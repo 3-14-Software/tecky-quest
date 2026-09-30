@@ -318,7 +318,7 @@ sans coupure. Importe-le comme *Sound* (type *Music*, compressé), puis :
 audio_play_sound(snd_music_tecky, 10, true);   // true = en boucle
 ```
 
-`music_victoire.wav` : fanfare de victoire (7 mesures, 13,5 s, reprend le motif du thème). Elle ne boucle pas :
+`music_victoire.wav` : fanfare de victoire (3 mesures, environ 7 s : une montée qui finit sur l'accord final). Elle ne boucle pas :
 à jouer une seule fois quand Tecky retrouve Alice, en coupant la musique de fond.
 
 ```gml

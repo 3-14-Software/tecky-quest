@@ -110,15 +110,14 @@ def events():
 
 # ------------------------------------------------------------------ fanfare de victoire
 FANFARE_BPM = 140
-FANFARE_CHORDS = ["C", "F", "G", "C", "F", "G", "C"]
+FANFARE_CHORDS = ["F", "G", "C"]
 FANFARE_LEAD = """
-G4 C5 E5 G5 C6 -  G5 C6 | A5 -  F5 A5 C6 -  A5 C6 | B5 -  G5 B5 D6 -  B5 D6 | E5 G5 C6 G5 E5 -  D5 E5
 A5 -  C6 -  F6 -  E6 D6 | B5 -  D6 -  G6 -  F6 D6 | C6 -  -  -  -  -  -  -
 """
 
 
 def fanfare_events():
-    """Fanfare de victoire (7 mesures, ne boucle pas) : retourne (pas total, événements)."""
+    """Fanfare de victoire (3 mesures : la montée finale, ne boucle pas) : retourne (pas total, événements)."""
     ev = []
     total = len(FANFARE_CHORDS) * STEPS_PER_BAR
     toks = FANFARE_LEAD.replace("|", " ").split()

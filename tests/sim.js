@@ -89,10 +89,10 @@ setTimeout(() => {
   step(2);
   ok(run('state') === 'dialog' && run('alice.found'), 'retrouvailles avec Alice');
   ok(run('Music.on') && run('Music.cur') === 'win', 'la fanfare de victoire démarre');
-  { const n1 = nodes; step(60 * 6); ok(nodes - n1 > 150, 'la fanfare joue des notes (' + (nodes - n1) + ' nœuds en 6 s)'); }
+  { const n1 = nodes; step(60 * 3); ok(nodes - n1 > 100, 'la fanfare joue des notes (' + (nodes - n1) + ' nœuds en 3 s)'); }
   run('audioOn()');
   ok(run('Music.cur') === 'win', 'le thème principal ne repart pas pendant la fanfare');
-  step(60 * 9);
+  step(60 * 4);
   ok(run('Music.step') >= run('Music.song.total'), 'la fanfare arrive à son terme (' + run('Music.song.total') + ' pas)');
   advanceDialog();
   ok(run('state') === 'win', 'écran de victoire');
