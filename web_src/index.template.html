@@ -1,0 +1,22 @@
+<title>Tecky Quest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400..700&display=swap">
+<style>
+  /* Écran de jeu plein cadre, un seul univers sombre autour du canvas */
+  :root { --night: #16100C; --cream: #FFF7E6; --red: #D7332B; --font: "Fredoka", "Trebuchet MS", system-ui, sans-serif; color-scheme: dark; }
+  html, body { height: 100%; margin: 0; overflow: hidden; background: var(--night); color: var(--cream); font-family: var(--font); }
+  canvas#game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; outline: none; }
+  #rotate { position: fixed; inset: 0; display: none; place-items: center; text-align: center; padding: 24px;
+    background: var(--night); font-size: 1.3rem; line-height: 1.5; z-index: 2; }
+  #rotate b { color: var(--red); font-weight: 600; }
+  @media (orientation: portrait) and (max-width: 760px) { #rotate { display: grid; } }
+</style>
+<canvas id="game" tabindex="0" aria-label="Tecky Quest, jeu d'aventure : aide Tecky le teckel à retrouver Alice"></canvas>
+<div id="rotate"><p><b>Tecky Quest</b><br>Tourne ton téléphone en mode paysage pour jouer.</p></div>
+<noscript>Tecky Quest a besoin de JavaScript pour fonctionner.</noscript>
+<script>
+/*__DATA__*/
+/*__GAME__*/
+</script>

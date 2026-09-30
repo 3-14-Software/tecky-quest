@@ -1,0 +1,5 @@
+__pycache__/
+out/
+web/
+tests/game_full.js
+*.zip

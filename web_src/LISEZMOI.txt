@@ -1,0 +1,37 @@
+TECKY QUEST — version à héberger soi-même
+==========================================
+
+Le dossier contient tout le jeu (une seule page, sans dépendance réseau).
+
+1. Lancer le serveur sur le PC (Fedora)
+---------------------------------------
+    cd tecky_quest_web
+    ./serve.sh
+
+Le script ouvre le port 8080 dans le pare-feu (firewalld, jusqu'au prochain redémarrage)
+et affiche l'adresse à ouvrir sur le téléphone, par exemple http://192.168.1.20:8080/
+Le téléphone doit être sur le même Wi-Fi que le PC. Ctrl+C pour arrêter.
+Si `qrencode` est installé (sudo dnf install qrencode), un QR code s'affiche aussi.
+
+
+2. Jouer en plein écran sur le téléphone
+----------------------------------------
+Android (Chrome) :
+  - ouvre l'adresse, tourne le téléphone en paysage, touche l'écran titre :
+    le jeu passe en plein écran et se verrouille en paysage ;
+  - si tu quittes le plein écran, le bouton ⛶ sous la pause le remet.
+
+iPhone (Safari) :
+  - Safari n'autorise pas le plein écran d'une page sur iPhone ;
+  - touche Partager puis « Sur l'écran d'accueil » : une icône Tecky Quest apparaît,
+    et le jeu s'ouvre depuis elle sans les barres de Safari, comme une vraie app.
+
+Sur ordinateur : touche F pour le plein écran.
+
+
+3. Pour aller plus loin : en ligne, en HTTPS
+--------------------------------------------
+En HTTPS (GitHub Pages, par exemple), Chrome sur Android propose aussi
+« Installer l'application » : le jeu s'ouvre alors directement en plein écran
+et fonctionne hors ligne. Il suffit de copier le contenu de ce dossier
+dans un dépôt GitHub et d'activer Pages.
