@@ -6,7 +6,7 @@ et des saucisses (qui ajoutent un os de vie maximum), et traverse campagne, rout
 
 Tout est généré par du code : sprites en SVG (aplats + contour), tileset, décors, HUD, musique chiptune, niveau.
 
-- **Jouer** : voir l'URL GitHub Pages dans la description du dépôt (clavier : flèches/ZQSD, X aboyer, C gratter/mordre, P pause, F plein écran, M son ; tactile sur téléphone).
+- **Jouer** : https://cgerardin.github.io/tecky-quest/ (clavier : flèches/ZQSD, X aboyer, C gratter/mordre, P pause, F plein écran, M son ; tactile sur téléphone).
 - **Kit GameMaker Studio 2** (sprites en strips x1/x2, tileset, décor, HUD, sons) : voir [GAMEMAKER.md](GAMEMAKER.md).
 
 ## Construire
