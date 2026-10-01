@@ -22,6 +22,8 @@ function main() {
 
   // aboyer appelle les chiens : pas de dégâts, pas de recul, un cœur, et il accourt
   run('B.x = B.hx = 3000; P.x = 8 * 64; P.y = 5 * 64 + 32;');
+  // les autres chiens restent chez eux (un roquet qui flâne non loin viendrait sinon attendre lui aussi)
+  run('dogs.forEach(d => { d.x = d.hx; d.y = d.hy; d.mode = "idle"; d.calm = 999; });');
   run('var R = dogs.find(d => d.kind === "roquet" && d !== B); R.hx = R.x = P.x + 230; R.hy = R.y = P.y; R.mode = "idle"; R.calm = 5;' +
       'P.dir = "right"; P.mode = "free"; P.cdBark = 0; fxs = []; pressed.bark = true');
   step(1);

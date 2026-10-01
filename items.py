@@ -118,6 +118,17 @@ def plush(d):
     d.add(ellipse(16, 16.8, 1.1, 0.75), ink, sil=False)
 
 
+def goldbone(d):
+    """Os doré : le trésor enterré sous les traces de pattes."""
+    tr = "rotate(-25 16 16)"
+    for x, y in ((8.6, 13.2), (8.6, 18.8), (23.4, 13.2), (23.4, 18.8)):
+        d.add(circle(x, y, 3.3, tr), "#F2C14E")
+    d.add(rect(8.2, 13.2, 15.6, 5.6, 2, tr), "#F2C14E")
+    d.add(rect(10, 16.9, 12, 1.6, 0.8, tr), "#D99A26", sil=False)
+    d.add(rect(11, 13.9, 8, 1.4, 0.7, tr), "#FFF1B8", sil=False)
+    d.add(circle(8.2, 12.4, 1.1, tr), "#FFF7D6", sil=False)
+
+
 ITEMS = {   # nom : (fonction de dessin, rôle)
     "bone": (bone, "soin +1"),
     "sausage": (sausage, "soin +3"),
@@ -127,6 +138,7 @@ ITEMS = {   # nom : (fonction de dessin, rôle)
     "hairclip": (hairclip, "indice : barrette d'Alice"),
     "shoe": (shoe, "indice : chaussure d'Alice"),
     "plush": (plush, "indice : doudou d'Alice"),
+    "goldbone": (goldbone, "os doré : trésor enterré, à collectionner"),
 }
 CLUES = ("hairclip", "shoe", "plush")   # dans l'ordre du jeu
 
@@ -312,6 +324,21 @@ def fx_heart():
     return out
 
 
+def fx_footprint():
+    """Empreinte de pied nu d'Alice (16x16, orteils vers le haut ; le jeu la tourne dans le sens de la piste).
+    2 images : pied gauche, pied droit. Piste d'odeur que Tecky fait apparaître en flairant."""
+    out = []
+    for flip in (1, -1):
+        d = Drawing(16, 16)
+        tr = f"translate(8 0) scale({flip} 1) translate(-8 0)"
+        d.add(path("M6.2,14.6 C4.4,14.4 4.2,11.6 4.8,9.4 C5.4,7.2 6.4,6 8.2,6 C10,6 10.8,7.6 10.4,9.8 "
+                   "C10,12 9.2,13.4 8.6,14 C8,14.6 7.2,14.7 6.2,14.6 Z", tr), "#FFE9A8")
+        for x, y, r in ((4.6, 4.6, 1.15), (6.4, 3.4, 1.05), (8.1, 3.1, 0.95), (9.6, 3.6, 0.85), (10.8, 4.6, 0.75)):
+            d.add(circle(x, y, r, tr), "#FFE9A8")
+        out.append(d.svg())
+    return out
+
+
 LEAF_COLORS = ("#6DB656", "#A7C94A", "#F2C14E", "#E58A3A")    # vert, vert tendre, jaune, orange
 
 
@@ -337,4 +364,5 @@ EFFECTS = {   # nom : (fonction, taille, fps)
     "glint": (fx_glint, 32, 7),
     "heart": (fx_heart, 32, 10),
     "leaf": (fx_leaf, 16, 0),        # pas une animation : image = couleur
+    "footprint": (fx_footprint, 16, 0),   # pied gauche, pied droit
 }

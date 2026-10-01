@@ -27,8 +27,9 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - `spritelib.py` : classe `Drawing` (parts SVG, silhouette dessinée en premier avec un trait épais = contour propre),
   `render_svg(svg, w, h, scale, pad)`, strips `_stripN`. Les vues gauches sont le miroir des vues droites.
 - `tecky.py`, `alice.py`, `enemies.py` (roquet, bouledogue, molosse/doberman, berger), `hens.py` (poules animées),
-  `vehicles.py` (voitures, camionnette, bus), `butterflies.py` (papillons, vus de dessus), `items.py`, `decor.py`,
-  `tiles.py`, `hud.py` :
+  `farmer.py` (le fermier Gaston, vu de face, 48x64, pieds en (24, 60) ; `FACE` pour son portrait),
+  `critters.py` (écureuil, chats roux et noir, de profil, 32x32), `vehicles.py` (voitures, camionnette, bus),
+  `butterflies.py` (papillons, vus de dessus), `items.py`, `decor.py`, `tiles.py`, `hud.py` :
   dessins et animations. `tiles.py` : tileset Wang/marching squares de 16 tuiles par transition (bits NO=1, NE=2, SO=4, SE=8),
   tuile 0 vide, 16 colonnes, `PAIRS`, `PRIORITY`, `resolve()`.
 - `music.py` : **source unique** de la musique (thème « Promenade de Tecky », 32 mesures, boucle ; fanfare de victoire et
@@ -109,6 +110,30 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   chien devient un copain (`d.friend`, points du chien, compté dans `fled` = « Copains de jeu » à la fin, sauvegardé
   dans `friends`). Un copain ne poursuit plus Tecky mais lui fait la fête quand il passe ; on peut rejouer sans points.
   L'aboiement n'éloigne personne : il appelle les chiens touchés (`callDog()` : bond, cœur, ils accourent). Test : `balade.js`.
+- Quête des poules (`farm`, `FARM`, `farmer`, `MAP.pen` / `penGate` / `farmer`) : cinq poules `quest` hors de l'enclos.
+  Le fermier parle quand Tecky arrive près de lui (`talkFarmer()` : demande, rappel « Encore n poules ! », merci).
+  Une poule poussée garde sa nouvelle place (`hx`), `funnelHen()` la guide vers la barrière, `keepHen()` la compte
+  (`penned`) et la garde dans l'enclos, jamais sur la route. Toutes rentrées : `finishFarm()` (saucisse, points).
+  Sauvegardé (`farm`, `hens`). Test : `farm.js`.
+- Dialogues : `say()` pendant un dialogue **met la réplique à la suite** (`dialog.queue`) au lieu de le remplacer
+  (le fermier parle et Tecky ramasse la barrette dans la même image).
+- Terriers (`MAP.tunnels`, décor `burrow` à plat, `TUNNEL`) : près d'un bout, C fait « Passer » (`startTunnel()`,
+  `updateTunnel()` : gratte, disparaît, ressort de l'autre côté ; `afterTunnel()` fait passer les copains). Les chiens
+  font le tour. Priorité de C : menace > jouer > trésor > terrier > panneau. Test : `tunnel.js`.
+- Flair (R, Y à la manette, bouton à truffe au toucher ; `SNIFF`) : piste de pieds nus (`fx/footprint`) vers
+  `arrowTarget()`, le long d'un vrai chemin à pied (`buildWalkGrid()` : grille de 16 px rasterisée une fois,
+  `fieldTo()` : distances par parcours en largeur, `scentPath()`). Les trésors proches scintillent. Test : `tunnel.js`.
+- Os dorés : le trésor sous les traces de pattes (`item/goldbone`, `treasures` = os dorés trouvés, HUD et victoire).
+- Petites bêtes (`critters`, `CRITTER`, `REFUGES`, `MAP.critters`) : écureuils et chats flânent ; Tecky trop près ou
+  qui aboie les fait filer vers un refuge pas de son côté (arbre/sapin : l'écureuil grimpe et disparaît ; toit ou
+  conteneur : le chat saute et feule), ils redescendent quand il est loin. Points la première fois (`scored`, sauvegardé).
+- Zones (`ZONES`, `zoneAt()`, `updateZone()`) : bandeau à l'arrivée (`banner`), étiquettes de la carte, ambiance sonore
+  (`Ambience`, `AMB_EVENTS`, `ambSound()` : oiseaux, coq, sonnette, cliquetis ; clapotis selon l'eau autour) et timbre
+  de la musique (`TIMBRE`, `Music.zone`). Test : `world.js`.
+- Carte de la pause (`drawPauseMap()`, `mapImg` pré-rendue au quart, `seenCells` : cases de 4 tuiles vues à l'écran,
+  sauvegardées) : brouillard, noms des zones vues, Tecky, indices, os dorés, Alice, enclos pendant la quête.
+- Copains qui suivent (balade, `FOLLOW`, `crumbs`, mode `follow`) : après avoir joué, le chien suit Tecky en file
+  indienne sur ses traces pendant 30 s, puis rentre. Test : `world.js`.
 - Manette (`pollPad()` appelé par `frame()` avant `update()`, `PAD_MAP`, `pad.on` → indices `hud/pad` au lieu de
   `hud/key`) : un appui = une impulsion dans `pressed`, la croix et le stick donnent `pressed.up/down` pour les menus,
   le stick gauche fait marcher (zone morte `PAD_DEAD`, vitesse selon l'inclinaison). Le clavier donne aussi
@@ -130,6 +155,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - Les tests Node exécutent le script de `web/index.html` dans un `vm` avec canvas/audio simulés ; `tests/game_full.js` est une
   copie générée (`tests/regen.py`) — la régénérer après toute modif de `game.js` (fait par `run_all.sh`).
 - Dialogues : 3 lignes maximum affichées ; chaîne longue = la découper en plusieurs répliques.
+- Tests : isoler la scène (`dogs = []`, `cars = []`, autres chiens renvoyés chez eux) ; un chien qui flâne ou une voiture
+  qui passe rendent sinon un test aléatoire. Relancer un nouveau test plusieurs fois avant de le valider.
 - Le service worker de `docs/` est réseau d'abord avec repli cache : pas de version à incrémenter à chaque livraison.
 - Canvas simulé des tests (`sim.js`, `check_placement.js`) : il doit renvoyer un objet pour `createRadialGradient` /
   `createLinearGradient` (nuages, lumière) ; tout nouvel appel de canvas qui renvoie un objet doit y être ajouté.
@@ -138,4 +165,6 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 
 ## Reste à faire
 
-Aucune demande en attente à la date du dernier commit.
+- Kit GameMaker **en pause** (choix de Christophe : on avance sur la version web). `build.py` doit continuer à
+  tourner, mais les nouveautés (fermier, petites bêtes, terriers, flair, carte, ambiances…) n'y sont pas documentées.
+- Piste en réflexion : dialogues lus à voix haute (pour qu'Alice joue sans savoir lire).

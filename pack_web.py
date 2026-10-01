@@ -18,6 +18,8 @@ import alice
 import butterflies
 import decor
 import enemies
+import critters
+import farmer
 import hens
 import hud
 import items
@@ -178,6 +180,25 @@ for x in list(range(64, 70)) + list(range(72, 77)):   # clôture du grand champ,
     DECOR.append(("fence_wood_h", x, 10.3))
 for y in range(17, 24):                               # entre la zone industrielle et le verger
     DECOR.append(("fence_metal_v", 40.6, y + 1))
+# enclos des poules (quête du fermier) : clôture en bois autour du poulailler, barrière ouverte au sud
+PEN = (59, 5.2, 64, 9.0)            # lignes de clôture, en tuiles : x0, y0, x1, y1
+PEN_GATE = (60, 62)                 # ouverture dans la clôture du bas
+for x in range(PEN[0], PEN[2]):
+    DECOR.append(("fence_wood_h", x, PEN[1]))
+    if not PEN_GATE[0] <= x < PEN_GATE[1]:
+        DECOR.append(("fence_wood_h", x, PEN[3]))
+for y in (6.2, 7.2, 8.2, PEN[3]):
+    DECOR.append(("fence_wood_v", PEN[0], y))
+    DECOR.append(("fence_wood_v", PEN[2], y))
+FARMER = (57.9, 8.4)                # le fermier Gaston, contre la clôture ouest de l’enclos
+# terriers sous les grillages : Tecky passe d'une extrémité à l'autre (raccourcis)
+TUNNELS = [((40.0, 21.0), (41.25, 21.0)),        # zone industrielle <-> verger de la ferme
+           ((36.5, 16.75), (36.5, 18.0)),        # trottoir <-> zone industrielle
+           ((14.5, 10.75), (14.5, 11.95)),       # pré de la niche <-> grande route
+           ((67.5, 9.75), (67.5, 10.95))]        # grand champ de la ferme <-> bord de route
+for a, b in TUNNELS:
+    for x, y in (a, b):
+        DECOR.append(("burrow", x, y))
 
 ITEMS = [
     ("bone", 6, 7.5), ("bone", 12, 17.6), ("bone", 28.5, 7.2), ("bone", 23.5, 19.8), ("bone", 19.5, 11.3),
@@ -203,7 +224,7 @@ ENEMIES = [
     ("bouledogue", 19.6, 16.9), ("bouledogue", 15.5, 22.2),
     ("molosse", 33.5, 20.2),
     # ferme : les chiens de berger gardent la cour et les prés
-    ("berger", 57.5, 8), ("berger", 66, 19.5), ("berger", 72, 6.5), ("bouledogue", 47.5, 20.4), ("roquet", 60.5, 23),
+    ("berger", 52.6, 10.6), ("berger", 66, 19.5), ("berger", 72, 6.5), ("bouledogue", 47.5, 20.4), ("roquet", 60.5, 23),
     # forêt
     ("roquet", 57, 34), ("roquet", 69, 39.6), ("bouledogue", 46.5, 40.4), ("molosse", 74.5, 40.6),
     # parc
@@ -228,9 +249,14 @@ BUTTERFLIES = [("yellow", 20, 33), ("blue", 24.5, 36.5), ("pink", 13, 40), ("ora
                ("blue", 4.5, 16.8), ("yellow", 14.5, 19.8),
                ("orange", 46, 21), ("yellow", 44, 19.6),
                ("blue", 69.5, 40.6)]
-# poules (animées : elles picorent, se promènent, et s'enfuient quand Tecky aboie)
-HENS = [("hen", 59.4, 8.6), ("hen_white", 62.2, 9), ("hen", 60.6, 9.8), ("hen_white", 63.6, 7.9),
-        ("hen_white", 66.6, 18.4), ("hen", 65.4, 20.2)]
+# poules (animées : elles picorent, se promènent, et s'enfuient quand Tecky aboie). Les cinq premières se sont
+# échappées de l'enclos : c'est la quête du fermier (quest = 1) ; les deux du sud de la route vivent leur vie.
+HENS = [("hen", 53.6, 9.6, 1), ("hen_white", 55.2, 7.0, 1), ("hen", 66.6, 6.8, 1), ("hen_white", 58.8, 11.0, 1),
+        ("hen", 49.6, 7.6, 1), ("hen_white", 66.6, 18.4, 0), ("hen", 65.4, 20.2, 0)]
+# petites bêtes que Tecky peut poursuivre : écureuils (forêt, parc) qui grimpent aux arbres, chats (village, zone
+# industrielle) qui sautent sur les toits et les conteneurs
+CRITTERS = [("squirrel", 57.4, 37.9), ("squirrel", 66.2, 36.9), ("squirrel", 48.6, 44.4), ("squirrel", 71.2, 44.4),
+            ("squirrel", 10.6, 32.6), ("cat", 29.6, 9.0), ("cat_black", 31.6, 19.4)]
 DIG = [(12.5, 6.5), (5.5, 19.5), (21.5, 18.5),
        (47.5, 20.5), (68.5, 11.5), (44.5, 33.5), (76.5, 44.5), (34.5, 33.5)]
 START = (4.5, 4.2)
@@ -347,7 +373,12 @@ def build_map():
         "decor": [[n, px(x), px(y)] for n, x, y in DECOR],
         "items": [[n, px(x), px(y)] for n, x, y in ITEMS],
         "enemies": [[n, px(x), px(y)] for n, x, y in ENEMIES],
-        "hens": [[n, px(x), px(y)] for n, x, y in HENS],
+        "hens": [[n, px(x), px(y), q] for n, x, y, q in HENS],
+        "pen": [px(v) for v in PEN], "penGate": [px(v) for v in PEN_GATE],
+        "farmer": [px(FARMER[0]), px(FARMER[1])],
+        "critters": [[n, px(x), px(y)] for n, x, y in CRITTERS],
+        "critterFps": {k: {a: fps for a, (_, fps, _) in critters.anims(k).items()} for k in critters.KINDS},
+        "tunnels": [[px(a[0]), px(a[1]), px(b[0]), px(b[1])] for a, b in TUNNELS],
         "butterflies": [[c, px(x), px(y)] for c, x, y in BUTTERFLIES],
         # où les papillons se posent : (x, y au sol, hauteur) — sur les pots de fleurs, ou sur les massifs
         "flowers": [[px(x), px(y) + 2, 44] for n, x, y in DECOR if n == "flower_pot"]
@@ -390,6 +421,11 @@ def collect():
     for a in alice.ANIMS:
         for v in dirs:
             out.append((f"alice/{a}/{v}", [render_svg(s, 48, 48, S, PAD) for s in alice.frames(a, v)], CH_O, True))
+    for a, (_, fps, _) in farmer.ANIMS.items():          # le fermier Gaston, vu de face, pieds en (24, 60)
+        out.append((f"farmer/{a}", [render_svg(sv, farmer.W, farmer.H, S, PAD) for sv in farmer.frames(a)], (24 * S + M, 60 * S + M), True))
+    for kind in critters.KINDS:                         # écureuil, chats : de profil vers la droite, pieds en (16, 28)
+        for a in critters.anims(kind):
+            out.append((f"{kind}/{a}", [render_svg(sv, 32, 32, S, PAD) for sv in critters.frames(kind, a)], (16 * S + M, 28 * S + M), True))
     for c in butterflies.COLORS:
         out.append((f"butterfly/{c}", [render_svg(sv, 24, 24, S, PAD) for sv in butterflies.frames(c)], (12 * S + M, 12 * S + M), True))
     for n, (_, (w, h), (ox, oy)) in vehicles.VEHICLES.items():
@@ -456,7 +492,7 @@ def preview(m, atlas, meta, tileset):
     things = [("decor/" + n, x, y) for n, x, y in m["decor"]]
     things += [("item/" + n, x, y) for n, x, y in m["items"]]
     things += [(f"{n}/idle/down", x, y) for n, x, y in m["enemies"]]
-    things += [(f"{n}/idle/right", x, y) for n, x, y in m["hens"]]
+    things += [(f"{n}/idle/right", x, y) for n, x, y, *_ in m["hens"]]
     things += [("tecky/idle/down", *m["start"]), ("alice/idle/down", *m["alice"])]
     for key, x, y in sorted(things, key=lambda t: t[2]):
         e = meta[key]

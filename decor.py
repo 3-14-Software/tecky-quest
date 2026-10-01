@@ -1012,6 +1012,19 @@ def playhouse():
 
 
 # décors animés : nom -> (nombre d'images, images par seconde) ; la fonction reçoit la phase 0..1
+def burrow():
+    """Terrier creusé sous un grillage (posé à plat) : monticule de terre, trou sombre, quelques mottes.
+    Tecky peut s'y glisser pour passer de l'autre côté."""
+    d = Drawing(40, 24)
+    d.add(ellipse(20, 14, 17, 7.5), "#B98F58")
+    d.add(ellipse(20, 13, 13, 5), "#9C6B3F", sil=False)
+    d.add(ellipse(20, 13.6, 9, 3.6), "#3A2418", sil=False)
+    d.add(ellipse(20, 12.6, 6.5, 1.8), "#5A3A26", sil=False, opacity=0.8)
+    for x, y, r in ((5.5, 17.5, 2.2), (34, 16.5, 2.6), (30, 20, 1.6), (9, 20.4, 1.4), (24, 20.6, 1.8)):
+        d.add(ellipse(x, y, r * 1.2, r), "#A97C4A", sil=False, edge=True)
+    return d
+
+
 ANIMATED = {"fountain": (8, 10)}
 
 
@@ -1067,6 +1080,7 @@ DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x)
     "slide": (slide, (64, 64), (32, 60)),
     "swing": (swing, (64, 64), (32, 60)),
     "sandbox": (sandbox, (64, 48), (32, 44)),
+    "burrow": (burrow, (40, 24), (20, 13)),
     "fountain": (fountain, (64, 64), (32, 58)),
     "playhouse": (playhouse, (64, 64), (32, 60)),
 }

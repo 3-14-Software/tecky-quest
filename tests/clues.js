@@ -26,6 +26,7 @@ eval(base + `setTimeout(() => {
   ok(run('state') === 'play', 'la remarque ne revient pas en boucle');
   // la barrette
   const take = n => { run('var it = ' + item(n) + '; P.x = it.x; P.y = it.y + 30; P.mode = "free";'); step(2); };
+  run('farm.state = "done"; farmer.near = true;');   // le fermier (voir farm.js) ne parle pas ici
   take('hairclip');
   ok(run('clues[0]') && run('dialog.lines[0].text') === run('CLUE_FOUND[0]') && run('dialog.lines[1].text') === run('CLUE_NEXT[1]'),
      'barrette : Tecky la reconnaît et dit où chercher ensuite (la forêt)');

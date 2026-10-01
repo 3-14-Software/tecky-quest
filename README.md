@@ -7,6 +7,11 @@ chiens (dont les chiens de berger, qui chargent), gratte la terre pour déterrer
 de la vie) et des saucisses (qui ajoutent un os de vie maximum). Il traverse campagne, route (gare aux voitures :
 mieux vaut passer par les passages piétons), village, zone industrielle, ferme, rivière (un seul pont), forêt et parc.
 La journée avance avec la recherche : la lumière baisse à chaque indice jusqu'au coucher du soleil.
+En chemin : le fermier Gaston a besoin d'aide pour ramener ses poules dans l'enclos, des écureuils et des chats
+filent se percher quand Tecky les poursuit, des terriers permettent de passer sous les grillages, et Tecky peut
+flairer la piste d'Alice (de petits pieds nus apparaissent au sol). Les trésors enterrés sont des os dorés à
+collectionner, et la pause montre la carte des coins déjà explorés. Chaque zone a son ambiance sonore et ses
+instruments.
 
 Deux modes au choix sur l'écran titre : **aventure** (les chiens mordent) et **balade**, pour les plus petits (personne ne
 se fait mal : les chiens attendent qu'on joue avec eux et deviennent des copains). La partie est enregistrée automatiquement dans le navigateur
@@ -15,8 +20,8 @@ sont gardés pour chaque mode.
 
 Tout est généré par du code : sprites en SVG (aplats + contour), tileset, décors, HUD, musique chiptune, niveau.
 
-- **Jouer** : https://3-14-software.github.io/tecky-quest/ (clavier : flèches/ZQSD, X aboyer, C mordre (ou gratter, ou lire un panneau), P pause, F plein écran, M son ; manette : stick ou croix, X/B aboyer, A mordre/gratter/lire et valider, Start pause, Select son ; tactile sur téléphone).
-- **Kit GameMaker Studio 2** (sprites en strips x1/x2, tileset, décor, HUD, sons) : voir [GAMEMAKER.md](GAMEMAKER.md).
+- **Jouer** : https://3-14-software.github.io/tecky-quest/ (clavier : flèches/ZQSD, X aboyer, C mordre (ou gratter, lire, passer sous un grillage, jouer), R flairer, P pause, F plein écran, M son ; manette : stick ou croix, X/B aboyer, A mordre/gratter/lire et valider, Y flairer, Start pause, Select son ; tactile sur téléphone).
+- **Kit GameMaker Studio 2** (sprites en strips x1/x2, tileset, décor, HUD, sons ; en pause pour l'instant) : voir [GAMEMAKER.md](GAMEMAKER.md).
 
 ## Construire
 
@@ -45,14 +50,15 @@ morsure prioritaire sur le grattage quand un chien menace, contournement des obs
 objets (rien dans l'eau, tout atteignable à pied depuis la niche), indices d'Alice, charge du chien de berger, poules,
 papillons, fontaine animée, circulation (bousculade, passages piétons), pont, eau animée, séquenceur musical, fanfare
 et musique de défaite, sauvegarde (continuer, reprise après KO, stockage refusé), records par mode, mode balade,
-manette simulée, poussière, feuilles, ombres de nuages et coucher de soleil. `tests/edges.py` détecte les sprites dont des pixels touchent le bord du cadre.
+manette simulée, poussière, feuilles, ombres de nuages et coucher de soleil, quête des poules, terriers, flair,
+os dorés, écureuils et chats, zones (bandeau, ambiance, timbre), carte de la pause, copains qui suivent Tecky. `tests/edges.py` détecte les sprites dont des pixels touchent le bord du cadre.
 
 ## Organisation
 
 | Fichier | Rôle |
 |---|---|
 | `spritelib.py` | boîte à outils de dessin SVG, rendu, strips, GIF |
-| `tecky.py`, `alice.py`, `enemies.py`, `hens.py`, `vehicles.py`, `butterflies.py`, `items.py`, `decor.py`, `tiles.py`, `hud.py` | dessin des personnages, poules, véhicules, papillons, objets, décor, tileset, HUD |
+| `tecky.py`, `alice.py`, `enemies.py`, `hens.py`, `farmer.py`, `critters.py`, `vehicles.py`, `butterflies.py`, `items.py`, `decor.py`, `tiles.py`, `hud.py` | dessin des personnages, poules, fermier, écureuils et chats, véhicules, papillons, objets, décor, tileset, HUD |
 | `music.py` | partition chiptune (thème en boucle, fanfare de victoire, musique de défaite), export WAV |
 | `sample_map.py`, `hud_mockup.py` | carte d'exemple et maquette du HUD |
 | `build.py` | export du kit GameMaker dans `out/` |

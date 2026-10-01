@@ -1,5 +1,9 @@
 # Tecky Quest — graphismes pour GameMaker Studio 2
 
+> **Kit en pause.** Le développement avance sur la version web. `python3 build.py` produit toujours tout ce qui est
+> décrit ici, mais les dernières nouveautés du jeu web (fermier et quête des poules, écureuils et chats, terriers,
+> flair, os dorés, carte de la pause, ambiances par zone) n'y sont pas encore décrites.
+
 Style aplats + contour, vue de dessus 3/4. Tout est généré par code :
 `python3 build.py` reconstruit l'ensemble en quelques secondes
 (dépendances : `pip install cairosvg pillow numpy` ; la police Fredoka est fournie dans `fonts/`).
@@ -274,9 +278,9 @@ Pensé pour l'event **Draw GUI** avec `display_set_gui_size(1920, 1080)` et les 
 | `spr_hud_name_tag` | 1 | (0, 0) | étiquette rouge pour le nom de celui qui parle |
 | `spr_hud_next` | 4 | (0, 0) | flèche « suite » qui rebondit |
 | `spr_hud_digits` | 16 | (0, 0) | police en sprite : `0123456789+-x/:%` |
-| `spr_hud_key` | 10 | (0, 0) | touches : X, C, E, Z, ↑, ↓, ←, →, Esc, Entrée |
+| `spr_hud_key` | 11 | (0, 0) | touches : X, C, E, Z, ↑, ↓, ←, →, Esc, Entrée, R |
 | `spr_hud_pad` | 5 | (0, 0) | boutons de manette, même cadre que les touches : A, B, X, Y, Start |
-| `spr_hud_action` | 10 | (0, 0) | boutons : aboyer, aboyer grisé, mordre, mordre grisé, gratter, gratter grisé, lire, lire grisé, jouer (cœur, mode balade), jouer grisé |
+| `spr_hud_action` | 12 | (0, 0) | boutons : aboyer, aboyer grisé, mordre, mordre grisé, gratter, gratter grisé, lire, lire grisé, jouer (cœur, mode balade), jouer grisé, flairer, flairer grisé |
 | `spr_hud_cooldown` | 8 | (0, 0) | voile de recharge à poser sur un bouton (0 = vient d'être utilisé) |
 | `spr_hud_enemy_bar_bg` / `_fill` | 1 | (28, 0) / (0, 0) | barre de vie au-dessus d'un ennemi |
 | `spr_hud_arrow` | 4 | centre (40, 40) | flèche au bord de l'écran (pointe à droite, pastille vide) : seule elle tourne |

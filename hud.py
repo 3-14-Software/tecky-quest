@@ -11,6 +11,7 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 
 import alice
+import farmer
 import items
 import tecky
 from spritelib import Drawing, circle, ellipse, rect, poly, path, line, render_svg, OUTLINE
@@ -110,8 +111,8 @@ def _portrait(scale, face_img, bg="#8FD0F0"):
     return frame
 
 
-def _crop_face(svg, cx, cy, half, scale):
-    big = render_svg(svg, 48, 48, scale * 4)
+def _crop_face(svg, cx, cy, half, scale, w=48, h=48):
+    big = render_svg(svg, w, h, scale * 4)
     k = scale * 4
     return big.crop((int((cx - half) * k), int((cy - half) * k), int((cx + half) * k), int((cy + half) * k)))
 
@@ -134,6 +135,13 @@ def alice_portrait(scale):
     return out
 
 
+def farmer_portrait(scale):
+    """Le fermier Gaston (dialogues de la quête des poules) : normal, clignement, joyeux."""
+    cx, cy, half = farmer.FACE
+    return [_portrait(scale, _crop_face(farmer.front(p).svg(), cx, cy, half, scale, farmer.W, farmer.H), bg="#CFE8B0")
+            for p in farmer.portrait_states()]
+
+
 # ------------------------------------------------------------------ texte en sprite : chiffres
 DIGITS = "0123456789+-x/:%"
 
@@ -154,7 +162,7 @@ def digit_frames(scale, w=22, h=28, size=19):
 
 
 # ------------------------------------------------------------------ touches et actions
-KEYS = ["X", "C", "E", "Z", "up", "down", "left", "right", "Esc", "Entrée"]
+KEYS = ["X", "C", "E", "Z", "up", "down", "left", "right", "Esc", "Entrée", "R"]
 
 
 def key_frames(scale):
@@ -213,9 +221,9 @@ def pad_frames(scale):
 
 
 def action_frames(scale):
-    """Boutons ronds 40x40 : aboyer, mordre, gratter, lire, jouer (mode balade) (+ versions grisées)."""
+    """Boutons ronds 40x40 : aboyer, mordre, gratter, lire, jouer (mode balade), flairer (+ versions grisées)."""
     out = []
-    for kind in ("bark", "bite", "dig", "read", "play"):
+    for kind in ("bark", "bite", "dig", "read", "play", "sniff"):
         for dim in (False, True):
             d = Drawing(40, 40)
             d.add(circle(20, 20, 17.5), "#F2C14E" if not dim else "#8A8F99")
@@ -244,6 +252,12 @@ def action_frames(scale):
                       "#C98A4B" if not dim else "#8A8F99", sil=False, edge=True)
                 for x1, y in ((24, 13.4), (21, 17.1)):
                     d.raw(line(f"M11,{y} L{x1},{y}", ink, 1.6))
+            elif kind == "sniff":
+                # truffe de teckel et trois volutes d'odeur
+                d.add(ellipse(13, 24, 7, 5.4), ink, sil=False)
+                d.add(ellipse(11, 22.6, 2.2, 1.3), "#FFFFFF" if not dim else "#C9CCD2", sil=False, opacity=0.7)
+                for k, (x, y) in enumerate(((22, 12), (26.5, 17.5), (21, 23))):
+                    d.raw(line(f"M{x},{y + 4} q2.2,-1.6 0,-3.2 q-2.2,-1.6 0,-3.2", ink, 1.7))
             elif kind == "play":
                 # cœur (comme fx/heart) : jouer avec un chien en mode balade
                 heart = ("M16,23.5 C9,18.6 7,15.2 7,12.6 C7,9.9 9.1,8 11.6,8 C13.6,8 15.1,9.2 16,10.9 "
@@ -360,6 +374,7 @@ def all_sprites(scale):
         "spr_hud_next": next_arrow(scale),
         "spr_hud_portrait_tecky": tecky_portrait(scale),
         "spr_hud_portrait_alice": alice_portrait(scale),
+        "spr_hud_portrait_farmer": farmer_portrait(scale),
         "spr_hud_digits": digit_frames(scale),
         "spr_hud_key": key_frames(scale),
         "spr_hud_pad": pad_frames(scale),
