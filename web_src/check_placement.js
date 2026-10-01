@@ -46,6 +46,7 @@ setTimeout(() => {
     for (const d of dogs) if (!standable(d.x, d.y)) out.push('chien ' + d.kind + ' ' + tile(d.x, d.y));
     for (const h of hens) if (!standable(h.x, h.y)) out.push('poule ' + tile(h.x, h.y));
     for (const c of critters) if (!standable(c.x, c.y) || !reachable(c.x, c.y, 120)) out.push(c.kind + ' ' + tile(c.x, c.y));
+    for (const d of ducks) if (!duckWater(d, d.x, d.y)) out.push(d.kind + ' hors de l’eau ' + tile(d.x, d.y));
     if (!standable(P.x, P.y)) out.push('départ de Tecky');
     for (const [x, y] of MAP.signs) if (!reachable(x, y + 30, 95)) out.push('panneau ' + tile(x, y));
     if (!reachable(alice.x, alice.y, 120)) out.push('Alice');
@@ -59,5 +60,5 @@ setTimeout(() => {
     return out;
   })())`));
   if (bad.length) { console.log('PROBLÈMES :\n  ' + bad.join('\n  ')); process.exitCode = 1; }
-  else console.log('placements ok :', r('items.length'), 'objets,', r('digs.length'), 'trésors,', r('dogs.length'), 'chiens,', r('hens.length'), 'poules, départ, panneaux, terriers, fermier et Alice');
+  else console.log('placements ok :', r('items.length'), 'objets,', r('digs.length'), 'trésors,', r('dogs.length'), 'chiens,', r('hens.length'), 'poules,', r('ducks.length'), 'canards, départ, panneaux, terriers, fermier et Alice');
 }, 20);

@@ -167,6 +167,8 @@ const SFX = {
     tone(415 * k, 0.2, 'square', 0.06, 0, 0.18); tone(330 * k, 0.2, 'square', 0.05, 0, 0.18); },
   sniff() { for (let i = 0; i < 3; i++) noise(0.06, 0.07, 1900 + i * 150, i * 0.13); },
   yip(p) { const k = p || 1; tone(820 * k, 0.07, 'square', 0.045, 420 * k); tone(980 * k, 0.09, 'square', 0.045, 380 * k, 0.11); },
+  quack(p) { const k = p || 1; tone(640 * k, 0.08, 'square', 0.035, -260 * k); tone(560 * k, 0.1, 'square', 0.035, -280 * k, 0.11); },
+  flap() { for (let i = 0; i < 4; i++) noise(0.05, 0.05, 700 + i * 60, i * 0.08); },
   hey(p) { const k = p || 1; tone(560 * k, 0.08, 'triangle', 0.08, 160 * k); tone(760 * k, 0.13, 'triangle', 0.08, -120 * k, 0.09); },
   cluck() { tone(950, 0.05, 'square', 0.05, 250); tone(1150, 0.05, 'square', 0.05, 200, 0.08); tone(1400, 0.12, 'square', 0.05, -600, 0.17); },
   win() { [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, 0.18, 'triangle', 0.09, 0, i * 0.14)); },
@@ -809,6 +811,7 @@ function reset() {
   hens = MAP.hens.map(newHen);
   farmer = newFarmer(); farm = { state: 'new' };
   critters = MAP.critters.map(newCritter);
+  ducks = MAP.ducks.map(newDuck); linkDucks();
   walkGrid = null; distField = null; trail = []; tunnelSeen = false; crumbs = []; followN = 0;
   seenCells = new Uint8Array(cellsW() * cellsH()); zone = null; zoneT = 0; banner = null; Music.zone = 'niche';
   cars = MAP.traffic.vehicles.map(newVehicle);
@@ -970,6 +973,10 @@ function doBark() {
   for (const c of critters) {
     const dx = c.x - P.x, dy = c.y - P.y, l = Math.hypot(dx, dy);
     if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) scareCritter(c);
+  }
+  for (const d of ducks) {
+    const dx = d.x - P.x, dy = d.y - P.y, l = Math.hypot(dx, dy);
+    if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) scareDuck(d);
   }
 }
 
@@ -1285,6 +1292,145 @@ function drawCritter(c) {
   const n = (ATLAS[c.kind + '/' + c.anim] || { f: [0] }).f.length;
   const i = Math.floor(c.t * fps);
   drawSpr(c.kind + '/' + c.anim, loop ? i : Math.min(i, n - 1), c.x, c.y - c.h, { flip: c.dir === 'left' });
+}
+
+/* ------------------------------------------------------------------ canards */
+/* Canards sur l'étang, les mares et la rivière (MAP.ducks : [espèce, x, y, famille]). Ils nagent tranquillement près de
+   leur place sans quitter l'eau profonde (duckWater), cancanent et plongent. Si Tecky approche ou aboie vers eux, les
+   adultes s'envolent (avec leur ombre au sol) vers un autre coin d'eau, loin de Tecky et pas de son côté
+   (pickLanding), et s'y posent. Une cane suivie de
+   canetons (même famille) ne s'envole pas : elle s'éloigne vite à la nage, ses petits en file derrière elle. Points la
+   première fois que chacun s'enfuit (scored, sauvegardé). */
+const DUCK = { scare: 190, swim: 24, roam: 110, flee: 100, gap: 30, flyH: 90, fly: 230, rise: 0.7, away: 1.2,
+  land: [300, 900], safe: 420, calm: 2.5, quack: [5, 14], dive: [10, 24], pts: 30 };
+let ducks = [];
+const DUCK_EDGE = { big: [[-28, 0], [28, 0], [0, -14], [0, 12], [-20, -10], [20, -10], [-20, 9], [20, 9]],
+  small: [[-16, 0], [16, 0], [0, -9], [0, 8]] };
+const duckWater = (d, x, y) => DUCK_EDGE[d.kind === 'duckling' ? 'small' : 'big'].every(([dx, dy]) => waterAt(x + dx, y + dy));
+const rnd = ([a, b]) => a + Math.random() * (b - a);
+const onScreen = (x, y) => x > camX - 60 && x < camX + VW + 60 && y > camY - 60 && y < camY + VH + 60;
+function newDuck([kind, x, y, fam], id) {
+  return { id, kind, fam, x, y, hx: x, hy: y, tx: x, ty: y, h: 0, mode: 'swim', anim: 'swim', t: Math.random() * 2,
+    timer: Math.random() * 2, flip: Math.random() < 0.5, quackT: rnd(DUCK.quack), diveT: rnd(DUCK.dive), scored: false,
+    lead: null, hasKids: false, vx: 0, vy: 0, calmT: 0 };
+}
+function linkDucks() {               // les canetons d'une famille se suivent en file derrière leur mère
+  for (const m of ducks) if (m.kind === 'duck_f' && m.fam) {
+    let prev = m;
+    for (const k of ducks) if (k.kind === 'duckling' && k.fam === m.fam) { k.lead = prev; prev = k; m.hasKids = true; }
+  }
+}
+const duckMom = d => d.lead ? ducks.find(m => m.hasKids && m.fam === d.fam) : d;
+function duckAnim(d, a) { if (d.anim !== a) { d.anim = a; d.t = 0; } }
+function duckFrame(d) {               // [image, fini ?] : les animations sans boucle (cancan, plongeon) se jouent une fois
+  const fps = (MAP.duckFps[d.kind] || {})[d.anim] || 8, n = (ATLAS[d.kind + '/' + d.anim] || { f: [0] }).f.length;
+  const i = Math.floor(d.t * fps);
+  return MAP.duckLoop[d.kind][d.anim] ? [i, false] : [Math.min(i, n - 1), i >= n];
+}
+function scareDuck(d) {
+  d = duckMom(d);
+  if (!d || d.mode !== 'swim') return;
+  if (d.hasKids) {
+    d.mode = 'flee'; d.calmT = 0; duckAnim(d, 'swim');
+    for (const k of ducks) if (k.lead && k.fam === d.fam) k.mode = 'flee';
+  } else {
+    const l = Math.max(1, dist(d.x, d.y, P.x, P.y)), p = pickLanding(d);
+    d.mode = 'fly'; d.vx = (d.x - P.x) / l; d.vy = (d.y - P.y) / l;
+    d.timer = p ? 0 : DUCK.away;                      // sans coin d'eau sûr : il s'éloigne un peu, puis revient
+    [d.tx, d.ty] = p || [d.hx, d.hy];
+    duckAnim(d, 'fly');
+    if (onScreen(d.x, d.y)) SFX.flap();
+  }
+  if (!d.scored) { d.scored = true; score += DUCK.pts; addPop('+' + DUCK.pts, d.x - 20, d.y - 60); }
+  addWordPop('Coin coin !', d.x, d.y - 80);
+  if (onScreen(d.x, d.y)) SFX.quack(d.kind === 'duck' ? 0.95 : 1.1);
+}
+function swimTo(d, tx, ty, sp, dt) {  // avance vers (tx, ty) sans quitter l'eau ; faux si la rive barre le chemin
+  const dx = tx - d.x, dy = ty - d.y, l = Math.hypot(dx, dy);
+  if (l < 1) return true;
+  const st = Math.min(l, sp * dt), nx = d.x + dx / l * st, ny = d.y + dy / l * st;
+  if (!duckWater(d, nx, ny)) return false;
+  d.x = nx; d.y = ny;
+  if (Math.abs(dx) > 1) d.flip = dx < 0;
+  return true;
+}
+function pickLanding(d) {             // où se poser : de l'eau à bonne distance, loin de Tecky et pas de son côté
+  const ok = [], away = [];
+  for (let y = d.y - DUCK.land[1]; y <= d.y + DUCK.land[1]; y += 32) for (let x = d.x - DUCK.land[1]; x <= d.x + DUCK.land[1]; x += 32) {
+    const l = dist(x, y, d.x, d.y);
+    if (l < DUCK.land[0] || l > DUCK.land[1] || dist(x, y, P.x, P.y) < DUCK.safe || !duckWater(d, x, y)) continue;
+    ok.push([x, y]);
+    if ((x - d.x) * (d.x - P.x) + (y - d.y) * (d.y - P.y) > 0) away.push([x, y]);
+  }
+  const c = away.length ? away : ok;
+  return c.length ? c[Math.floor(Math.random() * c.length)] : null;
+}
+function pickWater(d, cx, cy, r0, r1, far) {   // un point d'eau autour de (cx, cy), loin de Tecky si far
+  for (let k = 0; k < 40; k++) {
+    const a = Math.random() * Math.PI * 2, r = r0 + Math.random() * (r1 - r0);
+    const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r * 0.7;
+    if (duckWater(d, x, y) && (!far || dist(x, y, P.x, P.y) > far)) return [x, y];
+  }
+  return null;
+}
+function duckChatter(d, dt, pitch) {  // cancans et plongeons de temps en temps
+  if ((d.quackT -= dt) <= 0) {
+    d.quackT = rnd(DUCK.quack) * (d.lead ? 0.6 : 1); duckAnim(d, 'quack');
+    if (state === 'play' && onScreen(d.x, d.y)) SFX.quack(pitch);
+  } else if (!d.lead && !d.hasKids && (d.diveT -= dt) <= 0) { d.diveT = rnd(DUCK.dive); duckAnim(d, 'dive'); }
+}
+function updateDuck(d, dt) {
+  d.t += dt;
+  if (d.anim !== 'swim' && d.anim !== 'fly' && duckFrame(d)[1]) duckAnim(d, 'swim');
+  const dP = dist(d.x, d.y, P.x, P.y), alive = P.mode !== 'ko' && state === 'play';
+  if (d.lead) {                       // caneton : suit celui qui le précède, à DUCK.gap
+    const L = d.lead, dx = L.x - d.x, dy = L.y - d.y, l = Math.hypot(dx, dy);
+    if (alive && dP < DUCK.scare * 0.8) scareDuck(d);
+    if (l > DUCK.gap) swimTo(d, L.x - dx / l * DUCK.gap, L.y - dy / l * DUCK.gap, d.mode === 'flee' ? DUCK.flee * 1.15 : DUCK.swim * 1.8, dt);
+    duckChatter(d, dt, 1.6);
+    return;
+  }
+  switch (d.mode) {
+    case 'swim':
+      if (alive && dP < DUCK.scare) { scareDuck(d); return; }
+      duckChatter(d, dt, d.kind === 'duck' ? 0.95 : 1.1);
+      if (d.anim === 'dive') return;                    // la tête sous l'eau : il ne bouge pas
+      if ((d.timer -= dt) <= 0 || dist(d.x, d.y, d.tx, d.ty) < 4) {
+        const p = pickWater(d, d.hx, d.hy, 0, DUCK.roam);
+        if (p) { d.tx = p[0]; d.ty = p[1]; }
+        d.timer = 4 + Math.random() * 5;
+      }
+      if (!swimTo(d, d.tx, d.ty, DUCK.swim, dt)) d.timer = 0;
+      return;
+    case 'flee': {                    // la cane et ses petits s'éloignent à la nage
+      let moved = false;
+      const a0 = Math.atan2(d.y - P.y, d.x - P.x);
+      for (const da of [0, 0.5, -0.5, 1, -1, 1.5, -1.5])
+        if (swimTo(d, d.x + Math.cos(a0 + da) * 40, d.y + Math.sin(a0 + da) * 40, DUCK.flee, dt)) { moved = true; break; }
+      d.calmT = dP > DUCK.scare + 120 || !moved ? d.calmT + dt : 0;
+      if (d.calmT > DUCK.calm) {
+        d.mode = 'swim'; d.hx = d.tx = d.x; d.hy = d.ty = d.y; d.timer = 2;
+        for (const k of ducks) if (k.lead && k.fam === d.fam) k.mode = 'swim';
+      }
+      return;
+    }
+    case 'fly': {                     // s'envole, file vers son nouveau coin d'eau et s'y pose
+      let dx = d.tx - d.x, dy = d.ty - d.y, l = Math.hypot(dx, dy);
+      if (d.timer > 0) { d.timer -= dt; dx = d.vx; dy = d.vy; l = Infinity; }        // d'abord s'éloigner de Tecky
+      const st = Math.min(l, DUCK.fly * dt), n = Math.hypot(dx, dy) || 1;
+      d.x = clamp(d.x + dx / n * st, 40, MAP.w * TS - 40); d.y = clamp(d.y + dy / n * st, 160, MAP.h * TS - 40);
+      if (Math.abs(dx) > 1) d.flip = dx < 0;
+      d.h = Math.min(d.h + DUCK.flyH / DUCK.rise * dt, DUCK.flyH * Math.min(1, l / 180));   // monte, puis descend en arrivant
+      if (l - st < 1) {
+        d.h = 0; d.mode = 'swim'; d.hx = d.tx = d.x; d.hy = d.ty = d.y; d.timer = 2; duckAnim(d, 'swim');
+        addFx(ATLAS['fx/splash'] ? 'fx/splash' : 'fx/ripple', d.x, d.y, { fps: 12 });
+      }
+      return;
+    }
+  }
+}
+function drawDuck(d) {
+  drawSpr(d.kind + '/' + d.anim, duckFrame(d)[0], d.x, d.y - d.h, { flip: d.flip });
 }
 
 /* ------------------------------------------------------------------ quête des poules */
@@ -1978,6 +2124,7 @@ function saveGame() {
     farm: farm.state, hens: questHens().map(h => [r1(h.hx), r1(h.hy), h.penned ? 1 : 0]),
     seen: Array.from(seenCells).join(''),
     critters: critters.map(c => c.scored ? 1 : 0).join(''),
+    ducks: ducks.map(d => d.scored ? 1 : 0).join(''),
   });
 }
 // pas de sauvegarde automatique en plein combat : on reprendrait au milieu des crocs
@@ -2000,6 +2147,7 @@ function loadGame(s, rested) {
   farm.state = s.farm || 'new';
   if (s.seen) for (let i = 0; i < seenCells.length; i++) seenCells[i] = s.seen[i] === '1' ? 1 : 0;
   critters.forEach((c, i) => { c.scored = (s.critters || '')[i] === '1'; });
+  ducks.forEach((d, i) => { d.scored = (s.ducks || '')[i] === '1'; });
   questHens().forEach((h, i) => { const q = (s.hens || [])[i]; if (q) { h.x = h.hx = q[0]; h.y = h.hy = q[1]; h.penned = !!q[2]; } });
   if (nextClue() === 3) revealAlice();
   sun = sunGoal();
@@ -2519,6 +2667,7 @@ function update(dt) {
       for (const v of cars) updateVehicle(v, dt);
       for (const b of butterflies) updateButterfly(b, dt);
       for (const c of critters) updateCritter(c, dt);
+      for (const d of ducks) updateDuck(d, dt);
       updateLeaves(dt);
       const id = menuInput();
       if (id) chooseMenu(id);
@@ -2559,6 +2708,7 @@ function update(dt) {
       updateLeaves(dt);
       updateFarmer(dt);
       for (const c of critters) updateCritter(c, dt);
+      for (const d of ducks) updateDuck(d, dt);
       updateTrail(dt);
       updateZone(dt);
       Ambience.update(dt);
@@ -2599,6 +2749,13 @@ function drawWorld() {
   drawTrail();
   drawDust();
   drawRings();   // ondes d'aboiement, au sol sous les personnages
+  for (const d of ducks) if (d.h > 0 && vis(d.x, d.y, 60)) {           // ombres des canards en vol
+    ctx.save();
+    ctx.globalAlpha = 0.2 * (1 - Math.min(0.6, d.h / 200));
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.ellipse(d.x, d.y, 18, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
   for (const b of butterflies) if (vis(b.x, b.y, 60)) {             // ombres des papillons, plus pâles en altitude
     ctx.save();
     ctx.globalAlpha = 0.2 * (1 - Math.min(0.7, b.alt / 110));
@@ -2623,6 +2780,7 @@ function drawWorld() {
     drawSpr('vehicle/' + v.name, Math.floor(v.t * 4), v.x, v.y, { flip: v.dir < 0 }) });
   if (!alice.hidden && vis(alice.x, alice.y, 120)) list.push({ y: alice.y, draw: () => alice.draw() });
   if (vis(farmer.x, farmer.y, 140)) list.push({ y: farmer.y, draw: drawFarmer });
+  for (const d of ducks) if (d.h === 0 && vis(d.x, d.y, 60)) list.push({ y: d.y, draw: () => drawDuck(d) });
   for (const c of critters) if (critterVisible(c) && vis(c.x, c.y - c.h, 60))
     list.push({ y: c.h > 0 && c.ref ? c.ref.y + 2 : c.y, draw: () => drawCritter(c) });
   const blink = P.inv > 0 && P.mode !== 'ko' && Math.floor(P.inv * 12) % 2 === 0;
@@ -2633,6 +2791,7 @@ function drawWorld() {
   // papillons : au-dessus de tout, tournés dans le sens du vol
   for (const b of butterflies) if (vis(b.x, b.y, 80))
     drawSpr('butterfly/' + b.color, Math.floor(b.flap) % 4, b.x, b.y - b.alt, { angle: b.heading + Math.PI / 2, sc: BFLY.sc });
+  for (const d of ducks) if (d.h > 0 && vis(d.x, d.y - d.h, 80)) drawDuck(d);   // canards en vol, au-dessus de tout
   drawFallingLeaves();
   for (const f of fxs) drawSpr(f.key, Math.floor(f.t * f.fps), f.x, f.y, { angle: f.angle });
   drawClouds(cx, cy);

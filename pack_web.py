@@ -19,6 +19,7 @@ import butterflies
 import decor
 import enemies
 import critters
+import ducks
 import farmer
 import hens
 import hud
@@ -253,6 +254,10 @@ BUTTERFLIES = [("yellow", 20, 33), ("blue", 24.5, 36.5), ("pink", 13, 40), ("ora
 # échappées de l'enclos : c'est la quête du fermier (quest = 1) ; les deux du sud de la route vivent leur vie.
 HENS = [("hen", 53.6, 9.6, 1), ("hen_white", 55.2, 7.0, 1), ("hen", 66.6, 6.8, 1), ("hen_white", 58.8, 11.0, 1),
         ("hen", 49.6, 7.6, 1), ("hen_white", 66.6, 18.4, 0), ("hen", 65.4, 20.2, 0)]
+# canards (espèce, x, y en tuiles, famille) : une même famille = la cane et ses canetons, qui la suivent en file
+DUCKS = [("duck_f", 9.9, 2.4, 1), ("duckling", 9.4, 2.55, 1), ("duckling", 9.0, 2.7, 1), ("duckling", 8.6, 2.85, 1),
+         ("duck", 72.6, 19.4, 0), ("duck_f", 71.6, 19.9, 0),
+         ("duck", 30.5, 27.4, 0), ("duck_f", 31.6, 27.8, 0), ("duck", 48.0, 27.6, 0), ("duck", 2.6, 20.0, 0)]
 # petites bêtes que Tecky peut poursuivre : écureuils (forêt, parc) qui grimpent aux arbres, chats (village, zone
 # industrielle) qui sautent sur les toits et les conteneurs
 CRITTERS = [("squirrel", 57.4, 37.9), ("squirrel", 66.2, 36.9), ("squirrel", 48.6, 44.4), ("squirrel", 71.2, 44.4),
@@ -377,6 +382,9 @@ def build_map():
         "pen": [px(v) for v in PEN], "penGate": [px(v) for v in PEN_GATE],
         "farmer": [px(FARMER[0]), px(FARMER[1])],
         "critters": [[n, px(x), px(y)] for n, x, y in CRITTERS],
+        "ducks": [[n, px(x), px(y), f] for n, x, y, f in DUCKS],
+        "duckFps": {k: {a: fps for a, (_, fps, _) in ducks.anims(k).items()} for k in ducks.KINDS},
+        "duckLoop": {k: {a: loop for a, (_, _, loop) in ducks.anims(k).items()} for k in ducks.KINDS},
         "critterFps": {k: {a: fps for a, (_, fps, _) in critters.anims(k).items()} for k in critters.KINDS},
         "tunnels": [[px(a[0]), px(a[1]), px(b[0]), px(b[1])] for a, b in TUNNELS],
         "butterflies": [[c, px(x), px(y)] for c, x, y in BUTTERFLIES],
@@ -426,6 +434,9 @@ def collect():
     for kind in critters.KINDS:                         # écureuil, chats : de profil vers la droite, pieds en (16, 28)
         for a in critters.anims(kind):
             out.append((f"{kind}/{a}", [render_svg(sv, 32, 32, S, PAD) for sv in critters.frames(kind, a)], (16 * S + M, 28 * S + M), True))
+    for kind in ducks.KINDS:                            # canards : de profil vers la droite, ligne d'eau en (16, 24)
+        for a in ducks.anims(kind):
+            out.append((f"{kind}/{a}", [render_svg(sv, 32, 32, S, PAD) for sv in ducks.frames(kind, a)], (16 * S + M, 24 * S + M), True))
     for c in butterflies.COLORS:
         out.append((f"butterfly/{c}", [render_svg(sv, 24, 24, S, PAD) for sv in butterflies.frames(c)], (12 * S + M, 12 * S + M), True))
     for n, (_, (w, h), (ox, oy)) in vehicles.VEHICLES.items():

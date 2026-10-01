@@ -28,6 +28,7 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   `render_svg(svg, w, h, scale, pad)`, strips `_stripN`. Les vues gauches sont le miroir des vues droites.
 - `tecky.py`, `alice.py`, `enemies.py` (roquet, bouledogue, molosse/doberman, berger), `hens.py` (poules animées),
   `farmer.py` (le fermier Gaston, vu de face, 48x64, pieds en (24, 60) ; `FACE` pour son portrait),
+  `ducks.py` (colvert, cane, caneton, de profil, 32x32, ligne d'eau en (16, 24)),
   `critters.py` (écureuil, chats roux et noir, de profil, 32x32), `vehicles.py` (voitures, camionnette, bus),
   `butterflies.py` (papillons, vus de dessus), `items.py`, `decor.py`, `tiles.py`, `hud.py` :
   dessins et animations. `tiles.py` : tileset Wang/marching squares de 16 tuiles par transition (bits NO=1, NE=2, SO=4, SE=8),
@@ -133,6 +134,11 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - Petites bêtes (`critters`, `CRITTER`, `REFUGES`, `MAP.critters`) : écureuils et chats flânent ; Tecky trop près ou
   qui aboie les fait filer vers un refuge pas de son côté (arbre/sapin : l'écureuil grimpe et disparaît ; toit ou
   conteneur : le chat saute et feule), ils redescendent quand il est loin. Points la première fois (`scored`, sauvegardé).
+- Canards (`ducks`, `DUCK`, `MAP.ducks` : [espèce, x, y, famille], `ducks.py`) : nagent près de leur place sans quitter
+  l'eau (`duckWater()`, vérifié aussi par `check_placement.js`), cancanent, plongent. Tecky trop près ou qui aboie :
+  les adultes s'envolent vers un autre coin d'eau loin de lui (`pickLanding()`), ombre au sol, et s'y posent ; la cane
+  suivie de canetons (même famille, `lead`) s'éloigne à la nage avec eux en file. Points la première fois (`scored`,
+  sauvegardé dans `ducks`). Test : `ducks.js`.
 - Zones (`ZONES`, `zoneAt()`, `updateZone()`) : bandeau à l'arrivée (`banner`), étiquettes de la carte, ambiance sonore
   (`Ambience`, `AMB_EVENTS`, `ambSound()` : oiseaux, coq, sonnette, cliquetis ; clapotis selon l'eau autour) et timbre
   de la musique (`TIMBRE`, `Music.zone`). Test : `world.js`.
