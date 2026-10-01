@@ -54,7 +54,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - Ambiance (`game.js`, section « petits effets ») : poussière sous les pattes (`dusts`, `DUST`), feuilles qui tombent des
   arbres et sapins visibles (`leaves`, `LEAF`, sprite `fx/leaf` : une image par couleur), ombres de nuages pré-rendues
   (`clouds`, `CLOUD`, `buildClouds()`), coucher de soleil (`sun`, `SUN`, `drawLight()` : teinte multipliée sur le
-  monde seulement, halo, vignette, lampadaires, lumière des retrouvailles). `sun` suit `sunGoal()` = nombre d'indices
+  monde seulement ; vignette et halo pré-rendus en petit par `buildLight()` ; lampadaires et lumière des retrouvailles
+  par `glowSpot()`). `sun` suit `sunGoal()` = nombre d'indices
   (4 aux retrouvailles) : il est donc restauré avec la sauvegarde.
 - Menus (`menu`, `openTitleMenu()`, `openOverMenu()`, `menuInput()`, `menuHit()`, `chooseMenu()`) : écran titre
   (Continuer s'il y a une sauvegarde, Nouvelle aventure, Nouvelle balade, records du mode choisi) et KO (Reprendre la
@@ -160,6 +161,11 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - Le service worker de `docs/` est réseau d'abord avec repli cache : pas de version à incrémenter à chaque livraison.
 - Canvas simulé des tests (`sim.js`, `check_placement.js`) : il doit renvoyer un objet pour `createRadialGradient` /
   `createLinearGradient` (nuages, lumière) ; tout nouvel appel de canvas qui renvoie un objet doit y être ajouté.
+- **Performances (Firefox)** : Firefox dessine souvent le canvas avec le processeur. Rien de plein écran recalculé à
+  chaque image : pas de dégradé ni de mode de fusion autre qu'un remplissage uni (la lumière pré-rend ses dégradés en
+  petit, `buildLight()`) ; canvas plafonné à `MAX_PIXELS` (1920 x 1080), le navigateur agrandit au-delà (sinon
+  216 ms par image en 4K au coucher de soleil). Mesurer dans Firefox sans fenêtre : `firefox --headless` avec un
+  profil où `browser.dom.window.dump.enabled` est vrai, la page mesure `render()` et écrit le résultat avec `dump()`.
 - Tests sans `localStorage` : `STORE` passe en mémoire. Après un KO dans un test, le menu propose d'abord
   « Reprendre la partie » : choisir `menu.sel` explicitement pour « Recommencer ».
 

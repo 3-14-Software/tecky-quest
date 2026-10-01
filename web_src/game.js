@@ -13,8 +13,15 @@ const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
 let dpr = 1, scale = 1, offX = 0, offY = 0;
 
+/* Au plus MAX_PIXELS pixels dans le canvas : au-delà (plein écran sur un écran 1440p ou 4K), le navigateur l'agrandit
+   lui-même à l'affichage, gratuitement. Le monde est dessiné en px x2 (960 x 540 de caméra) : un canvas plus grand
+   n'ajoute presque rien à l'image, mais multiplie le travail (Firefox dessine souvent le canvas avec le processeur :
+   60 ms par image en 4K, contre 15 ms en 1920 x 1080). dpr = rapport réel canvas / CSS (sert aussi aux pointeurs). */
+const MAX_PIXELS = 1920 * 1080;
 function resize() {
   dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const px = innerWidth * innerHeight * dpr * dpr;
+  if (px > MAX_PIXELS) dpr *= Math.sqrt(MAX_PIXELS / px);
   cv.width = Math.round(innerWidth * dpr);
   cv.height = Math.round(innerHeight * dpr);
   scale = Math.min(cv.width / VW, cv.height / VH);
@@ -1749,6 +1756,39 @@ const SUN = { speed: 0.25, tints: [[255, 255, 255], [255, 241, 220], [255, 222, 
 const sunGoal = () => alice.found ? 4 : clues.filter(Boolean).length;
 function updateSun(dt) { sun += clamp(sunGoal() - sun, -SUN.speed * dt, SUN.speed * dt); }
 const sunAt = (arr, k) => { const i = Math.min(arr.length - 2, Math.floor(k)), f = k - i; return arr[i] + (arr[i + 1] - arr[i]) * f; };
+/* Pour rester rapide (Firefox dessine souvent le canvas avec le processeur : les dégradés recalculés à chaque image sur
+   tout l'écran coûtaient plus de 150 ms par image en 4K), la teinte est un simple remplissage, et la vignette et le
+   halo doré sont pré-rendus en petit (LIGHT, recalculés seulement quand le soleil bouge) puis posés agrandis sans
+   lissage : ce sont des dégradés très doux, aucune marche n'est visible. Halos des lampadaires et des retrouvailles :
+   une même tache de lumière pré-rendue (glowImg). */
+const LIGHT = { w: 480, h: 270, step: 0.01, glowK: 0.75 };
+let lightImg = null, lightK = -1, glowImg = null;
+function buildLight(k) {
+  if (!lightImg) { lightImg = document.createElement('canvas'); lightImg.width = LIGHT.w; lightImg.height = LIGHT.h; }
+  const o = lightImg.getContext('2d'), W = LIGHT.w, H = LIGHT.h;
+  o.clearRect(0, 0, W, H);
+  const vig = sunAt(SUN.vignette, k);
+  if (vig > 0) {
+    const g = o.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, W * 0.62);
+    g.addColorStop(0, 'rgba(90, 50, 110, 0)'); g.addColorStop(1, `rgba(90, 50, 110, ${vig})`);
+    o.fillStyle = g; o.fillRect(0, 0, W, H);
+  }
+  // halo doré venant de l'ouest (posé par-dessus, un peu moins fort que l'ancien mode « screen »)
+  const glow = sunAt(SUN.glow, k) * LIGHT.glowK;
+  const g = o.createLinearGradient(0, 0, W, H * 0.5);
+  g.addColorStop(0, `rgba(255, 190, 110, ${glow})`); g.addColorStop(1, 'rgba(255, 190, 110, 0)');
+  o.fillStyle = g; o.fillRect(0, 0, W, H);
+  lightK = k;
+}
+function glowSpot(x, y, r, a) {                       // tache de lumière chaude, pré-rendue une fois
+  if (!glowImg) {
+    glowImg = document.createElement('canvas'); glowImg.width = glowImg.height = 128;
+    const o = glowImg.getContext('2d'), g = o.createRadialGradient(64, 64, 4, 64, 64, 64);
+    g.addColorStop(0, 'rgba(255, 212, 140, 1)'); g.addColorStop(1, 'rgba(255, 212, 140, 0)');
+    o.fillStyle = g; o.fillRect(0, 0, 128, 128);
+  }
+  ctx.globalAlpha = a; ctx.drawImage(glowImg, x - r, y - r, r * 2, r * 2); ctx.globalAlpha = 1;
+}
 function drawLight(cx, cy) {
   if (sun < 0.01) return;
   const k = clamp(sun, 0, 4);
@@ -1757,35 +1797,21 @@ function drawLight(cx, cy) {
   ctx.globalCompositeOperation = 'multiply';
   ctx.fillStyle = `rgb(${tint[0]}, ${tint[1]}, ${tint[2]})`;
   ctx.fillRect(cx, cy, VW, VH);
-  const vig = sunAt(SUN.vignette, k);
-  if (vig > 0) {
-    const g = ctx.createRadialGradient(cx + VW / 2, cy + VH / 2, VH * 0.45, cx + VW / 2, cy + VH / 2, VW * 0.62);
-    g.addColorStop(0, 'rgba(90, 50, 110, 0)'); g.addColorStop(1, `rgba(90, 50, 110, ${vig})`);
-    ctx.fillStyle = g; ctx.fillRect(cx, cy, VW, VH);
-  }
-  ctx.globalCompositeOperation = 'screen';
-  const glow = sunAt(SUN.glow, k);
-  const g = ctx.createLinearGradient(cx, cy, cx + VW, cy + VH * 0.5);
-  g.addColorStop(0, `rgba(255, 190, 110, ${glow})`); g.addColorStop(1, 'rgba(255, 190, 110, 0)');
-  ctx.fillStyle = g; ctx.fillRect(cx, cy, VW, VH);
+  ctx.globalCompositeOperation = 'source-over';
+  if (Math.abs(k - lightK) >= LIGHT.step || (k !== lightK && (k === Math.round(k)))) buildLight(k);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(lightImg, cx, cy, VW, VH);
+  ctx.imageSmoothingEnabled = true;
   // lampadaires allumés en fin de journée : halo autour de la lanterne et flaque de lumière au sol
   const lamp = clamp(k - 1.5, 0, 1);
   if (lamp > 0) for (const d of decor) {
     if (d.n !== 'lamppost' || d.x < cx - 120 || d.x > cx + VW + 120 || d.y < cy - 40 || d.y > cy + VH + 160) continue;
-    for (const [x, y, r, a] of [[d.x, d.y - 93, 64, 0.55], [d.x, d.y - 4, 70, 0.3]]) {
-      const h = ctx.createRadialGradient(x, y, 4, x, y, r);
-      h.addColorStop(0, `rgba(255, 214, 130, ${a * lamp})`); h.addColorStop(1, 'rgba(255, 214, 130, 0)');
-      ctx.fillStyle = h; ctx.fillRect(x - r, y - r, r * 2, r * 2);
-    }
+    glowSpot(d.x, d.y - 93, 64, 0.55 * lamp);
+    glowSpot(d.x, d.y - 4, 70, 0.3 * lamp);
   }
   // retrouvailles : une lumière chaude autour d'Alice et de Tecky
   const hug = clamp(k - 3, 0, 1);
-  if (hug > 0) {
-    const x = (alice.x + P.x) / 2, y = (alice.y + P.y) / 2 - 50;
-    const h = ctx.createRadialGradient(x, y, 20, x, y, 260);
-    h.addColorStop(0, `rgba(255, 210, 150, ${0.45 * hug})`); h.addColorStop(1, 'rgba(255, 210, 150, 0)');
-    ctx.fillStyle = h; ctx.fillRect(x - 260, y - 260, 520, 520);
-  }
+  if (hug > 0) glowSpot((alice.x + P.x) / 2, (alice.y + P.y) / 2 - 50, 260, 0.45 * hug);
   ctx.restore();
 }
 
