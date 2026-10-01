@@ -67,7 +67,10 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   (`sfxGain()`, ambiance comprise), Difficulté (facile : `gameDiff`, `facile()`, 5 os, morsures moitié moins fortes,
   chiens `d.id % 3 === 2` retirés ; fixée à la nouvelle partie et sauvegardée ; records à part `aventure-facile`),
   Texte des dialogues (grand : 46 px, 4 lignes), Image (fluide = `MAX_PIXELS`, nette = sans plafond), Plein écran
-  (dans les événements clavier / toucher : il faut un geste de l'utilisateur). Test : `options.js`.
+  (dans les événements clavier / toucher : il faut un geste de l'utilisateur), Vibrations. Test : `options.js`.
+- Vibrations (`rumble(kind)`, `RUMBLE`) : manette (`vibrationActuator.playEffect('dual-rumble')`) si `pad.on`, sinon
+  téléphone (`navigator.vibrate`) en mode tactile ; morsure reçue, KO, choc de voiture, morsure qui porte, os doré.
+  Rien si l'option est à « non ». Test : `options.js`.
 
 ## Règles de jeu (à ne pas casser)
 

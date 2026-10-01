@@ -11,7 +11,7 @@ const TS = MAP.ts;
 
 /* Réglages du joueur (écran d'options, plus bas) : lus ici, avant le premier resize(). */
 const OPTIONS_KEY = 'tecky-quest-options';
-const OPT_DEF = { music: 7, sfx: 8, diff: 'normal', text: 'normal', image: 'fluide' };
+const OPT_DEF = { music: 7, sfx: 8, diff: 'normal', text: 'normal', image: 'fluide', vib: 'oui' };
 const opts = (() => {
   let o = null;
   try { o = JSON.parse(localStorage.getItem(OPTIONS_KEY)); } catch (e) { /* stockage refusé */ }
@@ -1068,6 +1068,7 @@ function updateVehicle(v, dt) {
     shake = 0.15;
     for (let k = 0; k < 4; k++) addDust(P.x + (Math.random() - 0.5) * 30, P.y - 2, (Math.random() - 0.5) * 90, -10 - Math.random() * 20, 6 + Math.random() * 3);
     addWordPop('Ouf !', P.x, P.y - 130);
+    rumble('bump');
   }
   for (const d of dogs) if (d.mode !== 'ko' && inLane(v, d.y) && Math.abs(d.x - v.x) < half + 6 && v.v > 30) {
     d.kx = v.dir * 160; d.ky = (d.y < mid ? -1 : 1) * 760;
@@ -1202,6 +1203,7 @@ function doBite() {
       hit = true;
     }
   }
+  if (hit) rumble('bite');
 }
 
 /* ------------------------------------------------------------------ petites bêtes */
@@ -1842,6 +1844,7 @@ function uncover(g) {
   addPop('+100', g.x - 30, g.y - 90);
   SFX.treasure();
   shake = 0.15;
+  rumble('treasure');
   say([{ who: 'tecky', face: 2, text: "Wouf ! Un os doré était enterré ! (" + treasures + " / " + MAP.dig.length + ")" }], saveGame);
 }
 
@@ -1854,6 +1857,7 @@ function hurtPlayer(dmg, fromX, fromY) {
   P.inv = 1.2; shake = 0.25;
   addFx('fx/hit', P.x, P.y - 44, { fps: 16 });
   SFX.hurt();
+  rumble(P.hp <= 0 ? 'ko' : 'hurt');
   if (P.hp <= 0) {
     P.mode = 'ko'; P.setAnim('ko'); P.timer = 0;
     Music.stop();
@@ -2235,7 +2239,7 @@ function openTitleMenu() {
   }
   items.push({ id: 'aventure', label: 'Nouvelle aventure', sub: 'Gare aux chiens du coin !', mode: 'aventure' });
   items.push({ id: 'balade', label: 'Nouvelle balade', sub: 'Les chiens veulent seulement jouer', mode: 'balade' });
-  items.push({ id: 'options', label: 'Options', sub: 'Son, difficulté, texte, image' });
+  items.push({ id: 'options', label: 'Options', sub: 'Son, difficulté, texte, image, vibrations' });
   menu = items.length > 3 ? { items, sel: 0, y0: 510, w: 760, h: 92, gap: 14 } : { items, sel: 0, y0: 520, w: 760, h: 104, gap: 20 };
 }
 function openOverMenu() {
@@ -2291,10 +2295,30 @@ function toTitle() {
   Music.start();
 }
 
+/* ------------------------------------------------------------------ vibrations */
+/* Option « Vibrations » : la manette (vibrationActuator, si c'est elle qui sert) ou le téléphone (navigator.vibrate, au
+   toucher) vibrent quand Tecky est mordu ou heurté, plus fort au KO, et d'un petit coup quand sa morsure porte ou qu'un
+   os doré sort de terre. RUMBLE : [force du gros moteur, du petit, durée en ms]. */
+const RUMBLE = { hurt: [0.7, 0.4, 180], ko: [1, 0.8, 450], bump: [0.5, 0.6, 220], bite: [0.25, 0.35, 70], treasure: [0.2, 0.5, 120] };
+function rumble(kind) {
+  if (opts.vib === 'non') return;
+  const [strong, weak, ms] = RUMBLE[kind];
+  try {
+    if (pad.on) {
+      for (const gp of (navigator.getGamepads && navigator.getGamepads()) || []) {
+        const a = gp && gp.vibrationActuator;
+        if (!a || !a.playEffect) continue;
+        const p = a.playEffect('dual-rumble', { duration: ms, strongMagnitude: strong, weakMagnitude: weak });
+        if (p && p.catch) p.catch(() => {});
+      }
+    } else if (touchMode && navigator.vibrate) navigator.vibrate(Math.round(ms * (0.4 + strong * 0.6)));
+  } catch (e) { /* vibrations refusées par le navigateur */ }
+}
+
 /* ------------------------------------------------------------------ écran d'options */
 /* Réglages gardés dans le navigateur (OPTIONS_KEY, lus au démarrage) : volumes de la musique et des bruitages (0 à 10),
    difficulté (« facile », pour les nouvelles parties), taille du texte des dialogues, image (« fluide » : canvas
-   plafonné à MAX_PIXELS ; « nette » : pleine résolution, pour les machines rapides), plein écran. Ouvert depuis le menu
+   plafonné à MAX_PIXELS ; « nette » : pleine résolution, pour les machines rapides), vibrations, plein écran. Ouvert depuis le menu
    principal ou le menu de la pause. Flèches ↑ ↓ pour choisir une ligne, ← → pour la régler (Entrée / A aussi),
    Échap / B pour revenir ; au toucher, la moitié gauche d'une ligne baisse, la moitié droite monte. */
 const OPTV = { y0: 196, w: 1120, h: 76, gap: 10 };
@@ -2308,6 +2332,7 @@ function optRows() {
     { id: 'text', label: 'Texte des dialogues', values: [['normal', 'Normal'], ['grand', 'Grand']] },
     { id: 'image', label: 'Image', values: [['fluide', 'Fluide'], ['nette', 'Nette']],
       note: opts.image === 'nette' ? 'Pleine résolution : pour les ordinateurs rapides' : 'Plus légère sur les grands écrans' },
+    { id: 'vib', label: 'Vibrations', values: [['oui', 'Oui'], ['non', 'Non']], note: 'Manette et téléphone' },
   ];
   if (canFullscreen()) rows.push({ id: 'fs', label: 'Plein écran', value: fsElement() ? 'Oui' : 'Non' });
   rows.push({ id: 'back', label: 'Retour' });

@@ -17,7 +17,7 @@ Deux modes au choix sur l'écran titre : **aventure** (les chiens mordent) et **
 se fait mal : les chiens attendent qu'on joue avec eux et deviennent des copains). La partie est enregistrée automatiquement dans le navigateur
 (« Continuer » sur l'écran titre, « Reprendre la partie » après un KO) et les records (meilleur score, meilleur temps)
 sont gardés pour chaque mode. Les options (menu principal ou pause) règlent la musique, les bruitages, la difficulté
-(« facile » : plus d'os, morsures moins fortes, moins de chiens), la taille du texte, l'image et le plein écran.
+(« facile » : plus d'os, morsures moins fortes, moins de chiens), la taille du texte, l'image, les vibrations (manette et téléphone) et le plein écran.
 
 Quand on ne touche plus à rien, Tecky s'assoit, bâille, se gratte l'oreille… puis s'endort.
 

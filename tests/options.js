@@ -1,4 +1,4 @@
-// écran d'options : volumes, difficulté (facile), taille du texte, image ; menu de la pause
+// écran d'options : volumes, difficulté (facile), taille du texte, image, vibrations ; menu de la pause
 const base = require('fs').readFileSync(__dirname + '/sim.js', 'utf8').split("setTimeout(() => {")[0];
 function main() {
   const ids = () => run('menu.items.map(i => i.id).join()');
@@ -7,7 +7,7 @@ function main() {
   run('audioOn(); STORE.mem = {};');
   ok(run('state') === 'title' && /options/.test(ids()), 'menu principal : entrée « Options »');
   run('menu.sel = menu.items.findIndex(i => i.id === "options"); pressed.ok = true'); step(1);
-  ok(run('state') === 'options' && /^music,sfx,diff,text,image,(fs,)?back$/.test(rowIds()), 'écran d’options : ' + rowIds());
+  ok(run('state') === 'options' && /^music,sfx,diff,text,image,vib,(fs,)?back$/.test(rowIds()), 'écran d’options : ' + rowIds());
   // volumes
   const lv0 = run('Music.level()');
   run('pressed.right = true'); step(1);
@@ -57,6 +57,19 @@ function main() {
   run('opts.text = "normal"; drawDialog(); f0 = ctx.font;');
   ok(/38px/.test(run('f0')), 'texte normal : 38 px');
   advanceDialog();
+
+  // vibrations : téléphone au toucher, manette quand elle sert, rien si l'option est coupée
+  run('var vib = []; navigator.vibrate = ms => { vib.push(ms); return true; }; touchMode = true; pad.on = false; P.inv = 0; P.mode = "free"; hurtPlayer(2, P.x + 50, P.y);');
+  ok(run('vib.length') === 1 && run('vib[0]') > 50, 'mordu : le téléphone vibre (' + run('vib[0]') + ' ms)');
+  run('opts.vib = "non"; P.inv = 0; P.mode = "free"; hurtPlayer(2, P.x + 50, P.y);');
+  ok(run('vib.length') === 1, 'option « Vibrations : non » : rien');
+  run('var eff = []; var GP2 = { axes: [0, 0], buttons: [], vibrationActuator: { playEffect: (t, o) => { eff.push([t, o.duration, o.strongMagnitude]); return Promise.resolve(); } } };');
+  run('navigator.getGamepads = () => [null, GP2]; touchMode = false; pad.on = true; opts.vib = "oui"; P.inv = 0; P.mode = "free"; hurtPlayer(2, P.x + 50, P.y);');
+  ok(run('eff.length') === 1 && run('eff[0][0]') === 'dual-rumble' && run('vib.length') === 1, 'à la manette : elle vibre, pas le téléphone');
+  run('uncover(digs.find(g => !g.dug));'); advanceDialog();
+  ok(run('eff.length') === 2 && run('eff[1][2]') < run('eff[0][2]'), 'os doré déterré : un petit coup');
+  run('P.hp = 6; P.inv = 0; P.mode = "free"; navigator.getGamepads = () => []; pad.on = false; P.x = 30 * 64; P.y = 20 * 64;');
+  ok(run('optRows().some(r => r.id === "vib")'), 'ligne « Vibrations » dans les options');
 
   // menu de la pause : reprendre, options, menu principal
   run('pressed.pause = true'); step(1);
