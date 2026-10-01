@@ -18,6 +18,8 @@ se fait mal : les chiens attendent qu'on joue avec eux et deviennent des copains
 (« Continuer » sur l'écran titre, « Reprendre la partie » après un KO) et les records (meilleur score, meilleur temps)
 sont gardés pour chaque mode.
 
+Quand on ne touche plus à rien, Tecky s'assoit, bâille, se gratte l'oreille… puis s'endort.
+
 Tout est généré par du code : sprites en SVG (aplats + contour), tileset, décors, HUD, musique chiptune, niveau.
 
 - **Jouer** : https://3-14-software.github.io/tecky-quest/ (clavier : flèches/ZQSD, X aboyer, C mordre (ou parler, gratter, lire, passer sous un grillage, jouer), R flairer, P pause, F plein écran, M son ; manette : stick ou croix, X/B aboyer, A mordre/gratter/lire et valider, Y flairer, Start pause, Select son ; tactile sur téléphone).

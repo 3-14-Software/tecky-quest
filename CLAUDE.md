@@ -134,6 +134,10 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - Petites bêtes (`critters`, `CRITTER`, `REFUGES`, `MAP.critters`) : écureuils et chats flânent ; Tecky trop près ou
   qui aboie les fait filer vers un refuge pas de son côté (arbre/sapin : l'écureuil grimpe et disparaît ; toit ou
   conteneur : le chat saute et feule), ils redescendent quand il est loin. Points la première fois (`scored`, sauvegardé).
+- Repos (`restPose()`, `REST`, `tecky.REST_ANIMS` → `MAP.rest`, ajoutés à `FPS` / `LOOP`) : sans geste du joueur, Tecky
+  s'assoit (6 s ; de dos, il se tourne vers nous), bâille et se gratte à tour de rôle, puis s'endort (24 s) avec des
+  « z » (`fx/zzz`, effets à durée de vie : `life`, `vx`/`vy`, `grow`). Tout geste le réveille ; jamais si un chien menace.
+  `REST_ANIMS` est à part de `ANIMS` (les chiens ennemis réutilisent `ANIMS`). Test : `rest.js`.
 - Canards (`ducks`, `DUCK`, `MAP.ducks` : [espèce, x, y, famille], `ducks.py`) : nagent près de leur place sans quitter
   l'eau (`duckWater()`, vérifié aussi par `check_placement.js`), cancanent, plongent. Tecky trop près ou qui aboie :
   les adultes s'envolent vers un autre coin d'eau loin de lui (`pickLanding()`), ombre au sol, et s'y posent ; la cane

@@ -169,6 +169,8 @@ const SFX = {
   yip(p) { const k = p || 1; tone(820 * k, 0.07, 'square', 0.045, 420 * k); tone(980 * k, 0.09, 'square', 0.045, 380 * k, 0.11); },
   quack(p) { const k = p || 1; tone(640 * k, 0.08, 'square', 0.035, -260 * k); tone(560 * k, 0.1, 'square', 0.035, -280 * k, 0.11); },
   flap() { for (let i = 0; i < 4; i++) noise(0.05, 0.05, 700 + i * 60, i * 0.08); },
+  yawn() { tone(420, 0.55, 'triangle', 0.035, -200); tone(630, 0.4, 'sine', 0.015, -260, 0.05); },
+  snore() { noise(0.5, 0.025, 260); },
   hey(p) { const k = p || 1; tone(560 * k, 0.08, 'triangle', 0.08, 160 * k); tone(760 * k, 0.13, 'triangle', 0.08, -120 * k, 0.09); },
   cluck() { tone(950, 0.05, 'square', 0.05, 250); tone(1150, 0.05, 'square', 0.05, 200, 0.08); tone(1400, 0.12, 'square', 0.05, -600, 0.17); },
   win() { [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, 0.18, 'triangle', 0.09, 0, i * 0.14)); },
@@ -702,6 +704,8 @@ function steer(d, vx, vy, s, dt) {
 /* ------------------------------------------------------------------ acteurs */
 const FPS = { idle: 6, walk: 12, bark: 10, bite: 14, hurt: 10, ko: 6, happy: 8, dig: 14 };
 const LOOP = { idle: true, walk: true, happy: true, dig: true, flap: true };
+// poses de repos de Tecky (tecky.REST_ANIMS) : assis, bâille, se gratte, dort, s'ébroue
+for (const [a, [fps, loop]] of Object.entries(MAP.rest)) { FPS[a] = fps; if (loop) LOOP[a] = true; }
 
 class Actor {
   constructor(kind, x, y) {
@@ -2261,6 +2265,35 @@ function inputVector() {
   return [x, y];
 }
 
+/* Tecky au repos : quand on ne touche à rien, il s'assoit (REST.sit s), bâille ou se gratte de temps en temps, puis
+   s'endort (REST.sleep s) avec des « z » qui montent (fx/zzz). Le moindre geste le réveille. Jamais quand un chien le
+   menace. Vues : assis, bâille et dort de face ou de profil (de dos, il se tourne vers nous) ; il se gratte de profil. */
+const REST = { sit: 6, sleep: 24, every: [3, 6.5], z: 0.95, snore: 2.6 };
+let napped = false;                   // il a fait la sieste (badge)
+function restPose(dt) {
+  if (threatened()) { P.restT = 0; P.setAnim('idle'); return; }
+  P.restT = (P.restT || 0) + dt;
+  if (P.restT < REST.sit) { P.setAnim('idle'); return; }
+  if (P.dir === 'up') P.dir = 'down';
+  if (P.restT >= REST.sleep) {
+    if (P.anim !== 'sleep') { P.setAnim('sleep'); P.zT = 0.4; P.snoreT = 1; napped = true; }
+    if ((P.zT -= dt) <= 0) {
+      P.zT = REST.z;
+      const side = P.dir === 'left' ? -1 : 1;
+      addFx('fx/zzz', P.x + side * (P.dir === 'down' ? 18 : 30), P.y - 52, { fps: 0, frame: 0, life: 2, vx: side * 12, vy: -34, grow: [0.55, 1.1] });
+    }
+    if ((P.snoreT -= dt) <= 0) { P.snoreT = REST.snore; if (!muted) SFX.snore(); }
+    return;
+  }
+  // assis ; de temps en temps, un bâillement ou une grattouille derrière l'oreille (à tour de rôle)
+  const busy = (P.anim === 'yawn' && !P.done()) || (P.anim === 'scratch' && P.t < 1.3);
+  if (!busy && P.anim !== 'sit') { P.setAnim('sit'); P.restEv = rnd(REST.every); }
+  if (P.anim === 'sit' && (P.restEv -= dt) <= 0) {
+    P.lastRest = P.lastRest === 'yawn' ? 'scratch' : P.lastRest === 'scratch' ? 'yawn' : Math.random() < 0.5 ? 'yawn' : 'scratch';
+    if (P.lastRest === 'yawn') { P.setAnim('yawn'); if (!muted) SFX.yawn(); }
+    else { if (P.dir === 'down') P.dir = Math.random() < 0.5 ? 'left' : 'right'; P.setAnim('scratch'); }
+  }
+}
 function updatePlayer(dt) {
   P.t += dt;
   hintText = null;
@@ -2317,7 +2350,9 @@ function updatePlayer(dt) {
   recordCrumb();
   const [ix, iy] = inputVector();
   const spd = 250;
+  if (pressed.sniff || pressed.bark || pressed.bite || pressed.act) P.restT = 0;
   if (ix || iy) {
+    P.restT = 0;
     const ox = P.x, oy = P.y;
     moveActor(P, ix * spd * dt, iy * spd * dt);
     P.dir = dirFrom(ix, iy, P.dir);
@@ -2327,7 +2362,7 @@ function updatePlayer(dt) {
       P.dustT = DUST.every;
       addDust(P.x - ix * 16 + (Math.random() - 0.5) * 10, P.y - 2, -ix * 30, -iy * 30 - 6, 5 + Math.random() * 3);
     }
-  } else P.setAnim('idle');
+  } else restPose(dt);
 
   if (pressed.sniff && P.cdSniff <= 0 && !alice.found) startSniff();
   else if (pressed.bark && P.cdBark <= 0) {
@@ -2613,7 +2648,7 @@ function updateFx(dt) {
   for (let i = fxs.length - 1; i >= 0; i--) {
     const f = fxs[i];
     f.t += dt;
-    if (f.t * f.fps >= ATLAS[f.key].f.length) fxs.splice(i, 1);
+    if (f.life ? f.t >= f.life : f.t * f.fps >= ATLAS[f.key].f.length) fxs.splice(i, 1);
   }
   for (let i = pops.length - 1; i >= 0; i--) {
     pops[i].t += dt;
@@ -2793,7 +2828,9 @@ function drawWorld() {
     drawSpr('butterfly/' + b.color, Math.floor(b.flap) % 4, b.x, b.y - b.alt, { angle: b.heading + Math.PI / 2, sc: BFLY.sc });
   for (const d of ducks) if (d.h > 0 && vis(d.x, d.y - d.h, 80)) drawDuck(d);   // canards en vol, au-dessus de tout
   drawFallingLeaves();
-  for (const f of fxs) drawSpr(f.key, Math.floor(f.t * f.fps), f.x, f.y, { angle: f.angle });
+  for (const f of fxs) drawSpr(f.key, f.frame !== undefined ? f.frame : Math.floor(f.t * f.fps), f.x + (f.vx || 0) * f.t,
+    f.y + (f.vy || 0) * f.t, { angle: f.angle, sc: f.grow ? f.grow[0] + (f.grow[1] - f.grow[0]) * f.t / f.life : undefined,
+      alpha: f.life ? clamp(Math.min(f.t / 0.25, (f.life - f.t) / 0.5), 0, 1) : undefined });
   drawClouds(cx, cy);
   drawLight(cx, cy);
 

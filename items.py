@@ -2,7 +2,8 @@
 Objets (32x32) et effets.
 Objets : bobbent en l'air avec une ombre au sol et un éclat de brillance.
 Effets : aboiement (48x48, orienté vers la droite), morsure, impact, soin, ramassage, terre, vaguelette, scintillement,
-cœur (32x32) ; feuilles qui tombent (16x16, une image par couleur).
+cœur (32x32) ; feuilles qui tombent (16x16, une image par couleur) ; météo : flaque (48x48, une image par forme),
+éclaboussure de pluie (32x32), gouttelette, flocon (une image par variante) et « z » du sommeil (16x16).
 """
 import math
 
@@ -353,6 +354,120 @@ def fx_leaf():
     return out
 
 
+# ------------------------------------------------------------------ météo (et sommeil)
+PUDDLE_EDGE = "#5B6573"     # contour doux brun-bleu : la flaque est posée au sol, pas le brun des personnages
+DROP_EDGE = "#2F6F9A"       # contour des gouttes (bleu des berges, tiles.py)
+SNOW_EDGE = "#B5D8EE"       # contour bleu très clair des flocons (en brun, la neige ferait des taches sombres)
+
+PUDDLES = (   # (cx, cy, rx, ry, harmoniques (n, amplitude, phase)) de la flaque, puis ses petites flaques voisines
+    ((24, 24, 19.2, 7.4, ((2, 0.10, 0.6), (3, 0.08, 2.1), (5, 0.04, 0.4))), ((9.6, 32.2, 2.6, 1.3, ()),)),
+    ((24, 24, 18.4, 8.0, ((2, 0.10, 0.2), (3, 0.07, 1.0), (4, 0.06, 2.6))), ()),
+    ((23.4, 24.6, 18.4, 7.0, ((2, 0.08, 0.0), (3, 0.11, 5.2), (4, 0.05, 0.8))), ((38.6, 15.4, 2.8, 1.4, ()),
+                                                                              (42.4, 19.0, 1.5, 0.8, ()))),
+)
+
+
+def _blob(cx, cy, rx, ry, waves, n=20, k=1.0, dx=0.0, dy=0.0):
+    """Forme ronde irrégulière au contour lissé : ellipse dont le rayon ondule selon quelques harmoniques.
+    k la réduit, dx/dy la décalent (aplats intérieurs)."""
+    pts = []
+    for i in range(n):
+        t = 2 * math.pi * i / n
+        r = k * (1 + sum(a * math.sin(h * t + ph) for h, a, ph in waves))
+        pts.append((cx + dx + rx * r * math.cos(t), cy + dy + ry * r * math.sin(t)))
+    mid = [((x0 + x1) / 2, (y0 + y1) / 2) for (x0, y0), (x1, y1) in zip(pts, pts[1:] + pts[:1])]
+    return path(f"M{mid[-1][0]:.2f},{mid[-1][1]:.2f} " + " ".join(
+        f"Q{x:.2f},{y:.2f} {mx:.2f},{my:.2f}" for (x, y), (mx, my) in zip(pts, mid)) + " Z")
+
+
+def fx_puddle():
+    """Flaque d'eau vue de dessus, posée au sol (48x48, environ 40 de large, centrée) : une image par forme
+    (3 variantes, le jeu choisit). Aplats : eau bleu-gris, bord plus sombre côté haut (la berge), reflets clairs ;
+    contour doux brun-bleu."""
+    out = []
+    for k, (main, sats) in enumerate(PUDDLES):
+        d = Drawing(48, 48)
+        for j, (cx, cy, rx, ry, waves) in enumerate((main,) + sats):
+            cid = f"puddle{k}_{j}"
+            shape = _blob(cx, cy, rx, ry, waves)
+            d.clip(cid, [shape])
+            d.add(shape, "#7398B3")
+            d.add(_blob(cx, cy, rx, ry, waves, k=0.97, dx=0.5, dy=min(1.3, ry * 0.22)), "#93BCD5", sil=False, clip=cid)
+        cx, cy, rx, ry, _ = main
+        d.add(ellipse(cx + rx * 0.22, cy + ry * 0.32, rx * 0.42, ry * 0.32), "#AED3E6", sil=False, clip=f"puddle{k}_0")
+        x0, y0 = cx - rx * 0.55, cy - ry * 0.02
+        d.raw(line(f"M{x0:.2f},{y0:.2f} Q{x0 + rx * 0.18:.2f},{y0 - ry * 0.34:.2f} {x0 + rx * 0.48:.2f},{y0 - ry * 0.32:.2f}",
+                   "#E4F4FB", 1.3))
+        d.raw(line(f"M{cx + rx * 0.05:.2f},{cy + ry * 0.46:.2f} L{cx + rx * 0.36:.2f},{cy + ry * 0.40:.2f}", "#E4F4FB", 1.0))
+        d.add(circle(x0 + rx * 0.6, y0 - ry * 0.3, 0.7), "#FFFFFF", sil=False)
+        out.append(d.svg(outline=PUDDLE_EDGE, outline_w=1.1))
+    return out
+
+
+def fx_splash():
+    """Impact d'une goutte de pluie (32x32, 4 images, ~16 i/s), point d'impact au centre du cadre : un anneau
+    aplati qui s'élargit et s'efface, trois gouttelettes qui sautent puis retombent."""
+    out = []
+    jumps = ((-6.4, 7.0, 1.05), (0.8, 9.0, 1.2), (6.0, 6.2, 0.95))   # (dérive x, hauteur, rayon)
+    for i in range(4):
+        t = (i + 0.8) / 4.4
+        rx = 2.2 + 9.4 * t ** 0.8
+        op = 1 - 0.75 * t * t
+        ring = f'<ellipse cx="16" cy="16" rx="{rx:.2f}" ry="{rx * 0.38:.2f}" fill="none" stroke="%C%" stroke-width="%W%"/>'
+        d = Drawing(32, 32)
+        d.raw(f'<g opacity="{op:.2f}">' + ring.replace("%C%", "#3F7EA8").replace("%W%", "2.0")
+              + ring.replace("%C%", "#E6F7FD").replace("%W%", "0.9") + "</g>")
+        for vx, h, r in jumps:
+            d.raw(f'<circle cx="{16 + vx * t:.2f}" cy="{16 - 4 * h * t * (1 - t) - 0.6:.2f}" r="{r * (1 - 0.35 * t):.2f}" '
+                  f'fill="#CDEBF8" stroke="#3F7EA8" stroke-width="0.6" opacity="{min(1, op + 0.25):.2f}"/>')
+        out.append(d.svg())
+    return out
+
+
+def fx_drop():
+    """Gouttelette d'eau bleue (16x16, centrée, pointe vers le haut) : Tecky s'ébroue."""
+    d = Drawing(16, 16)
+    d.add(path("M8,2.9 C9.5,5.2 11.2,7.2 11.2,9.6 C11.2,11.7 9.8,13.1 8,13.1 C6.2,13.1 4.8,11.7 4.8,9.6 "
+               "C4.8,7.2 6.5,5.2 8,2.9 Z"), "#7CC4EA")
+    d.add(path("M8,13.1 C9.8,13.1 11.2,11.7 11.2,9.6 C10.6,11 9.6,11.9 8,12 C6.4,11.9 5.4,11 4.8,9.6 "
+               "C4.8,11.7 6.2,13.1 8,13.1 Z"), "#4FA3D3", sil=False)
+    d.add(ellipse(6.6, 9.2, 0.9, 1.5, "rotate(20 6.6 9.2)"), "#FFFFFF", sil=False, opacity=0.85)
+    return [d.svg(outline=DROP_EDGE, outline_w=1.2)]
+
+
+def fx_snowflake():
+    """Flocon de neige (16x16, centré), 3 variantes (le jeu choisit) : rond doux, petit flocon à 6 branches,
+    grand flocon ramifié. Blanc, contour bleu très clair."""
+    d = Drawing(16, 16)
+    d.add(circle(8, 8, 2.3), "#FFFFFF")
+    d.add(circle(7.3, 7.3, 0.7), "#EAF5FC", sil=False)
+    out = [d.svg(outline=SNOW_EDGE, outline_w=1.0)]
+    for L, side in ((3.4, 0), (5.6, 1.9)):        # longueur des branches, longueur des rameaux
+        dd = ""
+        for k in range(6):
+            a = math.radians(k * 60 - 90)
+            c, s = math.cos(a), math.sin(a)
+            dd += f"M8,8 L{8 + L * c:.2f},{8 + L * s:.2f} "
+            m = L * 0.58
+            for sg in ((-1, 1) if side else ()):
+                b = a + sg * math.radians(48)
+                dd += f"M{8 + m * c:.2f},{8 + m * s:.2f} L{8 + m * c + side * math.cos(b):.2f},{8 + m * s + side * math.sin(b):.2f} "
+        w = 1.0 if side else 1.1
+        d = Drawing(16, 16)
+        d.raw(line(dd, SNOW_EDGE, w + 1.0) + line(dd, "#FFFFFF", w))
+        d.add(circle(8, 8, 1.0 if side else 0.9), "#FFFFFF", sil=False)
+        out.append(d.svg())
+    return out
+
+
+def fx_zzz():
+    """Lettre « z » arrondie (16x16, centrée), blanc crème au contour brun : Tecky dort."""
+    d = Drawing(16, 16)
+    dd = "M5,5 L11,5 L5,11 L11,11"
+    d.raw('<g transform="rotate(-8 8 8)">' + line(dd, OUTLINE, 4.0) + line(dd, "#FFF7E6", 2.0) + "</g>")
+    return [d.svg()]
+
+
 EFFECTS = {   # nom : (fonction, taille, fps)
     "bark": (fx_bark, 48, 12),
     "bite": (fx_bite, 32, 14),
@@ -365,4 +480,9 @@ EFFECTS = {   # nom : (fonction, taille, fps)
     "heart": (fx_heart, 32, 10),
     "leaf": (fx_leaf, 16, 0),        # pas une animation : image = couleur
     "footprint": (fx_footprint, 16, 0),   # pied gauche, pied droit
+    "puddle": (fx_puddle, 48, 0),         # flaque : image = forme (3)
+    "splash": (fx_splash, 32, 16),        # goutte de pluie qui tombe au sol
+    "drop": (fx_drop, 16, 0),             # gouttelette (Tecky s'ébroue)
+    "snowflake": (fx_snowflake, 16, 0),   # flocon : image = variante (3)
+    "zzz": (fx_zzz, 16, 0),               # « z » du sommeil
 }

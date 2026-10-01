@@ -382,6 +382,7 @@ def build_map():
         "pen": [px(v) for v in PEN], "penGate": [px(v) for v in PEN_GATE],
         "farmer": [px(FARMER[0]), px(FARMER[1])],
         "critters": [[n, px(x), px(y)] for n, x, y in CRITTERS],
+        "rest": {a: [fps, loop] for a, (_, fps, _, loop) in tecky.REST_ANIMS.items()},
         "ducks": [[n, px(x), px(y), f] for n, x, y, f in DUCKS],
         "duckFps": {k: {a: fps for a, (_, fps, _) in ducks.anims(k).items()} for k in ducks.KINDS},
         "duckLoop": {k: {a: loop for a, (_, _, loop) in ducks.anims(k).items()} for k in ducks.KINDS},
@@ -424,6 +425,9 @@ def collect():
         out.append((f"{kind}/ko/right", [render_svg(s, 48, 48, S, PAD) for s in fn("ko", "right")], CH_O, True))
 
     char("tecky", tecky.frames)
+    for a, (_, fps, views, loop) in tecky.REST_ANIMS.items():    # poses de repos (assis, bâille, se gratte, dort, s'ébroue)
+        for v in views:
+            out.append((f"tecky/{a}/{v}", [render_svg(sv, 48, 48, S, PAD) for sv in tecky.rest_frames(a, v)], CH_O, True))
     for dog in enemies.DOGS:
         char(dog, lambda a, v, dog=dog: enemies.frames(dog, a, v))
     for a in alice.ANIMS:
