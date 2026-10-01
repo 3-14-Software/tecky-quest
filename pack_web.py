@@ -198,7 +198,8 @@ ITEMS = [
     ("hairclip", 58.4, 9.4), ("shoe", 73.6, 41.2), ("plush", 29.6, 37.4),
 ]
 ENEMIES = [
-    ("roquet", 9, 6.4), ("roquet", 14, 3.5), ("roquet", 10.5, 19.2), ("roquet", 27, 6.5),
+    # le 1er roquet est assez loin de la niche pour ne pas attaquer dès la fin de l'intro
+    ("roquet", 12, 8.8), ("roquet", 14, 3.5), ("roquet", 10.5, 19.2), ("roquet", 27, 6.5),
     ("bouledogue", 19.6, 16.9), ("bouledogue", 15.5, 22.2),
     ("molosse", 33.5, 20.2),
     # ferme : les chiens de berger gardent la cour et les prés

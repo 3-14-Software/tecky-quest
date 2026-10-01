@@ -37,6 +37,10 @@ setTimeout(() => {
   ok(run('state') === 'dialog', 'dialogue d\'intro');
   advanceDialog();
   ok(run('state') === 'play', 'en jeu après l\'intro');
+  // au départ, Tecky a le temps de souffler : aucun chien ne fonce sur lui s'il reste près de sa niche
+  { const hp = run('P.hp'); let engaged = false;
+    for (let i = 0; i < 60 * 8; i++) { step(1); if (run('dogs.some(d => d.mode === "chase" || d.mode === "attack" || d.mode === "bark")')) engaged = true; }
+    ok(!engaged && run('P.hp') === hp, 'pas d\'attaque dans les 8 s qui suivent l\'intro'); }
   run('var saveDogs = dogs; dogs = [];');
   const x0 = run('P.x');
   step(120, 'held.right = true');
