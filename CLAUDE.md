@@ -18,7 +18,7 @@ python3 build.py                          # kit GameMaker -> out/
 ./publish_docs.sh                         # copie la version autonome dans docs/ (GitHub Pages)
 ```
 
-Jeu en ligne : https://cgerardin.github.io/tecky-quest/ — publié par `.github/workflows/pages.yml` à chaque push touchant `docs/`.
+Jeu en ligne : https://3-14-software.github.io/tecky-quest/ — publié par `.github/workflows/pages.yml` à chaque push touchant `docs/`.
 Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit (docs/ inclus), push sur `main`.
 `web/` et `out/` sont générés et ignorés par Git ; `docs/` est commité.
 

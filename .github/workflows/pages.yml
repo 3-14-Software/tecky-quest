@@ -1,4 +1,4 @@
-# Publie docs/ sur https://cgerardin.github.io/tecky-quest/ (Settings > Pages > Source : GitHub Actions)
+# Publie docs/ sur https://3-14-software.github.io/tecky-quest/ (Settings > Pages > Source : GitHub Actions)
 name: Déployer le jeu (GitHub Pages)
 
 on:
