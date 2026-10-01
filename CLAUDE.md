@@ -61,7 +61,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   par `glowSpot()`). `sun` suit `sunGoal()` = nombre d'indices
   (4 aux retrouvailles) : il est donc restauré avec la sauvegarde.
 - Menus (`menu`, `openTitleMenu()`, `openOverMenu()`, `openPauseMenu()`, `menuInput()`, `menuHit()`, `chooseMenu()`) :
-  écran titre (Continuer s'il y a une sauvegarde, Nouvelle aventure, Nouvelle balade, Options, records du mode choisi),
+  écran titre (Continuer s'il y a une sauvegarde, Nouvelle aventure, Nouvelle balade, Options, Badges, records du
+  mode choisi),
   pause (sous la carte, en ligne : Reprendre, Options, Menu principal ; P reprend directement) et KO (Reprendre la
   partie, Recommencer, Menu principal). La victoire ramène au menu (`toTitle()`).
 - Options (`opts`, `OPT_DEF`, `OPTIONS_KEY`, lues avant le premier `resize()` ; écran `state === 'options'`, `optRows()`,
@@ -70,6 +71,12 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   chiens `d.id % 3 === 2` retirés ; fixée à la nouvelle partie et sauvegardée ; records à part `aventure-facile`),
   Texte des dialogues (grand : 46 px, 4 lignes), Image (fluide = `MAX_PIXELS`, nette = sans plafond), Plein écran
   (dans les événements clavier / toucher : il faut un geste de l'utilisateur), Vibrations. Test : `options.js`.
+- Badges (`MAP.badges` = `hud.BADGES`, image i de `hud/badge`, la dernière = verrouillé ; `BADGE_INFO`, `BADGES_KEY`,
+  gardés d'une partie à l'autre) : `checkBadges()` toutes les demi-secondes, `winBadges()` à la victoire (aventure,
+  sans morsure = `bitten` faux, sauvegardé ; moins de 10 min). `unlockBadge()` : annonce « Nouveau badge ! »
+  (`toasts`), rappel sur l'écran de victoire (`newBadges`), écran « Badges » depuis le menu principal
+  (`state === 'badges'`). Un nouveau badge : l'ajouter à `hud.BADGES` (dessin), `BADGE_INFO` et une condition.
+  Test : `badges.js`.
 - Vibrations (`rumble(kind)`, `RUMBLE`) : manette (`vibrationActuator.playEffect('dual-rumble')`) si `pad.on`, sinon
   téléphone (`navigator.vibrate`) en mode tactile ; morsure reçue, KO, choc de voiture, morsure qui porte, os doré.
   Rien si l'option est à « non ». Test : `options.js`.

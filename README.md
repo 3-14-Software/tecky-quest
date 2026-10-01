@@ -20,6 +20,9 @@ se fait mal : les chiens attendent qu'on joue avec eux et deviennent des copains
 sont gardés pour chaque mode. Les options (menu principal ou pause) règlent la musique, les bruitages, la difficulté
 (« facile » : plus d'os, morsures moins fortes, moins de chiens), la taille du texte, l'image, les vibrations (manette et téléphone) et le plein écran.
 
+Douze badges sont à gagner (retrouver Alice sans se faire mordre, déterrer tous les os dorés, faire s'envoler
+tous les canards…), visibles depuis le menu principal.
+
 Quand on ne touche plus à rien, Tecky s'assoit, bâille, se gratte l'oreille… puis s'endort.
 
 Tout est généré par du code : sprites en SVG (aplats + contour), tileset, décors, HUD, musique chiptune, niveau.

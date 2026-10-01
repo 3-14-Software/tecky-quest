@@ -182,6 +182,7 @@ const SFX = {
   flap() { for (let i = 0; i < 4; i++) noise(0.05, 0.05, 700 + i * 60, i * 0.08); },
   yawn() { tone(420, 0.55, 'triangle', 0.035, -200); tone(630, 0.4, 'sine', 0.015, -260, 0.05); },
   snore() { noise(0.5, 0.025, 260); },
+  badge() { [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.14, 'triangle', 0.07, 0, i * 0.09)); },
   hey(p) { const k = p || 1; tone(560 * k, 0.08, 'triangle', 0.08, 160 * k); tone(760 * k, 0.13, 'triangle', 0.08, -120 * k, 0.09); },
   cluck() { tone(950, 0.05, 'square', 0.05, 250); tone(1150, 0.05, 'square', 0.05, 200, 0.08); tone(1400, 0.12, 'square', 0.05, -600, 0.17); },
   win() { [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, 0.18, 'triangle', 0.09, 0, i * 0.14)); },
@@ -498,6 +499,7 @@ cv.addEventListener('pointerdown', e => {
   if (touchMode && canFullscreen() && !fsElement() && (state === 'play' || state === 'pause') &&
       gx > FS_BTN.x && gx < FS_BTN.x + FS_BTN.w && gy > FS_BTN.y && gy < FS_BTN.y + FS_BTN.h) { goFullscreen(); return; }
   if (state === 'options') { optionsTap(gx, gy); return; }
+  if (state === 'badges') { closeBadges(); return; }
   if (menu && (state === 'title' || state === 'over' || state === 'pause')) {   // menus : toucher une entrée la choisit
     const i = menuHit(gx, gy);
     if (i >= 0) { menu.sel = i; pressed.ok = true; }
@@ -844,6 +846,7 @@ function reset() {
   neighbor = newNpc('neighbor', MAP.neighbor, 1.35); rose = { state: 'new' }; pompon = newPompon();
   critters = MAP.critters.map(newCritter);
   ducks = MAP.ducks.map(newDuck); linkDucks();
+  bitten = false; newBadges = []; toasts = []; napped = false;
   walkGrid = null; distField = null; trail = []; tunnelSeen = false; crumbs = []; followN = 0;
   seenCells = new Uint8Array(cellsW() * cellsH()); zone = null; zoneT = 0; banner = null; Music.zone = 'niche';
   cars = MAP.traffic.vehicles.map(newVehicle);
@@ -2022,6 +2025,7 @@ function hurtPlayer(dmg, fromX, fromY) {
   if (P.inv > 0 || P.mode === 'ko' || state !== 'play' || balade()) return;
   if (facile()) dmg = Math.max(1, Math.floor(dmg / 2));
   P.hp = Math.max(0, P.hp - dmg);
+  bitten = true;                      // (badge « Sans une égratignure »)
   const l = Math.max(1, dist(P.x, P.y, fromX, fromY));
   P.kx = (P.x - fromX) / l * 420; P.ky = (P.y - fromY) / l * 420;
   P.inv = 1.2; shake = 0.25;
@@ -2330,7 +2334,7 @@ function saveGame() {
     critters: critters.map(c => c.scored ? 1 : 0).join(''),
     ducks: ducks.map(d => d.scored ? 1 : 0).join(''),
     post: post.state, letters: letters.map(l => l.got ? 1 : 0).join(''),
-    rose: rose.state, cat: [r1(pompon.x), r1(pompon.y), pompon.mode],
+    rose: rose.state, cat: [r1(pompon.x), r1(pompon.y), pompon.mode], bitten,
   });
 }
 // pas de sauvegarde automatique en plein combat : on reprendrait au milieu des crocs
@@ -2358,6 +2362,7 @@ function loadGame(s, rested) {
   post.state = s.post || 'new';
   letters.forEach((l, i) => { l.got = (s.letters || '')[i] === '1'; });
   rose.state = s.rose || 'new';
+  bitten = !!s.bitten || rested;
   if (s.cat) { pompon.x = s.cat[0]; pompon.y = s.cat[1]; pompon.mode = s.cat[2] === 'follow' ? 'wait' : s.cat[2]; }
   questHens().forEach((h, i) => { const q = (s.hens || [])[i]; if (q) { h.x = h.hx = q[0]; h.y = h.hy = q[1]; h.penned = !!q[2]; } });
   if (nextClue() === 3) revealAlice();
@@ -2416,7 +2421,8 @@ function openTitleMenu() {
   items.push({ id: 'aventure', label: 'Nouvelle aventure', sub: 'Gare aux chiens du coin !', mode: 'aventure' });
   items.push({ id: 'balade', label: 'Nouvelle balade', sub: 'Les chiens veulent seulement jouer', mode: 'balade' });
   items.push({ id: 'options', label: 'Options', sub: 'Son, difficulté, texte, image, vibrations' });
-  menu = items.length > 3 ? { items, sel: 0, y0: 510, w: 760, h: 92, gap: 14 } : { items, sel: 0, y0: 520, w: 760, h: 104, gap: 20 };
+  items.push({ id: 'badges', label: 'Badges', sub: badgeCount() + ' sur ' + MAP.badges.length + ' gagnés' });
+  menu = items.length > 4 ? { items, sel: 0, y0: 500, w: 760, h: 80, gap: 12 } : { items, sel: 0, y0: 506, w: 760, h: 88, gap: 14 };
 }
 function openOverMenu() {
   const items = [];
@@ -2457,6 +2463,7 @@ function chooseMenu(id) {
   else if (id === 'restart') newGame(gameMode, true);
   else if (id === 'aventure' || id === 'balade') newGame(id, false);
   else if (id === 'options') openOptions(state);
+  else if (id === 'badges') openBadges();
   else if (id === 'unpause') { state = 'play'; Music.refresh(); }
   else if (id === 'quit') { saveGame(); toTitle(); }
   else toTitle();
@@ -2489,6 +2496,88 @@ function rumble(kind) {
       }
     } else if (touchMode && navigator.vibrate) navigator.vibrate(Math.round(ms * (0.4 + strong * 0.6)));
   } catch (e) { /* vibrations refusées par le navigateur */ }
+}
+
+/* ------------------------------------------------------------------ badges */
+/* Douze badges (MAP.badges, même ordre que hud.BADGES : image i de hud/badge, la dernière = verrouillé), gardés dans le
+   navigateur d'une partie à l'autre (BADGES_KEY). checkBadges() regarde la partie toutes les demi-secondes ; la
+   victoire débloque aussi « aventure », « intact » (sans morsure, bitten) et « rapide ». À chaque nouveau badge, une
+   annonce en haut de l'écran (toasts). Écran « Badges » depuis le menu principal ; nouveaux badges rappelés à la fin. */
+const BADGES_KEY = 'tecky-quest-badges';
+const BADGE_INFO = {
+  aventure: ['Retrouvailles', 'Retrouver Alice en mode aventure.'],
+  copains: ['Copain de tous', 'En balade, devenir copain avec tous les chiens.'],
+  os_dores: ['Chercheur d’or', 'Déterrer tous les os dorés.'],
+  intact: ['Sans une égratignure', 'Retrouver Alice en aventure sans se faire mordre.'],
+  rapide: ['Truffe rapide', 'Retrouver Alice en moins de 10 minutes.'],
+  poules: ['Chien de berger', 'Ramener toutes les poules de Gaston.'],
+  facteur: ['Facteur en herbe', 'Rapporter ses cinq lettres à Marcel.'],
+  chat: ['Ami des chats', 'Ramener Pompon à Mamie Rose.'],
+  betes: ['Curieux', 'Surprendre tous les écureuils et les chats.'],
+  canards: ['Coin-coin', 'Faire s’envoler tous les canards.'],
+  explorateur: ['Explorateur', 'Découvrir toute la carte.'],
+  sieste: ['Roi de la sieste', 'Laisser Tecky s’endormir.'],
+};
+const TOAST = { life: 3.6 };
+let badges = {}, toasts = [], newBadges = [], badgeT = 0, bitten = false;
+function loadBadges() { badges = STORE.get(BADGES_KEY) || {}; }
+const badgeCount = () => MAP.badges.filter(id => badges[id]).length;
+function unlockBadge(id) {
+  if (badges[id]) return;
+  badges[id] = Date.now();
+  STORE.set(BADGES_KEY, badges);
+  newBadges.push(id); toasts.push({ id, t: 0 });
+  SFX.badge();
+}
+function checkBadges() {
+  if (balade() && dogs.length && dogs.every(d => d.friend)) unlockBadge('copains');
+  if (treasures >= MAP.dig.length) unlockBadge('os_dores');
+  if (farm.state === 'done') unlockBadge('poules');
+  if (post.state === 'done') unlockBadge('facteur');
+  if (rose.state === 'done') unlockBadge('chat');
+  if (critters.every(c => c.scored)) unlockBadge('betes');
+  if (ducks.filter(d => !d.lead).every(d => d.scored)) unlockBadge('canards');
+  if (seenCells.reduce((a, v) => a + v, 0) >= seenCells.length * 0.95) unlockBadge('explorateur');
+  if (napped) unlockBadge('sieste');
+}
+function winBadges() {
+  if (!balade()) { unlockBadge('aventure'); if (!bitten) unlockBadge('intact'); }
+  if (timePlayed < 600) unlockBadge('rapide');
+  checkBadges();
+}
+function updateToasts(dt) {
+  if (toasts.length && (toasts[0].t += dt) > TOAST.life) toasts.shift();
+}
+function drawToast() {                // « Nouveau badge ! » en haut de l'écran
+  const T = toasts[0];
+  if (!T) return;
+  guiTransform();
+  const a = clamp(Math.min(T.t / 0.3, (TOAST.life - T.t) / 0.5), 0, 1), w = 640, h = 120, x = GW / 2 - w / 2;
+  const y = 196 - (1 - Math.min(1, T.t / 0.3)) * 30;
+  ctx.save(); ctx.globalAlpha = a;
+  drawNine('hud/panel', x, y, w, h, 32);
+  drawSpr('hud/badge', MAP.badges.indexOf(T.id), x + 18, y + 12, { sc: 1 });
+  text('Nouveau badge !', x + 130, y + 48, 28, '#D7332B', 'left', 600);
+  text(BADGE_INFO[T.id][0], x + 130, y + 90, 36, '#3A1E12', 'left', 700);
+  ctx.restore();
+}
+// écran des badges : 4 x 3 cartes ; ceux qu'il reste à gagner sont en gris, avec leur objectif
+function openBadges() { menu = null; state = 'badges'; }
+function closeBadges() { state = 'title'; openTitleMenu(); menu.sel = menu.items.findIndex(it => it.id === 'badges'); }
+function badgesInput() { if (pressed.pause || pressed.bark || pressed.ok || pressed.bite || pressed.act) closeBadges(); }
+function drawBadges() {
+  guiTransform();
+  veil(0.6);
+  outlined('Badges : ' + badgeCount() + ' / ' + MAP.badges.length, GW / 2, 118, 64, '#FFF7E6');
+  const cw = 420, ch = 236, gx = 26, gy = 22, x0 = GW / 2 - (4 * cw + 3 * gx) / 2, y0 = 168;
+  MAP.badges.forEach((id, i) => {
+    const x = x0 + (i % 4) * (cw + gx), y = y0 + Math.floor(i / 4) * (ch + gy), got = !!badges[id];
+    drawNine(got ? 'hud/panel' : 'hud/panel_dark', x, y, cw, ch, 32);
+    drawSpr('hud/badge', got ? i : MAP.badges.length, x + cw / 2 - 48, y + 14);
+    text(got ? BADGE_INFO[id][0] : '?', x + cw / 2, y + 144, 30, got ? '#3A1E12' : '#FFF7E6', 'center', 700);
+    para(BADGE_INFO[id][1], x + cw / 2, y + 180, 22, got ? '#6B5A4E' : '#E9DCC8', 'center', 500, cw - 50, 28);
+  });
+  text(touchMode ? 'Touche l’écran pour revenir' : pad.on ? 'B pour revenir' : 'Échap pour revenir', GW / 2, GH - 30, 26, '#E9DCC8', 'center', 500);
 }
 
 /* ------------------------------------------------------------------ écran d'options */
@@ -2833,7 +2922,8 @@ function updateDog(d, dt) {
     case 'hurt':
       d.timer -= dt;
       if (d.done()) d.setAnim('idle');
-      if (d.timer <= 0) { d.mode = 'chase'; }
+      // (heurté par une voiture loin de Tecky : il rentre chez lui, il ne traverse pas la carte pour le poursuivre)
+      if (d.timer <= 0) d.mode = dist(d.x, d.y, P.x, P.y) < T.aggro * 1.5 ? 'chase' : 'return';
       return;
     case 'attack': {
       if (!d.hitDone && d.t > T.windup) {
@@ -3009,6 +3099,7 @@ function revealAlice() {
 function finale() {
   alice.found = true;
   recordRun();
+  winBadges();
   STORE.del(SAVE_KEY);                 // partie terminée : plus rien à continuer
   P.mode = 'free'; P.setAnim('idle');
   P.dir = dirFrom(alice.x - P.x, alice.y - P.y, P.dir);
@@ -3035,6 +3126,7 @@ function updateCamera(dt) {
 
 function update(dt) {
   if (pressed.mute) { muted = !muted; Music.refresh(); }
+  updateToasts(dt);
   if (state !== 'play' && AC) Ambience.quiet();
   updateClouds(dt);
   if (state !== 'title') updateSun(dt);
@@ -3070,6 +3162,9 @@ function update(dt) {
     case 'options':
       optionsInput();
       break;
+    case 'badges':
+      badgesInput();
+      break;
     case 'play':
       if (pressed.pause) { state = 'pause'; openPauseMenu(); Music.refresh(); break; }
       timePlayed += dt;
@@ -3097,6 +3192,7 @@ function update(dt) {
       for (const c of critters) updateCritter(c, dt);
       for (const d of ducks) updateDuck(d, dt);
       updateTrail(dt);
+      if ((badgeT += dt) > 0.5) { badgeT = 0; checkBadges(); }
       updateZone(dt);
       Ambience.update(dt);
       updateCamera(dt);
@@ -3426,7 +3522,7 @@ function drawTitle() {
   drawMenu(titleT);
   const r = recordLine(menu.items[menu.sel].mode);
   const last = menuBox(menu.items.length - 1);
-  if (r) outlined(r, GW / 2, last.y + last.h + 58, 30, '#F2C14E');
+  if (r) outlined(r, GW / 2, last.y + last.h + 46, 30, '#F2C14E');
   if (!touchMode) text(pad.on ? 'Croix pour choisir, A pour valider' : '↑ ↓ pour choisir, Entrée pour valider',
     GW / 2, GH - 28, 26, '#E9DCC8', 'center', 500);
 }
@@ -3436,8 +3532,9 @@ function drawMenu(t) {
     const b = menuBox(i), sel = i === menu.sel;
     drawNine(sel ? 'hud/panel' : 'hud/panel_dark', b.x, b.y, b.w, b.h, 32);
     const ink = sel ? '#3A1E12' : '#FFF7E6';
-    text(it.label, b.x + b.w / 2, it.sub ? b.y + b.h * 0.48 : b.y + b.h / 2 + 14, 40, ink, 'center', 700);
-    if (it.sub) text(it.sub, GW / 2, b.y + b.h * 0.48 + 34, 26, sel ? '#6B5A4E' : '#E9DCC8', 'center', 500);
+    const small = b.h < 90;                                        // menu principal à cinq entrées : un peu plus petit
+    text(it.label, b.x + b.w / 2, it.sub ? b.y + b.h * (small ? 0.46 : 0.48) : b.y + b.h / 2 + 14, small ? 36 : 40, ink, 'center', 700);
+    if (it.sub) text(it.sub, GW / 2, b.y + b.h * (small ? 0.46 : 0.48) + (small ? 29 : 34), small ? 23 : 26, sel ? '#6B5A4E' : '#E9DCC8', 'center', 500);
     if (sel && !menu.row) {
       const k = Math.sin(t * 6) * 6;
       drawSpr('hud/bone', 0, b.x - 76 - k, b.y + b.h / 2 - 32);
@@ -3463,6 +3560,8 @@ function drawEnd(win) {
   outlined('Tecky a retrouvé Alice !', GW / 2, py + 100, 64, '#F2C14E');
   drawSpr('hud/portrait_tecky', 2, GW / 2 - 130, py + 140);
   drawSpr('hud/portrait_alice', 2, GW / 2 + 34, py + 140);
+  // badges gagnés pendant cette partie, en petit sous les portraits
+  newBadges.forEach((id, i) => drawSpr('hud/badge', MAP.badges.indexOf(id), GW / 2 - newBadges.length * 30 + i * 60 + 4, py + 242, { sc: 0.55 }));
   const rows = [['Score', String(score)], ['Temps', fmtTime(timePlayed)],
     ['Os dorés', treasures + ' / ' + MAP.dig.length], [balade() ? 'Copains de jeu' : 'Chiens mis en fuite', String(fled)]];
   rows.forEach(([k, v], i) => {
@@ -3495,6 +3594,7 @@ function render() {
   drawWorld();
   if (state === 'title') drawTitle();
   else if (state === 'options' && optReturn === 'title') { veil(0.35); drawOptions(); }
+  else if (state === 'badges') { veil(0.35); drawBadges(); }
   else {
     drawHUD();
     if (state === 'dialog' && dialog) drawDialog();
@@ -3511,6 +3611,7 @@ function render() {
     if (state === 'options') drawOptions();
     if (state === 'over') drawEnd(false);
     if (state === 'win') drawEnd(true);
+    if (state === 'play' || state === 'dialog' || state === 'win') drawToast();
   }
   ctx.restore();
 }
@@ -3535,6 +3636,7 @@ function start() {
   Promise.all([whenLoaded(atlas), whenLoaded(tilesImg), fontReady]).then(() => {
     buildGround();
     buildClouds();
+    loadBadges();
     toTitle();
   });
   requestAnimationFrame(frame);

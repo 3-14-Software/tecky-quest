@@ -393,6 +393,7 @@ def build_map():
                        **{k: {a: v[1] for a, v in npcs.ANIMS[k].items()} for k in npcs.KINDS}),
         "critters": [[n, px(x), px(y)] for n, x, y in CRITTERS],
         "rest": {a: [fps, loop] for a, (_, fps, _, loop) in tecky.REST_ANIMS.items()},
+        "badges": hud.BADGES,
         "ducks": [[n, px(x), px(y), f] for n, x, y, f in DUCKS],
         "duckFps": {k: {a: fps for a, (_, fps, _) in ducks.anims(k).items()} for k in ducks.KINDS},
         "duckLoop": {k: {a: loop for a, (_, _, loop) in ducks.anims(k).items()} for k in ducks.KINDS},
