@@ -32,6 +32,7 @@ DOGS = {
 }
 
 EYE_ANGRY = True
+COLLAR_TILT = -50     # vue de profil : bande perpendiculaire au cou (haut vers la nuque, bas vers la gorge)
 
 
 def _brow(d, x0, y0, x1, y1, tr):
@@ -78,16 +79,18 @@ def side(S, p):
     body = ellipse(cx, Y(cy), rx, ry)
     neck = ellipse(fx - 4.5 + ld, Y(cy - 5), 5, 6)
     d.clip("bodyclip", [body, neck])
+    d.clip("neckclip", [neck])
     d.add(body, S["fur"])
     d.add(neck, S["fur"])
     d.add(ellipse(cx - 2, Y(cy - ry * 0.55), rx * 0.9, ry * 0.55), S["dark"], sil=False, clip="bodyclip", opacity=0.45)
     d.add(ellipse(cx + 2, Y(cy + ry * 0.6), rx * 0.66, ry * 0.37), S["light"], sil=False, clip="bodyclip")
     if S["patch"]:
         d.add(ellipse(cx - 3, Y(cy - 1), 3.5, 2.8), S["patch"], sil=False, clip="bodyclip")
-    # collier à clous
-    ctr = f"rotate(28 {fx - 4.2 + ld:.2f} {Y(cy - 5):.2f})"
-    d.add(rect(fx - 6 + ld, Y(cy - 13), 3.2, 16, 0, ctr), "#2B2B33", sil=False, clip="bodyclip")
-    _collar_studs(d, [(fx - 4.4 + ld, Y(cy - 8.5 + k * 3.2)) for k in range(3)], ctr)
+    # collier à clous : une bande en travers du cou (de la nuque à la gorge), sous la tête, limitée au cou
+    ccx, ccy = fx - 4 + ld, Y(cy - 6)
+    ctr = f"rotate({COLLAR_TILT} {ccx:.2f} {ccy:.2f})"
+    d.add(rect(ccx - 1.6, ccy - 8, 3.2, 16, 0, ctr), "#2B2B33", sil=False, clip="neckclip")
+    _collar_studs(d, [(ccx, ccy + k * 3) for k in (-1, 0, 1)], ctr)
 
     hx, hy, hr = fx - 0.5, cy - 11, S["head_r"]
     sr, sry = S["snout"]
