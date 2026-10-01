@@ -14,7 +14,7 @@ function main() {
   tap(13);
   ok(run('menu.sel') === 1 && run('pad.on'), 'croix bas : entrée suivante du menu, indices de manette affichés');
   tap(12); tap(12);
-  ok(run('menu.sel') === 1, 'croix haut : le menu boucle (' + run('menu.sel') + ')');
+  ok(run('menu.sel') === 2, 'croix haut : le menu boucle (' + run('menu.sel') + ')');
   axes(0, 0.95); pstep(20);
   ok(run('menu.sel') === 0, 'stick incliné et tenu : une seule impulsion');
   axes(0, 0); pstep(1);

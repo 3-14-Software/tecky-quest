@@ -58,9 +58,16 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   monde seulement ; vignette et halo pré-rendus en petit par `buildLight()` ; lampadaires et lumière des retrouvailles
   par `glowSpot()`). `sun` suit `sunGoal()` = nombre d'indices
   (4 aux retrouvailles) : il est donc restauré avec la sauvegarde.
-- Menus (`menu`, `openTitleMenu()`, `openOverMenu()`, `menuInput()`, `menuHit()`, `chooseMenu()`) : écran titre
-  (Continuer s'il y a une sauvegarde, Nouvelle aventure, Nouvelle balade, records du mode choisi) et KO (Reprendre la
+- Menus (`menu`, `openTitleMenu()`, `openOverMenu()`, `openPauseMenu()`, `menuInput()`, `menuHit()`, `chooseMenu()`) :
+  écran titre (Continuer s'il y a une sauvegarde, Nouvelle aventure, Nouvelle balade, Options, records du mode choisi),
+  pause (sous la carte, en ligne : Reprendre, Options, Menu principal ; P reprend directement) et KO (Reprendre la
   partie, Recommencer, Menu principal). La victoire ramène au menu (`toTitle()`).
+- Options (`opts`, `OPT_DEF`, `OPTIONS_KEY`, lues avant le premier `resize()` ; écran `state === 'options'`, `optRows()`,
+  `changeOpt()`, `optionsTap()`, retour vers `optReturn`) : volumes Musique (`Music.level()`) et Bruitages
+  (`sfxGain()`, ambiance comprise), Difficulté (facile : `gameDiff`, `facile()`, 5 os, morsures moitié moins fortes,
+  chiens `d.id % 3 === 2` retirés ; fixée à la nouvelle partie et sauvegardée ; records à part `aventure-facile`),
+  Texte des dialogues (grand : 46 px, 4 lignes), Image (fluide = `MAX_PIXELS`, nette = sans plafond), Plein écran
+  (dans les événements clavier / toucher : il faut un geste de l'utilisateur). Test : `options.js`.
 
 ## Règles de jeu (à ne pas casser)
 
@@ -170,7 +177,7 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   Tests : `tests/obstacles.js`, `fence.js`, `fence_scan.js` (210 cas, 0 clignotement de direction).
 - Les tests Node exécutent le script de `web/index.html` dans un `vm` avec canvas/audio simulés ; `tests/game_full.js` est une
   copie générée (`tests/regen.py`) — la régénérer après toute modif de `game.js` (fait par `run_all.sh`).
-- Dialogues : 3 lignes maximum affichées ; chaîne longue = la découper en plusieurs répliques.
+- Dialogues : 3 lignes maximum affichées (4 en texte grand) ; chaîne longue = la découper en plusieurs répliques.
 - Tests : isoler la scène (`dogs = []`, `cars = []`, autres chiens renvoyés chez eux) ; un chien qui flâne ou une voiture
   qui passe rendent sinon un test aléatoire. Relancer un nouveau test plusieurs fois avant de le valider.
 - Le service worker de `docs/` est réseau d'abord avec repli cache : pas de version à incrémenter à chaque livraison.

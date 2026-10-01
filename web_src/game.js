@@ -9,6 +9,15 @@ const VW = 960, VH = 540;               // caméra, en px de monde
 const GW = 1920, GH = 1080;             // repère de l'interface
 const TS = MAP.ts;
 
+/* Réglages du joueur (écran d'options, plus bas) : lus ici, avant le premier resize(). */
+const OPTIONS_KEY = 'tecky-quest-options';
+const OPT_DEF = { music: 7, sfx: 8, diff: 'normal', text: 'normal', image: 'fluide' };
+const opts = (() => {
+  let o = null;
+  try { o = JSON.parse(localStorage.getItem(OPTIONS_KEY)); } catch (e) { /* stockage refusé */ }
+  return Object.assign({}, OPT_DEF, o || {});
+})();
+
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
 let dpr = 1, scale = 1, offX = 0, offY = 0;
@@ -16,12 +25,13 @@ let dpr = 1, scale = 1, offX = 0, offY = 0;
 /* Au plus MAX_PIXELS pixels dans le canvas : au-delà (plein écran sur un écran 1440p ou 4K), le navigateur l'agrandit
    lui-même à l'affichage, gratuitement. Le monde est dessiné en px x2 (960 x 540 de caméra) : un canvas plus grand
    n'ajoute presque rien à l'image, mais multiplie le travail (Firefox dessine souvent le canvas avec le processeur :
-   60 ms par image en 4K, contre 15 ms en 1920 x 1080). dpr = rapport réel canvas / CSS (sert aussi aux pointeurs). */
+   60 ms par image en 4K, contre 15 ms en 1920 x 1080). Option « Image : nette » : pas de plafond.
+   dpr = rapport réel canvas / CSS (sert aussi aux pointeurs). */
 const MAX_PIXELS = 1920 * 1080;
 function resize() {
   dpr = Math.min(window.devicePixelRatio || 1, 2);
   const px = innerWidth * innerHeight * dpr * dpr;
-  if (px > MAX_PIXELS) dpr *= Math.sqrt(MAX_PIXELS / px);
+  if (opts.image !== 'nette' && px > MAX_PIXELS) dpr *= Math.sqrt(MAX_PIXELS / px);
   cv.width = Math.round(innerWidth * dpr);
   cv.height = Math.round(innerHeight * dpr);
   scale = Math.min(cv.width / VW, cv.height / VH);
@@ -120,12 +130,13 @@ function drawDigits(text, x, y, sc, alpha, mono) {
 /* ------------------------------------------------------------------ son (synthétisé) */
 let AC = null, muted = false;
 const SFX_VOL = 1.4;   // bruitages un peu plus forts, pour bien ressortir sur la musique
+const sfxGain = () => SFX_VOL * opts.sfx / OPT_DEF.sfx;     // réglage « Bruitages » (8 = normal)
 function audioOn() {
   if (!AC) {
     try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; }
   }
   if (AC && AC.state === 'suspended') AC.resume();
-  if (AC && !Music.on && !(alice && alice.found) && (state === 'title' || state === 'play' || state === 'dialog' || state === 'pause')) Music.start();
+  if (AC && !Music.on && !(alice && alice.found) && ['title', 'play', 'dialog', 'pause', 'options'].includes(state)) Music.start();
 }
 function tone(freq, dur, type, vol, slide, delay) {
   if (!AC || muted) return;
@@ -134,7 +145,7 @@ function tone(freq, dur, type, vol, slide, delay) {
   o.type = type || 'square';
   o.frequency.setValueAtTime(freq, t0);
   if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), t0 + dur);
-  g.gain.setValueAtTime((vol || 0.08) * SFX_VOL, t0);
+  g.gain.setValueAtTime((vol || 0.08) * sfxGain(), t0);
   g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
   o.connect(g); g.connect(AC.destination);
   o.start(t0); o.stop(t0 + dur + 0.02);
@@ -148,7 +159,7 @@ function noise(dur, vol, freq, delay) {
   for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
   const src = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
   src.buffer = buf; f.type = 'bandpass'; f.frequency.value = freq || 1000; f.Q.value = 1.2;
-  g.gain.value = (vol || 0.1) * SFX_VOL;
+  g.gain.value = (vol || 0.1) * sfxGain();
   src.connect(f); f.connect(g); g.connect(AC.destination);
   src.start(t0);
 }
@@ -199,7 +210,10 @@ const Music = {
     return this.waves[duty];
   },
   // thème discret (derrière les bruitages), fanfare de fin à plein volume
-  level() { return muted ? 0 : state === 'pause' ? 0.12 : this.cur === 'main' ? 0.35 : 0.55; },
+  level() {                            // réglage « Musique » : 7 = normal
+    const quiet = state === 'pause' || (state === 'options' && optReturn === 'pause');
+    return muted ? 0 : (quiet ? 0.12 : this.cur === 'main' ? 0.35 : 0.55) * opts.music / OPT_DEF.music;
+  },
   /* name : 'main' (boucle), 'win' (fanfare de victoire) ou 'lose' (musique de défaite), ces deux-là jouées une seule fois */
   start(name) {
     name = name || 'main';
@@ -346,7 +360,7 @@ const Ambience = {
     }
     this.phase += dt;
     const lap = 0.75 + 0.25 * Math.sin(this.phase * 1.7) * Math.sin(this.phase * 0.63);
-    this.level = muted ? 0 : (w / n) * AMB.water * lap;
+    this.level = muted ? 0 : (w / n) * AMB.water * lap * opts.sfx / OPT_DEF.sfx;
     if (!this.gain && this.level > 0.001) this.startWater();
     if (this.gain) this.gain.gain.setTargetAtTime(this.level, AC.currentTime, 0.3);
   },
@@ -373,7 +387,7 @@ const INSTALLED = !!(window.matchMedia && (matchMedia('(display-mode: fullscreen
 function fsElement() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
 function canFullscreen() {
   const el = document.documentElement;
-  return !INSTALLED && !!(el.requestFullscreen || el.webkitRequestFullscreen) &&
+  return !!el && !INSTALLED && !!(el.requestFullscreen || el.webkitRequestFullscreen) &&
     (document.fullscreenEnabled !== false || document.webkitFullscreenEnabled);
 }
 function goFullscreen() {
@@ -419,6 +433,9 @@ addEventListener('keydown', e => {
   if (m) { held[m] = true; if (!e.repeat) pressed[m] = true; e.preventDefault(); }
   const a = actionOfKey(e);
   if (a === 'fullscreen') { if (!e.repeat) toggleFullscreen(); e.preventDefault(); return; }
+  if (state === 'options' && (a === 'ok' || a === 'bite' || a === 'act') && !e.repeat && optRows()[optSel].id === 'fs') {
+    toggleFullscreen(); e.preventDefault(); return;
+  }
   if (a) {
     if (!e.repeat) pressed[a] = true;
     held[a] = true;
@@ -480,9 +497,11 @@ cv.addEventListener('pointerdown', e => {
   if (touchMode && state === 'title') goFullscreen();
   if (touchMode && canFullscreen() && !fsElement() && (state === 'play' || state === 'pause') &&
       gx > FS_BTN.x && gx < FS_BTN.x + FS_BTN.w && gy > FS_BTN.y && gy < FS_BTN.y + FS_BTN.h) { goFullscreen(); return; }
-  if (menu && (state === 'title' || state === 'over')) {     // menus : toucher (ou cliquer) une entrée la choisit
+  if (state === 'options') { optionsTap(gx, gy); return; }
+  if (menu && (state === 'title' || state === 'over' || state === 'pause')) {   // menus : toucher une entrée la choisit
     const i = menuHit(gx, gy);
     if (i >= 0) { menu.sel = i; pressed.ok = true; }
+    else if (state === 'pause') pressed.pause = true;                    // ailleurs : on reprend
     return;
   }
   if (state !== 'play' || !touchMode) { pressed.ok = true; return; }
@@ -751,6 +770,10 @@ const balade = () => gameMode === 'balade';
 /* Vie : 2 PV par os. Tecky démarre avec 3 os ; chaque saucisse ajoute un os
    (déjà plein) jusqu'à MAX_BONES ; un os ramassé rend un os perdu, sans dépasser le maximum. */
 const START_BONES = 3, MAX_BONES = 8;
+/* Difficulté « facile » (option, pour les nouvelles parties ; gardée dans la sauvegarde) : 5 os au départ, morsures
+   moitié moins fortes (un demi-os), et un chien sur trois en moins (toujours les mêmes : d.id % 3 === 2). */
+let gameDiff = 'normal';
+const facile = () => gameDiff === 'facile';
 const ITEM = {
   bone: { heal: 2 }, sausage: { grow: true },
   medal: { pts: 100 }, squeaky: { pts: 50 }, ball: { pts: 20 },
@@ -799,7 +822,8 @@ function reset() {
   });
   P = new Actor('tecky', MAP.start[0], MAP.start[1]);
   // 5 emplacements d'os (2 PV par os) ; Tecky démarre avec 3 os pleins
-  Object.assign(P, { hp: START_BONES * 2, hpMax: START_BONES * 2, boneFx: 0, inv: 0, bumpT: 0, cdBark: 0, cdBite: 0, cdSniff: 0,
+  const bones = facile() ? 5 : START_BONES;
+  Object.assign(P, { hp: bones * 2, hpMax: bones * 2, boneFx: 0, inv: 0, bumpT: 0, cdBark: 0, cdBite: 0, cdSniff: 0,
     mode: 'free', kx: 0, ky: 0, hitDone: false });
   alice = new Actor('alice', MAP.alice[0], MAP.alice[1]);
   alice.fps = Object.assign({}, FPS, { walk: 10 });
@@ -812,6 +836,7 @@ function reset() {
     d.t = Math.random();
     return d;
   });
+  if (facile()) dogs = dogs.filter(d => d.id % 3 !== 2);
   hens = MAP.hens.map(newHen);
   farmer = newFarmer(); farm = { state: 'new' };
   critters = MAP.critters.map(newCritter);
@@ -1822,6 +1847,7 @@ function uncover(g) {
 
 function hurtPlayer(dmg, fromX, fromY) {
   if (P.inv > 0 || P.mode === 'ko' || state !== 'play' || balade()) return;
+  if (facile()) dmg = Math.max(1, Math.floor(dmg / 2));
   P.hp = Math.max(0, P.hp - dmg);
   const l = Math.max(1, dist(P.x, P.y, fromX, fromY));
   P.kx = (P.x - fromX) / l * 420; P.ky = (P.y - fromY) / l * 420;
@@ -2044,7 +2070,7 @@ function drawBanner() {
 /* La pause montre la carte : sol et décors en réduction (pré-rendus une fois), brouillard sur ce qui n'a pas encore été vu
    (cases de MAPV.cell tuiles, marquées quand elles passent à l'écran, sauvegardées), noms des zones déjà vues, Tecky,
    indices trouvés, os dorés déterrés, Alice une fois sortie de sa cachette, et l'enclos pendant la quête des poules. */
-const MAPV = { cell: 4, w: 1320, top: 150 };
+const MAPV = { cell: 4, w: 1180, top: 150 };
 let seenCells = null, mapImg = null;
 const cellsW = () => Math.ceil(MAP.w / MAPV.cell), cellsH = () => Math.ceil(MAP.h / MAPV.cell);
 function markSeen() {
@@ -2119,7 +2145,7 @@ const r1 = v => Math.round(v * 10) / 10;
 function saveGame() {
   if (!P || P.mode === 'ko' || P.hp <= 0 || alice.found) return;
   STORE.set(SAVE_KEY, {
-    v: 1, mode: gameMode, at: Date.now(), x: r1(P.x), y: r1(P.y), dir: P.dir, hp: P.hp, hpMax: P.hpMax,
+    v: 1, mode: gameMode, diff: gameDiff, at: Date.now(), x: r1(P.x), y: r1(P.y), dir: P.dir, hp: P.hp, hpMax: P.hpMax,
     score, time: r1(timePlayed), fled, treasures, clues: clues.slice(), sniffed: aliceSniffed, immune: barkImmuneSeen,
     dug: digs.map(g => g.dug ? 1 : 0),
     items: items.map(it => [it.n, r1(it.x), r1(it.y)]),
@@ -2133,12 +2159,13 @@ function saveGame() {
 }
 // pas de sauvegarde automatique en plein combat : on reprendrait au milieu des crocs
 const safeToSave = () => P.mode !== 'ko' && (balade() || !dogs.some(d => ENGAGED.has(d.mode) && dist(P.x, P.y, d.x, d.y) < 600));
-function saveOnLeave() { if (P && (state === 'play' || state === 'dialog' || state === 'pause')) saveGame(); }
+function saveOnLeave() { if (P && (state === 'play' || state === 'dialog' || state === 'pause' || (state === 'options' && optReturn === 'pause'))) saveGame(); }
 addEventListener('pagehide', saveOnLeave);
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveOnLeave(); });
 
 /* rested : reprise après un KO (Tecky a fait une sieste : vie pleine) */
 function loadGame(s, rested) {
+  gameDiff = s.diff === 'facile' ? 'facile' : 'normal';
   reset();
   gameMode = s.mode === 'balade' ? 'balade' : 'aventure';
   Object.assign(P, { x: s.x, y: s.y, dir: s.dir || 'down', hpMax: s.hpMax, hp: rested ? s.hpMax : Math.max(1, s.hp) });
@@ -2164,6 +2191,7 @@ function loadGame(s, rested) {
 }
 function newGame(mode, again) {
   const cx = camX, cy = camY;
+  gameDiff = opts.diff;
   reset();
   gameMode = mode;
   if (!again) { camX = cx; camY = cy; }          // depuis l'écran titre, la caméra glisse du village jusqu'à la niche
@@ -2174,22 +2202,23 @@ function newGame(mode, again) {
 }
 
 let recs = {}, newRecord = { score: false, time: false };
+const recKey = (mode, diff) => mode + (diff === 'facile' ? '-facile' : '');     // records à part en facile
 function recordRun() {
-  const all = STORE.get(RECORDS_KEY) || {}, r = all[gameMode] || {}, t = Math.floor(timePlayed);
+  const all = STORE.get(RECORDS_KEY) || {}, k = recKey(gameMode, gameDiff), r = all[k] || {}, t = Math.floor(timePlayed);
   newRecord = { score: !(r.score >= score), time: !(r.time <= t) };
   if (newRecord.score) r.score = score;
   if (newRecord.time) r.time = t;
   r.wins = (r.wins || 0) + 1;
-  all[gameMode] = r;
+  all[k] = r;
   STORE.set(RECORDS_KEY, all);
   recs = all;
 }
 const fmtTime = t => Math.floor(t / 60) + ' min ' + String(Math.floor(t % 60)).padStart(2, '0') + ' s';
 const MODE_NAME = { aventure: 'Aventure', balade: 'Balade' };
 function recordLine(mode) {
-  const r = recs[mode];
+  const r = recs[recKey(mode, opts.diff)];
   if (!r || !r.wins) return '';
-  return 'Records en ' + mode + ' : ' + r.score + ' points · ' + fmtTime(r.time);
+  return 'Records en ' + mode + (opts.diff === 'facile' ? ' facile' : '') + ' : ' + r.score + ' points · ' + fmtTime(r.time);
 }
 
 /* ------------------------------------------------------------------ menus (écran titre, KO) */
@@ -2202,11 +2231,12 @@ function openTitleMenu() {
   if (s) {
     const n = s.clues.filter(Boolean).length;
     items.push({ id: 'continue', label: 'Continuer', mode: s.mode,
-      sub: MODE_NAME[s.mode] + ' · ' + (n ? n + (n > 1 ? ' indices' : ' indice') + ' sur 3' : 'aucun indice') + ' · ' + fmtTime(s.time) });
+      sub: MODE_NAME[s.mode] + (s.diff === 'facile' ? ' facile' : '') + ' · ' + (n ? n + (n > 1 ? ' indices' : ' indice') + ' sur 3' : 'aucun indice') + ' · ' + fmtTime(s.time) });
   }
   items.push({ id: 'aventure', label: 'Nouvelle aventure', sub: 'Gare aux chiens du coin !', mode: 'aventure' });
   items.push({ id: 'balade', label: 'Nouvelle balade', sub: 'Les chiens veulent seulement jouer', mode: 'balade' });
-  menu = { items, sel: 0, y0: 520, w: 760, h: 104, gap: 20 };
+  items.push({ id: 'options', label: 'Options', sub: 'Son, difficulté, texte, image' });
+  menu = items.length > 3 ? { items, sel: 0, y0: 510, w: 760, h: 92, gap: 14 } : { items, sel: 0, y0: 520, w: 760, h: 104, gap: 20 };
 }
 function openOverMenu() {
   const items = [];
@@ -2215,7 +2245,15 @@ function openOverMenu() {
   items.push({ id: 'title', label: 'Menu principal', sub: 'Pour changer de mode' });
   menu = { items, sel: 0, y0: 600, w: 760, h: 96, gap: 18 };
 }
+function openPauseMenu() {             // sous la carte de la pause, en ligne
+  menu = { items: [{ id: 'unpause', label: 'Reprendre' }, { id: 'options', label: 'Options' }, { id: 'quit', label: 'Menu principal' }],
+    sel: 0, y0: 912, w: 380, h: 78, gap: 30, row: true };
+}
 function menuBox(i) {
+  if (menu.row) {
+    const n = menu.items.length, tw = n * menu.w + (n - 1) * menu.gap;
+    return { x: GW / 2 - tw / 2 + i * (menu.w + menu.gap), y: menu.y0, w: menu.w, h: menu.h };
+  }
   return { x: GW / 2 - menu.w / 2, y: menu.y0 + i * (menu.h + menu.gap), w: menu.w, h: menu.h };
 }
 function menuHit(gx, gy) {
@@ -2227,8 +2265,8 @@ function menuHit(gx, gy) {
 }
 function menuInput() {
   const n = menu.items.length;
-  if (pressed.up) { menu.sel = (menu.sel + n - 1) % n; SFX.blip(); }
-  if (pressed.down) { menu.sel = (menu.sel + 1) % n; SFX.blip(); }
+  if (pressed.up || (menu.row && pressed.left)) { menu.sel = (menu.sel + n - 1) % n; SFX.blip(); }
+  if (pressed.down || (menu.row && pressed.right)) { menu.sel = (menu.sel + 1) % n; SFX.blip(); }
   return pressed.ok || pressed.bark || pressed.bite || pressed.act ? menu.items[menu.sel].id : null;
 }
 function chooseMenu(id) {
@@ -2238,6 +2276,9 @@ function chooseMenu(id) {
   else if (id === 'resume' && s) loadGame(s, true);
   else if (id === 'restart') newGame(gameMode, true);
   else if (id === 'aventure' || id === 'balade') newGame(id, false);
+  else if (id === 'options') openOptions(state);
+  else if (id === 'unpause') { state = 'play'; Music.refresh(); }
+  else if (id === 'quit') { saveGame(); toTitle(); }
   else toTitle();
 }
 function toTitle() {
@@ -2248,6 +2289,107 @@ function toTitle() {
   state = 'title'; titleT = 0;
   openTitleMenu();
   Music.start();
+}
+
+/* ------------------------------------------------------------------ écran d'options */
+/* Réglages gardés dans le navigateur (OPTIONS_KEY, lus au démarrage) : volumes de la musique et des bruitages (0 à 10),
+   difficulté (« facile », pour les nouvelles parties), taille du texte des dialogues, image (« fluide » : canvas
+   plafonné à MAX_PIXELS ; « nette » : pleine résolution, pour les machines rapides), plein écran. Ouvert depuis le menu
+   principal ou le menu de la pause. Flèches ↑ ↓ pour choisir une ligne, ← → pour la régler (Entrée / A aussi),
+   Échap / B pour revenir ; au toucher, la moitié gauche d'une ligne baisse, la moitié droite monte. */
+const OPTV = { y0: 196, w: 1120, h: 76, gap: 10 };
+let optSel = 0, optReturn = 'title';
+function optRows() {
+  const rows = [
+    { id: 'music', label: 'Musique', level: true },
+    { id: 'sfx', label: 'Bruitages', level: true },
+    { id: 'diff', label: 'Difficulté', values: [['normal', 'Normale'], ['facile', 'Facile']],
+      note: opts.diff === 'facile' ? '5 os au départ, morsures moins fortes, moins de chiens' : 'Pour les nouvelles parties' },
+    { id: 'text', label: 'Texte des dialogues', values: [['normal', 'Normal'], ['grand', 'Grand']] },
+    { id: 'image', label: 'Image', values: [['fluide', 'Fluide'], ['nette', 'Nette']],
+      note: opts.image === 'nette' ? 'Pleine résolution : pour les ordinateurs rapides' : 'Plus légère sur les grands écrans' },
+  ];
+  if (canFullscreen()) rows.push({ id: 'fs', label: 'Plein écran', value: fsElement() ? 'Oui' : 'Non' });
+  rows.push({ id: 'back', label: 'Retour' });
+  return rows;
+}
+function openOptions(from) { optReturn = from === 'pause' ? 'pause' : 'title'; optSel = 0; menu = null; state = 'options'; Music.refresh(); }
+function closeOptions() {
+  state = optReturn;
+  if (state === 'title') { openTitleMenu(); menu.sel = menu.items.findIndex(it => it.id === 'options'); }
+  else { openPauseMenu(); menu.sel = 1; }
+  Music.refresh();
+}
+function changeOpt(r, dir) {
+  if (r.level) opts[r.id] = clamp(opts[r.id] + dir, 0, 10);
+  else if (r.values) {
+    const v = r.values.map(x => x[0]), i = Math.max(0, v.indexOf(opts[r.id]));
+    opts[r.id] = v[(i + (dir < 0 ? v.length - 1 : 1)) % v.length];
+  } else return;
+  STORE.set(OPTIONS_KEY, opts);
+  if (r.id === 'image') resize();
+  Music.refresh();
+  SFX.blip();
+}
+function optionsInput() {
+  const rows = optRows(), n = rows.length;
+  optSel = Math.min(optSel, n - 1);
+  if (pressed.up) { optSel = (optSel + n - 1) % n; SFX.blip(); }
+  if (pressed.down) { optSel = (optSel + 1) % n; SFX.blip(); }
+  const r = rows[optSel];
+  if (pressed.left) changeOpt(r, -1);
+  if (pressed.right) changeOpt(r, 1);
+  if (pressed.ok || pressed.bite || pressed.act) {
+    if (r.id === 'back') { closeOptions(); return; }
+    changeOpt(r, r.level && opts[r.id] >= 10 ? -10 : 1);     // Entrée / A : on monte, puis on repart de 0
+  }
+  if (pressed.pause || pressed.bark) closeOptions();
+}
+function optBox(i) { return { x: GW / 2 - OPTV.w / 2, y: OPTV.y0 + i * (OPTV.h + OPTV.gap), w: OPTV.w, h: OPTV.h }; }
+function optionsTap(gx, gy) {         // toucher / clic : appelé directement par l'événement (plein écran permis)
+  const rows = optRows();
+  for (let i = 0; i < rows.length; i++) {
+    const b = optBox(i), r = rows[i];
+    if (gx < b.x || gx > b.x + b.w || gy < b.y || gy > b.y + b.h) continue;
+    optSel = i;
+    if (r.id === 'back') closeOptions();
+    else if (r.id === 'fs') toggleFullscreen();
+    else changeOpt(r, r.level && gx < b.x + b.w * 0.6 ? -1 : 1);
+    return;
+  }
+}
+function arrowHead(x, y, dir, size, color) {   // petit triangle ◀ ▶ (la police n'a pas ces signes)
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.moveTo(x + dir * size, y); ctx.lineTo(x - dir * size * 0.6, y - size); ctx.lineTo(x - dir * size * 0.6, y + size);
+  ctx.closePath(); ctx.fill();
+}
+function drawOptions() {
+  guiTransform();
+  veil(0.55);
+  outlined('Options', GW / 2, 128, 68, '#FFF7E6');
+  optRows().forEach((r, i) => {
+    const b = optBox(i), sel = i === optSel, ink = sel ? '#3A1E12' : '#FFF7E6', soft = sel ? '#6B5A4E' : '#E9DCC8';
+    drawNine(sel ? 'hud/panel' : 'hud/panel_dark', b.x, b.y, b.w, b.h, 32);
+    const cy = b.y + b.h / 2, vx = b.x + b.w - 44;
+    if (r.id === 'back') { text(r.label, GW / 2, cy + 13, 36, ink, 'center', 700); return; }
+    text(r.label, b.x + 44, r.note ? cy - 2 : cy + 12, 34, ink, 'left', 600);
+    if (r.note) text(r.note, b.x + 44, cy + 26, 21, soft, 'left', 500);
+    if (r.level) {                                     // dix crans
+      for (let k = 0; k < 10; k++) {
+        ctx.fillStyle = k < opts[r.id] ? (sel ? '#E07A2E' : '#F2C14E') : (sel ? '#E3D3B8' : 'rgba(255, 247, 230, 0.22)');
+        ctx.fillRect(vx - 330 + k * 34, cy - 15, 26, 30);
+      }
+      text(String(opts[r.id]), vx - 352, cy + 12, 32, ink, 'right', 600);
+    } else {
+      const label = r.values ? (r.values.find(v => v[0] === opts[r.id]) || r.values[0])[1] : r.value;
+      ctx.font = '600 34px Fredoka, "Trebuchet MS", sans-serif';
+      const w = ctx.measureText(label).width;
+      text(label, vx - 34, cy + 12, 34, ink, 'right', 600);
+      if (r.values) { arrowHead(vx - 8, cy, 1, 11, ink); arrowHead(vx - 58 - w, cy, -1, 11, ink); }
+    }
+  });
+  text(touchMode ? 'Touche une ligne pour la régler (à gauche : moins, à droite : plus)' : pad.on ? 'Croix : choisir et régler · B : retour' :
+    '↑ ↓ : choisir · ← → : régler · Échap : retour', GW / 2, GH - 34, 26, '#E9DCC8', 'center', 500);
 }
 
 /* ------------------------------------------------------------------ mise à jour */
@@ -2717,11 +2859,17 @@ function update(dt) {
       updateFx(dt);
       updateCamera(dt);
       break;
-    case 'pause':
-      if (pressed.pause || pressed.ok) { state = 'play'; Music.refresh(); }
+    case 'pause': {
+      if (pressed.pause) { menu = null; state = 'play'; Music.refresh(); break; }
+      const id = menu && menuInput();
+      if (id) chooseMenu(id);
+      break;
+    }
+    case 'options':
+      optionsInput();
       break;
     case 'play':
-      if (pressed.pause) { state = 'pause'; Music.refresh(); break; }
+      if (pressed.pause) { state = 'pause'; openPauseMenu(); Music.refresh(); break; }
       timePlayed += dt;
       if (pendingSay && (pendingSay.t -= dt) <= 0) { const ps = pendingSay; pendingSay = null; say(ps.lines, ps.onEnd); break; }
       arrowT = Math.max(0, arrowT - dt);
@@ -3036,7 +3184,9 @@ function drawFsButton() {
 function drawDialog() {
   guiTransform();
   const L = dialog.lines[dialog.i], who = WHO[L.who];
-  const bx = 250, by = GH - 262, bw = GW - 500, bh = 226;
+  // option « Texte : grand » : plus gros, une ligne de plus, panneau plus haut
+  const big = opts.text === 'grand', fs = big ? 46 : 38, lh = big ? 56 : 50, maxL = big ? 4 : 3;
+  const bh = big ? 296 : 226, bx = 250, by = GH - 36 - bh, bw = GW - 500;
   drawNine('hud/panel', bx, by, bw, bh, 32);
   let tx = bx + 60;
   if (who.portrait) {
@@ -3045,9 +3195,9 @@ function drawDialog() {
     drawSpr('hud/name_tag', 0, bx + 150, by - 18);
     text(who.name, bx + 150 + 64, by + 12, 26, '#FFFFFF', 'center', 600);
   }
-  ctx.font = '500 38px Fredoka, "Trebuchet MS", sans-serif';
+  ctx.font = `500 ${fs}px Fredoka, "Trebuchet MS", sans-serif`;
   const lines = wrap(L.text.slice(0, Math.floor(dialog.c)), bx + bw - 70 - tx);
-  lines.slice(0, 3).forEach((ln, i) => text(ln, tx, by + 84 + i * 50, 38, '#3A1E12', 'left', 500));
+  lines.slice(0, maxL).forEach((ln, i) => text(ln, tx, by + 84 + (fs - 38) * 0.6 + i * lh, fs, '#3A1E12', 'left', 500));
   if (dialog.c >= L.text.length) drawSpr('hud/next', Math.floor(performance.now() / 120), bx + bw - 70, by + bh - 62);
 }
 
@@ -3075,9 +3225,9 @@ function drawMenu(t) {
     const b = menuBox(i), sel = i === menu.sel;
     drawNine(sel ? 'hud/panel' : 'hud/panel_dark', b.x, b.y, b.w, b.h, 32);
     const ink = sel ? '#3A1E12' : '#FFF7E6';
-    text(it.label, GW / 2, b.y + b.h * 0.48, 40, ink, 'center', 700);
+    text(it.label, b.x + b.w / 2, it.sub ? b.y + b.h * 0.48 : b.y + b.h / 2 + 14, 40, ink, 'center', 700);
     if (it.sub) text(it.sub, GW / 2, b.y + b.h * 0.48 + 34, 26, sel ? '#6B5A4E' : '#E9DCC8', 'center', 500);
-    if (sel) {
+    if (sel && !menu.row) {
       const k = Math.sin(t * 6) * 6;
       drawSpr('hud/bone', 0, b.x - 76 - k, b.y + b.h / 2 - 32);
       drawSpr('hud/bone', 0, b.x + b.w + 12 + k, b.y + b.h / 2 - 32);
@@ -3133,6 +3283,7 @@ function render() {
   ctx.beginPath(); ctx.rect(offX, offY, VW * scale, VH * scale); ctx.clip();
   drawWorld();
   if (state === 'title') drawTitle();
+  else if (state === 'options' && optReturn === 'title') { veil(0.35); drawOptions(); }
   else {
     drawHUD();
     if (state === 'dialog' && dialog) drawDialog();
@@ -3140,10 +3291,13 @@ function render() {
       veil(0.6);
       outlined('Pause', GW / 2, 104, 68, '#FFF7E6');
       drawPauseMap();
-      text((touchMode ? 'Touche l’écran pour reprendre' : pad.on ? 'Start ou A pour reprendre' : 'P ou Entrée pour reprendre, F pour le plein écran') +
-        ' · mode ' + gameMode + ' · partie enregistrée automatiquement', GW / 2, GH - 40, 28, '#E9DCC8', 'center', 500);
+      if (menu) drawMenu(titleT);
+      text((touchMode ? 'Touche un bouton, ou ailleurs pour reprendre' : pad.on ? 'Croix et A pour choisir, Start pour reprendre' :
+        '← → et Entrée pour choisir, P pour reprendre, F pour le plein écran') + ' · mode ' + gameMode +
+        (facile() ? ' facile' : '') + ' · partie enregistrée', GW / 2, GH - 34, 26, '#E9DCC8', 'center', 500);
       if (touchMode && canFullscreen() && !fsElement()) drawFsButton();
     }
+    if (state === 'options') drawOptions();
     if (state === 'over') drawEnd(false);
     if (state === 'win') drawEnd(true);
   }
