@@ -4,8 +4,9 @@ Mini RPG en vue de dessus, fait pour Christophe (3.14 Software, développeur Jav
 Tecky, le teckel au harnais rouge, cherche Alice (la fille de Christophe, 5 ans). Deux livrables issus des mêmes sources :
 une **version web** (Canvas, une seule page HTML, PWA) et un **kit d'assets GameMaker Studio 2** (`GAMEMAKER.md`).
 Langue : tout en français (interface du jeu, commentaires, README, messages de commit). Style visuel : aplats de couleurs,
-contour brun `#3A1E12`, lignes simples, ambiance mignonne. Les photos de référence de Tecky et d'Alice ne sont pas dans le dépôt
-(vie privée) : ne pas redessiner les personnages sans les demander à Christophe.
+contour brun `#3A1E12`, lignes simples, ambiance mignonne. Référence des personnages : `reference/alice_tecky.png`
+(illustrations générées par IA, fournies par Christophe). Tecky : teckel roux, harnais rouge en vrai ; Alice : cheveux châtains
+mi-longs avec frange, t-shirt jaune, jupe rose, pieds nus. Garder ces traits en cas de retouche des sprites.
 
 ## Commandes
 

@@ -47,5 +47,6 @@ des pixels touchent le bord du cadre.
 | `pack_web.py` | atlas, niveau, version web et paquet autonome dans `web/` |
 | `web_src/` | moteur du jeu (`game.js`), gabarits HTML, service worker, vérificateur de placement |
 | `fonts/` | police Fredoka (licence OFL) |
+| `reference/` | illustrations de référence d'Alice et de Tecky |
 | `docs/` | version publiée (GitHub Pages) |
 | `tests/` | batterie de tests |
