@@ -62,7 +62,6 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - Dialogues : 3 lignes maximum affichées ; chaîne longue = la découper en plusieurs répliques.
 - Le service worker de `docs/` est réseau d'abord avec repli cache : pas de version à incrémenter à chaque livraison.
 
-## Idées non faites
+## Reste à faire
 
-Aucune demande en attente à la date du dernier commit. Pistes évoquées : plus de zones/trésors, d'autres chiens, version iPhone
-installable (déjà possible via « Sur l'écran d'accueil »), export LibGDX/Java.
+Aucune demande en attente à la date du dernier commit.
