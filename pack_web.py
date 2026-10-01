@@ -15,6 +15,7 @@ import random
 from PIL import Image
 
 import alice
+import butterflies
 import decor
 import enemies
 import hens
@@ -211,8 +212,12 @@ ENEMIES = [
 # grande route : passages piétons (première des deux tuiles) et circulation (voie 0 en haut vers l'ouest,
 # voie 1 en bas vers l'est ; x de départ en tuiles). Les véhicules s'arrêtent aux passages quand Tecky y est.
 CROSSINGS = (10, 34, 55, 63)
+PARK_FLOWERS = ((14, 36), (30, 36), (14, 43), (31, 45), (35, 33), (2, 40), (12, 46), (24, 31), (36, 45), (19, 46))
 TRAFFIC = [("car_red", 0, 10), ("bus", 0, 40), ("car_yellow", 0, 66),
            ("car_blue", 1, 20), ("van", 1, 50), ("car_green", 1, 72)]
+# papillons du parc (couleur, coin du parc où ils volettent)
+BUTTERFLIES = [("yellow", 20, 33), ("blue", 24.5, 36.5), ("pink", 13, 40), ("orange", 30, 43),
+               ("blue", 34, 34), ("yellow", 6.5, 44.5), ("pink", 10, 33.6)]
 # poules (animées : elles picorent, se promènent, et s'enfuient quand Tecky aboie)
 HENS = [("hen", 59.4, 8.6), ("hen_white", 62.2, 9), ("hen", 60.6, 9.8), ("hen_white", 63.6, 7.9),
         ("hen_white", 66.6, 18.4), ("hen", 65.4, 20.2)]
@@ -315,7 +320,7 @@ def build_map():
         put("feuilles mortes", tx, ty)
     for tx, ty in ((57, 40), (72, 45), (43, 41)):
         put("touffe d'herbe", tx, ty)
-    for tx, ty in ((14, 36), (30, 36), (14, 43), (31, 45), (35, 33), (2, 40), (12, 46), (24, 31), (46, 22), (77, 15)):
+    for tx, ty in PARK_FLOWERS + ((46, 22), (77, 15)):
         put("fleurs", tx, ty)
     for tx, ty in ((51, 9), (58, 6), (64, 22)):
         put("cailloux", tx, ty)
@@ -336,6 +341,10 @@ def build_map():
         "items": [[n, px(x), px(y)] for n, x, y in ITEMS],
         "enemies": [[n, px(x), px(y)] for n, x, y in ENEMIES],
         "hens": [[n, px(x), px(y)] for n, x, y in HENS],
+        "butterflies": [[c, px(x), px(y)] for c, x, y in BUTTERFLIES],
+        # où les papillons se posent : (x, y au sol, hauteur) — sur les pots de fleurs du parc, ou sur les massifs
+        "flowers": [[px(x), px(y) + 2, 44] for n, x, y in DECOR if n == "flower_pot" and y > 30]
+                   + [[px(tx + 0.5), px(ty + 0.5), 4] for tx, ty in PARK_FLOWERS],
         "traffic": {"lanes": [px(12.95), px(14.95)], "road": [px(11.5), px(15.5)],
                     "crossings": [[px(tx), px(tx + 2)] for tx in CROSSINGS],
                     "vehicles": [[n, lane, px(x)] for n, lane, x in TRAFFIC]},
@@ -373,6 +382,8 @@ def collect():
     for a in alice.ANIMS:
         for v in dirs:
             out.append((f"alice/{a}/{v}", [render_svg(s, 48, 48, S, PAD) for s in alice.frames(a, v)], CH_O, True))
+    for c in butterflies.COLORS:
+        out.append((f"butterfly/{c}", [render_svg(sv, 24, 24, S, PAD) for sv in butterflies.frames(c)], (12 * S + M, 12 * S + M), True))
     for n, (_, (w, h), (ox, oy)) in vehicles.VEHICLES.items():
         out.append((f"vehicle/{n}", [render_svg(sv, w, h, S, PAD) for sv in vehicles.frames(n)], (ox * S + M, oy * S + M), True))
     for kind in hens.COLORS:

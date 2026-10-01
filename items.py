@@ -305,5 +305,5 @@ EFFECTS = {   # nom : (fonction, taille, fps)
     "pickup": (fx_pickup, 32, 14),
     "dirt": (fx_dirt, 32, 14),
     "ripple": (fx_ripple, 32, 3),
-    "glint": (fx_glint, 32, 8),
+    "glint": (fx_glint, 32, 7),
 }

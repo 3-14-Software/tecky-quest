@@ -18,6 +18,7 @@ import os
 from PIL import Image, ImageDraw
 
 import alice
+import butterflies
 import decor
 import enemies
 import hens
@@ -80,6 +81,12 @@ def build_vehicles(scale, folder):
         imgs = [render_svg(s, w, h, scale) for s in vehicles.frames(name)]
         save_strip(imgs, folder, f"spr_{name}_right")
         save_strip([mirror(i) for i in imgs], folder, f"spr_{name}_left")
+
+
+def build_butterflies(scale, folder):
+    """Papillons vus de dessus (tête vers le haut, à tourner avec image_angle) : spr_butterfly_<couleur>, 4 images."""
+    for color in butterflies.COLORS:
+        save_strip([render_svg(s, 24, 24, scale) for s in butterflies.frames(color)], folder, f"spr_butterfly_{color}")
 
 
 def build_alice(scale, folder):
@@ -150,6 +157,7 @@ def main():
         al = build_alice(sc, os.path.join(base, "alice"))
         build_hens(sc, os.path.join(base, "hens"))
         build_vehicles(sc, os.path.join(base, "vehicles"))
+        build_butterflies(sc, os.path.join(base, "butterflies"))
         it = build_items(sc, os.path.join(base, "items"))
         fx = build_fx(sc, os.path.join(base, "fx"))
         build_decor(sc, os.path.join(base, "decor"))

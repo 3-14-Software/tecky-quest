@@ -416,7 +416,7 @@ function drawGround(vx, vy) {
    deux, chaque tuile avec son décalage). En plus, des scintillements (fx/glint, mini-étoiles) avec leur propre
    cadence et leur propre place, en bref éclat au milieu de leur cycle. Uniquement en eau profonde : tout le contour,
    plus une marge pour le liseré clair du bord, doit être dans l'eau. */
-const RIPPLE = { cycle: 2.4, show: 0.5, drift: 8, glintCycle: 2.0, glintShow: 0.4 };
+const RIPPLE = { cycle: 2.4, show: 0.5, drift: 8, glintCycle: 2.8, glintShow: 0.4 };
 const deepWater = (x, y) => [[-30, 0], [30, 0], [0, -18], [0, 22], [-22, -12], [22, -12], [-22, 16], [22, 16]]
   .every(([dx, dy]) => waterAt(x + dx, y + dy));
 let waterTiles = null;
@@ -643,7 +643,7 @@ function arrowTarget() {
 }
 
 let state = 'loading';          // loading | title | play | dialog | pause | over | win
-let P, alice, dogs, hens, cars, items, fxs, pops, rings, digs, decor, camX = 0, camY = 0, shake = 0;
+let P, alice, dogs, hens, cars, butterflies, items, fxs, pops, rings, digs, decor, camX = 0, camY = 0, shake = 0;
 let score = 0, timePlayed = 0, fled = 0, treasures = 0, dialog = null, dialogReturn = 'play', aliceSniffed = false;
 let hintText = null, digHint = null, overT = 0, titleT = 0;
 
@@ -669,6 +669,7 @@ function reset() {
   });
   hens = MAP.hens.map(newHen);
   cars = MAP.traffic.vehicles.map(newVehicle);
+  butterflies = MAP.butterflies.map(newButterfly);
   items = MAP.items.map(([n, x, y]) => ({ n, x, y, t: Math.random() * 3 }));
   digs = MAP.dig.map(([x, y]) => ({ x, y, dug: false, t: Math.random() * 2 }));
   fxs = []; pops = []; rings = [];
@@ -805,6 +806,10 @@ function doBark() {
     const dx = h.x - P.x, dy = h.y - P.y, l = Math.hypot(dx, dy);
     if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) scareHen(h, P.x, P.y, HEN.fleeT);
   }
+  for (const b of butterflies) {
+    const dx = b.x - P.x, dy = b.y - P.y, l = Math.hypot(dx, dy);
+    if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) scareButterfly(b, P.x, P.y);
+  }
 }
 
 /* ------------------------------------------------------------------ circulation */
@@ -870,6 +875,62 @@ function updateVehicle(v, dt) {
     d.kx = v.dir * 160; d.ky = (d.y < mid ? -1 : 1) * 760;
     if (d.mode !== 'hurt') { d.mode = 'hurt'; d.setAnim('hurt'); d.timer = 0.5; }
   }
+}
+
+/* ------------------------------------------------------------------ papillons */
+// Ils volettent en zigzag autour de leur coin du parc (petite ombre au sol), se posent parfois sur un pot de fleurs
+// ou un massif (MAP.flowers) en ouvrant et fermant lentement les ailes, et s'envolent, plus haut et plus vite, si
+// Tecky s'approche ou aboie vers eux. Ils volent au-dessus de tout : pas de collision.
+const BFLY = { roam: 190, spd: 55, alt: 36, flee: 240, fleeT: 1.3, scare: 80, perch: 0.35, sc: 0.8 };
+function newButterfly([color, x, y]) {
+  return { color, x, y, hx: x, hy: y, tx: x, ty: y, alt: BFLY.alt, t: Math.random() * 9, flap: Math.random() * 4,
+    mode: 'fly', timer: 0, heading: -Math.PI / 2, perch: null };
+}
+function pickTarget(b) {          // parfois une fleur libre à portée, sinon un point au hasard autour de sa place
+  const free = MAP.flowers.filter(f => dist(f[0], f[1], b.hx, b.hy) < BFLY.roam * 1.3 && !butterflies.some(o => o !== b && o.perch === f));
+  if (free.length && Math.random() < BFLY.perch) {
+    b.perch = free[Math.floor(Math.random() * free.length)]; b.tx = b.perch[0]; b.ty = b.perch[1];
+  } else {
+    const a = Math.random() * Math.PI * 2, r = Math.random() * BFLY.roam;
+    b.perch = null; b.tx = b.hx + Math.cos(a) * r; b.ty = b.hy + Math.sin(a) * r * 0.7;
+  }
+}
+function scareButterfly(b, fromX, fromY) {
+  if (b.mode === 'flee') return;
+  const dx = b.x - fromX, dy = b.y - fromY, l = Math.max(1, Math.hypot(dx, dy));
+  b.mode = 'flee'; b.timer = BFLY.fleeT; b.vx = dx / l; b.vy = dy / l; b.perch = null;
+}
+function updateButterfly(b, dt) {
+  b.t += dt;
+  if (P.mode !== 'ko' && dist(b.x, b.y, P.x, P.y) < BFLY.scare) scareButterfly(b, P.x, P.y);
+  const ease = (want, k) => { b.alt += (want - b.alt) * Math.min(1, dt * k); };
+  if (b.mode === 'rest') {                                    // posé : ouvre et ferme lentement les ailes
+    b.flap += dt * 3;
+    ease(b.perch[2], 6);
+    if ((b.timer -= dt) <= 0) { b.mode = 'fly'; pickTarget(b); }
+    return;
+  }
+  let vx, vy, spd;
+  if (b.mode === 'flee') {
+    b.flap += dt * 22;
+    vx = b.vx; vy = b.vy; spd = BFLY.flee * Math.max(0.3, b.timer / BFLY.fleeT);
+    ease(BFLY.alt * 2, 3);
+    if ((b.timer -= dt) <= 0) { b.mode = 'fly'; pickTarget(b); }   // puis il revient vers sa place
+  } else {
+    b.flap += dt * 14;
+    const dx = b.tx - b.x, dy = b.ty - b.y, l = Math.hypot(dx, dy);
+    if (l < 8) {
+      if (b.perch) { b.mode = 'rest'; b.timer = 2 + Math.random() * 2.5; } else pickTarget(b);
+      return;
+    }
+    const w = Math.sin(b.t * 5.3) * 0.7;                       // zigzag
+    vx = dx / l - dy / l * w; vy = dy / l + dx / l * w;
+    const n = Math.hypot(vx, vy); vx /= n; vy /= n;
+    spd = BFLY.spd * (l < 40 ? 0.6 : 1);
+    ease(b.perch && l < 70 ? b.perch[2] : BFLY.alt + Math.sin(b.t * 2.6) * 10, 3);
+  }
+  b.x += vx * spd * dt; b.y += vy * spd * dt;
+  b.heading = Math.atan2(vy, vx);
 }
 
 /* ------------------------------------------------------------------ poules */
@@ -1343,6 +1404,7 @@ function update(dt) {
       for (const d of dogs) updateDog(d, dt);
       for (const h of hens) updateHen(h, dt);
       for (const v of cars) updateVehicle(v, dt);
+      for (const b of butterflies) updateButterfly(b, dt);
       separateDogs();
       dogs = dogs.filter(d => d.fade < 1);
       alice.t += dt;
@@ -1388,6 +1450,13 @@ function drawWorld() {
   }
   for (const d of decor) if (FLAT.has(d.n) && vis(d.x, d.y, 400)) drawSpr(d.key, 0, d.x, d.y);   // pont, bac à sable
   drawRings();   // ondes d'aboiement, au sol sous les personnages
+  for (const b of butterflies) if (vis(b.x, b.y, 60)) {             // ombres des papillons, plus pâles en altitude
+    ctx.save();
+    ctx.globalAlpha = 0.2 * (1 - Math.min(0.7, b.alt / 110));
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.ellipse(b.x, b.y, Math.max(4, 9 - b.alt * 0.05), 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
 
   const list = [];
   for (const d of decor) if (!FLAT.has(d.n) && vis(d.x, d.y, 280)) list.push({ y: d.y, draw: () => drawSpr(d.key, 0, d.x, d.y) });
@@ -1407,6 +1476,9 @@ function drawWorld() {
   list.sort((a, b) => a.y - b.y);
   for (const o of list) o.draw();
 
+  // papillons : au-dessus de tout, tournés dans le sens du vol
+  for (const b of butterflies) if (vis(b.x, b.y, 80))
+    drawSpr('butterfly/' + b.color, Math.floor(b.flap) % 4, b.x, b.y - b.alt, { angle: b.heading + Math.PI / 2, sc: BFLY.sc });
   for (const f of fxs) drawSpr(f.key, Math.floor(f.t * f.fps), f.x, f.y, { angle: f.angle });
 
   // barres de vie ennemies

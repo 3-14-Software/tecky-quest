@@ -68,6 +68,12 @@ Vues `_right` et `_left` (miroir), 4 images (les enjoliveurs tournent : vitesse 
 Circulation à droite sur la route horizontale. Un véhicule qui touche Tecky le projette sur le bas-côté, sans
 dégâts (il klaxonne avant) ; aux passages piétons, les véhicules s'arrêtent toujours pour Tecky.
 
+### Papillons (`butterflies/`) — `spr_butterfly_yellow` / `_blue` / `_pink` / `_orange`
+Vus de dessus, tête vers le haut : à tourner dans le sens du vol (`image_angle = direction - 90`). **Origine : (24, 24)**,
+au centre. 4 images : ailes ouvertes, mi-closes, presque fermées, mi-closes (environ 14 FPS en vol, 3 FPS posé).
+Dans le jeu web, ils volettent en zigzag dans le parc à environ 36 px du sol (petite ombre en dessous, à 80 % de
+leur taille), se posent sur les fleurs, et s'envolent quand Tecky s'approche ou aboie.
+
 ### Alice (`alice/`)
 | Anim | Images | FPS | Remarque |
 |---|---|---|---|
@@ -101,7 +107,7 @@ dégâts (il klaxonne avant) ; aux passages piétons, les véhicules s'arrêtent
 | `spr_fx_pickup` | 5 | 14 |
 | `spr_fx_dirt` | 5 | 14 — mottes de terre projetées quand Tecky gratte (origine en bas au centre : (32, 56)) |
 | `spr_fx_ripple` | 8 | 3 — petit arc qui naît, s'étire et s'efface : à semer avec parcimonie sur l'eau profonde, loin des berges (le jeu web en met une par tuile d'eau, un cycle de 2,4 s sur deux, à un endroit qui change à chaque cycle) |
-| `spr_fx_glint` | 8 | 8 — mini-étoile qui scintille : en plus des vaguelettes, avec sa propre cadence (le jeu web : une par tuile, cycle de 2 s, 4 cycles sur 10, éclat au milieu du cycle) |
+| `spr_fx_glint` | 8 | 8 — mini-étoile qui scintille : en plus des vaguelettes, avec sa propre cadence (le jeu web : une par tuile, cycle de 2,8 s, 4 cycles sur 10, éclat d'environ 1 s au milieu du cycle) |
 
 ---
 
