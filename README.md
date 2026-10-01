@@ -14,7 +14,7 @@ Tout est généré par du code : sprites en SVG (aplats + contour), tileset, dé
 Prérequis : Python 3 avec `cairosvg`, `Pillow`, `numpy` ; Node 18+ pour les tests.
 
 ```bash
-pip install cairosvg pillow numpy
+pip install -r requirements.txt
 
 python3 pack_web.py      # version web  -> web/index.html (une seule page) + web/tecky_quest_web/ (autonome, PWA)
 python3 build.py         # kit GameMaker -> out/ (sprites, tileset, HUD, audio, aperçus)
