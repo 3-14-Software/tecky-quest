@@ -153,6 +153,8 @@ def main():
     music.render_wav(os.path.join(OUT, "audio", "music_tecky.wav"), loops=1)
     music.render_wav(os.path.join(OUT, "audio", "music_victoire.wav"), loops=1,
                      song=music.fanfare_events(), bpm=music.FANFARE_BPM, tail=1.5)
+    music.render_wav(os.path.join(OUT, "audio", "music_defaite.wav"), loops=1,
+                     song=music.defeat_events(), bpm=music.DEFEAT_BPM, tail=1.5)
     print("OK ->", OUT)
 
 

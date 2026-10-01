@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-« Promenade de Tecky » — morceau chiptune original, en boucle.
+« Promenade de Tecky » — morceau chiptune original, en boucle ; fanfare de victoire et musique de défaite.
 
 Une seule source pour les deux versions :
   - events() -> liste de notes utilisée par le jeu web (WebAudio)
@@ -29,8 +29,8 @@ CHORDS = ["C", "Am", "F", "G", "C", "Am", "F", "G",          # A : thème
           "Am", "Em", "F", "C", "Dm", "Am", "G", "G",        # C : passage plus doux
           "C", "Am", "F", "G", "C", "Am", "Dm", "G"]         # D : reprise du thème
 CHORD_NOTES = {"C": ["C", "E", "G"], "Am": ["A", "C", "E"], "F": ["F", "A", "C"],
-               "G": ["G", "B", "D"], "Em": ["E", "G", "B"], "Dm": ["D", "F", "A"]}
-ROOT_BASS = {"C": "C2", "Am": "A1", "F": "F1", "G": "G1", "Em": "E2", "Dm": "D2"}
+               "G": ["G", "B", "D"], "Em": ["E", "G", "B"], "Dm": ["D", "F", "A"], "E": ["E", "G#", "B"]}
+ROOT_BASS = {"C": "C2", "Am": "A1", "F": "F1", "G": "G1", "Em": "E2", "Dm": "D2", "E": "E2"}
 
 # Mélodie en croches : note, "-" = tenue, "." = silence
 LEAD = """
@@ -167,6 +167,60 @@ def fanfare_events():
     return total, ev
 
 
+# ------------------------------------------------------------------ musique de défaite
+# Même forme et même durée que la fanfare (3 mesures à 140 BPM), mais en la mineur : la mélodie descend doucement,
+# passe par la tension de mi majeur (sol dièse) et se pose sur un la grave tenu. Triste mais tendre, pas moqueuse.
+DEFEAT_BPM = FANFARE_BPM
+DEFEAT_CHORDS = ["Am", "E", "Am"]
+DEFEAT_LEAD = """
+E5 -  D5 -  C5 -  B4 -  | A4 -  C5 -  B4 -  G#4 - | A4 -  -  -  -  -  -  -
+"""
+
+
+def defeat_events():
+    """Musique de défaite (3 mesures, ne boucle pas) : retourne (pas total, événements)."""
+    ev = []
+    total = len(DEFEAT_CHORDS) * STEPS_PER_BAR
+    toks = DEFEAT_LEAD.replace("|", " ").split()
+    assert len(toks) == len(DEFEAT_CHORDS) * 8, len(toks)
+    i = 0
+    while i < len(toks):
+        t = toks[i]
+        if t in "-.":
+            i += 1
+            continue
+        j = i + 1
+        while j < len(toks) and toks[j] == "-":
+            j += 1
+        last = j >= len(toks)
+        ev.append([i * 2, "lead", midi(t), (j - i) * 2 - (0.4 if not last else 0.0), 0.9])
+        i = j
+    for bar, ch in enumerate(DEFEAT_CHORDS):
+        s0 = bar * STEPS_PER_BAR
+        r = midi(ROOT_BASS[ch])
+        if bar == len(DEFEAT_CHORDS) - 1:
+            # accord final tenu, tout doux : la grave, do et mi en écho, un dernier petit coup de grosse caisse
+            ev.append([s0, "bass", r, 16, 1.0])
+            ev.append([s0, "bass", r + 12, 16, 0.5])
+            for n in ("C5", "E5"):
+                ev.append([s0, "lead", midi(n), 16, 0.3])
+            ev.append([s0, "drums", "kick", 1, 0.7])
+            continue
+        # basse en blanches (fondamentale, quinte) : plus lente et posée que dans le thème
+        ev.append([s0, "bass", r, 7.6, 1.0])
+        ev.append([s0 + 8, "bass", r + 7, 7.6, 0.9])
+        # arpège en croches, discret
+        tones = sorted(midi(n + "4") for n in CHORD_NOTES[ch])
+        tones = tones + [tones[0] + 12]
+        for k in range(8):
+            ev.append([s0 + k * 2, "arp", tones[(k * 3) % 4], 1.6, 1.1])
+        # batterie à peine présente : un temps sur deux
+        ev.append([s0, "drums", "kick", 1, 0.6])
+        ev.append([s0 + 8, "drums", "hat", 1, 0.5])
+    ev.sort(key=lambda e: e[0])
+    return total, ev
+
+
 VOL = {"lead": 0.16, "arp": 0.045, "bass": 0.2, "kick": 0.5, "snare": 0.2, "hat": 0.07}
 
 
@@ -241,3 +295,6 @@ if __name__ == "__main__":
     out2 = os.path.join(os.path.dirname(out), "music_victoire.wav")
     dur = render_wav(out2, loops=1, song=fanfare_events(), bpm=FANFARE_BPM, tail=1.5)
     print(f"OK -> {out2} ({dur:.1f} s, ne boucle pas)")
+    out3 = os.path.join(os.path.dirname(out), "music_defaite.wav")
+    dur = render_wav(out3, loops=1, song=defeat_events(), bpm=DEFEAT_BPM, tail=1.5)
+    print(f"OK -> {out3} ({dur:.1f} s, ne boucle pas)")

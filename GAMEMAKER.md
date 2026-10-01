@@ -360,7 +360,15 @@ audio_stop_sound(snd_music_tecky);
 audio_play_sound(snd_music_victoire, 10, false);
 ```
 
-La partition est dans `music.py` (mélodie, accords, batterie ; `fanfare_events()` pour la victoire) : modifie-la puis relance
+`music_defaite.wav` : musique de défaite, même durée que la fanfare (3 mesures à 140 BPM, environ 7 s), en la mineur :
+une mélodie qui descend doucement et se pose sur un accord tenu. À jouer une seule fois quand Tecky n'a plus de vie.
+
+```gml
+audio_stop_sound(snd_music_tecky);
+audio_play_sound(snd_music_defaite, 10, false);
+```
+
+La partition est dans `music.py` (mélodie, accords, batterie ; `fanfare_events()` pour la victoire, `defeat_events()` pour la défaite) : modifie-la puis relance
 `python3 music.py` pour regénérer les WAV. Le jeu web joue exactement la même partition.
 
 ## Import dans GameMaker

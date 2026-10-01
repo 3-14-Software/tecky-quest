@@ -157,7 +157,6 @@ const SFX = {
   scratch() { noise(0.07, 0.09, 700 + Math.random() * 500); },
   blip() { tone(1200, 0.02, 'square', 0.02); },
   win() { [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, 0.18, 'triangle', 0.09, 0, i * 0.14)); },
-  lose() { [392, 330, 262, 196].forEach((f, i) => tone(f, 0.25, 'triangle', 0.08, 0, i * 0.2)); },
 };
 
 /* ------------------------------------------------------------------ musique chiptune */
@@ -167,7 +166,7 @@ const Music = {
   VOL: { lead: 0.16, arp: 0.045, bass: 0.2, kick: 0.5, snare: 0.2, hat: 0.07 },
   init() {
     const mk = S => { const b = Array.from({ length: S.total }, () => []); for (const e of S.ev) b[e[0]].push(e); return { byStep: b, total: S.total, bpm: S.bpm }; };
-    this.songs = { main: mk(SONG), win: mk(WINSONG) };
+    this.songs = { main: mk(SONG), win: mk(WINSONG), lose: mk(LOSESONG) };
     this.byStep = true;
     const len = AC.sampleRate;
     this.noiseBuf = AC.createBuffer(1, len, AC.sampleRate);
@@ -183,12 +182,12 @@ const Music = {
     return this.waves[duty];
   },
   // thème discret (derrière les bruitages), fanfare de fin à plein volume
-  level() { return muted ? 0 : state === 'pause' ? 0.12 : this.cur === 'win' ? 0.55 : 0.35; },
-  /* name : 'main' (boucle) ou 'win' (fanfare de victoire, jouée une seule fois) */
+  level() { return muted ? 0 : state === 'pause' ? 0.12 : this.cur === 'main' ? 0.35 : 0.55; },
+  /* name : 'main' (boucle), 'win' (fanfare de victoire) ou 'lose' (musique de défaite), ces deux-là jouées une seule fois */
   start(name) {
     name = name || 'main';
     if (!AC) return;
-    if (this.on && this.cur === 'win' && name === 'main') this.stop();   // rejouer pendant la fanfare
+    if (this.on && this.cur !== 'main' && name === 'main') this.stop();   // rejouer pendant la fanfare ou la défaite
     if (this.on) return;
     if (!this.byStep) this.init();
     this.cur = name; this.song = this.songs[name];
@@ -218,7 +217,7 @@ const Music = {
       this.step++;
       if (this.step >= this.song.total) {
         if (this.cur === 'main') this.step = 0;
-        else { clearInterval(this.timer); const g0 = this.gain; setTimeout(() => { if (this.gain === g0) this.stop(); }, 2500); return; }   // fanfare : une seule fois
+        else { clearInterval(this.timer); const g0 = this.gain; setTimeout(() => { if (this.gain === g0) this.stop(); }, 2500); return; }   // fanfare, défaite : une seule fois
       }
     }
   },
@@ -836,7 +835,7 @@ function hurtPlayer(dmg, fromX, fromY) {
   if (P.hp <= 0) {
     P.mode = 'ko'; P.setAnim('ko'); P.timer = 0;
     Music.stop();
-    SFX.lose();
+    Music.start('lose');
   } else {
     P.mode = 'hurt'; P.setAnim('hurt'); P.timer = 0.25;
   }

@@ -29,8 +29,9 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - `tecky.py`, `alice.py`, `enemies.py` (roquet, bouledogue, molosse/doberman), `items.py`, `decor.py`, `tiles.py`, `hud.py` :
   dessins et animations. `tiles.py` : tileset Wang/marching squares de 16 tuiles par transition (bits NO=1, NE=2, SO=4, SE=8),
   tuile 0 vide, 16 colonnes, `PAIRS`, `PRIORITY`, `resolve()`.
-- `music.py` : **source unique** de la musique (thème « Promenade de Tecky », 32 mesures, boucle ; fanfare de victoire de 3 mesures).
-  Génère les WAV GameMaker et les données `SONG`/`WINSONG` jouées par le séquenceur WebAudio du jeu.
+- `music.py` : **source unique** de la musique (thème « Promenade de Tecky », 32 mesures, boucle ; fanfare de victoire et
+  musique de défaite, 3 mesures chacune à 140 BPM, même durée). Génère les WAV GameMaker et les données
+  `SONG`/`WINSONG`/`LOSESONG` jouées par le séquenceur WebAudio du jeu (`Music.start('main' | 'win' | 'lose')`).
 - `pack_web.py` : atlas (frames rognées), niveau (`MW=80`, `MH=48` tuiles, positions des décors/objets/chiens/trésors `DIG`),
   `index.html` à partir de `web_src/index.template.html` + `game.js`, paquet autonome (manifest, service worker, icônes, `serve.sh`).
   Lance `web_src/check_placement.js` : rien dans l'eau ou un obstacle, et tout atteignable **à pied depuis la niche**
@@ -55,7 +56,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - Aboiement : touche dans un cône devant soi, jusqu'à `BARK` (Tecky, 300 px) ou `DOG_BARK` (doberman, 320 px).
   Une onde au sol (`addBarkRing` / `drawRings`, crème ou rouge) montre exactement cette zone : toujours passer par ces
   constantes pour changer une portée. Test : `tests/ring.js`.
-- Son : thème à 0,35 (`Music.level()`), fanfare de fin à 0,55 ; bruitages multipliés par `SFX_VOL` (1,4).
+- Son : thème à 0,35 (`Music.level()`), fanfare de victoire et musique de défaite à 0,55 (jouées une seule fois) ;
+  bruitages multipliés par `SFX_VOL` (1,4). KO de Tecky → `Music.start('lose')` ; rejouer relance le thème.
 - Trésors (médaille 100, jouet pouic-pouic 50, balle 20) : jamais dans l'eau — `check_placement.js` le vérifie.
 - Indices (`CLUES` : barrette à la ferme, chaussure dans la forêt, doudou au parc) : chacun dit où chercher ensuite
   (`CLUE_NEXT`), la flèche du HUD vise le prochain indice puis Alice (`arrowTarget()`). Elle n'est **pas permanente** :

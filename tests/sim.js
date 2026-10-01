@@ -63,14 +63,20 @@ setTimeout(() => {
   run('var B = dogs.find(d => d.kind === "bouledogue"); P.x = B.x + 70; P.y = B.y; P.inv = 0; P.hp = 10; P.mode="free";');
   step(300);
   ok(run('P.hp') < 10, 'le bouledogue mord Tecky (PV = ' + run('P.hp') + ')');
-  // KO -> game over
+  // KO -> musique de défaite -> game over
   run('P.hp = 1; P.inv = 0; P.mode = "free"; P.x = B.x + 70; P.y = B.y;');
-  step(600);
+  { let k = 0; while (run('P.mode') !== 'ko' && k++ < 600) step(1); }
+  ok(run('Music.on') && run('Music.cur') === 'lose', 'KO : la musique de défaite démarre');
+  ok(run('LOSESONG.total') === run('WINSONG.total') && run('LOSESONG.bpm') === run('WINSONG.bpm'),
+     'même durée que la fanfare (' + run('LOSESONG.total') + ' pas à ' + run('LOSESONG.bpm') + ' BPM)');
+  { const n1 = nodes; step(60 * 2); ok(nodes - n1 > 20, 'elle joue des notes (' + (nodes - n1) + ' nœuds en 2 s)'); }
+  step(60 * 8);
   ok(run('state') === 'over', 'game over quand la vie tombe à 0 (état : ' + run('state') + ')');
-  step(90); run('pressed.ok = true'); step(1);
+  ok(intervals.length === 0, 'la musique de défaite ne boucle pas (séquenceur arrêté)');
+  run('pressed.ok = true'); step(1);
   advanceDialog();
   ok(run('state') === 'play' && run('P.hp') === 6, 'on peut rejouer, avec 3 os sur 5');
-  ok(run('Music.on'), 'la musique reprend');
+  ok(run('Music.on') && run('Music.cur') === 'main', 'le thème reprend');
   // ramasser une balle
   run('var it = items.find(i => i.n === "ball"); P.x = it.x; P.y = it.y + 30; P.mode="free"; var sc = score;');
   step(2);
