@@ -20,6 +20,7 @@ from PIL import Image, ImageDraw
 import alice
 import decor
 import enemies
+import hens
 import hud
 import hud_mockup
 import items
@@ -61,6 +62,15 @@ def build_enemies(scale, folder):
     anims = {a: dirs for a, (_, _, dirs) in tecky.ANIMS.items() if a != "dig"}
     return {dog: _four_dirs(lambda a, v, dog=dog: enemies.frames(dog, a, v), anims, folder, f"spr_{dog}", scale)
             for dog in enemies.DOGS}
+
+
+def build_hens(scale, folder):
+    """Poules animées : spr_hen_<anim>_right / _left (et spr_hen_white_…)."""
+    for kind in hens.COLORS:
+        for anim in hens.ANIMS:
+            imgs = [render_svg(s, 32, 32, scale) for s in hens.frames(kind, anim)]
+            save_strip(imgs, folder, f"spr_{kind}_{anim}_right")
+            save_strip([mirror(i) for i in imgs], folder, f"spr_{kind}_{anim}_left")
 
 
 def build_alice(scale, folder):
@@ -129,6 +139,7 @@ def main():
         t = build_tecky(sc, os.path.join(base, "tecky"))
         en = build_enemies(sc, os.path.join(base, "enemies"))
         al = build_alice(sc, os.path.join(base, "alice"))
+        build_hens(sc, os.path.join(base, "hens"))
         it = build_items(sc, os.path.join(base, "items"))
         fx = build_fx(sc, os.path.join(base, "fx"))
         build_decor(sc, os.path.join(base, "decor"))

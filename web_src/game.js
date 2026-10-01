@@ -156,6 +156,7 @@ const SFX = {
   flee() { tone(700, 0.25, 'sine', 0.06, 500); },
   scratch() { noise(0.07, 0.09, 700 + Math.random() * 500); },
   blip() { tone(1200, 0.02, 'square', 0.02); },
+  cluck() { tone(950, 0.05, 'square', 0.05, 250); tone(1150, 0.05, 'square', 0.05, 200, 0.08); tone(1400, 0.12, 'square', 0.05, -600, 0.17); },
   win() { [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, 0.18, 'triangle', 0.09, 0, i * 0.14)); },
 };
 
@@ -424,7 +425,7 @@ const FOOT = {
   barrel_blue: [-18, -16, 18, 0], barrel_red: [-18, -16, 18, 0], crate: [-24, -22, 24, 0],
   fence_metal_h: [0, -12, 64, 0], fence_metal_v: [-6, -64, 6, 0],
   // ferme et rivière (roseaux, barque et pont : pas de collision)
-  barn: [-96, -84, 96, -2], chicken_coop: [-36, -14, 36, 0], hen: [-14, -10, 14, 0], hen_white: [-14, -10, 14, 0],
+  barn: [-96, -84, 96, -2], chicken_coop: [-36, -14, 36, 0],
   tractor: [-52, -20, 52, 0], scarecrow: [-7, -8, 7, 0],
   // forêt et parc (champignons, fougère et bac à sable : pas de collision)
   fir: [-18, -16, 18, 0], stump: [-20, -16, 20, 0], log: [-54, -22, 56, 0], slide: [-56, -14, 58, 0],
@@ -527,7 +528,7 @@ function steer(d, vx, vy, s, dt) {
 
 /* ------------------------------------------------------------------ acteurs */
 const FPS = { idle: 6, walk: 12, bark: 10, bite: 14, hurt: 10, ko: 6, happy: 8, dig: 14 };
-const LOOP = { idle: true, walk: true, happy: true, dig: true };
+const LOOP = { idle: true, walk: true, happy: true, dig: true, flap: true };
 
 class Actor {
   constructor(kind, x, y) {
@@ -598,7 +599,7 @@ function arrowTarget() {
 }
 
 let state = 'loading';          // loading | title | play | dialog | pause | over | win
-let P, alice, dogs, items, fxs, pops, rings, digs, decor, camX = 0, camY = 0, shake = 0;
+let P, alice, dogs, hens, items, fxs, pops, rings, digs, decor, camX = 0, camY = 0, shake = 0;
 let score = 0, timePlayed = 0, fled = 0, treasures = 0, dialog = null, dialogReturn = 'play', aliceSniffed = false;
 let hintText = null, digHint = null, overT = 0, titleT = 0;
 
@@ -622,6 +623,7 @@ function reset() {
     d.t = Math.random();
     return d;
   });
+  hens = MAP.hens.map(newHen);
   items = MAP.items.map(([n, x, y]) => ({ n, x, y, t: Math.random() * 3 }));
   digs = MAP.dig.map(([x, y]) => ({ x, y, dug: false, t: Math.random() * 2 }));
   fxs = []; pops = []; rings = [];
@@ -753,6 +755,60 @@ function doBark() {
       continue;
     }
     hurtDog(d, 1, dx / l * 380, dy / l * 380, 1.1);
+  }
+  for (const h of hens) {
+    const dx = h.x - P.x, dy = h.y - P.y, l = Math.hypot(dx, dy);
+    if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) scareHen(h, P.x, P.y, HEN.fleeT);
+  }
+}
+
+/* ------------------------------------------------------------------ poules */
+// Elles picorent et se promènent autour de leur place ; un aboiement de Tecky (même cône, même portée que pour les
+// chiens) les fait fuir de quelques pas en battant des ailes. Elles ne bloquent pas : si Tecky leur fonce dessus,
+// elles s'écartent aussi.
+const HEN = { roam: 64, spd: 34, flee: 260, fleeT: 0.85, bump: 40, bumpT: 0.45 };
+const HEN_FPS = { idle: 4, peck: 10, walk: 10, flap: 14 };      // comme hens.py
+let lastCluck = -1;
+function newHen([kind, x, y]) {
+  const h = new Actor(kind, x, y);
+  return Object.assign(h, { fps: HEN_FPS, hx: x, hy: y, mode: 'idle', timer: Math.random() * 2,
+    dir: Math.random() < 0.5 ? 'left' : 'right' });
+}
+function scareHen(h, fromX, fromY, t) {
+  if (h.mode === 'flee' && h.timer >= t) return;
+  if (h.mode !== 'flee' && timePlayed - lastCluck > 0.15) { lastCluck = timePlayed; SFX.cluck(); }
+  const dx = h.x - fromX, dy = h.y - fromY, l = Math.max(1, Math.hypot(dx, dy));
+  h.mode = 'flee'; h.timer = t; h.fleeT = t; h.vx = dx / l; h.vy = dy / l;
+  h.dir = h.vx < 0 ? 'left' : 'right';
+  h.setAnim('flap');
+}
+function updateHen(h, dt) {
+  h.t += dt;
+  h.timer -= dt;
+  if (P.mode !== 'ko' && dist(h.x, h.y, P.x, P.y) < HEN.bump) scareHen(h, P.x, P.y, HEN.bumpT);
+  switch (h.mode) {
+    case 'flee': {
+      const k = Math.max(0.25, h.timer / h.fleeT);              // ralentit en fin de fuite
+      moveActor(h, h.vx * HEN.flee * k * dt, h.vy * HEN.flee * k * dt, 8);
+      if (h.timer <= 0) { h.mode = 'idle'; h.timer = 0.6 + Math.random(); h.setAnim('idle'); }
+      return;
+    }
+    case 'peck':
+      if (h.done()) { h.mode = 'idle'; h.timer = 0.3 + Math.random() * 1.2; h.setAnim('idle'); }
+      return;
+    case 'walk': {
+      const dx = h.tx - h.x, dy = h.ty - h.y, l = Math.hypot(dx, dy), ox = h.x, oy = h.y;
+      if (l > 4) moveActor(h, dx / l * HEN.spd * dt, dy / l * HEN.spd * dt, 8);
+      if (l <= 4 || h.timer <= 0 || (ox === h.x && oy === h.y)) { h.mode = 'idle'; h.timer = 0.4 + Math.random(); h.setAnim('idle'); }
+      return;
+    }
+    default:   // au repos : picorer (le plus souvent) ou faire quelques pas autour de sa place
+      if (h.timer > 0) return;
+      if (Math.random() < 0.6) { h.mode = 'peck'; h.setAnim('peck'); return; }
+      const a = Math.random() * Math.PI * 2, r = Math.random() * HEN.roam;
+      h.tx = h.hx + Math.cos(a) * r; h.ty = h.hy + Math.sin(a) * r * 0.6;
+      h.dir = h.tx < h.x ? 'left' : 'right';
+      h.mode = 'walk'; h.timer = 2.5; h.setAnim('walk');
   }
 }
 
@@ -1158,6 +1214,7 @@ function update(dt) {
       updateDialog(dt);
       alice.t += dt; P.t += dt;
       for (const d of dogs) if (d.mode !== 'ko') d.t += dt;
+      for (const h of hens) h.t += dt;
       updateFx(dt);
       updateCamera(dt);
       break;
@@ -1172,6 +1229,7 @@ function update(dt) {
       if (!alice.found && (stuckT += dt) > ARROW.nudgeAfter) showArrow(ARROW.nudge);
       updatePlayer(dt);
       for (const d of dogs) updateDog(d, dt);
+      for (const h of hens) updateHen(h, dt);
       separateDogs();
       dogs = dogs.filter(d => d.fade < 1);
       alice.t += dt;
@@ -1226,6 +1284,7 @@ function drawWorld() {
     list.push({ y: it.y + 24, draw: () => drawSpr('item/' + it.n, i, it.x, it.y + dy) });
   }
   for (const d of dogs) if (vis(d.x, d.y, 120)) list.push({ y: d.y, draw: () => d.draw(Math.max(0, 1 - d.fade)) });
+  for (const h of hens) if (vis(h.x, h.y, 60)) list.push({ y: h.y, draw: () => h.draw() });
   if (!alice.hidden && vis(alice.x, alice.y, 120)) list.push({ y: alice.y, draw: () => alice.draw() });
   const blink = P.inv > 0 && P.mode !== 'ko' && Math.floor(P.inv * 12) % 2 === 0;
   list.push({ y: P.y, draw: () => P.draw(blink ? 0.35 : 1) });

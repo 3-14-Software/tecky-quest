@@ -46,6 +46,16 @@ Mêmes animations pour Tecky (`spr_tecky_…`) et les trois ennemis :
 | dig  | 6 | 14 | **Tecky seulement** : gratter le sol (à boucler ~1 s, avec `spr_fx_dirt`) |
 | ko   | 4 | 6 | `right` et `left` seulement ; rester sur la dernière image |
 
+### Poules (`hens/`) — rousse `spr_hen_…` et blanche `spr_hen_white_…`
+Vues `_right` et `_left` (miroir). **Origine : (32, 56)**, sous les pattes. Pas de collision : elles s'écartent.
+
+| Anim | Images | FPS | Remarque |
+|---|---|---|---|
+| idle | 4 | 4 | petits mouvements de tête |
+| peck | 7 | 10 | picore (le cou plonge jusqu'au sol), une fois puis retour à idle |
+| walk | 4 | 10 | quelques pas autour de sa place, en hochant la tête |
+| flap | 4 | 14 | fuite en battant des ailes (aboiement de Tecky dans le cône, ou Tecky trop près) |
+
 ### Alice (`alice/`)
 | Anim | Images | FPS | Remarque |
 |---|---|---|---|
@@ -205,7 +215,6 @@ L'origine est au pied de l'objet.
 | `spr_decor_fence_metal_h` / `_v` | 64×64 | (0, 56) / (32, 64) |
 | `spr_decor_barn` (grange) | 256×224 | (128, 216) |
 | `spr_decor_chicken_coop` (poulailler) | 128×128 | (64, 120) |
-| `spr_decor_hen` / `hen_white` (poule rousse / blanche) | 64×64 | (32, 56) |
 | `spr_decor_tractor` | 128×96 | (64, 88) |
 | `spr_decor_scarecrow` (épouvantail) | 64×128 | (32, 120) |
 | `spr_decor_bridge` (pont, **à plat**) | 192×320 | (96, 320) |
@@ -247,7 +256,7 @@ Pensé pour l'event **Draw GUI** avec `display_set_gui_size(1920, 1080)` et les 
 | `spr_hud_cooldown` | 8 | (0, 0) | voile de recharge à poser sur un bouton (0 = vient d'être utilisé) |
 | `spr_hud_enemy_bar_bg` / `_fill` | 1 | (28, 0) / (0, 0) | barre de vie au-dessus d'un ennemi |
 | `spr_hud_arrow` | 4 | centre (40, 40) | flèche au bord de l'écran (pointe à droite, pastille vide) : seule elle tourne |
-| `spr_hud_arrow_icon` | 4 | centre (20, 20) | contenu de la pastille, toujours droit : barrette, chaussure, doudou, tête d'Alice |
+| `spr_hud_arrow_icon` | 4 | centre (22, 22) | contenu de la pastille, toujours droit : barrette, chaussure, doudou, tête d'Alice |
 | `spr_title_logo` | 1 | centre | logo « Tecky Quest » pour l'écran titre |
 
 **9-slice** : dans l'éditeur de sprite, active *Nine Slice* avec 32 px de chaque côté (16 en x1),

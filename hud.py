@@ -271,8 +271,9 @@ def arrow(scale):
 
 
 def arrow_icons(scale):
-    """Contenu de la pastille (20x20, rond) : barrette, chaussure, doudou (indices dans l'ordre), puis tête d'Alice."""
-    n = 20 * scale
+    """Contenu de la pastille (disque de 20 dans un cadre de 22, marge comprise) : barrette, chaussure, doudou
+    (indices dans l'ordre), puis tête d'Alice."""
+    n, m = 20 * scale, 22 * scale
     mask = Image.new("L", (n, n), 0)
     ImageDraw.Draw(mask).ellipse([0, 0, n - 1, n - 1], fill=255)
     out = []
@@ -280,11 +281,14 @@ def arrow_icons(scale):
         d = Drawing(32, 32)
         items.ITEMS[name][0](d)
         im = render_svg(d.svg(), 32, 32, scale).resize((int(21 * scale), int(21 * scale)), Image.LANCZOS)
-        cell = Image.new("RGBA", (n, n), (0, 0, 0, 0))
-        cell.alpha_composite(im, ((n - im.width) // 2, (n - im.height) // 2))
+        cell = Image.new("RGBA", (m, m), (0, 0, 0, 0))
+        cell.alpha_composite(im, ((m - im.width) // 2, (m - im.height) // 2))
         out.append(cell)
     face = _crop_face(alice.front(alice.A()).svg(), 24, 16.5, 12, scale).resize((n, n), Image.LANCZOS)
-    out.append(Image.composite(face, Image.new("RGBA", (n, n), (0, 0, 0, 0)), Image.composite(face.getchannel("A"), mask, mask)))
+    disc = Image.composite(face, Image.new("RGBA", (n, n), (0, 0, 0, 0)), Image.composite(face.getchannel("A"), mask, mask))
+    cell = Image.new("RGBA", (m, m), (0, 0, 0, 0))
+    cell.alpha_composite(disc, (scale, scale))
+    out.append(cell)
     return out
 
 

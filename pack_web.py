@@ -17,6 +17,7 @@ from PIL import Image
 import alice
 import decor
 import enemies
+import hens
 import hud
 import items
 import tecky
@@ -132,7 +133,7 @@ DECOR = [
     ("reeds", 69, 25.8), ("tree", 75, 25.3), ("reeds", 78.5, 25.9),
 
     # ================= FERME (nord-est)
-    ("barn", 56, 4.9), ("chicken_coop", 60.8, 6.4), ("hen", 59.4, 8.4), ("hen_white", 62.2, 8.9), ("hen", 60.6, 9.6),
+    ("barn", 56, 4.9), ("chicken_coop", 60.8, 6.4),
     ("tractor", 52, 8.7), ("hay", 50.8, 5.6), ("hay", 52, 6), ("hay", 61.5, 4.2),
     ("scarecrow", 70.5, 6), ("scarecrow", 45.5, 5.6),
     ("tree", 41.5, 2), ("tree", 49.5, 1.3), ("tree", 63, 1.3), ("tree", 78.6, 1.6), ("tree", 41.5, 10.8),
@@ -142,7 +143,7 @@ DECOR = [
     ("tree", 43, 18.6), ("tree", 46.4, 18.4), ("tree", 49.8, 18.6), ("tree", 43.2, 21.8), ("tree", 46.6, 22),
     ("tree", 50, 21.8), ("tree", 76.5, 17.6), ("tree", 78.5, 22.6), ("bush", 61.6, 17.4), ("bush", 67.4, 23.3),
     ("reeds", 69.6, 18.6), ("reeds", 74.6, 21.4), ("hay", 61.8, 21.4), ("scarecrow", 56, 21.4),
-    ("hen_white", 66.6, 18.2), ("signpost", 62, 24.6),
+    ("signpost", 62, 24.6),
     ("bridge", 64, 30),
 
     # ================= FORÊT (sud-est)
@@ -206,6 +207,9 @@ ENEMIES = [
     ("roquet", 26.5, 37.2), ("bouledogue", 15, 41.6), ("berger", 33, 40),
 ]
 # trésors enterrés : au centre de la tuile des traces de pattes (scintillement et trou creusé s'y alignent)
+# poules (animées : elles picorent, se promènent, et s'enfuient quand Tecky aboie)
+HENS = [("hen", 59.4, 8.6), ("hen_white", 62.2, 9), ("hen", 60.6, 9.8), ("hen_white", 63.6, 7.9),
+        ("hen_white", 66.6, 18.4), ("hen", 65.4, 20.2)]
 DIG = [(12.5, 6.5), (5.5, 19.5), (21.5, 18.5),
        (47.5, 20.5), (68.5, 11.5), (44.5, 33.5), (76.5, 44.5), (34.5, 33.5)]
 START = (4.5, 4.2)
@@ -325,6 +329,7 @@ def build_map():
         "decor": [[n, px(x), px(y)] for n, x, y in DECOR],
         "items": [[n, px(x), px(y)] for n, x, y in ITEMS],
         "enemies": [[n, px(x), px(y)] for n, x, y in ENEMIES],
+        "hens": [[n, px(x), px(y)] for n, x, y in HENS],
         "dig": [[px(x), px(y)] for x, y in DIG],
         "start": [px(START[0]), px(START[1])],
         "alice": [px(ALICE[0]), px(ALICE[1])],
@@ -359,6 +364,10 @@ def collect():
     for a in alice.ANIMS:
         for v in dirs:
             out.append((f"alice/{a}/{v}", [render_svg(s, 48, 48, S, PAD) for s in alice.frames(a, v)], CH_O, True))
+    for kind in hens.COLORS:
+        for anim in hens.ANIMS:
+            out.append((f"{kind}/{anim}/right", [render_svg(s, 32, 32, S, PAD) for s in hens.frames(kind, anim)],
+                        (16 * S + M, 28 * S + M), True))
     for n in items.ITEMS:
         out.append((f"item/{n}", [render_svg(s, 32, 32, S, PAD) for s in items.item_frames(n)], (32 + M, 32 + M), True))
     for n, (fn, size, _) in items.EFFECTS.items():
@@ -368,7 +377,7 @@ def collect():
         out.append((f"decor/{n}", [render_svg(fn().svg(), w, h, S, PAD)], (ox * S + M, oy * S + M), True))
     for n, ims in hud.all_sprites(S).items():
         key = "hud/" + n.replace("spr_hud_", "").replace("spr_", "")
-        o = {"spr_hud_arrow": (40, 40), "spr_hud_arrow_icon": (20, 20)}.get(n, (0, 0))
+        o = {"spr_hud_arrow": (40, 40), "spr_hud_arrow_icon": (22, 22)}.get(n, (0, 0))
         if n == "spr_title_logo":
             o = (ims[0].width // 2, ims[0].height // 2)
         out.append((key, ims, o, n in ("spr_hud_digits",)))
@@ -417,6 +426,7 @@ def preview(m, atlas, meta, tileset):
     things = [("decor/" + n, x, y) for n, x, y in m["decor"]]
     things += [("item/" + n, x, y) for n, x, y in m["items"]]
     things += [(f"{n}/idle/down", x, y) for n, x, y in m["enemies"]]
+    things += [(f"{n}/idle/right", x, y) for n, x, y in m["hens"]]
     things += [("tecky/idle/down", *m["start"]), ("alice/idle/down", *m["alice"])]
     for key, x, y in sorted(things, key=lambda t: t[2]):
         e = meta[key]

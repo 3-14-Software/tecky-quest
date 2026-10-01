@@ -408,39 +408,6 @@ def chicken_coop():
     return d
 
 
-def hen(body="#D9772B", wing="#B9601E", tail="#A3502A"):
-    """Poule de profil (tournée vers la droite)."""
-    d = Drawing(32, 32)
-    _shadow(d, 15.5, 28, 9, 1.8)
-    # pattes
-    d.raw(line("M13,23 L13,27.6 M11.2,28 L14.6,28 M17,23 L17,27.6 M15.2,28 L18.6,28", "#E8A33A", 1.3))
-    # queue (plumes dressées)
-    d.add(path("M10,19 Q3,15 4.5,7 Q8,10 9,9 Q10,13 13,15 Z"), tail)
-    # corps
-    d.add(ellipse(15.5, 19, 8.5, 6.2), body)
-    # cou + tête
-    d.add(path("M17.5,17 Q18,10 21.5,8.5 L24.5,12 Q23,17 23.5,19 Z"), body)
-    d.add(circle(22, 9.5, 4.3), body)
-    # crête (au-dessus de la tête) et barbillon
-    for cx, cy, r in ((19.6, 5.6, 1.8), (22, 4.8, 2.0), (24.3, 5.8, 1.6)):
-        d.add(circle(cx, cy, r), "#E2332B")
-    d.add(ellipse(25.3, 13.4, 1.4, 2.0), "#E2332B")
-    # bec
-    d.add(poly([(25.6, 8.6), (29.6, 10.2), (25.6, 11.8)]), "#F2C14E")
-    # aile
-    d.add(path("M10.5,17.5 Q15,14.8 20,17.2 Q18.5,22.5 13,22 Q10,20.5 10.5,17.5 Z"), wing, sil=False, edge=True)
-    d.raw(line("M13,19.4 Q15.5,18.6 18,19.4", "#9E4E1C", 0.7))
-    # œil + joue
-    d.add(circle(22.6, 9, 1.05), OUTLINE, sil=False)
-    d.add(circle(22.9, 8.6, 0.38), "#FFFFFF", sil=False)
-    d.add(circle(24, 11.4, 1.1), "#F28CB8", sil=False, opacity=0.7)
-    return d
-
-
-def hen_white():
-    return hen(body="#FFF7E6", wing="#E6DCC8", tail="#F3E7CF")
-
-
 def tractor(body="#D7332B", body_dk="#A82520"):
     """Tracteur de profil, tourné vers la droite : grande roue arrière, petite roue avant, cabine."""
     d = Drawing(64, 48)
@@ -1050,8 +1017,6 @@ DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x)
     # ferme et rivière
     "barn": (barn, (128, 112), (64, 108)),
     "chicken_coop": (chicken_coop, (64, 64), (32, 60)),
-    "hen": (hen, (32, 32), (16, 28)),
-    "hen_white": (hen_white, (32, 32), (16, 28)),
     "tractor": (tractor, (64, 48), (32, 44)),
     "scarecrow": (scarecrow, (32, 64), (16, 60)),
     "bridge": (bridge, (96, 160), (48, 160)),
