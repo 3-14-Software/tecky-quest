@@ -21,6 +21,16 @@ function main() {
   ok(run('P.alpha') === 1 && run('P.sy') === undefined && run('P.mode') === 'free', 'il repart normalement');
   run('P.cdBite = 0; pressed.bite = true'); step(80);
   ok(Math.abs(run('P.x') - run('TN[0]')) < 1 && run('state') === 'play', 'retour par le même terrier, sans nouvelle explication');
+  // tous les terriers, dans les deux sens (trois d'entre eux sont verticaux : même x aux deux bouts)
+  const nT = run('MAP.tunnels.length');
+  run('var dug0 = digs.map(g => g.dug); digs.forEach(g => g.dug = true);');   // (un trésor près d'un bout passerait avant)
+  for (let k = 0; k < nT; k++) for (const [a, b] of [[0, 2], [2, 0]]) {
+    run(`var T2 = MAP.tunnels[${k}]; P.x = T2[${a}]; P.y = T2[${a + 1}]; P.mode = "free"; P.cdBite = 0; state = "play"; dialog = null; pressed.bite = true`);
+    step(80); if (run('state') === 'dialog') advanceDialog();
+    ok(Math.abs(run(`P.x - T2[${b}]`)) < 1 && Math.abs(run(`P.y - T2[${b + 1}]`)) < 1 && run('P.mode') === 'free',
+       'terrier ' + (k + 1) + (a ? ' (retour)' : ' (aller)') + ' : Tecky ressort de l’autre côté');
+  }
+  run('digs.forEach((g, i) => g.dug = dug0[i]);');
   // un chien qui le poursuit doit faire le tour
   run('var D = new Actor("roquet", TN[0] - 60, TN[1]); Object.assign(D, { id: 99, T: DOGS.roquet, hp: 2, mode: "chase", timer: 0, hx: D.x, hy: D.y, vx: 0, vy: 0, kx: 0, ky: 0, cd: 9, barkCd: 9, chargeCd: 9, hitDone: false, fade: 0 }); dogs = [D];');
   run('P.x = TN[0]; P.y = TN[1]; P.mode = "free"; P.cdBite = 0; pressed.bite = true'); step(80);

@@ -1427,7 +1427,7 @@ function updateTunnel(dt) {
     P.sy = 1 - P.timer / T.dig * 0.6;
   } else if (P.timer < T.dig + T.under) {              // sous le grillage
     P.alpha = 0; P.sy = 0.3;
-    if (P.x !== t.tx) { P.x = t.tx; P.y = t.ty; P.setAnim('idle'); afterTunnel(); }
+    if (!t.moved) { t.moved = true; P.x = t.tx; P.y = t.ty; P.setAnim('idle'); afterTunnel(); }   // (terriers verticaux : même x aux deux bouts)
   } else if (P.timer < T.dig + T.under + T.out) {      // il ressort de l'autre côté
     P.alpha = 1; P.sy = 0.3 + (P.timer - T.dig - T.under) / T.out * 0.7;
   } else {
