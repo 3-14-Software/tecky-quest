@@ -28,6 +28,7 @@ import music
 import sample_map
 import tecky
 import tiles
+import vehicles
 from spritelib import render_svg, mirror, flash, save_strip, save_gif
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -71,6 +72,14 @@ def build_hens(scale, folder):
             imgs = [render_svg(s, 32, 32, scale) for s in hens.frames(kind, anim)]
             save_strip(imgs, folder, f"spr_{kind}_{anim}_right")
             save_strip([mirror(i) for i in imgs], folder, f"spr_{kind}_{anim}_left")
+
+
+def build_vehicles(scale, folder):
+    """Véhicules de la route : spr_<nom>_right / _left, 4 images (enjoliveurs)."""
+    for name, (_, (w, h), _) in vehicles.VEHICLES.items():
+        imgs = [render_svg(s, w, h, scale) for s in vehicles.frames(name)]
+        save_strip(imgs, folder, f"spr_{name}_right")
+        save_strip([mirror(i) for i in imgs], folder, f"spr_{name}_left")
 
 
 def build_alice(scale, folder):
@@ -140,6 +149,7 @@ def main():
         en = build_enemies(sc, os.path.join(base, "enemies"))
         al = build_alice(sc, os.path.join(base, "alice"))
         build_hens(sc, os.path.join(base, "hens"))
+        build_vehicles(sc, os.path.join(base, "vehicles"))
         it = build_items(sc, os.path.join(base, "items"))
         fx = build_fx(sc, os.path.join(base, "fx"))
         build_decor(sc, os.path.join(base, "decor"))

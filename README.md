@@ -4,8 +4,8 @@ Mini RPG en vue de dessus : **Tecky**, le teckel au harnais rouge, part à la re
 cache-cache. Il suit les affaires qu'elle a semées (sa barrette, sa chaussure, son doudou) : chacune indique où chercher
 ensuite, et Alice ne sort de sa cachette qu'une fois les trois retrouvées. En chemin, Tecky aboie pour repousser les
 chiens (dont les chiens de berger, qui chargent), gratte la terre pour déterrer des trésors, ramasse des os (qui rendent
-de la vie) et des saucisses (qui ajoutent un os de vie maximum). Il traverse campagne, route, village, zone industrielle,
-ferme, rivière (un seul pont), forêt et parc.
+de la vie) et des saucisses (qui ajoutent un os de vie maximum). Il traverse campagne, route (gare aux voitures :
+mieux vaut passer par les passages piétons), village, zone industrielle, ferme, rivière (un seul pont), forêt et parc.
 
 Tout est généré par du code : sprites en SVG (aplats + contour), tileset, décors, HUD, musique chiptune, niveau.
 
@@ -37,15 +37,15 @@ Simulation sans navigateur (Node, canvas et audio simulés) : déroulé complet 
 règles de vie, immunité du doberman aux aboiements, onde montrant la portée des aboiements, bouton « Lire »,
 morsure prioritaire sur le grattage quand un chien menace, contournement des obstacles par les chiens, placement des
 objets (rien dans l'eau, tout atteignable à pied depuis la niche), indices d'Alice, charge du chien de berger, poules,
-pont, séquenceur musical, fanfare et musique de défaite. `tests/edges.py` détecte les sprites dont des pixels
-touchent le bord du cadre.
+circulation (bousculade, passages piétons), pont, séquenceur musical, fanfare et musique de défaite. `tests/edges.py`
+détecte les sprites dont des pixels touchent le bord du cadre.
 
 ## Organisation
 
 | Fichier | Rôle |
 |---|---|
 | `spritelib.py` | boîte à outils de dessin SVG, rendu, strips, GIF |
-| `tecky.py`, `alice.py`, `enemies.py`, `hens.py`, `items.py`, `decor.py`, `tiles.py`, `hud.py` | dessin des personnages, poules, objets, décor, tileset, HUD |
+| `tecky.py`, `alice.py`, `enemies.py`, `hens.py`, `vehicles.py`, `items.py`, `decor.py`, `tiles.py`, `hud.py` | dessin des personnages, poules, véhicules, objets, décor, tileset, HUD |
 | `music.py` | partition chiptune (thème en boucle, fanfare de victoire, musique de défaite), export WAV |
 | `sample_map.py`, `hud_mockup.py` | carte d'exemple et maquette du HUD |
 | `build.py` | export du kit GameMaker dans `out/` |

@@ -156,6 +156,8 @@ const SFX = {
   flee() { tone(700, 0.25, 'sine', 0.06, 500); },
   scratch() { noise(0.07, 0.09, 700 + Math.random() * 500); },
   blip() { tone(1200, 0.02, 'square', 0.02); },
+  honk(p) { const k = p || 1; tone(415 * k, 0.13, 'square', 0.06); tone(330 * k, 0.13, 'square', 0.05);
+    tone(415 * k, 0.2, 'square', 0.06, 0, 0.18); tone(330 * k, 0.2, 'square', 0.05, 0, 0.18); },
   cluck() { tone(950, 0.05, 'square', 0.05, 250); tone(1150, 0.05, 'square', 0.05, 200, 0.08); tone(1400, 0.12, 'square', 0.05, -600, 0.17); },
   win() { [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, 0.18, 'triangle', 0.09, 0, i * 0.14)); },
 };
@@ -599,7 +601,7 @@ function arrowTarget() {
 }
 
 let state = 'loading';          // loading | title | play | dialog | pause | over | win
-let P, alice, dogs, hens, items, fxs, pops, rings, digs, decor, camX = 0, camY = 0, shake = 0;
+let P, alice, dogs, hens, cars, items, fxs, pops, rings, digs, decor, camX = 0, camY = 0, shake = 0;
 let score = 0, timePlayed = 0, fled = 0, treasures = 0, dialog = null, dialogReturn = 'play', aliceSniffed = false;
 let hintText = null, digHint = null, overT = 0, titleT = 0;
 
@@ -611,7 +613,7 @@ function reset() {
   });
   P = new Actor('tecky', MAP.start[0], MAP.start[1]);
   // 5 emplacements d'os (2 PV par os) ; Tecky démarre avec 3 os pleins
-  Object.assign(P, { hp: START_BONES * 2, hpMax: START_BONES * 2, boneFx: 0, inv: 0, cdBark: 0, cdBite: 0, mode: 'free', kx: 0, ky: 0, hitDone: false });
+  Object.assign(P, { hp: START_BONES * 2, hpMax: START_BONES * 2, boneFx: 0, inv: 0, bumpT: 0, cdBark: 0, cdBite: 0, mode: 'free', kx: 0, ky: 0, hitDone: false });
   alice = new Actor('alice', MAP.alice[0], MAP.alice[1]);
   alice.fps = Object.assign({}, FPS, { walk: 10 });
   alice.found = false;
@@ -624,6 +626,7 @@ function reset() {
     return d;
   });
   hens = MAP.hens.map(newHen);
+  cars = MAP.traffic.vehicles.map(newVehicle);
   items = MAP.items.map(([n, x, y]) => ({ n, x, y, t: Math.random() * 3 }));
   digs = MAP.dig.map(([x, y]) => ({ x, y, dug: false, t: Math.random() * 2 }));
   fxs = []; pops = []; rings = [];
@@ -759,6 +762,71 @@ function doBark() {
   for (const h of hens) {
     const dx = h.x - P.x, dy = h.y - P.y, l = Math.hypot(dx, dy);
     if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) scareHen(h, P.x, P.y, HEN.fleeT);
+  }
+}
+
+/* ------------------------------------------------------------------ circulation */
+/* Voitures, camionnette et bus roulent à droite sur la grande route (voie du haut vers l'ouest, du bas vers l'est)
+   et réapparaissent de l'autre côté de la carte. Un véhicule klaxonne quand Tecky est devant lui, et s'il le touche,
+   le projette sur le bas-côté, sans dégâts (« Ouf ! »). Aux passages piétons, ils s'arrêtent toujours pour Tecky.
+   Les chiens sont aussi écartés de la route. */
+const VEHICLE = { car: { len: 116, spd: 215, pitch: 1.15 }, van: { len: 146, spd: 185, pitch: 1 },
+                  bus: { len: 240, spd: 140, pitch: 0.75 } };
+const TRAFFIC = { gap: 60, accel: 260, brake: 900, honk: 300, knock: 950, look: 230 };
+function newVehicle([name, lane, x]) {
+  return { name, lane, x, T: VEHICLE[name.split('_')[0]], dir: lane === 0 ? -1 : 1, y: MAP.traffic.lanes[lane],
+    v: VEHICLE[name.split('_')[0]].spd, t: Math.random(), honkT: 0 };
+}
+// passage piéton où se trouve (ou entre) Tecky, sinon null
+function crossingAt(x, y) {
+  const [r0, r1] = MAP.traffic.road;
+  if (y < r0 - 24 || y > r1 + 34) return null;
+  return MAP.traffic.crossings.find(([x0, x1]) => x > x0 - 18 && x < x1 + 18) || null;
+}
+// dans la bande de la voie, devant la carrosserie (pieds de 12 px de haut)
+const inLane = (v, y) => y > v.y - 58 && y < v.y + 6;
+function updateVehicle(v, dt) {
+  const W = MAP.w * TS, half = v.T.len / 2;
+  // sortie de carte : il réapparaît de l'autre côté dès que la place est libre
+  if (v.dir > 0 ? v.x - half > W + 40 : v.x + half < -40) {
+    const nx = v.dir > 0 ? -half - 40 : W + half + 40;
+    if (!cars.some(o => o !== v && o.lane === v.lane && Math.abs(o.x - nx) < half + o.T.len / 2 + TRAFFIC.gap)) {
+      v.x = nx; v.v = v.T.spd;
+    }
+    return;
+  }
+  const front = v.x + v.dir * half;
+  let target = v.T.spd;
+  for (const o of cars) if (o !== v && o.lane === v.lane) {          // garder ses distances
+    const gap = (o.x - v.x) * v.dir - half - o.T.len / 2;
+    if (gap > -20 && gap < TRAFFIC.look) target = Math.min(target, Math.max(0, (gap - TRAFFIC.gap) * 2.2));
+  }
+  const cw = P.mode !== 'ko' ? crossingAt(P.x, P.y) : null;
+  if (cw) {                                                           // Tecky sur le passage : on s'arrête avant
+    const stop = (v.dir > 0 ? cw[0] - 14 : cw[1] + 14);
+    const gap = (stop - front) * v.dir;
+    if (gap > -6 && gap < TRAFFIC.look) target = Math.min(target, Math.max(0, gap * 2.2));
+  }
+  v.v = target < v.v ? Math.max(target, v.v - TRAFFIC.brake * dt) : Math.min(target, v.v + TRAFFIC.accel * dt);
+  v.x += v.dir * v.v * dt;
+  v.t += dt * v.v / 90;                                                // enjoliveurs
+  v.honkT -= dt;
+  if (P.mode === 'ko' || state !== 'play') return;
+  const ahead = (P.x - v.x) * v.dir;
+  if (!cw && inLane(v, P.y) && ahead > 0 && ahead < half + TRAFFIC.honk && v.v > 40 && v.honkT <= 0) {
+    SFX.honk(v.T.pitch); v.honkT = 2.5;
+  }
+  const mid = (MAP.traffic.road[0] + MAP.traffic.road[1]) / 2;
+  if (!cw && inLane(v, P.y) && Math.abs(P.x - v.x) < half + 10 && v.v > 30 && P.bumpT <= 0) {
+    // projeté sur le bas-côté le plus proche, sans dégâts
+    P.kx = v.dir * 220; P.ky = (P.y < mid ? -1 : 1) * TRAFFIC.knock;
+    P.mode = 'hurt'; P.setAnim('hurt'); P.timer = 0.25; P.bumpT = 1;
+    shake = 0.15;
+    addWordPop('Ouf !', P.x, P.y - 130);
+  }
+  for (const d of dogs) if (d.mode !== 'ko' && inLane(v, d.y) && Math.abs(d.x - v.x) < half + 6 && v.v > 30) {
+    d.kx = v.dir * 160; d.ky = (d.y < mid ? -1 : 1) * 760;
+    if (d.mode !== 'hurt') { d.mode = 'hurt'; d.setAnim('hurt'); d.timer = 0.5; }
   }
 }
 
@@ -912,6 +980,7 @@ function updatePlayer(dt) {
   hintText = null;
   digHint = null;
   P.inv = Math.max(0, P.inv - dt);
+  P.bumpT = Math.max(0, P.bumpT - dt);           // une voiture ne bouscule Tecky qu'une fois à la fois
   P.cdBark = Math.max(0, P.cdBark - dt);
   P.cdBite = Math.max(0, P.cdBite - dt);
   P.boneFx = Math.max(0, P.boneFx - dt * 1.5);
@@ -1205,6 +1274,7 @@ function update(dt) {
     case 'title':
       titleT += dt;
       alice.t += dt; P.t += dt;
+      for (const v of cars) updateVehicle(v, dt);
       if (pressed.ok || pressed.bark || pressed.bite || pressed.act) {
         state = 'play';
         say(introLines(), () => showArrow());
@@ -1230,6 +1300,7 @@ function update(dt) {
       updatePlayer(dt);
       for (const d of dogs) updateDog(d, dt);
       for (const h of hens) updateHen(h, dt);
+      for (const v of cars) updateVehicle(v, dt);
       separateDogs();
       dogs = dogs.filter(d => d.fade < 1);
       alice.t += dt;
@@ -1285,6 +1356,8 @@ function drawWorld() {
   }
   for (const d of dogs) if (vis(d.x, d.y, 120)) list.push({ y: d.y, draw: () => d.draw(Math.max(0, 1 - d.fade)) });
   for (const h of hens) if (vis(h.x, h.y, 60)) list.push({ y: h.y, draw: () => h.draw() });
+  for (const v of cars) if (vis(v.x, v.y, 280)) list.push({ y: v.y, draw: () =>
+    drawSpr('vehicle/' + v.name, Math.floor(v.t * 4), v.x, v.y, { flip: v.dir < 0 }) });
   if (!alice.hidden && vis(alice.x, alice.y, 120)) list.push({ y: alice.y, draw: () => alice.draw() });
   const blink = P.inv > 0 && P.mode !== 'ko' && Math.floor(P.inv * 12) % 2 === 0;
   list.push({ y: P.y, draw: () => P.draw(blink ? 0.35 : 1) });

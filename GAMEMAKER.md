@@ -56,6 +56,18 @@ Vues `_right` et `_left` (miroir). **Origine : (32, 56)**, sous les pattes. Pas 
 | walk | 4 | 10 | quelques pas autour de sa place, en hochant la tête |
 | flap | 4 | 14 | fuite en battant des ailes (aboiement de Tecky dans le cône, ou Tecky trop près) |
 
+### Véhicules (`vehicles/`) — `spr_car_red_…` (et `_blue`, `_yellow`, `_green`), `spr_van_…`, `spr_bus_…`
+Vues `_right` et `_left` (miroir), 4 images (les enjoliveurs tournent : vitesse d'image proportionnelle à la vitesse).
+
+| Sprite | Taille x2 | Origine x2 | Suggestion de gameplay |
+|---|---|---|---|
+| `spr_car_<couleur>` | 128×80 | (64, 77) | rapide (~215 px/s) |
+| `spr_van` (camionnette de boulangerie) | 160×96 | (80, 89) | ~185 px/s |
+| `spr_bus` | 256×112 | (128, 105) | lent (~140 px/s) |
+
+Circulation à droite sur la route horizontale. Un véhicule qui touche Tecky le projette sur le bas-côté, sans
+dégâts (il klaxonne avant) ; aux passages piétons, les véhicules s'arrêtent toujours pour Tecky.
+
 ### Alice (`alice/`)
 | Anim | Images | FPS | Remarque |
 |---|---|---|---|

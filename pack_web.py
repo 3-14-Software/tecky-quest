@@ -21,6 +21,7 @@ import hens
 import hud
 import items
 import tecky
+import vehicles
 import music
 import tiles
 from spritelib import render_svg, flash, PAD
@@ -197,7 +198,7 @@ ITEMS = [
 ]
 ENEMIES = [
     ("roquet", 9, 6.4), ("roquet", 14, 3.5), ("roquet", 10.5, 19.2), ("roquet", 27, 6.5),
-    ("bouledogue", 20, 13.6), ("bouledogue", 15.5, 22.2),
+    ("bouledogue", 19.6, 16.9), ("bouledogue", 15.5, 22.2),
     ("molosse", 33.5, 20.2),
     # ferme : les chiens de berger gardent la cour et les prés
     ("berger", 57.5, 8), ("berger", 66, 19.5), ("berger", 72, 6.5), ("bouledogue", 47.5, 20.4), ("roquet", 60.5, 23),
@@ -207,6 +208,11 @@ ENEMIES = [
     ("roquet", 26.5, 37.2), ("bouledogue", 15, 41.6), ("berger", 33, 40),
 ]
 # trésors enterrés : au centre de la tuile des traces de pattes (scintillement et trou creusé s'y alignent)
+# grande route : passages piétons (première des deux tuiles) et circulation (voie 0 en haut vers l'ouest,
+# voie 1 en bas vers l'est ; x de départ en tuiles). Les véhicules s'arrêtent aux passages quand Tecky y est.
+CROSSINGS = (10, 34, 55, 63)
+TRAFFIC = [("car_red", 0, 10), ("bus", 0, 40), ("car_yellow", 0, 66),
+           ("car_blue", 1, 20), ("van", 1, 50), ("car_green", 1, 72)]
 # poules (animées : elles picorent, se promènent, et s'enfuient quand Tecky aboie)
 HENS = [("hen", 59.4, 8.6), ("hen_white", 62.2, 9), ("hen", 60.6, 9.8), ("hen_white", 63.6, 7.9),
         ("hen_white", 66.6, 18.4), ("hen", 65.4, 20.2)]
@@ -274,9 +280,9 @@ def build_map():
     # marquages de la route
     for tx in range(MW):
         ground[13 * MW + tx] = 5 if tx % 2 == 0 else tiles.tile_index("road", 15)
-    for tx in (10, 11, 34, 35, 55, 56, 63, 64):      # passages piétons (dont chemin de la ferme et du pont)
+    for tx in CROSSINGS:                              # passages piétons (dont chemin de la ferme et du pont)
         for ty in (12, 13, 14):
-            ground[ty * MW + tx] = 7
+            ground[ty * MW + tx] = ground[ty * MW + tx + 1] = 7
     # détails
     over = [0] * (MW * MH)
     ovrow = tiles.OVERLAY_ROW * tiles.COLS
@@ -330,6 +336,9 @@ def build_map():
         "items": [[n, px(x), px(y)] for n, x, y in ITEMS],
         "enemies": [[n, px(x), px(y)] for n, x, y in ENEMIES],
         "hens": [[n, px(x), px(y)] for n, x, y in HENS],
+        "traffic": {"lanes": [px(12.95), px(14.95)], "road": [px(11.5), px(15.5)],
+                    "crossings": [[px(tx), px(tx + 2)] for tx in CROSSINGS],
+                    "vehicles": [[n, lane, px(x)] for n, lane, x in TRAFFIC]},
         "dig": [[px(x), px(y)] for x, y in DIG],
         "start": [px(START[0]), px(START[1])],
         "alice": [px(ALICE[0]), px(ALICE[1])],
@@ -364,6 +373,8 @@ def collect():
     for a in alice.ANIMS:
         for v in dirs:
             out.append((f"alice/{a}/{v}", [render_svg(s, 48, 48, S, PAD) for s in alice.frames(a, v)], CH_O, True))
+    for n, (_, (w, h), (ox, oy)) in vehicles.VEHICLES.items():
+        out.append((f"vehicle/{n}", [render_svg(sv, w, h, S, PAD) for sv in vehicles.frames(n)], (ox * S + M, oy * S + M), True))
     for kind in hens.COLORS:
         for anim in hens.ANIMS:
             out.append((f"{kind}/{anim}/right", [render_svg(s, 32, 32, S, PAD) for s in hens.frames(kind, anim)],
