@@ -114,7 +114,8 @@ ENEMIES = [
     ("bouledogue", 20, 13.6), ("bouledogue", 15.5, 22.2),
     ("molosse", 33.5, 20.2),
 ]
-DIG = [(12.5, 6.1), (5.0, 19.3), (21.5, 18.8)]      # trésors enterrés (sous des traces de pattes)
+# trésors enterrés : au centre de la tuile des traces de pattes (scintillement et trou creusé s'y alignent)
+DIG = [(12.5, 6.5), (5.5, 19.5), (21.5, 18.5)]
 START = (4.5, 4.2)
 ALICE = (33.5, 7.3)
 SIGNS = [

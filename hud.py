@@ -184,9 +184,9 @@ def key_frames(scale):
 
 
 def action_frames(scale):
-    """Boutons ronds 40x40 : aboyer, mordre, gratter (+ versions grisées)."""
+    """Boutons ronds 40x40 : aboyer, mordre, gratter, lire (+ versions grisées)."""
     out = []
-    for kind in ("bark", "bite", "dig"):
+    for kind in ("bark", "bite", "dig", "read"):
         for dim in (False, True):
             d = Drawing(40, 40)
             d.add(circle(20, 20, 17.5), "#F2C14E" if not dim else "#8A8F99")
@@ -208,6 +208,13 @@ def action_frames(scale):
                 for x, y, r in ((27, 27, 2.4), (30.5, 22.5, 1.8), (26, 19.5, 1.4)):
                     d.add(circle(x, y, r), "#9C6B3F" if not dim else "#7D8189", sil=False, edge=True)
                 d.raw(line("M24,31 L33,31", ink, 1.6))
+            elif kind == "read":
+                # panneau en bois (comme le décor) avec deux lignes de texte
+                d.add(rect(18.5, 20, 3, 12, 1), "#8A5A3A" if not dim else "#6E727A", sil=False, edge=True)
+                d.add(poly([(7.5, 9.5), (27, 9.5), (32.5, 15.25), (27, 21), (7.5, 21)]),
+                      "#C98A4B" if not dim else "#8A8F99", sil=False, edge=True)
+                for x1, y in ((24, 13.4), (21, 17.1)):
+                    d.raw(line(f"M11,{y} L{x1},{y}", ink, 1.6))
             else:
                 d.add(poly([(9, 11), (31, 11), (31, 17.5), (28.8, 21.5), (26.6, 17.5), (24.4, 21.5), (22.2, 17.5),
                             (20, 21.5), (17.8, 17.5), (15.6, 21.5), (13.4, 17.5), (11.2, 21.5), (9, 17.5)]),

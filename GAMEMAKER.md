@@ -216,7 +216,7 @@ Pensé pour l'event **Draw GUI** avec `display_set_gui_size(1920, 1080)` et les 
 | `spr_hud_next` | 4 | (0, 0) | flèche « suite » qui rebondit |
 | `spr_hud_digits` | 16 | (0, 0) | police en sprite : `0123456789+-x/:%` |
 | `spr_hud_key` | 10 | (0, 0) | touches : X, C, E, Z, ↑, ↓, ←, →, Esc, Entrée |
-| `spr_hud_action` | 6 | (0, 0) | boutons : aboyer, aboyer grisé, mordre, mordre grisé, gratter, gratter grisé |
+| `spr_hud_action` | 8 | (0, 0) | boutons : aboyer, aboyer grisé, mordre, mordre grisé, gratter, gratter grisé, lire, lire grisé |
 | `spr_hud_cooldown` | 8 | (0, 0) | voile de recharge à poser sur un bouton (0 = vient d'être utilisé) |
 | `spr_hud_enemy_bar_bg` / `_fill` | 1 | (28, 0) / (0, 0) | barre de vie au-dessus d'un ennemi |
 | `spr_hud_alice_arrow` | 4 | centre (40, 40) | flèche au bord de l'écran vers Alice, pointe à droite |
@@ -369,13 +369,17 @@ if (state == "idle" || state == "walk") {
         fx.image_angle = (dir == "right") ? 0 : (dir == "up") ? 90 : (dir == "left") ? 180 : 270;
     }
     if (keyboard_check_pressed(ord("C"))) {
-        // près d'un trésor (obj_dig), C fait gratter au lieu de mordre,
-        // sauf si un chien (obj_dog, parent de tous les chiens) est tout près : mordre d'abord
+        // C fait gratter près d'un trésor (obj_dig), lire près d'un panneau (obj_sign), sinon mordre ;
+        // mordre d'abord si un chien (obj_dog, parent de tous les chiens) est tout près.
+        // Le bouton suit la même règle : image 2 (mordre), 4 (gratter) ou 6 (lire) de spr_hud_action.
         var _spot = instance_nearest(x, y, obj_dig);
+        var _sign = instance_nearest(x, y, obj_sign);
         var _dog = instance_nearest(x, y, obj_dog);
         var _threat = _dog != noone && point_distance(x, y, _dog.x, _dog.y) < 240;
         if (!_threat && _spot != noone && !_spot.dug && point_distance(x, y, _spot.x, _spot.y) < 86) {
             state = "dig"; dig_timer = room_speed; dig_spot = _spot;
+        } else if (!_threat && _sign != noone && point_distance(x, y, _sign.x, _sign.y) < 95) {
+            obj_hud.dialog_text = _sign.text; obj_hud.dialog_name = "";
         } else state = "bite";
     }
 }

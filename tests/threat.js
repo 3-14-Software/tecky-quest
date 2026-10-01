@@ -8,7 +8,7 @@ eval(base + `setTimeout(() => {
   ok(run('digHint') !== null, 'sans chien : bulle « gratter » près du trésor');
   // chien lancé contre Tecky, tout proche (niche à côté, sinon il rentre chez lui) : C mord
   run(place + 'dogs = [R]; R.x = R.hx = P.x + 70; R.y = R.hy = P.y; R.mode = "chase"; R.hp = R.T.hp;'); step(1);
-  ok(run('nearDig()') === null && run('digHint') === null, 'chien menaçant : ni bouton ni bulle « gratter »');
+  ok(run('biteAction()') === 'bite' && run('digHint') === null, 'chien menaçant : ni bouton ni bulle « gratter »');
   run('pressed.bite = true'); step(1);
   ok(run('P.mode') === 'bite', 'chien menaçant près du trésor : C mord (mode ' + run('P.mode') + ')');
   step(20);

@@ -596,8 +596,8 @@ function introLines() {
     { who: 'tecky', face: 0, text: "Ouaf ! Alice est partie jouer au village… et elle n'est pas rentrée !" },
     { who: 'tecky', face: 2, text: "Je vais la retrouver. Gare aux chiens du quartier, ils ne sont pas commodes." },
     { who: 'info', text: touchMode
-        ? "Glisse le doigt à gauche pour marcher. Boutons à droite pour aboyer et mordre. Près d'un panneau, touche l'écran à droite pour le lire."
-        : "Flèches ou ZQSD pour marcher, X pour aboyer, C pour mordre, E pour lire un panneau. P pour la pause, M pour le son, F pour le plein écran." },
+        ? "Glisse le doigt à gauche pour marcher. Boutons à droite pour aboyer et mordre. Près d'un panneau, le bouton de morsure devient « lire »."
+        : "Flèches ou ZQSD pour marcher, X pour aboyer, C pour mordre ou lire un panneau. P pour la pause, M pour le son, F pour le plein écran." },
     { who: 'info', text: touchMode
         ? "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Près des traces de pattes, le bouton de morsure devient « gratter » : un trésor est peut-être enterré !"
         : "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Près des traces de pattes, C sert à gratter le sol : un trésor est peut-être enterré !" },
@@ -672,19 +672,31 @@ function doBite() {
   }
 }
 
-/* ------------------------------------------------------------------ gratter */
-// menace immédiate : un chien lancé contre Tecky et tout proche. Mordre passe alors avant gratter.
+/* ------------------------------------------------------------------ gratter, lire */
+// menace immédiate : un chien lancé contre Tecky et tout proche. Mordre passe alors avant gratter ou lire.
 const THREAT_R = 240;
 function threatened() {
   return dogs.some(d => (d.mode === 'chase' || d.mode === 'attack' || d.mode === 'bark' || d.mode === 'hurt')
     && dist(P.x, P.y, d.x, d.y) < THREAT_R);
 }
-// trésor à gratter (null s'il n'y en a pas à portée ou si un chien menace : C mord)
 function nearDig() {
-  if (threatened()) return null;
   for (const g of digs) if (!g.dug && dist(P.x, P.y, g.x, g.y + 6) < 86) return g;
   return null;
 }
+// panneau à portée : [x, y, texte]
+function nearSign() {
+  for (const s of MAP.signs) if (dist(P.x, P.y, s[0], s[1] + 30) < 95) return s;
+  return null;
+}
+// ce que fait C (le bouton de morsure) : mordre si un chien menace, sinon gratter un trésor
+// ou lire un panneau à portée, sinon mordre
+function biteAction() {
+  if (threatened()) return 'bite';
+  if (nearDig()) return 'dig';
+  if (nearSign()) return 'read';
+  return 'bite';
+}
+const ACTION_FRAME = { bite: 2, dig: 4, read: 6 };   // images de hud/action
 function startDig(g) {
   P.mode = 'dig'; P.setAnim('dig'); P.timer = 1.0; P.digSpot = g; P.digTick = 0;
   P.dir = dirFrom(g.x - P.x, g.y - P.y, P.dir);
@@ -784,22 +796,20 @@ function updatePlayer(dt) {
 
   if (pressed.bark && P.cdBark <= 0) {
     P.mode = 'bark'; P.setAnim('bark'); P.cdBark = 1.0; P.cdBarkMax = 1.0; doBark();
-  } else if (pressed.bite && P.cdBite <= 0) {
-    const g = nearDig();
-    if (g) startDig(g);
-    else { P.mode = 'bite'; P.setAnim('bite'); P.cdBite = 0.5; P.cdBiteMax = 0.5; P.hitDone = false; }
-  }
-
-  // panneaux
-  for (const [sx, sy, text] of MAP.signs) {
-    if (dist(P.x, P.y, sx, sy + 30) < 95) {
-      hintText = { x: sx, y: sy - 110 };
-      if (pressed.act) say([{ who: 'info', text }]);
+  } else if (pressed.bite) {
+    const a = biteAction();
+    if (a === 'read') say([{ who: 'info', text: nearSign()[2] }]);
+    else if (P.cdBite <= 0) {
+      if (a === 'dig') startDig(nearDig());
+      else { P.mode = 'bite'; P.setAnim('bite'); P.cdBite = 0.5; P.cdBiteMax = 0.5; P.hitDone = false; }
     }
   }
-  // trésor à portée : bulle "gratter"
-  const g = nearDig();
-  if (g) digHint = g;
+
+  // panneau (C ou E pour lire) et trésor à portée : bulles "lire" / "gratter"
+  const sign = nearSign(), act = biteAction();
+  if (sign && pressed.act) say([{ who: 'info', text: sign[2] }]);
+  if (act === 'read') hintText = { x: sign[0], y: sign[1] - 110 };
+  if (act === 'dig') digHint = nearDig();
   // Alice
   if (!alice.found && dist(P.x, P.y, alice.x, alice.y) < 120) finale();
 }
@@ -1094,22 +1104,23 @@ function drawWorld() {
       ctx.restore();
     } else drawDigits(p.text, p.x, p.y - p.t * 60, 0.75, a);
   }
-  // bulle "lire"
+  // bulles "gratter" / "lire" : ce que fait C à cet endroit (touche C devant le mot au clavier)
+  const bob = Math.sin(performance.now() / 200) * 4;
   if (digHint && state === 'play' && P.mode !== 'dig') {
-    const bx = digHint.x, by = digHint.y - 150 + Math.sin(performance.now() / 200) * 4;
-    ctx.font = '600 22px Fredoka, "Trebuchet MS", sans-serif';
-    ctx.textAlign = 'center'; ctx.lineWidth = 5; ctx.strokeStyle = '#3A1E12'; ctx.lineJoin = 'round';
-    if (!touchMode) drawSpr('hud/key', 1, bx - 40 - 34, by - 4, { sc: 0.9 });
-    const tx = touchMode ? bx : bx + 26;
-    ctx.strokeText('Gratter', tx, by + 26); ctx.fillStyle = '#FFF7E6'; ctx.fillText('Gratter', tx, by + 26);
+    // juste au-dessus des traces de pattes, dessinées sur la tuile du sol qui contient le trésor
+    const mx = Math.floor(digHint.x / TS) * TS + TS / 2, my = Math.floor(digHint.y / TS) * TS;
+    actionBubble('Gratter', mx, my - 36 + bob);
   }
-  if (hintText && state === 'play') {
-    if (touchMode) {
-      ctx.font = '600 22px Fredoka, "Trebuchet MS", sans-serif';
-      ctx.textAlign = 'center'; ctx.lineWidth = 5; ctx.strokeStyle = '#3A1E12'; ctx.lineJoin = 'round';
-      ctx.strokeText('Lire', hintText.x, hintText.y + 26); ctx.fillStyle = '#FFF7E6'; ctx.fillText('Lire', hintText.x, hintText.y + 26);
-    } else drawSpr('hud/key', 2, hintText.x - 40, hintText.y, { sc: 0.9 });
-  }
+  if (hintText && state === 'play') actionBubble('Lire', hintText.x, hintText.y + bob);
+}
+function actionBubble(label, bx, by) {
+  ctx.font = '600 22px Fredoka, "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center'; ctx.lineWidth = 5; ctx.strokeStyle = '#3A1E12'; ctx.lineJoin = 'round';
+  // même écart touche-mot que pour « Gratter », l'ensemble restant centré
+  const shift = (ctx.measureText('Gratter').width - ctx.measureText(label).width) / 2;
+  if (!touchMode) drawSpr('hud/key', 1, bx - 40 - 34 + shift, by - 4, { sc: 0.9 });
+  const tx = touchMode ? bx : bx + 26;
+  ctx.strokeText(label, tx, by + 26); ctx.fillStyle = '#FFF7E6'; ctx.fillText(label, tx, by + 26);
 }
 
 /* ------------------------------------------------------------------ interface */
@@ -1194,7 +1205,7 @@ function drawHUD() {
 
   // boutons d'action
   if (touchMode) {
-    const biteFr = nearDig() ? 4 : 2;
+    const biteFr = ACTION_FRAME[biteAction()];
     for (const [k, fr] of [['bark', 0], ['bite', biteFr]]) {
       const b = BTN[k];
       const cd = k === 'bark' ? P.cdBark / (P.cdBarkMax || 1) : P.cdBite / (P.cdBiteMax || 1);
@@ -1221,7 +1232,7 @@ function drawHUD() {
     text('II', GW - 87, 272, 40, '#FFF7E6', 'center', 700);
     if (canFullscreen() && !fsElement()) drawFsButton();
   } else {
-    [['bark', 0, 0], ['bite', nearDig() ? 4 : 2, 1]].forEach(([k, fr, key], i) => {
+    [['bark', 0, 0], ['bite', ACTION_FRAME[biteAction()], 1]].forEach(([k, fr, key], i) => {
       const x = GW - 230 + i * 110, y = GH - 190;
       drawSpr('hud/action', fr, x, y);
       const cd = k === 'bark' ? P.cdBark / (P.cdBarkMax || 1) : P.cdBite / (P.cdBiteMax || 1);
