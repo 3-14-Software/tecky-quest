@@ -24,5 +24,7 @@ eval(base + `setTimeout(() => {
   const gls = run('gl');
   ok(gls.length > 10 && gls.every(([x, y]) => run('deepWater(' + x + ', ' + y + ')')), gls.length + ' scintillements en plus des vaguelettes, en eau profonde');
   run('rip = []; drawWater(64 * 64, 2 * 64, 1.2); drawSpr = drawSpr0;');
+  // fontaine animée : 8 images, le dessin change d'image avec le temps
+  ok(run('ATLAS["decor/fountain"].f.length') === 8 && run('MAP.decorFps.fountain') === 10, 'la fontaine a 8 images à 10 par seconde');
   ok(run('rip.length') === 0, 'aucune vaguelette loin de l\\'eau');
 }, 50);`);

@@ -212,12 +212,21 @@ ENEMIES = [
 # grande route : passages piétons (première des deux tuiles) et circulation (voie 0 en haut vers l'ouest,
 # voie 1 en bas vers l'est ; x de départ en tuiles). Les véhicules s'arrêtent aux passages quand Tecky y est.
 CROSSINGS = (10, 34, 55, 63)
-PARK_FLOWERS = ((14, 36), (30, 36), (14, 43), (31, 45), (35, 33), (2, 40), (12, 46), (24, 31), (36, 45), (19, 46))
+# massifs de fleurs au sol (tuiles) : dessinés en détail sur le sol, et perchoirs des papillons
+FLOWER_BEDS = ((7, 4), (15, 8), (3, 17), (10, 5), (6, 9), (16, 20), (44, 20), (46, 22), (77, 15), (68, 41),
+               (14, 36), (30, 36), (14, 43), (31, 45), (35, 33), (2, 40), (12, 46), (24, 31), (36, 45), (19, 46),
+               (6, 33), (8, 46))
 TRAFFIC = [("car_red", 0, 10), ("bus", 0, 40), ("car_yellow", 0, 66),
            ("car_blue", 1, 20), ("van", 1, 50), ("car_green", 1, 72)]
-# papillons du parc (couleur, coin du parc où ils volettent)
+# papillons (couleur, coin où ils volettent) : surtout au parc, mais aussi près de la niche, sur la place du village,
+# dans la campagne sud-ouest, au verger de la ferme et dans la clairière de la forêt
 BUTTERFLIES = [("yellow", 20, 33), ("blue", 24.5, 36.5), ("pink", 13, 40), ("orange", 30, 43),
-               ("blue", 34, 34), ("yellow", 6.5, 44.5), ("pink", 10, 33.6)]
+               ("blue", 34, 34), ("yellow", 6.5, 44.5), ("pink", 10, 33.6),
+               ("yellow", 9, 5.6), ("orange", 6, 8.6),
+               ("pink", 28, 6.4), ("blue", 33, 5.4),
+               ("blue", 4.5, 16.8), ("yellow", 14.5, 19.8),
+               ("orange", 46, 21), ("yellow", 44, 19.6),
+               ("blue", 69.5, 40.6)]
 # poules (animées : elles picorent, se promènent, et s'enfuient quand Tecky aboie)
 HENS = [("hen", 59.4, 8.6), ("hen_white", 62.2, 9), ("hen", 60.6, 9.8), ("hen_white", 63.6, 7.9),
         ("hen_white", 66.6, 18.4), ("hen", 65.4, 20.2)]
@@ -301,9 +310,6 @@ def build_map():
     put("flaque", 3, 9)
     put("feuilles mortes", 1, 2)
     put("feuilles mortes", 13, 2)
-    put("fleurs", 7, 4)
-    put("fleurs", 15, 8)
-    put("fleurs", 3, 14 + 3)
     put("touffe d'herbe", 9, 10)
     put("touffe d'herbe", 18, 18)
     put("cailloux", 20, 10)
@@ -320,7 +326,7 @@ def build_map():
         put("feuilles mortes", tx, ty)
     for tx, ty in ((57, 40), (72, 45), (43, 41)):
         put("touffe d'herbe", tx, ty)
-    for tx, ty in PARK_FLOWERS + ((46, 22), (77, 15)):
+    for tx, ty in FLOWER_BEDS:
         put("fleurs", tx, ty)
     for tx, ty in ((51, 9), (58, 6), (64, 22)):
         put("cailloux", tx, ty)
@@ -342,9 +348,9 @@ def build_map():
         "enemies": [[n, px(x), px(y)] for n, x, y in ENEMIES],
         "hens": [[n, px(x), px(y)] for n, x, y in HENS],
         "butterflies": [[c, px(x), px(y)] for c, x, y in BUTTERFLIES],
-        # où les papillons se posent : (x, y au sol, hauteur) — sur les pots de fleurs du parc, ou sur les massifs
-        "flowers": [[px(x), px(y) + 2, 44] for n, x, y in DECOR if n == "flower_pot" and y > 30]
-                   + [[px(tx + 0.5), px(ty + 0.5), 4] for tx, ty in PARK_FLOWERS],
+        # où les papillons se posent : (x, y au sol, hauteur) — sur les pots de fleurs, ou sur les massifs
+        "flowers": [[px(x), px(y) + 2, 44] for n, x, y in DECOR if n == "flower_pot"]
+                   + [[px(tx + 0.5), px(ty + 0.5), 4] for tx, ty in FLOWER_BEDS],
         "traffic": {"lanes": [px(12.95), px(14.95)], "road": [px(11.5), px(15.5)],
                     "crossings": [[px(tx), px(tx + 2)] for tx in CROSSINGS],
                     "vehicles": [[n, lane, px(x)] for n, lane, x in TRAFFIC]},
@@ -352,6 +358,7 @@ def build_map():
         "start": [px(START[0]), px(START[1])],
         "alice": [px(ALICE[0]), px(ALICE[1])],
         "title": [px(TITLE[0]), px(TITLE[1])],
+        "decorFps": {n: fps for n, (_, fps) in decor.ANIMATED.items()},
         "signs": [[px(x), px(y), t] for x, y, t in SIGNS],
     }
 
@@ -396,7 +403,7 @@ def collect():
         o = (12 + M, 48 + M) if n == "bark" else (size + M, size + M)
         out.append((f"fx/{n}", [render_svg(s, size, size, S, PAD) for s in fn()], o, True))
     for n, (fn, (w, h), (ox, oy)) in decor.DECOR.items():
-        out.append((f"decor/{n}", [render_svg(fn().svg(), w, h, S, PAD)], (ox * S + M, oy * S + M), True))
+        out.append((f"decor/{n}", [render_svg(dr.svg(), w, h, S, PAD) for dr in decor.frames(n)], (ox * S + M, oy * S + M), True))
     for n, ims in hud.all_sprites(S).items():
         key = "hud/" + n.replace("spr_hud_", "").replace("spr_", "")
         o = {"spr_hud_arrow": (40, 40), "spr_hud_arrow_icon": (22, 22)}.get(n, (0, 0))

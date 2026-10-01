@@ -878,9 +878,9 @@ function updateVehicle(v, dt) {
 }
 
 /* ------------------------------------------------------------------ papillons */
-// Ils volettent en zigzag autour de leur coin du parc (petite ombre au sol), se posent parfois sur un pot de fleurs
-// ou un massif (MAP.flowers) en ouvrant et fermant lentement les ailes, et s'envolent, plus haut et plus vite, si
-// Tecky s'approche ou aboie vers eux. Ils volent au-dessus de tout : pas de collision.
+// Ils volettent en zigzag autour de leur coin (surtout au parc ; petite ombre au sol), se posent parfois sur un pot
+// de fleurs ou un massif proche (MAP.flowers) en ouvrant et fermant lentement les ailes, et s'envolent, plus haut et
+// plus vite, si Tecky s'approche ou aboie vers eux. Ils volent au-dessus de tout : pas de collision.
 const BFLY = { roam: 190, spd: 55, alt: 36, flee: 240, fleeT: 1.3, scare: 80, perch: 0.35, sc: 0.8 };
 function newButterfly([color, x, y]) {
   return { color, x, y, hx: x, hy: y, tx: x, ty: y, alt: BFLY.alt, t: Math.random() * 9, flap: Math.random() * 4,
@@ -1378,6 +1378,7 @@ function update(dt) {
       titleT += dt;
       alice.t += dt; P.t += dt;
       for (const v of cars) updateVehicle(v, dt);
+      for (const b of butterflies) updateButterfly(b, dt);
       if (pressed.ok || pressed.bark || pressed.bite || pressed.act) {
         state = 'play';
         say(introLines(), () => showArrow());
@@ -1459,7 +1460,9 @@ function drawWorld() {
   }
 
   const list = [];
-  for (const d of decor) if (!FLAT.has(d.n) && vis(d.x, d.y, 280)) list.push({ y: d.y, draw: () => drawSpr(d.key, 0, d.x, d.y) });
+  const now = performance.now() / 1000;            // décors animés (fontaine) : MAP.decorFps
+  for (const d of decor) if (!FLAT.has(d.n) && vis(d.x, d.y, 280))
+    list.push({ y: d.y, draw: () => drawSpr(d.key, Math.floor(now * (MAP.decorFps[d.n] || 0)), d.x, d.y) });
   for (const it of items) if (vis(it.x, it.y, 80)) {
     const i = Math.floor(it.t * 8);
     let dy = 0;

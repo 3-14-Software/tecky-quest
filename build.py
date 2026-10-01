@@ -12,8 +12,11 @@ Sorties :
   out/sample_map.png   carte d'exemple
 Les sprites animés sont des strips <sprite>_stripN.png : GameMaker les découpe
 automatiquement en N images à l'import.
+Avant chaque construction, ce que build.py produit dans out/ est effacé : un sprite renommé ou supprimé
+(ex. un strip dont le nombre d'images change) ne laisse pas d'ancien fichier derrière lui.
 """
 import os
+import shutil
 
 from PIL import Image, ImageDraw
 
@@ -115,7 +118,11 @@ def build_fx(scale, folder):
 def build_decor(scale, folder):
     os.makedirs(folder, exist_ok=True)
     for name, (fn, (w, h), _) in decor.DECOR.items():
-        render_svg(fn().svg(), w, h, scale).save(os.path.join(folder, f"spr_decor_{name}.png"))
+        imgs = [render_svg(dr.svg(), w, h, scale) for dr in decor.frames(name)]
+        if len(imgs) == 1:
+            imgs[0].save(os.path.join(folder, f"spr_decor_{name}.png"))
+        else:                                              # décor animé (fontaine) : strip
+            save_strip(imgs, folder, f"spr_decor_{name}")
 
 
 def build_tiles(scale, folder):
@@ -147,7 +154,22 @@ def tile_legend(sheet, fn):
     lg.save(fn)
 
 
+# tout ce que build.py écrit dans out/ (rien d'autre n'y est touché)
+GENERATED = ("x1", "x2", "previews", "audio", "sample_map.png", "hud_mockup.png")
+
+
+def clean():
+    """Efface les sorties d'une construction précédente."""
+    for name in GENERATED:
+        p = os.path.join(OUT, name)
+        if os.path.isdir(p):
+            shutil.rmtree(p)
+        elif os.path.isfile(p):
+            os.remove(p)
+
+
 def main():
+    clean()
     prev = os.path.join(OUT, "previews")
     os.makedirs(prev, exist_ok=True)
     for tag, sc in SCALES.items():

@@ -13,7 +13,7 @@ mi-longs avec frange, t-shirt jaune, jupe rose, pieds nus. Garder ces traits en 
 ```bash
 pip install -r requirements.txt           # cairosvg, pillow, numpy (+ Node 18+ pour les tests)
 python3 pack_web.py                       # web/index.html, web/tecky_quest_web/ (autonome), atlas, niveau
-python3 build.py                          # kit GameMaker -> out/
+python3 build.py                          # kit GameMaker -> out/ (efface d'abord ses anciennes sorties)
 ./tests/run_all.sh                        # reconstruit puis lance tous les tests (doit finir avec exit=0)
 ./publish_docs.sh                         # copie la version autonome dans docs/ (GitHub Pages)
 ```
@@ -45,6 +45,7 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - `web_src/game.js` : tout le moteur. Monde en pixels x2 (tuile = 64), caméra 960x540, interface 1920x1080 (`GW`/`GH`).
   Sol pré-rendu en blocs de 16 tuiles (`groundChunks`, 1024 px) : une seule image de la carte dépasserait la taille
   de canevas permise sur certains téléphones. Décors `FLAT` (pont, bac à sable) dessinés sous les personnages.
+  Décors animés (`decor.ANIMATED`, ex. la fontaine : la fonction reçoit la phase 0..1 ; fps dans `MAP.decorFps`).
   Eau animée : le tileset web a une eau unie (`tiles.tileset(S, water_marks=False)`) et `drawWater()` y sème des
   vaguelettes `fx/ripple` légères (une par tuile, un cycle sur deux, position tirée par `hash3`) et, en plus, des
   scintillements `fx/glint` (mini-étoiles, cadence propre), seulement en eau profonde (`deepWater()` : tout le contour plus une
@@ -74,9 +75,11 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   grande route, retour par l'autre bord de la carte, distances de sécurité. Un choc projette Tecky sur le bas-côté
   (klaxon avant, « Ouf ! ») **sans dégâts** ; aux passages piétons, arrêt systématique. Les chiens sont aussi
   écartés. Test : `traffic.js`.
-- Papillons (`butterflies`, `BFLY`, `MAP.flowers`) : volettent en zigzag dans le parc avec une ombre au sol, se posent
-  sur les pots de fleurs ou les massifs (`PARK_FLOWERS`), s'envolent si Tecky approche ou aboie. Dessinés au-dessus de
-  tout, sans collision. Test : `butterflies.js`.
+- Papillons (`butterflies`, `BFLY`, `MAP.flowers`) : 16, surtout au parc, mais aussi niche, village (visibles dès
+  l'écran titre), campagne sud-ouest, verger de la ferme, clairière. Volettent en zigzag avec une ombre au sol, se
+  posent sur les pots de fleurs ou les massifs (`FLOWER_BEDS`, dessinés aussi au sol), s'envolent si Tecky approche
+  ou aboie. Chacun doit avoir une fleur à portée (testé). Dessinés au-dessus de tout, sans collision. Test :
+  `butterflies.js`.
 - Poules (`hens`, `HEN`) : picorent et se promènent autour de leur place ; un aboiement dans le cône (`BARK`) ou Tecky
   trop près les fait fuir en battant des ailes (« cot-cot »). Pas de collision. Test : `hens.js`.
 - Chien de berger (`berger`, `CHARGE`) : s'accroupit (« ! », sprite écrasé), charge en ligne droite si `clearPath()`,

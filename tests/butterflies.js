@@ -3,14 +3,16 @@ const base = require('fs').readFileSync(__dirname + '/sim.js', 'utf8').split("se
 eval(base + `setTimeout(() => {
   run('audioOn(); pressed.ok = true'); step(1); advanceDialog();
   run('dogs = []; P.x = 5 * 64; P.y = 5 * 64; P.inv = 1e9;');
-  ok(run('butterflies.length') === 7 && run('butterflies.every(b => b.x < 40 * 64 && b.y > 30 * 64)'), '7 papillons dans le parc');
+  ok(run('butterflies.filter(b => b.x < 40 * 64 && b.y > 30 * 64).length') === 7, '7 papillons dans le parc');
+  ok(run('butterflies.length') >= 14, run('butterflies.length') + ' papillons en tout (niche, village, campagne, ferme, forêt)');
+  ok(run('butterflies.every(b => MAP.flowers.some(f => dist(f[0], f[1], b.hx, b.hy) < BFLY.roam * 1.3))'), 'chacun a des fleurs où se poser');
   run('var rested = new Set(), frames = new Set(), far = 0;');
   for (let i = 0; i < 60 * 60; i++) {
     step(1);
     if (i % 6 === 0) run('butterflies.forEach((b, k) => { if (b.mode === "rest" && dist(b.x, b.y, b.perch[0], b.perch[1]) < 10) rested.add(k);' +
                          ' frames.add(Math.floor(b.flap) % 4); far = Math.max(far, dist(b.x, b.y, b.hx, b.hy)); })');
   }
-  ok(run('rested.size') >= 3, run('rested.size') + ' papillons se sont posés sur une fleur en une minute');
+  ok(run('rested.size') >= 6, run('rested.size') + ' papillons se sont posés sur une fleur en une minute');
   ok(run('frames.size') === 4, 'ils battent des ailes (4 images)');
   ok(run('far') < run('BFLY.roam') * 1.6, 'ils restent dans leur coin du parc (au plus ' + Math.round(run('far')) + ' px de leur place)');
   // Tecky s'approche : il s'envole, plus haut, puis revient

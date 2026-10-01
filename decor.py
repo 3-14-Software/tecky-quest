@@ -905,25 +905,36 @@ def sandbox():
     return d
 
 
-def fountain():
-    """Fontaine : bassin rond en pierre, vasque sur une colonne, jet d'eau qui retombe en gerbe."""
+def _bezier(p0, c, p1, t):
+    return ((1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * c[0] + t * t * p1[0],
+            (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * c[1] + t * t * p1[1])
+
+
+def fountain(phase=0.0):
+    """Fontaine : bassin rond en pierre, vasque sur une colonne, jet d'eau qui retombe en gerbe.
+    phase (0..1) anime l'eau : le jet monte et descend, des gouttes glissent le long de la gerbe et des filets,
+    les éclaboussures palpitent et des ronds s'élargissent dans le bassin (ANIMATED)."""
     d = Drawing(64, 64)
     _shadow(d, 33, 52, 30, 8)
     stone, stone_lt, stone_dk = "#A3A8AD", "#C4C8CC", "#7D8288"
     water, water_dk, water_lt = "#9FD3F0", "#6DB6E3", "#DDF3FC"
+    wave = lambda off=0.0: math.sin(2 * math.pi * (phase + off))
     # bassin : paroi avant + margelle
     d.add(path("M5,40 L5,47 A27,11 0 0 0 59,47 L59,40 Z"), stone)
     for x in (12, 22, 32, 42, 52):
         y = 47 + 11 * math.sqrt(max(0, 1 - ((x - 32) / 27) ** 2))
         d.raw(line(f"M{x},{y - 6.5:.1f} L{x},{y - 0.8:.1f}", stone_dk, 0.8))
     d.add(ellipse(32, 40, 27, 11), stone_lt, edge=True)
-    # eau du bassin (paroi intérieure du fond visible au-dessus)
+    # eau du bassin (paroi intérieure du fond visible au-dessus) ; des ronds s'élargissent et s'effacent
     inner = ellipse(32, 40.5, 22.5, 8.2)
     d.clip("fontaine_in", [inner])
     d.add(inner, stone_dk, sil=False, edge=True)
     d.add(ellipse(32, 42.6, 23, 7.6), water, sil=False, clip="fontaine_in")
-    d.raw(_ring(32, 44.2, 12.5, 3.6, water_lt, 0.9))
-    d.raw(_ring(32, 44.2, 17.5, 5.0, water_dk, 0.7))
+    for k in range(2):
+        f = (phase + k / 2) % 1
+        rx = 6 + 15 * f
+        d.raw(f'<g clip-path="url(#fontaine_in)" opacity="{1 - f:.2f}">'
+              + _ring(32, 44.2, rx, rx * 0.29, water_lt if k == 0 else water_dk, 0.9) + "</g>")
     # colonne et vasque
     d.add(rect(29.6, 26, 4.8, 18, 1), stone, edge=True)
     d.add(rect(30.4, 27, 1.2, 15, 0.6), stone_lt, sil=False)
@@ -932,14 +943,26 @@ def fountain():
     d.add(ellipse(32, 24, 10, 3), stone_lt, edge=True)
     d.add(ellipse(32, 24.3, 8, 2), water, sil=False)
     # gerbe : jet central qui retombe dans la vasque, filets qui débordent dans le bassin
+    arcs = []
     for s in (-1, 1):
-        _tube(d, f"M32,8.5 Q{32 + 8 * s},6.5 {32 + 9.5 * s},{22.5}", water, 1.6)
-        _tube(d, f"M{32 + 9.6 * s},26 Q{32 + 13.5 * s},27 {32 + 14.2 * s},{37.5}", water, 1.4)
-    d.add(path("M30.4,24 Q30,15 32,6.4 Q34,15 33.6,24 Z"), water)
-    d.raw(line("M31.9,21 L31.9,11", "#FFFFFF", 0.8))
-    for x, y, r in ((22.2, 21.4, 0.9), (41.8, 21.4, 0.9), (17.2, 38.6, 1.0), (46.8, 38.6, 1.0),
-                    (26, 10.5, 0.7), (38, 10.5, 0.7)):
-        d.add(circle(x, y, r), water_lt, sil=False)
+        up = ((32, 8.5), (32 + 8 * s, 6.5), (32 + 9.5 * s, 22.5))
+        over = ((32 + 9.6 * s, 26), (32 + 13.5 * s, 27), (32 + 14.2 * s, 37.5))
+        arcs += [(up, 3, 1.0), (over, 2, 1.3)]
+        _tube(d, f"M{up[0][0]},{up[0][1]} Q{up[1][0]},{up[1][1]} {up[2][0]},{up[2][1]}", water, 1.6)
+        _tube(d, f"M{over[0][0]},{over[0][1]} Q{over[1][0]},{over[1][1]} {over[2][0]},{over[2][1]}", water, 1.4)
+    top = 6.4 - 0.9 * wave()
+    d.add(path(f"M30.4,24 Q30,15 32,{top:.2f} Q34,15 33.6,24 Z"), water)
+    d.raw(line(f"M31.9,21 L31.9,{top + 4.6:.2f}", "#FFFFFF", 0.8))
+    # gouttes qui glissent le long des filets
+    for (p0, c, p1), n, speed in arcs:
+        for k in range(n):
+            x, y = _bezier(p0, c, p1, (phase * speed + k / n) % 1)
+            d.add(circle(x, y, 0.7), "#FFFFFF", sil=False, opacity=0.9)
+    # éclaboussures qui palpitent, embruns en haut du jet
+    for i, (x, y, r) in enumerate(((22.2, 21.4, 0.9), (41.8, 21.4, 0.9), (17.2, 38.6, 1.0), (46.8, 38.6, 1.0))):
+        d.add(circle(x, y, r * (1 + 0.35 * wave(i / 4))), water_lt, sil=False)
+    for x in (26, 38):
+        d.add(circle(x, 10.5 - 1.2 * wave(0.25), 0.7), water_lt, sil=False)
     return d
 
 
@@ -986,6 +1009,19 @@ def playhouse():
     _tuft(d, 12.5, 60.6)
     _tuft(d, 52, 60.6)
     return d
+
+
+# décors animés : nom -> (nombre d'images, images par seconde) ; la fonction reçoit la phase 0..1
+ANIMATED = {"fountain": (8, 10)}
+
+
+def frames(name):
+    """Images d'un décor (une seule, sauf pour les décors animés)."""
+    fn = DECOR[name][0]
+    if name in ANIMATED:
+        n = ANIMATED[name][0]
+        return [fn(i / n) for i in range(n)]
+    return [fn()]
 
 
 DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x)

@@ -71,8 +71,9 @@ dégâts (il klaxonne avant) ; aux passages piétons, les véhicules s'arrêtent
 ### Papillons (`butterflies/`) — `spr_butterfly_yellow` / `_blue` / `_pink` / `_orange`
 Vus de dessus, tête vers le haut : à tourner dans le sens du vol (`image_angle = direction - 90`). **Origine : (24, 24)**,
 au centre. 4 images : ailes ouvertes, mi-closes, presque fermées, mi-closes (environ 14 FPS en vol, 3 FPS posé).
-Dans le jeu web, ils volettent en zigzag dans le parc à environ 36 px du sol (petite ombre en dessous, à 80 % de
-leur taille), se posent sur les fleurs, et s'envolent quand Tecky s'approche ou aboie.
+Dans le jeu web, ils volettent en zigzag à environ 36 px du sol (petite ombre en dessous, à 80 % de leur taille),
+surtout au parc mais aussi près de la niche, au village, à la ferme et dans la clairière ; ils se posent sur les
+fleurs, et s'envolent quand Tecky s'approche ou aboie.
 
 ### Alice (`alice/`)
 | Anim | Images | FPS | Remarque |
@@ -246,7 +247,7 @@ L'origine est au pied de l'objet.
 | `spr_decor_mushrooms` / `fern` (champignons / fougère, traversables) | 64×64 | (32, 56) |
 | `spr_decor_slide` / `swing` (toboggan / balançoire) | 128×128 | (64, 120) |
 | `spr_decor_sandbox` (bac à sable, **à plat**) | 128×96 | (64, 88) |
-| `spr_decor_fountain` (fontaine) | 128×128 | (64, 116) |
+| `spr_decor_fountain_strip8` (fontaine **animée** : jet, gouttes, ronds dans le bassin ; 10 FPS) | 128×128 | (64, 116) |
 | `spr_decor_playhouse` (cabane de jeu, cachette d'Alice) | 128×128 | (64, 120) |
 
 Les clôtures et la haie `_h` se répètent tous les 64 px ; les `_v` se posent en colonne.
