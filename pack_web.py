@@ -20,6 +20,7 @@ import decor
 import enemies
 import critters
 import ducks
+import npcs
 import farmer
 import hens
 import hud
@@ -192,6 +193,11 @@ for y in (6.2, 7.2, 8.2, PEN[3]):
     DECOR.append(("fence_wood_v", PEN[0], y))
     DECOR.append(("fence_wood_v", PEN[2], y))
 FARMER = (57.9, 8.4)                # le fermier Gaston, contre la clôture ouest de l’enclos
+POSTMAN = (26.4, 10.45)             # Marcel le facteur, près de la boîte aux lettres du village
+NEIGHBOR = (32.4, 4.95)             # Mamie Rose, devant sa maison bleue
+POMPON = (38.7, 21.2)               # son chat, caché près des entrepôts
+# les lettres du facteur, emportées par le vent : campagne, village, zone industrielle, près de la niche
+LETTERS = [(13.6, 8.2), (22.0, 6.6), (34.6, 7.0), (24.6, 18.0), (2.6, 5.6)]
 # terriers sous les grillages : Tecky passe d'une extrémité à l'autre (raccourcis)
 TUNNELS = [((40.0, 21.0), (41.25, 21.0)),        # zone industrielle <-> verger de la ferme
            ((36.5, 16.75), (36.5, 18.0)),        # trottoir <-> zone industrielle
@@ -381,6 +387,10 @@ def build_map():
         "hens": [[n, px(x), px(y), q] for n, x, y, q in HENS],
         "pen": [px(v) for v in PEN], "penGate": [px(v) for v in PEN_GATE],
         "farmer": [px(FARMER[0]), px(FARMER[1])],
+        "postman": [px(POSTMAN[0]), px(POSTMAN[1])], "neighbor": [px(NEIGHBOR[0]), px(NEIGHBOR[1])],
+        "pompon": [px(POMPON[0]), px(POMPON[1])], "letters": [[px(x), px(y)] for x, y in LETTERS],
+        "npcFps": dict({"farmer": {a: v[1] for a, v in farmer.ANIMS.items()}},
+                       **{k: {a: v[1] for a, v in npcs.ANIMS[k].items()} for k in npcs.KINDS}),
         "critters": [[n, px(x), px(y)] for n, x, y in CRITTERS],
         "rest": {a: [fps, loop] for a, (_, fps, _, loop) in tecky.REST_ANIMS.items()},
         "ducks": [[n, px(x), px(y), f] for n, x, y, f in DUCKS],
@@ -435,6 +445,10 @@ def collect():
             out.append((f"alice/{a}/{v}", [render_svg(s, 48, 48, S, PAD) for s in alice.frames(a, v)], CH_O, True))
     for a, (_, fps, _) in farmer.ANIMS.items():          # le fermier Gaston, vu de face, pieds en (24, 60)
         out.append((f"farmer/{a}", [render_svg(sv, farmer.W, farmer.H, S, PAD) for sv in farmer.frames(a)], (24 * S + M, 60 * S + M), True))
+    for kind in npcs.KINDS:                             # le facteur et la voisine, vus de face, pieds en (24, 60)
+        for a in npcs.ANIMS[kind]:
+            out.append((f"{kind}/{a}", [render_svg(sv, npcs.W, npcs.H, S, PAD) for sv in npcs.frames(kind, a)], (24 * S + M, 60 * S + M), True))
+    out.append(("item/letter", [render_svg(sv, 32, 32, S, PAD) for sv in npcs.letter_frames()], (32 + M, 32 + M), True))
     for kind in critters.KINDS:                         # écureuil, chats : de profil vers la droite, pieds en (16, 28)
         for a in critters.anims(kind):
             out.append((f"{kind}/{a}", [render_svg(sv, 32, 32, S, PAD) for sv in critters.frames(kind, a)], (16 * S + M, 28 * S + M), True))

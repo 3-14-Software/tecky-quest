@@ -29,6 +29,7 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - `tecky.py`, `alice.py`, `enemies.py` (roquet, bouledogue, molosse/doberman, berger), `hens.py` (poules animées),
   `farmer.py` (le fermier Gaston, vu de face, 48x64, pieds en (24, 60) ; `FACE` pour son portrait),
   `ducks.py` (colvert, cane, caneton, de profil, 32x32, ligne d'eau en (16, 24)),
+  `npcs.py` (le facteur Marcel et la voisine Mamie Rose, comme `farmer.py` ; `letter_frames()` : la lettre),
   `critters.py` (écureuil, chats roux et noir, de profil, 32x32), `vehicles.py` (voitures, camionnette, bus),
   `butterflies.py` (papillons, vus de dessus), `items.py`, `decor.py`, `tiles.py`, `hud.py` :
   dessins et animations. `tiles.py` : tileset Wang/marching squares de 16 tuiles par transition (bits NO=1, NE=2, SO=4, SE=8),
@@ -38,7 +39,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   `SONG`/`WINSONG`/`LOSESONG` jouées par le séquenceur WebAudio du jeu (`Music.start('main' | 'win' | 'lose')`).
 - `pack_web.py` : atlas (frames rognées), niveau (`MW=80`, `MH=48` tuiles, positions des décors/objets/chiens/trésors `DIG`),
   `index.html` à partir de `web_src/index.template.html` + `game.js`, paquet autonome (manifest, service worker, icônes, `serve.sh`).
-  Lance `web_src/check_placement.js` : rien dans l'eau ou un obstacle, et tout atteignable **à pied depuis la niche**
+  Lance `web_src/check_placement.js` : rien dans l'eau ou un obstacle (canards : dans l'eau), et tout (personnages,
+  lettres, Pompon compris) atteignable **à pied depuis la niche**
   (parcours en largeur sur une grille de 16 px ; c'est lui qui garantit que le pont et les sentiers suffisent).
 - Carte : le quart nord-ouest (40 x 24) est la carte d'origine (mêmes coordonnées, les tests s'y appuient). Ferme au
   nord-est, rivière d'un bord à l'autre (y 26..29) avec **un seul pont** (`BRIDGES`, x 63..65 : coins rendus non-eau ;
@@ -128,7 +130,15 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   `keepHen()` la compte (`penned`) et la garde dans l'enclos, jamais sur la route. Toutes rentrées : le fermier appelle
   Tecky (« Bravo ! Viens me voir ! ») et, quand Tecky lui parle, `finishFarm()` (saucisse, points). Sauvegardé
   (`farm`, `hens`). Test : `farm.js`.
-- Personnages (`NPC`, `npcList()`, `NPC_DO` : par personnage `mark` / `greet` / `talk`) : comme dans un RPG, ils ne
+- Le facteur Marcel (`post`, `POST`, `letters`, `MAP.postman`, `MAP.letters`) : cinq lettres emportées par le vent autour
+  du village ; Tecky les ramasse en passant dessus (même avant d'avoir parlé à Marcel), compteur dans le HUD pendant
+  la quête, puis Marcel remercie (os + points). La voisine Mamie Rose (`rose`, `neighbor`, `MAP.neighbor`) a perdu son
+  chat Pompon (`pompon`, `CAT`, `MAP.pompon`, sprites `cat_white/*`) : une fois la quête acceptée, Pompon suit Tecky
+  sur ses traces (`crumbAt()`, terriers compris), s'assoit s'il est trop loin (`wait`), et reste chez elle une fois
+  arrivé (`home`) ; elle remercie (saucisse + points). Un aboiement le fait feuler. Sauvegardés (`post`, `letters`,
+  `rose`, `cat`). Test : `quests.js`.
+- Personnages (`NPC`, `npcList()`, `NPC_DO` : par personnage `mark` / `greet` / `talk` ; `newNpc()`, `updateNpcAnim()` :
+  parle, se réjouit (`cheerT`), salue (`waveT`), s'inquiète (`worried`) ; fps dans `MAP.npcFps`) : comme dans un RPG, ils ne
   parlent que sur C (« Parler », `biteAction()` → `'talk'`, E aussi). Bulle `hud/talk` au-dessus de la tête : « ! »
   (une demande ou une récompense à donner), « ? » (demande en cours), remplacée par « Parler » tout près. Quand Tecky
   arrive près d'eux : petite exclamation (`npcShout()`, bulle de mots + `SFX.hey`), sans bloquer le jeu.

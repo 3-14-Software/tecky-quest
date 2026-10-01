@@ -13,6 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 import alice
 import farmer
 import items
+import npcs
 import tecky
 from spritelib import Drawing, circle, ellipse, rect, poly, path, line, render_svg, OUTLINE
 
@@ -140,6 +141,13 @@ def farmer_portrait(scale):
     cx, cy, half = farmer.FACE
     return [_portrait(scale, _crop_face(farmer.front(p).svg(), cx, cy, half, scale, farmer.W, farmer.H), bg="#CFE8B0")
             for p in farmer.portrait_states()]
+
+
+def npc_portrait(kind, scale):
+    """Le facteur Marcel et la voisine Mamie Rose : normal, clignement, joyeux, inquiet."""
+    cx, cy, half = npcs.FACES[kind]
+    return [_portrait(scale, _crop_face(npcs.front(kind, p).svg(), cx, cy, half, scale, npcs.W, npcs.H), bg=npcs.PORTRAIT_BG[kind])
+            for p in npcs.portrait_states(kind)]
 
 
 # ------------------------------------------------------------------ texte en sprite : chiffres
@@ -360,6 +368,272 @@ def arrow_icons(scale):
     return out
 
 
+# ------------------------------------------------------------------ badges (succès)
+BADGES = ["aventure", "copains", "os_dores", "intact", "rapide", "poules",
+          "facteur", "chat", "betes", "canards", "explorateur", "sieste"]
+BADGE_C = (24, 20.5)      # centre de la médaille dans le cadre 48x48
+_HEART = ("M16,23.5 C9,18.6 7,15.2 7,12.6 C7,9.9 9.1,8 11.6,8 C13.6,8 15.1,9.2 16,10.9 "
+          "C16.9,9.2 18.4,8 20.4,8 C22.9,8 25,9.9 25,12.6 C25,15.2 23,18.6 16,23.5 Z")   # même cœur que fx/heart
+
+
+def _arc(cx, cy, r, a0, a1):
+    """Arc de cercle (angles en degrés, sens horaire à l'écran), pour un trait."""
+    p = lambda a: (cx + r * math.cos(math.radians(a)), cy + r * math.sin(math.radians(a)))
+    (x0, y0), (x1, y1) = p(a0), p(a1)
+    return f"M{x0:.2f},{y0:.2f} A{r},{r} 0 {1 if a1 - a0 > 180 else 0} 1 {x1:.2f},{y1:.2f}"
+
+
+def _sparkle(d, x, y, s):
+    """Petite étoile blanche cernée de brun (comme l'éclat des objets)."""
+    pts = " ".join(f"{px:.2f},{py:.2f}" for px, py in items.star_pts(x, y, s, s * 0.36))
+    d.raw(f'<polygon points="{pts}" fill="#FFFFFF" stroke="{OUTLINE}" stroke-width="0.7" stroke-linejoin="round"/>')
+
+
+def _zee(x, y, s, fill, w=1.5):
+    """Lettre « z » arrondie de côté s centrée en (x, y) : trait épais brun, puis trait de couleur par-dessus."""
+    dd = (f"M{x - s / 2:.2f},{y - s / 2:.2f} L{x + s / 2:.2f},{y - s / 2:.2f} L{x - s / 2:.2f},{y + s / 2:.2f} "
+          f"L{x + s / 2:.2f},{y + s / 2:.2f}")
+    return line(dd, OUTLINE, w + 1.8) + line(dd, fill, w)
+
+
+def _medal(scale, locked=False):
+    """Médaille sans icône : deux rubans (rouge et bleu, comme la médaille trésor), anneau doré (gris si
+    verrouillé) avec reflet et ombre, disque crème au centre."""
+    cx, cy = BADGE_C
+    ring, hi, lo = ("#A2A7B0", "#C9CCD2", "#8A8F99") if locked else ("#F2C14E", "#FFE9A0", "#D99A26")
+    rib = ("#8A8F99", "#6E727A") if locked else ("#D7332B", "#2E6FD1")
+    d = Drawing(48, 48)
+    for s, col in ((-1, rib[0]), (1, rib[1])):
+        x = lambda v: cx + s * v
+        d.add(poly([(x(3.5), 30), (x(11), 28), (x(13.2), 44.6), (x(10.2), 42.4), (x(6.8), 45.4)]), col)
+        d.add(poly([(x(7.2), 31), (x(8.6), 30.6), (x(10.4), 42.8), (x(9.3), 42.4)]), "#FFFFFF", sil=False,
+              opacity=0.3)
+    d.add(circle(cx, cy, 17.5), ring)
+    d.raw(line(_arc(cx, cy, 15.85, 200, 265), hi, 1.4))
+    d.raw(line(_arc(cx, cy, 15.85, 20, 85), lo, 1.4))
+    d.add(circle(cx, cy, 14.1), lo, sil=False)
+    d.add(circle(cx, cy, 13.3), "#E4E6EA" if locked else CREAM, sil=False, edge=True)
+    return render_svg(d.svg(), 48, 48, scale)
+
+
+# --- icônes : dessinées dans un carré 32x32 autour de (16, 16), comme les objets, puis posées sur le disque
+def _ic_aventure(d):
+    """Cœur rouge : Tecky a retrouvé Alice."""
+    d.add(path(_HEART, "translate(16 16.4) scale(1.04) translate(-16 -15.7)"), "#E2332B")
+    d.add(ellipse(11.9, 11.6, 2.5, 1.6, "rotate(-30 11.9 11.6)"), "#FFFFFF", sil=False, opacity=0.8)
+
+
+def _ic_copains(d):
+    """Patte de Tecky (roux) et petit cœur rose : copain de tous les chiens."""
+    fur, light = tecky.PAL["fur"], tecky.PAL["light"]
+    px, py = 14.2, 20.6
+    d.add(ellipse(px, py, 5.8, 4.8), fur)
+    for x, y in ((-6.4, -6.0), (-2.6, -9.6), (2.6, -9.6), (6.4, -6.0)):
+        d.add(ellipse(px + x, py + y, 2.1, 2.6, f"rotate({x * 3:.0f} {px + x} {py + y})"), fur)
+    d.add(ellipse(px - 1.6, py - 1.4, 2.2, 1.3), light, sil=False)
+    d.add(path(_HEART, "translate(23.6 10.0) scale(0.48) translate(-16 -15.7)"), "#F2607E")
+    d.add(ellipse(22.0, 8.6, 1.1, 0.75, "rotate(-30 22.0 8.6)"), "#FFFFFF", sil=False, opacity=0.8)
+
+
+def _ic_os_dores(d):
+    """Os doré (le même que le trésor) et deux éclats."""
+    items.goldbone(d)
+    _sparkle(d, 25.6, 7.4, 3.4)
+    _sparkle(d, 6.4, 24.6, 2.2)
+
+
+def _ic_intact(d):
+    """Bouclier bleu frappé d'un cœur, un éclat : sans une égratignure."""
+    shield = path("M16,4.2 C19.4,6.2 22.6,6.8 26,6.8 C26.2,16.6 22.8,23.8 16,28.2 C9.2,23.8 5.8,16.6 6,6.8 "
+                  "C9.4,6.8 12.6,6.2 16,4.2 Z")
+    d.clip("bshield", [shield])
+    d.add(shield, "#4A90D9")
+    d.add(rect(16, 0, 14, 30), "#3A7CC4", sil=False, clip="bshield")
+    d.add(path(_HEART, "translate(16 15.8) scale(0.55) translate(-16 -15.7)"), CREAM, sil=False, edge=True)
+    _sparkle(d, 24.6, 7.0, 3.2)
+
+
+def _ic_rapide(d):
+    """Chronomètre rouge (temps écoulé en rose) et traits de vitesse : moins de 10 minutes."""
+    cx, cy = 17.8, 17.6
+    d.add(rect(cx - 1.8, 4.4, 3.6, 2.6, 1), "#C9CED6")
+    d.add(rect(cx - 1.1, 6.2, 2.2, 3, 0.5), "#C9CED6")
+    d.add(rect(cx + 6.4, 7.0, 2.6, 3.4, 0.8, f"rotate(45 {cx + 7.7} 8.7)"), "#C9CED6")
+    d.add(circle(cx, cy, 9.0), "#E24B4B")
+    d.add(circle(cx, cy, 6.8), "#FFFFFF", sil=False, edge=True)
+    arc = _arc(cx, cy, 6.3, -90, 0)
+    d.add(path(f"M{cx},{cy} L{cx},{cy - 6.3} {arc[arc.index('A'):]} Z"), "#FFC9C2", sil=False)
+    for a in range(0, 360, 90):
+        r = math.radians(a)
+        d.raw(line(f"M{cx + 5.0 * math.cos(r):.2f},{cy + 5.0 * math.sin(r):.2f} "
+                   f"L{cx + 6.2 * math.cos(r):.2f},{cy + 6.2 * math.sin(r):.2f}", OUTLINE, 0.9))
+    d.raw(line(f"M{cx},{cy} L{cx + 3.4:.2f},{cy - 2.8:.2f}", OUTLINE, 1.4))
+    d.add(circle(cx, cy, 1.1), OUTLINE, sil=False)
+    for y, x0, w in ((13.6, 4.6, 3.0), (17.6, 3.6, 3.6), (21.6, 4.6, 3.0)):
+        d.raw(line(f"M{x0},{y} L{x0 + w},{y}", OUTLINE, 1.3))
+
+
+def _ic_poules(d):
+    """Poule rousse de profil (couleurs de hens.py) : les poules de Gaston."""
+    body, wing = "#D9772B", "#B9601E"
+    d.add(path("M9.5,19 Q2.8,15.5 4.2,7.6 Q7.6,10.4 8.6,9.4 Q9.8,13.2 12.6,15 Z"), "#A3502A")
+    d.add(ellipse(15.5, 19.5, 9, 7), body)
+    d.add(circle(21.2, 10.6, 5), body)
+    for cx, cy, r in ((18.4, 6.2, 2.0), (21, 5.1, 2.3), (23.6, 6.2, 1.8)):
+        d.add(circle(cx, cy, r), "#E2332B")
+    d.add(ellipse(25, 15, 1.5, 2.2), "#E2332B")
+    d.add(poly([(25.4, 9.4), (29.8, 11.2), (25.4, 13)]), "#F2C14E")
+    d.add(path("M9.5,17.5 Q15,14.6 20.6,17.4 Q19,23.4 13,22.8 Q9.6,21.2 9.5,17.5 Z"), wing, sil=False, edge=True)
+    d.add(circle(22, 10, 1.15), OUTLINE, sil=False)
+    d.add(circle(22.35, 9.6, 0.4), "#FFFFFF", sil=False)
+    d.add(circle(23.4, 12.6, 1.1), "#F28CB8", sil=False, opacity=0.7)
+    d.raw(line("M13,26 L12.4,28.6 M17.6,26 L18.2,28.6", "#E8A33A", 1.4))
+
+
+def _ic_facteur(d):
+    """Enveloppe blanche et timbre rouge : le courrier du facteur."""
+    tr = "rotate(-8 16 16)"
+    d.add(rect(4.5, 8.5, 23, 16, 2, tr), "#FFFFFF")
+    d.add(path("M5.2,9.4 L16,18 L26.8,9.4 Z", tr), "#E3EEF8", sil=False)
+    d.raw(f'<g transform="{tr}">' + line("M5.4,9.4 L16,18 L26.6,9.4", OUTLINE, 1.0)
+          + line("M5.6,23.6 L13,17 M26.4,23.6 L19,17", "#B9C6D3", 0.9) + "</g>")
+    d.add(rect(19.4, 4.6, 7.2, 8.2, 0.6, "rotate(6 23 8.7)"), "#FFFFFF", sil=False, edge=True)
+    d.add(rect(20.6, 5.8, 4.8, 5.8, 0.4, "rotate(6 23 8.7)"), "#E24B4B", sil=False)
+    d.add(path(_HEART, "translate(23 8.7) rotate(6) scale(0.17) translate(-16 -15.7)"), "#FFFFFF", sil=False)
+
+
+def _ic_chat(d):
+    """Tête du chat blanc de la voisine (couleurs de critters.py) : taches grises, yeux bleus, collier rose à grelot."""
+    fur, patch, ear, eye, collar = "#FBF8F3", "#9D9BA8", "#F4A3A8", "#6DB8EA", "#F2729E"
+    d.add(poly([(6.2, 12.6), (7.6, 3.2), (14.4, 8.4)]), patch)          # oreille gauche grise
+    d.add(poly([(25.8, 12.6), (24.4, 3.2), (17.6, 8.4)]), fur)
+    head = ellipse(16, 15.6, 10.2, 8.6)
+    d.clip("bcat", [head])
+    d.add(head, fur)
+    d.add(poly([(8.4, 10.6), (8.8, 6.0), (12.4, 8.8)]), ear, sil=False)
+    d.add(poly([(23.6, 10.6), (23.2, 6.0), (19.6, 8.8)]), ear, sil=False)
+    d.add(ellipse(10.2, 11.6, 5.6, 4.8, "rotate(-20 10.2 11.6)"), patch, sil=False, clip="bcat")
+    d.add(ellipse(23.8, 20.6, 3.4, 2.6), patch, sil=False, clip="bcat")
+    for x in (11.6, 20.4):
+        d.add(ellipse(x, 15.2, 1.9, 2.2), eye, sil=False, edge=True)
+        d.add(ellipse(x, 15.4, 0.8, 1.5), OUTLINE, sil=False)
+        d.add(circle(x + 0.6, 14.4, 0.5), "#FFFFFF", sil=False)
+    d.add(poly([(14.6, 18.4), (17.4, 18.4), (16, 19.8)]), "#EE97A8", sil=False, edge=True)
+    d.raw(line("M16,19.8 Q15.2,21.4 13.8,20.8 M16,19.8 Q16.8,21.4 18.2,20.8", OUTLINE, 0.8))
+    d.raw(line("M3.2,17.6 L9,18.4 M3.6,21 L9,19.8 M28.8,17.6 L23,18.4 M28.4,21 L23,19.8", "#ABA49B", 0.7))
+    d.add(path("M8.6,22.2 Q16,26.2 23.4,22.2 L23.8,24.6 Q16,28.8 8.2,24.6 Z"), collar, sil=False, edge=True)
+    d.add(circle(16, 27.4, 2.2), "#F2C14E")
+    d.raw(line("M14.6,27.6 L17.4,27.6", OUTLINE, 0.7))
+
+
+def _ic_betes(d):
+    """Écureuil roux assis, queue en panache, un gland entre les pattes : toutes les petites bêtes surprises."""
+    fur, dark, belly = "#C8642E", "#9E4A22", "#F6DDB8"
+    for x, y, r in ((9.6, 25.2, 3.4), (6.8, 21.4, 4.0), (5.8, 16.2, 4.4), (7, 11, 4.4), (9.4, 6.8, 3.8),
+                    (13, 4.8, 3.0)):
+        d.add(circle(x, y, r), fur)
+    d.raw(line("M8.6,22 Q6.6,16 8.4,10.6 Q10,7.6 12.6,6.4", dark, 1.0))
+    d.add(ellipse(17.4, 21.6, 5.4, 6.6, "rotate(10 17.4 21.6)"), fur)
+    d.add(ellipse(20, 22.6, 2.8, 5, "rotate(10 17.4 21.6)"), belly, sil=False)
+    d.add(ellipse(18.8, 28, 3.8, 1.3), fur)
+    d.add(ellipse(14.6, 24.8, 4.2, 3.2, "rotate(-28 14.6 24.8)"), fur, sil=False, edge=True)
+    d.add(poly([(17.4, 11.8), (18.6, 10.6), (17.2, 7.4)]), dark)
+    d.add(circle(20.6, 13.4, 4.8), fur)
+    d.add(ellipse(23.6, 14.8, 3.4, 2.7), fur)
+    d.add(ellipse(23, 16.4, 2.6, 1.5), belly, sil=False)
+    d.add(poly([(17.8, 10.6), (21.6, 9.4), (18.6, 4.8)]), fur)
+    d.add(circle(22.4, 12.8, 1.8), belly, sil=False)
+    d.add(circle(22.6, 12.8, 1.25), OUTLINE, sil=False)
+    d.add(circle(23.0, 12.3, 0.45), "#FFFFFF", sil=False)
+    d.add(ellipse(26.8, 14.4, 0.9, 0.75), OUTLINE, sil=False)
+    d.add(ellipse(24.4, 21.4, 2.2, 2.5), "#D9A15E", sil=False, edge=True)
+    d.add(path("M21.8,20.6 Q24.4,17.2 27,20.6 Z"), "#8A5A2E", sil=False, edge=True)
+    d.add(ellipse(22.4, 21.4, 1.2, 1.0), fur, sil=False, edge=True)
+
+
+def _ic_canards(d):
+    """Colvert qui nage, de profil (couleurs de ducks.py) : tête verte, collier blanc, poitrine brun-roux."""
+    green, sheen, bill, chest = "#2E8A55", "#5BBB84", "#F2CB45", "#A9552F"
+    body = path("M4.2,17.4 Q6.6,15.6 9,17 Q14,14.8 20.6,15.4 Q28.2,16.4 27.6,21.6 Q26.4,26.6 16.4,26.6 "
+                "Q7.6,26.6 5.6,22 Q4.6,19.8 4.2,17.4 Z")
+    d.clip("bduck", [body])
+    d.add(rect(16.6, 6.6, 7.4, 12, 3.4, "rotate(8 20.3 12.6)"), green)
+    d.add(body, "#DCD7CD")
+    d.add(ellipse(24.2, 20, 5.4, 5.6), chest, sil=False, clip="bduck")
+    d.add(path("M8.6,18.6 Q14,16.6 19.4,18.8 Q18.4,23.2 12.6,23.2 Q9,22.4 8.6,18.6 Z"), "#AFA392", sil=False, edge=True)
+    d.add(path("M4.2,17.4 Q6.6,15.6 9,17 Q7.6,19.6 5.6,22 Q4.6,19.8 4.2,17.4 Z"), "#2B2A30", sil=False)
+    d.add(circle(21.4, 7.8, 5.4), green)
+    d.add(path("M25.6,6.8 Q30.4,6.6 31.2,9.4 Q30.2,11 26,10.4 Z"), bill)
+    d.add(rect(17.4, 13.0, 8.2, 2.2, 1.1, "rotate(8 21.5 14.1)"), "#FFFFFF", sil=False, edge=True)
+    d.add(path("M18,4.4 Q21,2.8 24.4,4.2 Q21.2,4.6 19.4,6.6 Z"), sheen, sil=False)
+    d.add(circle(23.2, 6.8, 1.15), OUTLINE, sil=False)
+    d.add(circle(23.55, 6.4, 0.4), "#FFFFFF", sil=False)
+    d.raw(line("M9.4,28.6 Q11.6,27.4 13.8,28.6 Q16,29.8 18.2,28.6 Q20.4,27.4 22.6,28.6", "#4A90D9", 1.2))
+
+
+def _ic_explorateur(d):
+    """Boussole verte, aiguille rouge (nord) et grise : toute la carte explorée."""
+    cx, cy = 16, 17
+    d.add(circle(cx, 5.4, 2.6), "#C9CED6")
+    d.add(circle(cx, 5.4, 1.1), CREAM, sil=False, edge=True)
+    d.add(circle(cx, cy, 10.2), "#5DBB63")
+    d.add(circle(cx, cy, 7.8), "#FFFFFF", sil=False, edge=True)
+    for a in range(0, 360, 90):
+        r = math.radians(a)
+        d.raw(line(f"M{cx + 6.0 * math.cos(r):.2f},{cy + 6.0 * math.sin(r):.2f} "
+                   f"L{cx + 7.2 * math.cos(r):.2f},{cy + 7.2 * math.sin(r):.2f}", OUTLINE, 0.9))
+    tr = f"rotate(35 {cx} {cy})"
+    d.add(poly([(cx, cy - 6.6), (cx + 2.3, cy), (cx - 2.3, cy)], tr), "#E2332B", sil=False, edge=True)
+    d.add(poly([(cx, cy + 6.6), (cx + 2.3, cy), (cx - 2.3, cy)], tr), "#C9CED6", sil=False, edge=True)
+    d.add(circle(cx, cy, 1.2), "#F2C14E", sil=False, edge=True)
+
+
+def _ic_sieste(d):
+    """Croissant de lune (deux arcs entre les mêmes pointes) et deux « z » : Tecky a fait la sieste."""
+    d.add(path("M14.6,6.2 A10.4,10.4 0 1 0 24.6,21.4 A8.2,8.2 0 0 1 14.6,6.2 Z"), "#F7D67A")
+    d.add(path("M11.8,10.2 A7.6,7.6 0 0 0 9.8,22"), "#FFF1B8", sil=False)
+    d.add(circle(11.6, 22.4, 1.15), "#E0B84A", sil=False)
+    d.add(circle(8.8, 15.8, 0.85), "#E0B84A", sil=False)
+    d.raw(_zee(21.2, 11.8, 4.4, "#4A90D9", 1.6))
+    d.raw(_zee(25.2, 7.4, 2.8, "#4A90D9", 1.3))
+
+
+BADGE_ICONS = {   # nom : (dessin, échelle, point de l'icône posé au centre du disque)
+    "aventure": (_ic_aventure, 0.95, 16, 16), "copains": (_ic_copains, 0.92, 16, 16),
+    "os_dores": (_ic_os_dores, 0.95, 16, 16), "intact": (_ic_intact, 0.92, 16, 16),
+    "rapide": (_ic_rapide, 0.9, 16, 16), "poules": (_ic_poules, 0.8, 16.6, 16.6),
+    "facteur": (_ic_facteur, 0.86, 16, 16.4), "chat": (_ic_chat, 0.9, 16, 16),
+    "betes": (_ic_betes, 0.82, 15.2, 16.4), "canards": (_ic_canards, 0.84, 17, 16.4),
+    "explorateur": (_ic_explorateur, 0.9, 16, 16), "sieste": (_ic_sieste, 0.86, 16.4, 15.8),
+}
+
+
+def badge_frames(scale):
+    """Badges de succès : médailles rondes 48x48 (même cadre, origine (0, 0), rien ne touche le bord), une image
+    par badge dans l'ordre de BADGES, puis une de plus à la fin : le badge verrouillé (médaille grise, « ? »).
+    L'icône est un calque à part (son propre contour brun), posé au centre du disque crème."""
+    cx, cy = BADGE_C
+    base = _medal(scale)
+    out = []
+    for name in BADGES:
+        fn, k, ix, iy = BADGE_ICONS[name]
+        d = Drawing(48, 48)
+        fn(d)
+        im = base.copy()
+        im.alpha_composite(render_svg(d.svg(f"translate({cx} {cy}) scale({k}) translate({-ix} {-iy})"), 48, 48, scale))
+        out.append(im)
+    d = Drawing(48, 48)
+    q = (f"M{cx - 3.6:.2f},{cy - 3.4:.2f} Q{cx - 3.6:.2f},{cy - 7.6:.2f} {cx:.2f},{cy - 7.6:.2f} "
+         f"Q{cx + 3.8:.2f},{cy - 7.6:.2f} {cx + 3.8:.2f},{cy - 4:.2f} Q{cx + 3.8:.2f},{cy - 1.4:.2f} {cx:.2f},{cy + 0.4:.2f} "
+         f"L{cx:.2f},{cy + 2.4:.2f}")
+    d.raw(line(q, OUTLINE, 5.0) + line(q, "#FFFFFF", 2.8))
+    d.add(circle(cx, cy + 6.6, 1.9), "#FFFFFF")
+    im = _medal(scale, locked=True)
+    im.alpha_composite(render_svg(d.svg(), 48, 48, scale))
+    out.append(im)
+    return out
+
+
 # ------------------------------------------------------------------ logo
 def logo(scale):
     W, H = 240, 96
@@ -393,6 +667,8 @@ def all_sprites(scale):
         "spr_hud_portrait_tecky": tecky_portrait(scale),
         "spr_hud_portrait_alice": alice_portrait(scale),
         "spr_hud_portrait_farmer": farmer_portrait(scale),
+        "spr_hud_portrait_postman": npc_portrait("postman", scale),
+        "spr_hud_portrait_neighbor": npc_portrait("neighbor", scale),
         "spr_hud_digits": digit_frames(scale),
         "spr_hud_key": key_frames(scale),
         "spr_hud_pad": pad_frames(scale),
@@ -403,5 +679,6 @@ def all_sprites(scale):
         "spr_hud_enemy_bar_fill": [bar_fill],
         "spr_hud_arrow": arrow(scale),
         "spr_hud_arrow_icon": arrow_icons(scale),
+        "spr_hud_badge": badge_frames(scale),
         "spr_title_logo": [logo(scale)],
     }

@@ -839,6 +839,9 @@ function reset() {
   if (facile()) dogs = dogs.filter(d => d.id % 3 !== 2);
   hens = MAP.hens.map(newHen);
   farmer = newFarmer(); farm = { state: 'new' };
+  postman = newNpc('postman', MAP.postman, 1.05); post = { state: 'new' };
+  letters = MAP.letters.map(([x, y]) => ({ x, y, t: Math.random() * 2, got: false }));
+  neighbor = newNpc('neighbor', MAP.neighbor, 1.35); rose = { state: 'new' }; pompon = newPompon();
   critters = MAP.critters.map(newCritter);
   ducks = MAP.ducks.map(newDuck); linkDucks();
   walkGrid = null; distField = null; trail = []; tunnelSeen = false; crumbs = []; followN = 0;
@@ -859,6 +862,8 @@ const WHO = {
   tecky: { name: 'Tecky', portrait: 'hud/portrait_tecky' },
   alice: { name: 'Alice', portrait: 'hud/portrait_alice' },
   farmer: { name: 'Gaston', portrait: 'hud/portrait_farmer' },
+  postman: { name: 'Marcel', portrait: 'hud/portrait_postman' },
+  neighbor: { name: 'Mamie Rose', portrait: 'hud/portrait_neighbor' },
   info:  { name: '', portrait: null },
 };
 // une réplique demandée pendant un dialogue passe à la suite (ex. : le fermier parle, et Tecky ramasse la barrette)
@@ -1006,6 +1011,10 @@ function doBark() {
   for (const d of ducks) {
     const dx = d.x - P.x, dy = d.y - P.y, l = Math.hypot(dx, dy);
     if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) scareDuck(d);
+  }
+  {                                    // Pompon n'aime pas qu'on lui aboie dessus
+    const dx = pompon.x - P.x, dy = pompon.y - P.y, l = Math.hypot(dx, dy);
+    if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) { pompon.hissT = 0.8; addWordPop('Pfff !', pompon.x, pompon.y - 70); }
   }
 }
 
@@ -1501,11 +1510,11 @@ function keepHen(h) {
     if (!hensLeft()) { farmer.waveT = 2.5; npcShout(farmer, farm.state === 'asked' ? 'Bravo ! Viens me voir !' : 'Oh ! Mes poules !'); }
   }
 }
-function newFarmer() {
-  const [x, y] = MAP.farmer;
+function newNpc(kind, [x, y], pitch) {
   solids.push([x - 16, y - 12, x + 16, y]);
-  return { kind: 'farmer', x, y, t: 0, anim: 'idle', near: false, waveT: 0, pitch: 0.8 };
+  return { kind, x, y, t: 0, anim: 'idle', near: false, waveT: 0, cheerT: 0, pitch };
 }
+const newFarmer = () => newNpc('farmer', MAP.farmer, 0.8);
 const farmThanks = () => [
   { who: 'farmer', face: 2, text: "Toutes mes poules sont rentrées ! Tu es un vrai chien de berger, Tecky." },
   { who: 'farmer', face: 0, text: "Tiens, voilà une bonne saucisse pour toi. Et bonne chance pour retrouver Alice !" },
@@ -1550,18 +1559,22 @@ function talkFarmer() {
     { who: 'tecky', face: 2, text: "Ouaf ! Je m'en occupe !" },
   ], saveGame);
 }
-function updateFarmer(dt) {
-  farmer.t += dt;
-  farmer.waveT = Math.max(0, farmer.waveT - dt);
-  const talking = state === 'dialog' && dialog && dialog.lines[dialog.i].who === 'farmer';
-  const a = talking ? 'talk' : farmer.waveT > 0 ? 'wave' : 'idle';
-  if (a !== farmer.anim) { farmer.anim = a; farmer.t = 0; }
+function updateNpcAnim(n, dt) {       // parle, se réjouit, salue, s'inquiète ou attend
+  n.t += dt;
+  n.waveT = Math.max(0, n.waveT - dt); n.cheerT = Math.max(0, n.cheerT - dt);
+  const talking = state === 'dialog' && dialog && dialog.lines[dialog.i].who === n.kind;
+  const a = talking ? 'talk' : n.cheerT > 0 && ATLAS[n.kind + '/cheer'] ? 'cheer' : n.waveT > 0 ? 'wave' :
+    n.worried && ATLAS[n.kind + '/worry'] ? 'worry' : 'idle';
+  if (a !== n.anim) { n.anim = a; n.t = 0; }
 }
-function drawFarmer() {
-  const k = 'farmer/' + farmer.anim, s = ATLAS[k];
-  if (s) drawSpr(k, Math.floor(farmer.t * (FARMER_FPS[farmer.anim] || 6)), farmer.x, farmer.y);
+function updateFarmer(dt) {           // tous les personnages
+  for (const n of npcList()) updateNpcAnim(n, dt);
+  neighbor.worried = rose.state !== 'done' && pompon.mode !== 'home';
 }
-const FARMER_FPS = { idle: 5, talk: 8, wave: 8 };       // comme farmer.py
+function drawNpc(n) {
+  const k = n.kind + '/' + n.anim;
+  if (ATLAS[k]) drawSpr(k, Math.floor(n.t * ((MAP.npcFps[n.kind] || {})[n.anim] || 6)), n.x, n.y);
+}
 
 /* ------------------------------------------------------------------ personnages */
 /* Les personnages ne parlent que si Tecky vient les voir et appuie sur C (« Parler », E aussi), comme dans un RPG.
@@ -1570,8 +1583,12 @@ const FARMER_FPS = { idle: 5, talk: 8, wave: 8 };       // comme farmer.py
    saluent d'une petite exclamation (bulle de mots, sans bloquer le jeu). NPC_DO : par personnage, bulle (0 « ! »,
    1 « ? », -1 aucune), salut et conversation. */
 const NPC = { talk: 150, markY: 150 };
-const npcList = () => [farmer];
-const NPC_DO = { farmer: { mark: farmerMark, greet: farmerGreet, talk: talkFarmer } };
+const npcList = () => [farmer, postman, neighbor];
+const NPC_DO = {
+  farmer: { mark: farmerMark, greet: farmerGreet, talk: talkFarmer },
+  postman: { mark: postmanMark, greet: postmanGreet, talk: talkPostman },
+  neighbor: { mark: neighborMark, greet: neighborGreet, talk: talkNeighbor },
+};
 function nearNpc() {
   let best = null, bd = NPC.talk;
   for (const n of npcList()) { const d = dist(P.x, P.y, n.x, n.y); if (d < bd) { best = n; bd = d; } }
@@ -1582,6 +1599,158 @@ function talkTo(n) { P.dir = dirFrom(n.x - P.x, n.y - P.y, P.dir); P.setAnim('id
 function updateNpcs() {               // petit salut quand Tecky arrive près d'un personnage
   const near = nearNpc();
   for (const n of npcList()) { if (n === near && !n.near) NPC_DO[n.kind].greet(); n.near = n === near; }
+}
+
+/* ------------------------------------------------------------------ le facteur */
+/* Marcel, le facteur du village, a perdu ses lettres dans un coup de vent (MAP.letters : cinq lettres autour du
+   village). Tecky les ramasse en passant dessus, même avant d'avoir parlé à Marcel ; quand il les a toutes, Marcel
+   l'appelle et, quand Tecky vient lui parler, le remercie (un os et des points). Sauvegardé (post, letters). */
+const POST = { reward: 150, pick: 54 };
+let post = { state: 'new' }, postman = null, letters = [];
+const lettersLeft = () => letters.filter(l => !l.got).length;
+function updateLetters(dt) {
+  for (const l of letters) {
+    l.t += dt;
+    if (l.got || dist(P.x, P.y, l.x, l.y + 20) > POST.pick || P.mode === 'ko') continue;
+    l.got = true;
+    const n = letters.length - lettersLeft();
+    addWordPop(post.state === 'new' ? 'Une lettre ?' : 'Une lettre ! (' + n + '/' + letters.length + ')', l.x, l.y - 70);
+    SFX.pick();
+    if (!lettersLeft()) { postman.waveT = 2.5; if (post.state === 'asked') npcShout(postman, 'Mes lettres ! Viens vite !'); }
+  }
+}
+function postmanMark() { return post.state === 'done' ? -1 : post.state === 'asked' && lettersLeft() ? 1 : 0; }
+function postmanGreet() {
+  if (post.state === 'new') npcShout(postman, 'Oh là là, mes lettres !');
+  else if (post.state === 'asked') {
+    const n = lettersLeft();
+    npcShout(postman, !n ? 'Mes lettres ! Merci !' : 'Encore ' + n + (n > 1 ? ' lettres !' : ' lettre !'));
+  } else { npcShout(postman, 'Bonne journée, Tecky !'); postman.waveT = 1.5; }
+}
+const postThanks = () => [
+  { who: 'postman', face: 2, text: "Toutes mes lettres ! Merci, Tecky : tout le monde va enfin recevoir son courrier." },
+  { who: 'postman', face: 0, text: "Tiens, un bel os pour la peine. Et si je croise ta petite Alice, je lui dis que tu la cherches !" },
+];
+function finishPost() {
+  post.state = 'done'; score += POST.reward;
+  addPop('+' + POST.reward, P.x - 30, P.y - 140);
+  items.push({ n: 'bone', x: P.x + 40, y: P.y - 30, t: 0, pop: 0.001 });
+  postman.cheerT = 3;
+  saveGame();
+}
+function talkPostman() {
+  if (post.state === 'done') {
+    postman.waveT = 2;
+    say([{ who: 'postman', face: 2, text: "Grâce à toi, la tournée est finie à l'heure ! Bonne chance pour retrouver Alice." }]);
+    return;
+  }
+  if (!lettersLeft()) { post.state = 'asked'; say(postThanks(), finishPost); return; }
+  if (post.state === 'asked') {
+    const n = lettersLeft();
+    say([{ who: 'postman', face: 0, text: (n > 1 ? `Il m'en manque encore ${n}.` : "Plus qu'une !") +
+      " Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts." }]);
+    return;
+  }
+  post.state = 'asked';
+  const got = letters.length - lettersLeft();
+  say([
+    { who: 'postman', face: 3, text: "Bonjour, petit chien ! Un coup de vent a fait s'envoler mes lettres, juste au début de ma tournée…" },
+    { who: 'postman', face: 0, text: got ? `Tu en as déjà trouvé ${got} ? Bravo ! Il y en a cinq en tout, autour du village. Rapporte-les-moi, s'il te plaît !`
+      : "Il y en a cinq, dans le village et autour. Si tu les trouves, rapporte-les-moi, s'il te plaît !" },
+    { who: 'tecky', face: 2, text: "Ouaf ! Je vais les chercher !" },
+  ], saveGame);
+}
+
+/* ------------------------------------------------------------------ la voisine et son chat */
+/* Mamie Rose (devant sa maison, au village) a perdu son chat Pompon (cat_white, collier rose), caché près des entrepôts
+   (MAP.pompon). Une fois que Tecky lui a parlé, Pompon le suit quand il le retrouve (sur ses traces, comme les copains
+   en balade, terriers compris) ; trop loin, il s'assoit et attend. Arrivé près de Mamie Rose, il reste avec elle, et
+   elle remercie Tecky quand il vient lui parler (une saucisse et des points). Un aboiement le fait feuler. Sauvegardé
+   (rose, cat). */
+const CAT = { find: 130, gap: 70, walk: 150, run: 330, lost: 700, home: 280, meow: [2.5, 5] };
+let rose = { state: 'new' }, neighbor = null, pompon = null;
+function newPompon() {
+  const [x, y] = MAP.pompon;
+  return { kind: 'cat_white', x, y, mode: 'lost', anim: 'idle', t: 0, dir: 'left', meowT: 1, hissT: 0 };
+}
+function catAnim(c, a) { if (c.anim !== a) { c.anim = a; c.t = 0; } }
+function catMove(c, tx, ty, dt) {      // va vers (tx, ty), d'autant plus vite que c'est loin (il court pour rattraper Tecky)
+  const dx = tx - c.x, dy = ty - c.y, l = Math.hypot(dx, dy);
+  if (l < 10) { catAnim(c, 'idle'); return; }
+  const sp = clamp(l * 3, CAT.walk * 0.6, CAT.run), st = Math.min(l, sp * dt);
+  c.x += dx / l * st; c.y += dy / l * st; c.dir = dx < 0 ? 'left' : 'right';
+  catAnim(c, sp > 220 ? 'run' : 'walk');
+}
+function updatePompon(dt) {
+  const c = pompon, dP = dist(c.x, c.y, P.x, P.y);
+  c.t += dt;
+  if (c.hissT > 0) { c.hissT -= dt; catAnim(c, 'hiss'); return; }
+  switch (c.mode) {
+    case 'lost':
+    case 'wait':
+      catAnim(c, 'idle');
+      if (dP < 300) c.dir = P.x < c.x ? 'left' : 'right';
+      if (dP < CAT.find && rose.state === 'asked') {
+        if (c.mode === 'lost') say([{ who: 'tecky', face: 2, text: "Te voilà, Pompon ! Viens, on rentre chez Mamie Rose." }]);
+        c.mode = 'follow'; addWordPop('Miaou !', c.x, c.y - 70);
+      } else if (dP < 260 && (c.meowT -= dt) <= 0) { c.meowT = rnd(CAT.meow); addWordPop(c.mode === 'lost' ? 'Miaou ?' : 'Miaou !', c.x, c.y - 70); }
+      return;
+    case 'follow': {
+      const [tx, ty] = crumbAt(CAT.gap);
+      catMove(c, tx, ty, dt);
+      if (dist(c.x, c.y, neighbor.x, neighbor.y) < CAT.home) {
+        c.mode = 'home'; neighbor.cheerT = 3;
+        npcShout(neighbor, 'Pompon ! Viens me voir, Tecky !');
+        saveGame();
+      } else if (dP > CAT.lost) { c.mode = 'wait'; addWordPop('Miaou !', c.x, c.y - 70); }
+      return;
+    }
+    case 'home':                       // près de Mamie Rose, à côté de ses chaussons
+      catMove(c, neighbor.x + 56, neighbor.y + 18, dt);
+      if (c.anim === 'idle') c.dir = 'left';
+      return;
+  }
+}
+function drawPompon() {
+  const c = pompon, fps = (MAP.critterFps.cat_white || {})[c.anim] || 8;
+  drawSpr('cat_white/' + c.anim, Math.floor(c.t * fps), c.x, c.y, { flip: c.dir === 'left' });
+}
+function neighborMark() { return rose.state === 'done' ? -1 : rose.state === 'asked' && pompon.mode !== 'home' ? 1 : 0; }
+function neighborGreet() {
+  if (rose.state === 'new') npcShout(neighbor, 'Pompon ? Pompon, où es-tu ?');
+  else if (rose.state === 'asked') npcShout(neighbor, pompon.mode === 'home' ? 'Mon Pompon est là !' : pompon.mode === 'follow' ? 'Oh ! Tu l’as trouvé !' : 'Tu as vu Pompon ?');
+  else { npcShout(neighbor, 'Bonjour, Tecky !'); neighbor.waveT = 1.5; }
+}
+const nbThanks = () => [
+  { who: 'neighbor', face: 2, text: "Pompon ! Te voilà enfin, mon chaton ! J'étais si inquiète…" },
+  { who: 'neighbor', face: 0, text: "Merci, Tecky ! Tiens, une bonne saucisse : tu l'as bien méritée." },
+];
+function finishNeighbor() {
+  rose.state = 'done'; score += POST.reward;
+  addPop('+' + POST.reward, P.x - 30, P.y - 140);
+  items.push({ n: 'sausage', x: P.x + 40, y: P.y - 30, t: 0, pop: 0.001 });
+  neighbor.cheerT = 3;
+  saveGame();
+}
+function talkNeighbor() {
+  if (rose.state === 'done') {
+    neighbor.waveT = 2;
+    say([{ who: 'neighbor', face: 2, text: "Pompon ne quitte plus le jardin, grâce à toi. Bonne chance pour retrouver ta petite Alice !" }]);
+    return;
+  }
+  if (pompon.mode === 'home') { say(nbThanks(), finishNeighbor); return; }
+  if (rose.state === 'asked') {
+    say([{ who: 'neighbor', face: 3, text: pompon.mode === 'follow' || pompon.mode === 'wait'
+      ? "Tu l'as trouvé ! Ramène-le-moi : il te suivra si tu ne vas pas trop vite."
+      : "Pompon adore se cacher près des entrepôts, de l'autre côté de la grande route. Attention aux voitures !" }]);
+    return;
+  }
+  rose.state = 'asked';
+  say([
+    { who: 'neighbor', face: 3, text: "Bonjour, mon petit. Tu n'aurais pas vu mon chat, Pompon ? Il est tout blanc, avec un collier rose et un grelot." },
+    { who: 'neighbor', face: 0, text: "Il s'est sauvé ce matin… Il adore se cacher près des entrepôts, de l'autre côté de la grande route." },
+    { who: 'tecky', face: 2, text: "Ouaf ! Je te le ramène !" },
+  ], saveGame);
 }
 
 /* ------------------------------------------------------------------ terriers */
@@ -1811,6 +1980,7 @@ function startFollow(d) { d.mode = 'follow'; d.followT = FOLLOW.time; d.followN 
 function afterTunnel() {               // les copains qui suivent passent sous le grillage avec Tecky
   crumbs = [];
   for (const d of dogs) if (d.mode === 'follow') { d.x = P.x; d.y = P.y; }
+  if (pompon.mode === 'follow') { pompon.x = P.x; pompon.y = P.y; }
 }
 // aboiement en balade : le chien répond (petit bond, cœur) et accourt pour jouer
 function callDog(d) {
@@ -2159,6 +2329,8 @@ function saveGame() {
     seen: Array.from(seenCells).join(''),
     critters: critters.map(c => c.scored ? 1 : 0).join(''),
     ducks: ducks.map(d => d.scored ? 1 : 0).join(''),
+    post: post.state, letters: letters.map(l => l.got ? 1 : 0).join(''),
+    rose: rose.state, cat: [r1(pompon.x), r1(pompon.y), pompon.mode],
   });
 }
 // pas de sauvegarde automatique en plein combat : on reprendrait au milieu des crocs
@@ -2183,6 +2355,10 @@ function loadGame(s, rested) {
   if (s.seen) for (let i = 0; i < seenCells.length; i++) seenCells[i] = s.seen[i] === '1' ? 1 : 0;
   critters.forEach((c, i) => { c.scored = (s.critters || '')[i] === '1'; });
   ducks.forEach((d, i) => { d.scored = (s.ducks || '')[i] === '1'; });
+  post.state = s.post || 'new';
+  letters.forEach((l, i) => { l.got = (s.letters || '')[i] === '1'; });
+  rose.state = s.rose || 'new';
+  if (s.cat) { pompon.x = s.cat[0]; pompon.y = s.cat[1]; pompon.mode = s.cat[2] === 'follow' ? 'wait' : s.cat[2]; }
   questHens().forEach((h, i) => { const q = (s.hens || [])[i]; if (q) { h.x = h.hx = q[0]; h.y = h.hy = q[1]; h.penned = !!q[2]; } });
   if (nextClue() === 3) revealAlice();
   sun = sunGoal();
@@ -2870,6 +3046,7 @@ function update(dt) {
       for (const b of butterflies) updateButterfly(b, dt);
       for (const c of critters) updateCritter(c, dt);
       for (const d of ducks) updateDuck(d, dt);
+      updateFarmer(dt);
       updateLeaves(dt);
       const id = menuInput();
       if (id) chooseMenu(id);
@@ -2915,6 +3092,8 @@ function update(dt) {
       updateFx(dt);
       updateLeaves(dt);
       updateFarmer(dt);
+      updateLetters(dt);
+      updatePompon(dt);
       for (const c of critters) updateCritter(c, dt);
       for (const d of ducks) updateDuck(d, dt);
       updateTrail(dt);
@@ -2987,7 +3166,9 @@ function drawWorld() {
   for (const v of cars) if (vis(v.x, v.y, 280)) list.push({ y: v.y, draw: () =>
     drawSpr('vehicle/' + v.name, Math.floor(v.t * 4), v.x, v.y, { flip: v.dir < 0 }) });
   if (!alice.hidden && vis(alice.x, alice.y, 120)) list.push({ y: alice.y, draw: () => alice.draw() });
-  if (vis(farmer.x, farmer.y, 140)) list.push({ y: farmer.y, draw: drawFarmer });
+  for (const n of npcList()) if (vis(n.x, n.y, 140)) list.push({ y: n.y, draw: () => drawNpc(n) });
+  for (const l of letters) if (!l.got && vis(l.x, l.y, 60)) list.push({ y: l.y + 20, draw: () => drawSpr('item/letter', Math.floor(l.t * 6), l.x, l.y) });
+  if (vis(pompon.x, pompon.y, 60)) list.push({ y: pompon.y, draw: drawPompon });
   for (const d of ducks) if (d.h === 0 && vis(d.x, d.y, 60)) list.push({ y: d.y, draw: () => drawDuck(d) });
   for (const c of critters) if (critterVisible(c) && vis(c.x, c.y - c.h, 60))
     list.push({ y: c.h > 0 && c.ref ? c.ref.y + 2 : c.y, draw: () => drawCritter(c) });
@@ -3123,13 +3304,16 @@ function drawHUD() {
   drawNine('hud/panel_dark', GW - 24 - 210, 138, 210, 70, 32);
   drawSpr('item/goldbone', 0, GW - 24 - 210 + 42, 166, { sc: 0.8 });
   drawDigits(treasures + '/' + MAP.dig.length, GW - 24 - 210 + 82, 146, 0.8);
-  // quête des poules en cours : poules rentrées dans l'enclos
-  if (farm.state === 'asked') {
-    const n = questHens().length;
-    drawNine('hud/panel_dark', 24, 264, 210, 70, 32);
-    drawSpr('hen/idle/right', 0, 24 + 46, 264 + 58, { sc: 0.9 });
-    drawDigits((n - hensLeft()) + '/' + n, 24 + 92, 272, 0.8);
-  }
+  // quêtes en cours : poules rentrées dans l'enclos, lettres du facteur retrouvées (empilées sous les indices)
+  const quests = [];
+  if (farm.state === 'asked') quests.push(['hen/idle/right', 46, 58, 0.9, questHens().length - hensLeft(), questHens().length]);
+  if (post.state === 'asked') quests.push(['item/letter', 50, 36, 0.8, letters.length - lettersLeft(), letters.length]);
+  quests.forEach(([k, ox, oy, sc, a, b], i) => {
+    const y = 264 + i * 82;
+    drawNine('hud/panel_dark', 24, y, 210, 70, 32);
+    drawSpr(k, 0, 24 + ox, y + oy, { sc });
+    drawDigits(a + '/' + b, 24 + 92, y + 8, 0.8);
+  });
 
   // indices d'Alice : trois cases sous la vie, l'objet apparaît quand il est retrouvé
   drawNine('hud/panel_dark', 24, 166, 24 + CLUES.length * 76, 88, 32);
@@ -3217,8 +3401,10 @@ function drawDialog() {
   if (who.portrait) {
     drawSpr(who.portrait, L.face || 0, bx + 36, by + 64);
     tx = bx + 170;
-    drawSpr('hud/name_tag', 0, bx + 150, by - 18);
-    text(who.name, bx + 150 + 64, by + 12, 26, '#FFFFFF', 'center', 600);
+    ctx.font = '600 26px Fredoka, "Trebuchet MS", sans-serif';
+    const nw = Math.max(128, Math.ceil(ctx.measureText(who.name).width) + 40);       // l'étiquette s'élargit avec le nom
+    drawNine('hud/name_tag', bx + 150, by - 18, nw, 40, 16);
+    text(who.name, bx + 150 + nw / 2, by + 12, 26, '#FFFFFF', 'center', 600);
   }
   ctx.font = `500 ${fs}px Fredoka, "Trebuchet MS", sans-serif`;
   const lines = wrap(L.text.slice(0, Math.floor(dialog.c)), bx + bw - 70 - tx);

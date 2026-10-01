@@ -51,6 +51,10 @@ setTimeout(() => {
     for (const [x, y] of MAP.signs) if (!reachable(x, y + 30, 95)) out.push('panneau ' + tile(x, y));
     if (!reachable(alice.x, alice.y, 120)) out.push('Alice');
     if (!reachable(farmer.x, farmer.y, 150)) out.push('fermier');
+    if (!reachable(postman.x, postman.y, 150)) out.push('facteur');
+    if (!reachable(neighbor.x, neighbor.y, 150)) out.push('voisine');
+    for (const l of letters) if (waterAt(l.x, l.y + 20) || !reachable(l.x, l.y + 20, 52)) out.push('lettre ' + tile(l.x, l.y));
+    if (!standable(pompon.x, pompon.y) || !reachable(pompon.x, pompon.y, 120)) out.push('Pompon ' + tile(pompon.x, pompon.y));
     // terriers : les deux bouts praticables et atteignables à pied (le terrier est un raccourci, pas un passage obligé)
     for (const [ax, ay, bx, by] of MAP.tunnels)
       for (const [x, y] of [[ax, ay], [bx, by]]) if (!standable(x, y) || !reachable(x, y, 40)) out.push('terrier ' + tile(x, y));
@@ -60,5 +64,5 @@ setTimeout(() => {
     return out;
   })())`));
   if (bad.length) { console.log('PROBLÈMES :\n  ' + bad.join('\n  ')); process.exitCode = 1; }
-  else console.log('placements ok :', r('items.length'), 'objets,', r('digs.length'), 'trésors,', r('dogs.length'), 'chiens,', r('hens.length'), 'poules,', r('ducks.length'), 'canards, départ, panneaux, terriers, fermier et Alice');
+  else console.log('placements ok :', r('items.length'), 'objets,', r('digs.length'), 'trésors,', r('dogs.length'), 'chiens,', r('hens.length'), 'poules,', r('ducks.length'), 'canards,', r('letters.length'), 'lettres, départ, panneaux, terriers, personnages, Pompon et Alice');
 }, 20);

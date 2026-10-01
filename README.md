@@ -7,7 +7,8 @@ chiens (dont les chiens de berger, qui chargent), gratte la terre pour déterrer
 de la vie) et des saucisses (qui ajoutent un os de vie maximum). Il traverse campagne, route (gare aux voitures :
 mieux vaut passer par les passages piétons), village, zone industrielle, ferme, rivière (un seul pont), forêt et parc.
 La journée avance avec la recherche : la lumière baisse à chaque indice jusqu'au coucher du soleil.
-En chemin : le fermier Gaston (allez lui parler, C) a besoin d'aide pour ramener ses poules dans l'enclos, des écureuils et des chats
+En chemin : le fermier Gaston (allez lui parler, C) a besoin d'aide pour ramener ses poules dans l'enclos, Marcel le
+facteur a perdu ses lettres dans le vent, Mamie Rose cherche son chat Pompon, des écureuils et des chats
 filent se percher quand Tecky les poursuit, des canards s'envolent de l'étang et de la rivière, des terriers permettent de passer sous les grillages, et Tecky peut
 flairer la piste d'Alice (de petits pieds nus apparaissent au sol). Les trésors enterrés sont des os dorés à
 collectionner, et la pause montre la carte des coins déjà explorés. Chaque zone a son ambiance sonore et ses
@@ -61,7 +62,7 @@ os dorés, écureuils et chats, zones (bandeau, ambiance, timbre), carte de la p
 | Fichier | Rôle |
 |---|---|
 | `spritelib.py` | boîte à outils de dessin SVG, rendu, strips, GIF |
-| `tecky.py`, `alice.py`, `enemies.py`, `hens.py`, `farmer.py`, `critters.py`, `ducks.py`, `vehicles.py`, `butterflies.py`, `items.py`, `decor.py`, `tiles.py`, `hud.py` | dessin des personnages, poules, fermier, écureuils et chats, canards, véhicules, papillons, objets, décor, tileset, HUD |
+| `tecky.py`, `alice.py`, `enemies.py`, `hens.py`, `farmer.py`, `npcs.py`, `critters.py`, `ducks.py`, `vehicles.py`, `butterflies.py`, `items.py`, `decor.py`, `tiles.py`, `hud.py` | dessin des personnages, poules, fermier, facteur et voisine, écureuils et chats, canards, véhicules, papillons, objets, décor, tileset, HUD |
 | `music.py` | partition chiptune (thème en boucle, fanfare de victoire, musique de défaite), export WAV |
 | `sample_map.py`, `hud_mockup.py` | carte d'exemple et maquette du HUD |
 | `build.py` | export du kit GameMaker dans `out/` |

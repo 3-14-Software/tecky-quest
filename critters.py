@@ -5,13 +5,15 @@ Petits animaux que Tecky peut poursuivre (cellule 32x32, pieds à y=28 : origine
   et escalade d'un tronc vu de DOS (climb, seule animation qui n'est pas de profil).
 - Les chats du village ("cat" roux tigré, "cat_black" noir aux yeux jaune-vert) : assis (idle), marche (walk),
   galop (run), saut (jump : élan puis bond) et feulement dos rond (hiss).
+- Le chat de la voisine ("cat_white") : blanc aux yeux bleus, oreilles, tache sur le dos et bout de queue gris,
+  collier rose à grelot doré pour le reconnaître. Mêmes poses et animations que les autres chats.
 
 Vues de profil tournées vers la droite ; la vue gauche est le miroir (fait par le jeu).
 Même principe que hens.py : `ANIMS[espèce][anim] = (poses, fps, boucle)`, `frames(kind, anim)` -> SVG.
 """
 import math
 
-from spritelib import Drawing, circle, ellipse, poly, path, leg, line, OUTLINE, OUTLINE_W
+from spritelib import Drawing, circle, ellipse, rect, poly, path, leg, line, OUTLINE, OUTLINE_W
 
 W = H = 32
 G = 28            # ligne des pieds
@@ -22,8 +24,12 @@ KINDS = {   # couleurs par espèce / variante
                 ear="#F4A3A8", nose="#E57C8E", whisker="#FFF1DC"),
     "cat_black": dict(fur="#3B3540", dark="#27222B", stripe=None, belly="#5E5566", eye="#D9E64A",
                       ear="#8A6878", nose="#C48E9C", whisker="#B9B1BF"),
+    # chat de la voisine : patch = taches grises (oreilles, dos, bout de queue), collar + bell = collier à grelot
+    "cat_white": dict(fur="#FBF8F3", dark="#D9D3CB", stripe=None, belly="#FFFFFF", eye="#6DB8EA",
+                      ear="#F4A3A8", nose="#EE97A8", whisker="#ABA49B",
+                      patch="#9D9BA8", patch_dk="#7D7B88", collar="#F2729E", bell="#F2C14E"),
 }
-SPECIES = {"squirrel": "squirrel", "cat": "cat", "cat_black": "cat"}   # les deux chats partagent les poses
+SPECIES = {"squirrel": "squirrel", "cat": "cat", "cat_black": "cat", "cat_white": "cat"}   # les chats partagent les poses
 # l'écureuil est dessiné un peu grand puis réduit autour de l'origine (16, 28) : plus petit qu'une poule,
 # le contour garde la même épaisseur que les autres sprites
 SCALE = {"squirrel": 0.85, "cat": 1.0}
@@ -311,6 +317,14 @@ def _sq_climb(C, phase=0.0, wave=0.0):
 
 
 # ================================================================== CHAT
+def _spot(d, C, cid, shapes, spot):
+    """Tache grise du chat blanc (C["patch"]), découpée aux formes `shapes` ; rien pour les autres chats."""
+    if not C.get("patch"):
+        return
+    d.clip(cid, shapes)
+    d.raw(f'<g clip-path="url(#{cid})">' + spot.replace('fill="%F%"', f'fill="{C["patch"]}"') + "</g>")
+
+
 def _cat_tail(d, C, pts, r0, r1, puff=0.0):
     """Queue en boudin (rayures si chat tigré) ; puff > 0 : poils hérissés (feulement)."""
     n = len(pts)
@@ -328,22 +342,34 @@ def _cat_tail(d, C, pts, r0, r1, puff=0.0):
             q = (r0 + (r1 - r0) * i / (n - 1) + puff * 0.8) * 0.85
             d.raw(line(f"M{x + nx * q:.2f},{y + ny * q:.2f} L{x - nx * q:.2f},{y - ny * q:.2f}", C["stripe"], 1.0))
         d.add(circle(*pts[-1], r1 * 0.8 + puff * 0.6), C["stripe"], sil=False)
+    if C.get("patch"):   # bout de queue gris (chat blanc) : mêmes rayons que la queue, il en épouse le bord
+        for i in range(n - max(3, n // 4), n):
+            r = r0 + (r1 - r0) * i / (n - 1) + (puff * (0.7 + 0.5 * (i % 2)) if puff else 0.0)
+            d.add(circle(*pts[i], r), C["patch"], sil=False)
 
 
 def _cat_head(d, C, hx, hy, tr="", ears=0.0, eye="open", mouth=0.0):
     """Tête de profil vers la droite, centre (hx, hy). ears : 0 dressées -> 1 couchées en arrière ;
     eye : 'open', 'blink', 'angry' ; mouth : 0 fermée -> 1 grande ouverte (feulement)."""
     er = -ears * 62
+    if C.get("collar"):   # cou et collier (chat de la voisine) : bande en travers du cou, sous la tête
+        neck = ellipse(hx - 1.7, hy + 4.4, 3.1, 3.4, tr)
+        d.add(neck, C["fur"])
+        d.clip("catneck", [neck])
+        d.raw(_clipped("catneck", tr, rect(hx - 5.8, hy + 4.35, 8.8, 2.3, 0.6, f"rotate(24 {hx - 1.4:.2f} {hy + 5.5:.2f})")
+                       .replace('fill="%F%"', f'fill="{C["collar"]}" stroke="{OUTLINE}" stroke-width="0.7"')))
     # oreille lointaine (derrière)
     d.add(poly([(hx - 4.4, hy - 1.4), (hx - 1.4, hy - 4.2), (hx - 4.4, hy - 8.4)],
-               f"{tr} rotate({er:.1f} {hx - 2.9:.2f} {hy - 2.8:.2f})"), C["dark"])
+               f"{tr} rotate({er:.1f} {hx - 2.9:.2f} {hy - 2.8:.2f})"), C.get("patch_dk") or C["dark"])
     # crâne rond, joues un peu plus larges en bas
-    d.add(circle(hx, hy, 4.9, tr), C["fur"])
+    skull = circle(hx, hy, 4.9, tr)
+    d.add(skull, C["fur"])
     d.add(ellipse(hx + 1.0, hy + 1.6, 4.6, 3.4, tr), C["fur"])
     d.add(ellipse(hx + 2.9, hy + 2.2, 2.7, 1.9, tr), C["belly"], sil=False)       # museau clair
+    _spot(d, C, "catcap", [skull], ellipse(hx - 1.4, hy - 4.0, 3.4, 2.2, f"{tr} rotate(-15 {hx - 1.4:.2f} {hy - 4.0:.2f})"))
     # oreille proche + intérieur rose
     etr = f"{tr} rotate({er:.1f} {hx - 0.8:.2f} {hy - 3.8:.2f})"
-    d.add(poly([(hx - 2.8, hy - 3.2), (hx + 1.6, hy - 4.2), (hx - 1.4, hy - 9.0)], etr), C["fur"])
+    d.add(poly([(hx - 2.8, hy - 3.2), (hx + 1.6, hy - 4.2), (hx - 1.4, hy - 9.0)], etr), C.get("patch") or C["fur"])
     d.add(poly([(hx - 1.7, hy - 4.0), (hx + 0.5, hy - 4.5), (hx - 1.3, hy - 7.4)], etr), C["ear"], sil=False)
     # rayures du front (chat tigré)
     if C["stripe"]:
@@ -376,6 +402,11 @@ def _cat_head(d, C, hx, hy, tr="", ears=0.0, eye="open", mouth=0.0):
           C["nose"], sil=False, edge=True)
     d.raw(_g(tr, line(f"M{nx - 1.2:.2f},{ny + 1.0:.2f} L{nx + 1.9:.2f},{ny + 0.4:.2f} "
                       f"M{nx - 1.2:.2f},{ny + 1.4:.2f} L{nx + 1.8:.2f},{ny + 1.9:.2f}", C["whisker"], 0.5)))
+    if C.get("bell"):     # grelot doré sous la gorge
+        bx, by = hx + 1.2, hy + 7.2
+        d.add(circle(bx, by, 1.2, tr), C["bell"], sil=False, edge=True)
+        d.raw(_g(tr, line(f"M{bx - 0.5:.2f},{by + 0.45:.2f} L{bx + 0.5:.2f},{by + 0.45:.2f}", OUTLINE, 0.45)))
+        d.add(circle(bx - 0.4, by - 0.4, 0.35, tr), "#FFF7D6", sil=False)
 
 
 def _cat_stripes(d, C, cid, tr, cx, top, ry, xs):
@@ -398,13 +429,15 @@ def _cat_sit(C, sweep=0.0, blink=False):
     # patte avant lointaine (foncée)
     _limb(d, 19.8, 20.0, 20.6, G - 0.4, 2.2, C["dark"])
     # croupe ronde + poitrail
-    d.add(ellipse(13.4, 23.6, 5.3, 4.4), C["fur"])
+    rump = ellipse(13.4, 23.6, 5.3, 4.4)
+    d.add(rump, C["fur"])
     btr = "rotate(14 17.4 19.6)"
     chest = ellipse(17.4, 19.6, 3.9, 5.4, btr)
     d.clip("catchest", [chest])
     d.add(chest, C["fur"])
     d.add(ellipse(20.0, 18.8, 1.9, 3.6, btr), C["belly"], sil=False, clip="catchest")
     _cat_stripes(d, C, "catchest", "rotate(-50 17.4 19.6)", 17.4, 14.6, 4.0, (15.6, 18.0))
+    _spot(d, C, "catspot", [rump, chest], ellipse(13.6, 19.0, 3.4, 2.4, "rotate(-38 13.6 19.0)"))
     # cuisse et pied arrière
     d.add(ellipse(16.0, 27.3, 2.6, 1.05), C["fur"])
     d.add(ellipse(12.8, 24.2, 3.9, 3.3), C["fur"], edge=True)
@@ -447,6 +480,7 @@ def _cat_stand(C, cx=14.6, cy=20.8, rx=7.4, ry=4.0, tilt=0.0, hop=0.0, legs=None
     d.add(body, C["fur"])
     d.add(ellipse(cx + 1.5, cy + ry * 0.82, rx * 0.68, ry * 0.42, btr), C["belly"], sil=False, clip="catbody")
     _cat_stripes(d, C, "catbody", btr, cx, cy - ry, ry, (cx - 2.6, cx + 0.4, cx + 3.2))
+    _spot(d, C, "catspot", [body], ellipse(cx - 0.6, cy - ry * 0.85, 3.4, 2.1, btr))
     # pattes proches : arrière (cuisse orientée vers le pied) puis avant
     _limb(d, hx, hy, h2[0], h2[1], 2.3, C["fur"])
     _thigh(d, C["fur"], hx, hy, h2[0], h2[1], 3.3, 2.7)
@@ -534,6 +568,8 @@ def _cat_hiss(C, k=0):
                 f"L20.4,22.4 Q15.2,{15.6 - up:.2f} 10.6,23.4 Z")
     d.clip("cathiss", [body])
     d.add(body, C["fur"])
+    sx_, sy_ = arch(0.45)
+    _spot(d, C, "catspot", [body], ellipse(sx_ - 0.4, sy_ + 0.6, 3.4, 2.3, f"rotate(8 {sx_:.2f} {sy_:.2f})"))
     if C["stripe"]:
         for t in (0.32, 0.5, 0.68):
             x, y = arch(t)
@@ -580,7 +616,7 @@ _DRAW = {
 
 
 def anims(kind):
-    """Animations d'un kind ("squirrel", "cat", "cat_black") : {nom : (poses, fps, boucle)}."""
+    """Animations d'un kind ("squirrel", "cat", "cat_black", "cat_white") : {nom : (poses, fps, boucle)}."""
     return ANIMS[SPECIES[kind]]
 
 
