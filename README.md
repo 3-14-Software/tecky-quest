@@ -31,9 +31,10 @@ Jouer en local : `cd web/tecky_quest_web && ./serve.sh` (serveur sur le réseau 
 ```
 
 Simulation sans navigateur (Node, canvas et audio simulés) : déroulé complet de la partie, collisions, combat, grattage,
-règles de vie, immunité du doberman aux aboiements, morsure prioritaire sur le grattage quand un chien menace,
-contournement des obstacles par les chiens, placement des objets (rien dans l'eau, trésors atteignables), séquenceur
-musical et fanfare. `tests/edges.py` détecte les sprites dont des pixels touchent le bord du cadre.
+règles de vie, immunité du doberman aux aboiements, onde montrant la portée des aboiements, bouton « Lire »,
+morsure prioritaire sur le grattage quand un chien menace, contournement des obstacles par les chiens, placement des
+objets (rien dans l'eau, trésors atteignables), séquenceur musical et fanfare. `tests/edges.py` détecte les sprites
+dont des pixels touchent le bord du cadre.
 
 ## Organisation
 

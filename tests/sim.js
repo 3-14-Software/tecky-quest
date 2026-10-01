@@ -123,6 +123,9 @@ setTimeout(() => {
   ok(run('P.hp') === 8, 'os : pas au-delà du maximum courant (PV ' + run('P.hp') + ')');
   for (let i = 0; i < 6; i++) give('sausage');
   ok(run('P.hpMax') === 16, 'plafond à 8 os (PV max ' + run('P.hpMax') + ')');
+  run('state = "play"; var cur0 = Music.cur; Music.cur = "main"'); const lm = run('Music.level()');
+  run('Music.cur = "win"'); const lw = run('Music.level()'); run('Music.cur = cur0');
+  ok(lm < lw, 'thème plus discret que la fanfare de fin (' + lm + ' < ' + lw + ')');
   run('drawHUD()');
   run('pressed = {}; drawDigits("01250", 0, 0, 1, undefined, true); drawDigits("+20", 0, 0, 0.75);');
   ok(true, 'rendu des chiffres (chasse fixe et proportionnelle)');

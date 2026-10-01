@@ -45,6 +45,10 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   **Mordre passe avant tout** si un chien menace Tecky (`threatened()` : chien en chasse, attaque, aboiement ou
   sonné à moins de `THREAT_R` = 240 px) ; C interrompt alors aussi un grattage en cours. Tests : `threat.js`, `read.js`.
   Le **doberman est immunisé aux aboiements** (`barkImmune`) : il faut le mordre (Tecky l'explique, bulle « Même pas peur ! »).
+- Aboiement : touche dans un cône devant soi, jusqu'à `BARK` (Tecky, 300 px) ou `DOG_BARK` (doberman, 320 px).
+  Une onde au sol (`addBarkRing` / `drawRings`, crème ou rouge) montre exactement cette zone : toujours passer par ces
+  constantes pour changer une portée. Test : `tests/ring.js`.
+- Son : thème à 0,35 (`Music.level()`), fanfare de fin à 0,55 ; bruitages multipliés par `SFX_VOL` (1,4).
 - Trésors (médaille 100, jouet pouic-pouic 50, balle 20) : jamais dans l'eau — `check_placement.js` le vérifie.
 - Fin : retrouver Alice → dialogue + fanfare (`Music.start('win')`, une seule fois, le thème ne repart pas) → écran de victoire.
 

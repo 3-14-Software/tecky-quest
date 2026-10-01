@@ -316,6 +316,7 @@ sans coupure. Importe-le comme *Sound* (type *Music*, compressé), puis :
 
 ```gml
 audio_play_sound(snd_music_tecky, 10, true);   // true = en boucle
+audio_sound_gain(snd_music_tecky, 0.65, 0);     // thème discret : la fanfare et les bruitages passent devant
 ```
 
 `music_victoire.wav` : fanfare de victoire (3 mesures, environ 7 s : une montée qui finit sur l'accord final). Elle ne boucle pas :

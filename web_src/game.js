@@ -111,6 +111,7 @@ function drawDigits(text, x, y, sc, alpha, mono) {
 
 /* ------------------------------------------------------------------ son (synthétisé) */
 let AC = null, muted = false;
+const SFX_VOL = 1.4;   // bruitages un peu plus forts, pour bien ressortir sur la musique
 function audioOn() {
   if (!AC) {
     try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; }
@@ -125,7 +126,7 @@ function tone(freq, dur, type, vol, slide, delay) {
   o.type = type || 'square';
   o.frequency.setValueAtTime(freq, t0);
   if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), t0 + dur);
-  g.gain.setValueAtTime(vol || 0.08, t0);
+  g.gain.setValueAtTime((vol || 0.08) * SFX_VOL, t0);
   g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
   o.connect(g); g.connect(AC.destination);
   o.start(t0); o.stop(t0 + dur + 0.02);
@@ -139,12 +140,12 @@ function noise(dur, vol, freq, delay) {
   for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
   const src = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
   src.buffer = buf; f.type = 'bandpass'; f.frequency.value = freq || 1000; f.Q.value = 1.2;
-  g.gain.value = vol || 0.1;
+  g.gain.value = (vol || 0.1) * SFX_VOL;
   src.connect(f); f.connect(g); g.connect(AC.destination);
   src.start(t0);
 }
 const SFX = {
-  bark(p) { const k = p || 1; tone(520 * k, 0.09, 'sawtooth', 0.09, -260 * k); noise(0.08, 0.08, 1400 * k); tone(470 * k, 0.11, 'sawtooth', 0.08, -240 * k, 0.12); noise(0.09, 0.07, 1200 * k, 0.12); },
+  bark(p) { const k = p || 1; tone(520 * k, 0.09, 'sawtooth', 0.16, -260 * k); noise(0.08, 0.14, 1400 * k); tone(470 * k, 0.11, 'sawtooth', 0.14, -240 * k, 0.12); noise(0.09, 0.12, 1200 * k, 0.12); },
   bite() { noise(0.05, 0.18, 2600); tone(180, 0.06, 'square', 0.06, -80); },
   pick() { tone(880, 0.07, 'triangle', 0.08); tone(1320, 0.1, 'triangle', 0.08, 0, 0.07); },
   treasure() { [660, 880, 990, 1320].forEach((f, i) => tone(f, 0.12, 'triangle', 0.08, 0, i * 0.08)); },
@@ -180,7 +181,8 @@ const Music = {
     }
     return this.waves[duty];
   },
-  level() { return muted ? 0 : state === 'pause' ? 0.18 : 0.55; },
+  // thème discret (derrière les bruitages), fanfare de fin à plein volume
+  level() { return muted ? 0 : state === 'pause' ? 0.12 : this.cur === 'win' ? 0.55 : 0.35; },
   /* name : 'main' (boucle) ou 'win' (fanfare de victoire, jouée une seule fois) */
   start(name) {
     name = name || 'main';
@@ -532,7 +534,7 @@ const ITEM = {
 };
 
 let state = 'loading';          // loading | title | play | dialog | pause | over | win
-let P, alice, dogs, items, fxs, pops, digs, decor, camX = 0, camY = 0, shake = 0;
+let P, alice, dogs, items, fxs, pops, rings, digs, decor, camX = 0, camY = 0, shake = 0;
 let score = 0, timePlayed = 0, fled = 0, treasures = 0, dialog = null, dialogReturn = 'play';
 let hintText = null, digHint = null, overT = 0, titleT = 0;
 
@@ -559,7 +561,7 @@ function reset() {
   });
   items = MAP.items.map(([n, x, y]) => ({ n, x, y, t: Math.random() * 3 }));
   digs = MAP.dig.map(([x, y]) => ({ x, y, dug: false, t: Math.random() * 2 }));
-  fxs = []; pops = [];
+  fxs = []; pops = []; rings = [];
   score = 0; timePlayed = 0; fled = 0; treasures = 0; shake = 0; barkImmuneSeen = false; pendingSay = null;
   camX = clamp(P.x - VW / 2, 0, MAP.w * TS - VW);
   camY = clamp(P.y - VH / 2, 0, MAP.h * TS - VH);
@@ -610,6 +612,38 @@ function addPop(text, x, y) { pops.push({ text, x, y, t: 0 }); }
 function addWordPop(text, x, y) { pops.push({ text, x, y, t: 0, word: true }); }
 let barkImmuneSeen = false, pendingSay = null;
 
+/* Aboiement : touche dans un cône devant celui qui aboie (cos de l'angle > cos), jusqu'à range (pattes à pattes).
+   Une onde (arc ondulé au sol) s'étend jusqu'à cette portée puis s'efface, pour la montrer. */
+const BARK = { range: 300, cos: 0.62 };          // Tecky
+const DOG_BARK = { range: 320, cos: 0.6 };       // doberman
+const RING_GROW = 0.22, RING_FADE = 0.2;
+function addBarkRing(x, y, dir, B, color) {
+  const [vx, vy] = DIRV[dir];
+  rings.push({ x, y, ang: Math.atan2(vy, vx), half: Math.acos(B.cos), range: B.range, color, t: 0 });
+}
+function drawRings() {
+  for (const r of rings) {
+    const k = Math.min(1, r.t / RING_GROW);
+    const rad = r.range * (1 - Math.pow(1 - k, 3));          // part vite puis ralentit en arrivant à la portée
+    const a = r.t < RING_GROW ? 1 : Math.max(0, 1 - (r.t - RING_GROW) / RING_FADE);
+    if (rad < 24 || a <= 0) continue;
+    const len = rad * r.half * 2;
+    const n = Math.max(24, Math.round(len / 3)), waves = Math.max(3, Math.round(len / 26));
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const u = i / n, th = r.ang - r.half + u * 2 * r.half;
+      const rr = rad + Math.sin((u * waves + r.t * 4) * Math.PI * 2) * 4;   // ligne ondulée qui défile
+      const px = r.x + Math.cos(th) * rr, py = r.y + Math.sin(th) * rr;
+      if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+    }
+    ctx.save();
+    ctx.globalAlpha = a * 0.9; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#3A1E12'; ctx.lineWidth = 7; ctx.stroke();
+    ctx.strokeStyle = r.color; ctx.lineWidth = 3.5; ctx.stroke();
+    ctx.restore();
+  }
+}
+
 function hurtDog(d, dmg, kx, ky, stun) {
   if (d.mode === 'ko') return;
   d.hp -= dmg;
@@ -633,13 +667,14 @@ function doBark() {
   const mouth = { right: [40, -44], left: [-40, -44], up: [0, -86], down: [0, -26] }[P.dir];
   const ang = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 }[P.dir];
   addFx('fx/bark', P.x + mouth[0], P.y + mouth[1], { angle: ang, fps: 12 });
+  addBarkRing(P.x, P.y, P.dir, BARK, '#FFF7E6');
   SFX.bark(1);
   for (const d of dogs) {
     if (d.mode === 'ko') continue;
     const dx = d.x - P.x, dy = d.y - P.y, l = Math.hypot(dx, dy);
-    if (l > 300 || l < 1) continue;
+    if (l > BARK.range || l < 1) continue;
     const cos = (dx * vx + dy * vy) / l;
-    if (cos <= 0.62) continue;
+    if (cos <= BARK.cos) continue;
     if (d.T.barkImmune) {
       // aucun effet : il se fâche et répond
       if (!pops.some(p => p.word && p.dog === d)) { addWordPop('Même pas peur !', d.x, d.y - 130); pops[pops.length - 1].dog = d; }
@@ -854,8 +889,9 @@ function updateDog(d, dt) {
         const mouth = { right: [44, -54], left: [-44, -54], up: [0, -100], down: [0, -30] }[d.dir];
         const ang = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 }[d.dir];
         addFx('fx/bark', d.x + mouth[0], d.y + mouth[1], { angle: ang, fps: 12 });
+        addBarkRing(d.x, d.y, d.dir, DOG_BARK, '#D7332B');
         SFX.bark(T.pitch);
-        if (l < 320 && (dx * vx + dy * vy) / Math.max(1, l) > 0.6) hurtPlayer(1, d.x, d.y);
+        if (l < DOG_BARK.range && (dx * vx + dy * vy) / Math.max(1, l) > DOG_BARK.cos) hurtPlayer(1, d.x, d.y);
       }
       if (d.done()) { d.mode = 'chase'; d.barkCd = 3.2; }
       return;
@@ -961,6 +997,7 @@ function updateItems(dt) {
 }
 
 function updateFx(dt) {
+  for (let i = rings.length - 1; i >= 0; i--) if ((rings[i].t += dt) > RING_GROW + RING_FADE) rings.splice(i, 1);
   for (let i = fxs.length - 1; i >= 0; i--) {
     const f = fxs[i];
     f.t += dt;
@@ -1063,6 +1100,7 @@ function drawWorld() {
     if (g.dug) drawHole(g.x, g.y);
     else if (g.t % 2.4 < 0.7) drawSpr('fx/pickup', Math.floor((g.t % 2.4) * 7), g.x, g.y - 24, { sc: 0.55, alpha: 0.9 });
   }
+  drawRings();   // ondes d'aboiement, au sol sous les personnages
 
   const vis = (x, y, m) => x > cx - m && x < cx + VW + m && y > cy - m && y < cy + VH + m + 140;
   const list = [];
