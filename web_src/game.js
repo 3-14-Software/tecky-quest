@@ -411,6 +411,48 @@ function drawGround(vx, vy) {
     if (x1 > x0 && y1 > y0) ctx.drawImage(k.c, x0 - k.x, y0 - k.y, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
   }
 }
+/* Eau animée : la texture de l'eau est unie dans la version web ; quelques vaguelettes (fx/ripple) y naissent,
+   s'étirent en dérivant un peu, puis s'effacent, à un endroit qui change à chaque cycle (une par tuile, un cycle sur
+   deux, chaque tuile avec son décalage). En plus, des scintillements (fx/glint, mini-étoiles) avec leur propre
+   cadence et leur propre place, en bref éclat au milieu de leur cycle. Uniquement en eau profonde : tout le contour,
+   plus une marge pour le liseré clair du bord, doit être dans l'eau. */
+const RIPPLE = { cycle: 2.4, show: 0.5, drift: 8, glintCycle: 2.0, glintShow: 0.4 };
+const deepWater = (x, y) => [[-30, 0], [30, 0], [0, -18], [0, 22], [-22, -12], [22, -12], [-22, 16], [22, 16]]
+  .every(([dx, dy]) => waterAt(x + dx, y + dy));
+let waterTiles = null;
+function hash3(a, b, c) {
+  let h = Math.imul(a, 374761393) ^ Math.imul(b, 668265263) ^ Math.imul(c, 1274126177);
+  h = Math.imul(h ^ (h >>> 13), 1103515245);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+function drawWater(vx, vy, time) {
+  if (!waterTiles) {                       // tuiles ayant au moins un coin d'eau
+    waterTiles = new Uint8Array(MAP.w * MAP.h);
+    const W1 = MAP.w + 1, c = (a, b) => MAP.water[b * W1 + a];
+    for (let j = 0; j < MAP.h; j++) for (let i = 0; i < MAP.w; i++)
+      waterTiles[j * MAP.w + i] = c(i, j) | c(i + 1, j) | c(i, j + 1) | c(i + 1, j + 1);
+  }
+  const n = ATLAS['fx/ripple'].f.length, ng = ATLAS['fx/glint'].f.length;
+  for (let ty = Math.max(0, Math.floor(vy / TS)); ty <= Math.min(MAP.h - 1, Math.floor((vy + VH) / TS)); ty++)
+    for (let tx = Math.max(0, Math.floor(vx / TS)); tx <= Math.min(MAP.w - 1, Math.floor((vx + VW) / TS)); tx++) {
+      if (!waterTiles[ty * MAP.w + tx]) continue;
+      // vaguelette : un cycle sur deux en moyenne
+      let c = time / RIPPLE.cycle + hash3(tx, ty, 7), cyc = Math.floor(c), u = c - cyc;
+      if (hash3(tx, cyc, ty) < RIPPLE.show) {
+        const x = tx * TS + 8 + hash3(tx, ty, cyc * 31) * (TS - 16) + u * RIPPLE.drift;
+        const y = ty * TS + 8 + hash3(ty, tx, cyc * 17) * (TS - 16);
+        if (deepWater(x, y)) drawSpr('fx/ripple', Math.floor(u * n), x, y);
+      }
+      // scintillement, en plus : sa propre cadence et sa propre place, bref éclat au milieu du cycle
+      c = time / RIPPLE.glintCycle + hash3(ty, tx, 11); cyc = Math.floor(c); u = c - cyc;
+      if (u > 0.3 && u < 0.7 && hash3(cyc, tx, ty) < RIPPLE.glintShow) {
+        const x = tx * TS + 8 + hash3(tx, ty, cyc * 47 + 5) * (TS - 16);
+        const y = ty * TS + 8 + hash3(ty, tx, cyc * 53 + 9) * (TS - 16);
+        if (deepWater(x, y)) drawSpr('fx/glint', Math.floor((u - 0.3) / 0.4 * ng), x, y);
+      }
+    }
+}
+
 function drawHole(x, y) {
   const idx = MAP.hole;
   ctx.drawImage(tilesImg, (idx % 16) * TS, Math.floor(idx / 16) * TS, TS, TS, x - TS / 2, y - TS / 2 - 6, TS, TS);
@@ -1336,6 +1378,7 @@ function drawWorld() {
   const cy = clamp(Math.round((camY + sy) * scale) / scale, 0, MAP.h * TS - VH);
   ctx.setTransform(scale, 0, 0, scale, offX - cx * scale, offY - cy * scale);
   drawGround(cx, cy);
+  drawWater(cx, cy, performance.now() / 1000);
 
   const vis = (x, y, m) => x > cx - m && x < cx + VW + m && y > cy - m && y < cy + VH + m + 140;
   // trous et scintillements des trésors

@@ -451,7 +451,7 @@ def main():
     m = build_map()
     atlas, meta = pack(collect())
     atlas.save(os.path.join(WEB, "atlas.png"), optimize=True)
-    tileset = tiles.tileset(S)
+    tileset = tiles.tileset(S, water_marks=False)          # eau unie : le jeu anime ses vaguelettes
     tileset.save(os.path.join(WEB, "tiles.png"), optimize=True)
     preview(m, atlas, meta, tileset)
     tpl = open(os.path.join(SRC, "index.template.html"), encoding="utf-8").read()

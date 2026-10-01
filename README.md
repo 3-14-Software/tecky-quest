@@ -37,8 +37,8 @@ Simulation sans navigateur (Node, canvas et audio simulés) : déroulé complet 
 règles de vie, immunité du doberman aux aboiements, onde montrant la portée des aboiements, bouton « Lire »,
 morsure prioritaire sur le grattage quand un chien menace, contournement des obstacles par les chiens, placement des
 objets (rien dans l'eau, tout atteignable à pied depuis la niche), indices d'Alice, charge du chien de berger, poules,
-circulation (bousculade, passages piétons), pont, séquenceur musical, fanfare et musique de défaite. `tests/edges.py`
-détecte les sprites dont des pixels touchent le bord du cadre.
+circulation (bousculade, passages piétons), pont, eau animée, séquenceur musical, fanfare et musique de défaite.
+`tests/edges.py` détecte les sprites dont des pixels touchent le bord du cadre.
 
 ## Organisation
 

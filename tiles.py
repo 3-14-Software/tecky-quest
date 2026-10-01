@@ -172,8 +172,13 @@ def tex_sidewalk(scale, seed=0):
     return im
 
 
+WATER_MARKS = True        # vaguelettes fixes dans la texture (la version web les anime à part : fx_ripple)
+
+
 def tex_water(scale, seed=0):
     im = _canvas(scale, TERRAINS["water"]["fill"])
+    if not WATER_MARKS:
+        return im
     d = ImageDraw.Draw(im)
     k = scale * SS
     rnd = random.Random(6000 + seed)
@@ -412,7 +417,17 @@ ROW0 = ["(vide)", "herbe", "herbe + brins", "herbe + fleurs", "herbe + cailloux"
 OVERLAY_ROW = 1 + len(PAIRS)
 
 
-def tileset(scale):
+def tileset(scale, water_marks=True):
+    """water_marks=False : eau unie, pour la version web qui anime ses vaguelettes."""
+    global WATER_MARKS
+    WATER_MARKS, before = water_marks, WATER_MARKS
+    try:
+        return _tileset(scale)
+    finally:
+        WATER_MARKS = before
+
+
+def _tileset(scale):
     ts = T * scale
     sheet = Image.new("RGBA", (COLS * ts, (2 + len(PAIRS)) * ts), (0, 0, 0, 0))
     row0 = [None] + [grass_tile(scale, v) for v in range(4)]

@@ -100,6 +100,8 @@ dégâts (il klaxonne avant) ; aux passages piétons, les véhicules s'arrêtent
 | `spr_fx_heal` | 5 | 10 |
 | `spr_fx_pickup` | 5 | 14 |
 | `spr_fx_dirt` | 5 | 14 — mottes de terre projetées quand Tecky gratte (origine en bas au centre : (32, 56)) |
+| `spr_fx_ripple` | 8 | 3 — petit arc qui naît, s'étire et s'efface : à semer avec parcimonie sur l'eau profonde, loin des berges (le jeu web en met une par tuile d'eau, un cycle de 2,4 s sur deux, à un endroit qui change à chaque cycle) |
+| `spr_fx_glint` | 8 | 8 — mini-étoile qui scintille : en plus des vaguelettes, avec sa propre cadence (le jeu web : une par tuile, cycle de 2 s, 4 cycles sur 10, éclat au milieu du cycle) |
 
 ---
 

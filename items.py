@@ -1,7 +1,7 @@
 """
 Objets (32x32) et effets.
 Objets : bobbent en l'air avec une ombre au sol et un éclat de brillance.
-Effets : aboiement (48x48, orienté vers la droite), morsure, impact, soin, ramassage (32x32).
+Effets : aboiement (48x48, orienté vers la droite), morsure, impact, soin, ramassage, terre, vaguelette, scintillement (32x32).
 """
 import math
 
@@ -266,6 +266,37 @@ def fx_dirt():
     return out
 
 
+def fx_ripple():
+    """Vaguelette sur l'eau (32x32, 8 images) : un petit arc fin qui naît, s'étire en remontant un peu, avec un
+    reflet au plus fort, puis s'efface. Le jeu en sème peu, à des endroits qui changent à chaque cycle."""
+    out = []
+    for i in range(8):
+        u = (i + 0.5) / 8
+        a = math.sin(math.pi * u)
+        w, y = 2.2 + 2.4 * a, 17 - 1.2 * u
+        d = Drawing(32, 32)
+        d.raw(f'<g opacity="{0.15 + 0.55 * a:.2f}">'
+              + line(f"M{16 - w:.2f},{y + 0.8:.2f} Q16,{y - 1.6:.2f} {16 + w:.2f},{y + 0.8:.2f}", "#D2F0FB", 1.0) + "</g>")
+        if 0.35 < u < 0.65:
+            d.add(circle(16, y - 0.6, 0.55), "#FFFFFF", sil=False, opacity=round(0.8 * a, 2))
+        out.append(d.svg())
+    return out
+
+
+def fx_glint():
+    """Scintillement sur l'eau (32x32, 8 images) : mini-étoile blanche à 4 branches qui grandit en tournant un peu,
+    avec un halo bleuté, puis s'éteint. Le jeu en sème en plus des vaguelettes."""
+    out = []
+    for i, k in enumerate((0.15, 0.4, 0.75, 1.0, 0.85, 0.6, 0.35, 0.12)):
+        d = Drawing(32, 32)
+        d.add(circle(16, 16, 2.2 * k), "#E6F7FD", sil=False, opacity=round(0.3 * k, 2))
+        pts = star_pts(16, 16, 4.4 * k, 0.7 * k, n=4, rot=i * 5)
+        d.raw(f'<polygon points="{" ".join(f"{x:.2f},{y:.2f}" for x, y in pts)}" fill="#FFFFFF" '
+              f'opacity="{0.35 + 0.65 * k:.2f}"/>')
+        out.append(d.svg())
+    return out
+
+
 EFFECTS = {   # nom : (fonction, taille, fps)
     "bark": (fx_bark, 48, 12),
     "bite": (fx_bite, 32, 14),
@@ -273,4 +304,6 @@ EFFECTS = {   # nom : (fonction, taille, fps)
     "heal": (fx_heal, 32, 10),
     "pickup": (fx_pickup, 32, 14),
     "dirt": (fx_dirt, 32, 14),
+    "ripple": (fx_ripple, 32, 3),
+    "glint": (fx_glint, 32, 8),
 }
