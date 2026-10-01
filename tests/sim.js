@@ -75,7 +75,8 @@ setTimeout(() => {
   run('var it = items.find(i => i.n === "ball"); P.x = it.x; P.y = it.y + 30; P.mode="free"; var sc = score;');
   step(2);
   ok(run('score') === run('sc') + 20, 'balle ramassée : +20');
-  // trésor
+  // trésor (chiens écartés : un chien menaçant ferait mordre au lieu de gratter, voir threat.js)
+  run('saveDogs = dogs; dogs = [];');
   run('var gd = digs[0]; P.x = gd.x; P.y = gd.y - 20; P.dir = "down"; P.mode = "free"; P.cdBite = 0; P.inv = 9; pressed.bite = true;');
   step(1);
   ok(run('P.mode') === 'dig', 'près du trésor, le bouton fait gratter');
@@ -84,6 +85,7 @@ setTimeout(() => {
   step(40);
   ok(run('treasures') === 1, 'trésor déterré après le grattage');
   advanceDialog();
+  run('dogs = saveDogs;');
   // éloigner les chiens pour la fin
   run('P.x = alice.x - 100; P.y = alice.y + 10; P.mode = "free"; P.inv = 9;');
   step(2);

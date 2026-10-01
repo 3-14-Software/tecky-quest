@@ -369,9 +369,12 @@ if (state == "idle" || state == "walk") {
         fx.image_angle = (dir == "right") ? 0 : (dir == "up") ? 90 : (dir == "left") ? 180 : 270;
     }
     if (keyboard_check_pressed(ord("C"))) {
-        // près d'un trésor (obj_dig), C fait gratter au lieu de mordre
+        // près d'un trésor (obj_dig), C fait gratter au lieu de mordre,
+        // sauf si un chien (obj_dog, parent de tous les chiens) est tout près : mordre d'abord
         var _spot = instance_nearest(x, y, obj_dig);
-        if (_spot != noone && !_spot.dug && point_distance(x, y, _spot.x, _spot.y) < 86) {
+        var _dog = instance_nearest(x, y, obj_dog);
+        var _threat = _dog != noone && point_distance(x, y, _dog.x, _dog.y) < 240;
+        if (!_threat && _spot != noone && !_spot.dug && point_distance(x, y, _spot.x, _spot.y) < 86) {
             state = "dig"; dig_timer = room_speed; dig_spot = _spot;
         } else state = "bite";
     }

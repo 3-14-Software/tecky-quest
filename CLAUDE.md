@@ -41,6 +41,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - Vie : 2 PV par os ; départ **3 os** (`START_BONES`), plafond 8. Un **os** rend un os perdu *jusqu'au maximum courant* (inutile à
   vie pleine, il reste au sol). Une **saucisse** ajoute un os au maximum et soigne tout.
 - Actions : X aboie (repousse), C **gratte** près d'un trésor enterré (traces de pattes), sinon C **mord**.
+  **Mordre passe avant gratter** si un chien menace Tecky (`threatened()` : chien en chasse, attaque, aboiement ou
+  sonné à moins de `THREAT_R` = 240 px) ; C interrompt alors aussi un grattage en cours. Test : `tests/threat.js`.
   Le **doberman est immunisé aux aboiements** (`barkImmune`) : il faut le mordre (Tecky l'explique, bulle « Même pas peur ! »).
 - Trésors (médaille 100, jouet pouic-pouic 50, balle 20) : jamais dans l'eau — `check_placement.js` le vérifie.
 - Fin : retrouver Alice → dialogue + fanfare (`Music.start('win')`, une seule fois, le thème ne repart pas) → écran de victoire.

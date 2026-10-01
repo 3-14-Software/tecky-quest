@@ -673,7 +673,15 @@ function doBite() {
 }
 
 /* ------------------------------------------------------------------ gratter */
+// menace immédiate : un chien lancé contre Tecky et tout proche. Mordre passe alors avant gratter.
+const THREAT_R = 240;
+function threatened() {
+  return dogs.some(d => (d.mode === 'chase' || d.mode === 'attack' || d.mode === 'bark' || d.mode === 'hurt')
+    && dist(P.x, P.y, d.x, d.y) < THREAT_R);
+}
+// trésor à gratter (null s'il n'y en a pas à portée ou si un chien menace : C mord)
 function nearDig() {
+  if (threatened()) return null;
   for (const g of digs) if (!g.dug && dist(P.x, P.y, g.x, g.y + 6) < 86) return g;
   return null;
 }
@@ -756,7 +764,11 @@ function updatePlayer(dt) {
     return;
   }
   if (P.mode === 'bark') { if (P.done()) P.mode = 'free'; return; }
-  if (P.mode === 'dig') { updateDig(dt); return; }
+  if (P.mode === 'dig') {
+    // un chien arrive pendant qu'on gratte : C interrompt le grattage pour mordre
+    if (!(pressed.bite && threatened())) { updateDig(dt); return; }
+    P.mode = 'free';
+  }
   if (P.mode === 'bite') {
     if (!P.hitDone && P.t > 0.12) { P.hitDone = true; doBite(); }
     if (P.done()) P.mode = 'free';
