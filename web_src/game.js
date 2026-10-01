@@ -167,6 +167,7 @@ const SFX = {
     tone(415 * k, 0.2, 'square', 0.06, 0, 0.18); tone(330 * k, 0.2, 'square', 0.05, 0, 0.18); },
   sniff() { for (let i = 0; i < 3; i++) noise(0.06, 0.07, 1900 + i * 150, i * 0.13); },
   yip(p) { const k = p || 1; tone(820 * k, 0.07, 'square', 0.045, 420 * k); tone(980 * k, 0.09, 'square', 0.045, 380 * k, 0.11); },
+  hey(p) { const k = p || 1; tone(560 * k, 0.08, 'triangle', 0.08, 160 * k); tone(760 * k, 0.13, 'triangle', 0.08, -120 * k, 0.09); },
   cluck() { tone(950, 0.05, 'square', 0.05, 250); tone(1150, 0.05, 'square', 0.05, 200, 0.08); tone(1400, 0.12, 'square', 0.05, -600, 0.17); },
   win() { [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, 0.18, 'triangle', 0.09, 0, i * 0.14)); },
 };
@@ -782,7 +783,7 @@ let P, alice, dogs, hens, cars, butterflies, items, fxs, pops, rings, digs, deco
 let dusts = [], leaves = [], leafTrees = null, clouds = [], sun = 0, saveT = 0;
 // fled : chiens mis en fuite (aventure) ou devenus copains (balade)
 let score = 0, timePlayed = 0, fled = 0, treasures = 0, dialog = null, dialogReturn = 'play', aliceSniffed = false;
-let hintText = null, digHint = null, playHint = null, tunnelHint = null, overT = 0, titleT = 0;
+let hintText = null, digHint = null, playHint = null, tunnelHint = null, talkHint = null, overT = 0, titleT = 0;
 
 function reset() {
   solids = [];
@@ -1290,9 +1291,10 @@ function drawCritter(c) {
 /* Le fermier Gaston a perdu ses poules : cinq (quest) se promènent hors de l'enclos (MAP.pen, barrière MAP.penGate au
    sud). Tecky les y ramène en aboyant derrière elles. Après chaque fuite, une poule reste où elle est arrivée : on la
    pousse petit à petit. Près de la barrière, sa fuite est guidée vers l'ouverture (funnelHen). Une fois dans l'enclos,
-   elle y reste (keepHen). Quand Tecky passe près du fermier, il lui demande son aide, puis le remercie une fois toutes
-   les poules rentrées (saucisse et points). Tout cela marche aussi en balade. */
-const FARM = { talk: 150, reward: 200, perHen: 20, funnel: 190, roadY: 11.3 * 64 };
+   elle y reste (keepHen). Le fermier ne parle que si Tecky vient le voir (C, « Parler », voir « personnages ») : il
+   lui demande son aide, puis le remercie une fois toutes les poules rentrées (saucisse et points). Tout cela marche
+   aussi en balade. */
+const FARM = { reward: 200, perHen: 20, funnel: 190, roadY: 11.3 * 64 };
 let farm = { state: 'new' };          // new (pas encore parlé) | asked | done
 let farmer = null;
 // intérieur de l'enclos (pieds des poules) : [x0, y0, x1, y1]
@@ -1319,13 +1321,13 @@ function keepHen(h) {
     addPop('+' + FARM.perHen, h.x - 20, h.y - 70);
     addWordPop(hensLeft() ? 'Rentrée !' : 'Toutes rentrées !', h.x, h.y - 100);
     SFX.cluck();
-    if (!hensLeft() && farm.state === 'asked') pendingSay = { t: 0.6, lines: farmThanks(), onEnd: finishFarm };
+    if (!hensLeft()) { farmer.waveT = 2.5; npcShout(farmer, farm.state === 'asked' ? 'Bravo ! Viens me voir !' : 'Oh ! Mes poules !'); }
   }
 }
 function newFarmer() {
   const [x, y] = MAP.farmer;
   solids.push([x - 16, y - 12, x + 16, y]);
-  return { x, y, t: 0, anim: 'idle', near: false, waveT: 0 };
+  return { kind: 'farmer', x, y, t: 0, anim: 'idle', near: false, waveT: 0, pitch: 0.8 };
 }
 const farmThanks = () => [
   { who: 'farmer', face: 2, text: "Toutes mes poules sont rentrées ! Tu es un vrai chien de berger, Tecky." },
@@ -1339,13 +1341,29 @@ function finishFarm() {
   farmer.waveT = 3;
   saveGame();
 }
+function farmerMark() {          // « ! » : une demande, ou des remerciements à faire ; « ? » : quête en cours
+  if (farm.state === 'done') return -1;
+  return farm.state === 'asked' && hensLeft() ? 1 : 0;
+}
+function farmerGreet() {
+  if (farm.state === 'new') npcShout(farmer, 'Hé, petit chien ! Par ici !');
+  else if (farm.state === 'asked') {
+    const n = hensLeft();
+    npcShout(farmer, !n ? 'Bravo ! Viens me voir !' : 'Encore ' + n + (n > 1 ? ' poules !' : ' poule !'));
+  } else { npcShout(farmer, 'Bonjour, Tecky !'); farmer.waveT = 1.5; }
+}
 function talkFarmer() {
-  farmer.dir = 'down';
-  if (farm.state === 'done') { addWordPop('Merci, Tecky !', farmer.x, farmer.y - 140); farmer.waveT = 1.5; return; }
+  if (farm.state === 'done') {
+    farmer.waveT = 2;
+    say([{ who: 'farmer', face: 2, text: "Merci encore pour mes poules, Tecky ! Bonne chance pour retrouver Alice." }]);
+    return;
+  }
   if (!hensLeft()) { say(farmThanks(), finishFarm); return; }
   if (farm.state === 'asked') {
     const n = hensLeft();
-    addWordPop('Encore ' + n + (n > 1 ? ' poules !' : ' poule !'), farmer.x, farmer.y - 140);
+    say([{ who: 'farmer', face: 0, text: n > 1
+      ? `Il en reste ${n} dehors ! Aboie derrière elles pour les pousser vers la barrière ouverte, au sud de l'enclos.`
+      : "Plus qu'une ! Aboie derrière elle pour la pousser vers la barrière ouverte, au sud de l'enclos." }]);
     return;
   }
   farm.state = 'asked';
@@ -1367,6 +1385,27 @@ function drawFarmer() {
   if (s) drawSpr(k, Math.floor(farmer.t * (FARMER_FPS[farmer.anim] || 6)), farmer.x, farmer.y);
 }
 const FARMER_FPS = { idle: 5, talk: 8, wave: 8 };       // comme farmer.py
+
+/* ------------------------------------------------------------------ personnages */
+/* Les personnages ne parlent que si Tecky vient les voir et appuie sur C (« Parler », E aussi), comme dans un RPG.
+   Au-dessus de leur tête, une bulle (hud/talk) : « ! » ils ont quelque chose à demander ou à donner, « ? » leur
+   demande est en cours ; tout près, elle laisse la place à la bulle « Parler ». Quand Tecky arrive près d'eux, ils le
+   saluent d'une petite exclamation (bulle de mots, sans bloquer le jeu). NPC_DO : par personnage, bulle (0 « ! »,
+   1 « ? », -1 aucune), salut et conversation. */
+const NPC = { talk: 150, markY: 150 };
+const npcList = () => [farmer];
+const NPC_DO = { farmer: { mark: farmerMark, greet: farmerGreet, talk: talkFarmer } };
+function nearNpc() {
+  let best = null, bd = NPC.talk;
+  for (const n of npcList()) { const d = dist(P.x, P.y, n.x, n.y); if (d < bd) { best = n; bd = d; } }
+  return best;
+}
+function npcShout(n, text) { addWordPop(text, n.x, n.y - 140); SFX.hey(n.pitch); }
+function talkTo(n) { P.dir = dirFrom(n.x - P.x, n.y - P.y, P.dir); P.setAnim('idle'); NPC_DO[n.kind].talk(); }
+function updateNpcs() {               // petit salut quand Tecky arrive près d'un personnage
+  const near = nearNpc();
+  for (const n of npcList()) { if (n === near && !n.near) NPC_DO[n.kind].greet(); n.near = n === near; }
+}
 
 /* ------------------------------------------------------------------ terriers */
 /* Sous certains grillages, un terrier (MAP.tunnels : deux extrémités). Près d'une extrémité, C fait « Passer » :
@@ -1553,13 +1592,14 @@ const playDog = () => playTarget(false) || playTarget(true);
 function biteAction() {
   if (threatened()) return 'bite';
   if (balade() && playTarget(false)) return 'play';
+  if (nearNpc()) return 'talk';
   if (nearDig()) return 'dig';
   if (nearTunnel()) return 'tunnel';
   if (nearSign()) return 'read';
   if (balade() && playTarget(true)) return 'play';
   return 'bite';
 }
-const ACTION_FRAME = { bite: 2, dig: 4, read: 6, play: 8, tunnel: 4, sniff: 10 };   // images de hud/action
+const ACTION_FRAME = { bite: 2, dig: 4, read: 6, talk: 6, play: 8, tunnel: 4, sniff: 10 };   // images de hud/action
 // Tecky et le chien sautillent ensemble ; à la fin, le chien devient un copain (voir updateDog, mode 'play')
 function startPlay(d) {
   P.mode = 'play'; P.timer = PLAY.tecky; P.setAnim('idle'); P.cdBite = 0.5; P.cdBiteMax = 0.5;
@@ -2079,6 +2119,7 @@ function updatePlayer(dt) {
   digHint = null;
   playHint = null;
   tunnelHint = null;
+  talkHint = null;
   P.inv = Math.max(0, P.inv - dt);
   P.bumpT = Math.max(0, P.bumpT - dt);           // une voiture ne bouscule Tecky qu'une fois à la fois
   P.cdBark = Math.max(0, P.cdBark - dt);
@@ -2146,6 +2187,7 @@ function updatePlayer(dt) {
   } else if (pressed.bite) {
     const a = biteAction();
     if (a === 'read') say([{ who: 'info', text: nearSign()[2] }]);
+    else if (a === 'talk') talkTo(nearNpc());
     else if (P.cdBite <= 0) {
       if (a === 'play') startPlay(playDog());
       else if (a === 'tunnel') startTunnel(nearTunnel());
@@ -2156,15 +2198,14 @@ function updatePlayer(dt) {
 
   // panneau (C ou E pour lire) et trésor à portée : bulles "lire" / "gratter"
   const sign = nearSign(), act = biteAction();
-  if (sign && pressed.act) say([{ who: 'info', text: sign[2] }]);
+  if (pressed.act && act === 'talk') talkTo(nearNpc());
+  else if (sign && pressed.act) say([{ who: 'info', text: sign[2] }]);
   if (act === 'read') hintText = { x: sign[0], y: sign[1] - 110 };
   if (act === 'dig') digHint = nearDig();
   if (act === 'play') playHint = playDog();
   if (act === 'tunnel') { const t = nearTunnel(); tunnelHint = { x: t.fx, y: t.fy }; }
-  // le fermier : il parle à Tecky quand celui-ci arrive près de lui
-  const nearF = dist(P.x, P.y, farmer.x, farmer.y) < FARM.talk;
-  if (nearF && !farmer.near) talkFarmer();
-  farmer.near = nearF;
+  if (act === 'talk') { const n = nearNpc(); talkHint = { x: n.x, y: n.y - NPC.markY }; }
+  updateNpcs();
   // Alice
   if (!alice.found && !alice.hidden && dist(P.x, P.y, alice.x, alice.y) < 120) finale();
   // devant la cachette trop tôt : Tecky la sent mais il lui manque des indices
@@ -2629,6 +2670,14 @@ function drawWorld() {
   if (hintText && state === 'play') actionBubble('Lire', hintText.x, hintText.y + bob);
   if (playHint && state === 'play' && P.mode !== 'play') actionBubble('Jouer', playHint.x, playHint.y - 125 + bob);
   if (tunnelHint && state === 'play' && P.mode !== 'tunnel') actionBubble('Passer', tunnelHint.x, tunnelHint.y - 100 + bob);
+  if (talkHint && state === 'play') actionBubble('Parler', talkHint.x, talkHint.y + bob);
+  // « ! » / « ? » au-dessus des personnages (sauf celui à qui Tecky peut parler : bulle « Parler »)
+  for (const n of npcList()) {
+    const m = NPC_DO[n.kind].mark(), k = ATLAS['hud/talk'];
+    if (m < 0 || !k || (talkHint && n.near) || !vis(n.x, n.y, 140)) continue;
+    const [, , w, h] = k.f[m];
+    drawSpr('hud/talk', m, n.x - w / 2, n.y - NPC.markY - h + 26 + bob * 1.5);
+  }
 }
 function actionBubble(label, bx, by) {
   ctx.font = '600 22px Fredoka, "Trebuchet MS", sans-serif';

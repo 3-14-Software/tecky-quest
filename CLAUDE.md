@@ -112,15 +112,20 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   dans `friends`). Un copain ne poursuit plus Tecky mais lui fait la fête quand il passe ; on peut rejouer sans points.
   L'aboiement n'éloigne personne : il appelle les chiens touchés (`callDog()` : bond, cœur, ils accourent). Test : `balade.js`.
 - Quête des poules (`farm`, `FARM`, `farmer`, `MAP.pen` / `penGate` / `farmer`) : cinq poules `quest` hors de l'enclos.
-  Le fermier parle quand Tecky arrive près de lui (`talkFarmer()` : demande, rappel « Encore n poules ! », merci).
-  Une poule poussée garde sa nouvelle place (`hx`), `funnelHen()` la guide vers la barrière, `keepHen()` la compte
-  (`penned`) et la garde dans l'enclos, jamais sur la route. Toutes rentrées : `finishFarm()` (saucisse, points).
-  Sauvegardé (`farm`, `hens`). Test : `farm.js`.
+  Le fermier ne parle que si Tecky vient le voir (voir « Personnages ») : `talkFarmer()` (demande, rappel « Il en
+  reste n », merci). Une poule poussée garde sa nouvelle place (`hx`), `funnelHen()` la guide vers la barrière,
+  `keepHen()` la compte (`penned`) et la garde dans l'enclos, jamais sur la route. Toutes rentrées : le fermier appelle
+  Tecky (« Bravo ! Viens me voir ! ») et, quand Tecky lui parle, `finishFarm()` (saucisse, points). Sauvegardé
+  (`farm`, `hens`). Test : `farm.js`.
+- Personnages (`NPC`, `npcList()`, `NPC_DO` : par personnage `mark` / `greet` / `talk`) : comme dans un RPG, ils ne
+  parlent que sur C (« Parler », `biteAction()` → `'talk'`, E aussi). Bulle `hud/talk` au-dessus de la tête : « ! »
+  (une demande ou une récompense à donner), « ? » (demande en cours), remplacée par « Parler » tout près. Quand Tecky
+  arrive près d'eux : petite exclamation (`npcShout()`, bulle de mots + `SFX.hey`), sans bloquer le jeu.
 - Dialogues : `say()` pendant un dialogue **met la réplique à la suite** (`dialog.queue`) au lieu de le remplacer
   (le fermier parle et Tecky ramasse la barrette dans la même image).
 - Terriers (`MAP.tunnels`, décor `burrow` à plat, `TUNNEL`) : près d'un bout, C fait « Passer » (`startTunnel()`,
   `updateTunnel()` : gratte, disparaît, ressort de l'autre côté ; `afterTunnel()` fait passer les copains). Les chiens
-  font le tour. Priorité de C : menace > jouer > trésor > terrier > panneau. Test : `tunnel.js`.
+  font le tour. Priorité de C : menace > jouer > parler > trésor > terrier > panneau. Test : `tunnel.js`.
 - Flair (R, Y à la manette, bouton à truffe au toucher ; `SNIFF`) : piste de pieds nus (`fx/footprint`) vers
   `arrowTarget()`, le long d'un vrai chemin à pied (`buildWalkGrid()` : grille de 16 px rasterisée une fois,
   `fieldTo()` : distances par parcours en largeur, `scentPath()`). Les trésors proches scintillent. Test : `tunnel.js`.

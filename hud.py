@@ -297,6 +297,24 @@ def cooldown_frames(scale, n=8):
 
 
 # ------------------------------------------------------------------ jauges et indicateurs
+def talk_frames(scale):
+    """Bulle au-dessus d'un personnage qui a quelque chose à dire, comme dans un RPG : « ! » (il a une demande),
+    « ? » (demande en cours), « … » (rien de neuf). 28x32, pointe en bas au centre (14, 28)."""
+    out = []
+    for glyph, col in (("!", "#E24B4B"), ("?", "#4A90D9"), ("…", "#3A3F4A")):
+        d = Drawing(28, 32)
+        d.add(rect(3, 3, 22, 20, 8), CREAM)
+        d.add(poly([(10, 21), (18, 21), (14, 28)]), CREAM)
+        im = render_svg(d.svg(), 28, 32, scale)
+        dr = ImageDraw.Draw(im)
+        f = font(17 * scale)
+        bb = dr.textbbox((0, 0), glyph, font=f)
+        dr.text(((im.width - (bb[2] - bb[0])) / 2 - bb[0], (26 * scale - (bb[3] - bb[1])) / 2 - bb[1]),
+                glyph, font=f, fill=rgb(col))
+        out.append(im)
+    return out
+
+
 def enemy_bar(scale):
     bg = Drawing(30, 10)
     bg.add(rect(2, 2, 26, 6, 3), "#2B1C14")
@@ -380,6 +398,7 @@ def all_sprites(scale):
         "spr_hud_pad": pad_frames(scale),
         "spr_hud_action": action_frames(scale),
         "spr_hud_cooldown": cooldown_frames(scale),
+        "spr_hud_talk": talk_frames(scale),
         "spr_hud_enemy_bar_bg": [bar_bg],
         "spr_hud_enemy_bar_fill": [bar_fill],
         "spr_hud_arrow": arrow(scale),
