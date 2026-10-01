@@ -24,6 +24,11 @@ DOGS = {
     "molosse": dict(fur="#2E2A2B", dark="#1C1819", light="#C77B3B", legcol="#C77B3B", patch=None,
                     body_rx=12.5, body_ry=6.2, leg=13, leg_w=3.4, head_r=6.2, snout=(5.2, 2.7),
                     snout_f=(3.8, 3.4), ear="pointy", tail="bushy", top_w=7.5, collar="spike"),
+    # chien de berger (border collie noir et blanc) : garde la ferme, charge en ligne droite
+    "berger": dict(fur="#2B2A2E", dark="#18171B", light="#F4F1EA", legcol="#F4F1EA", patch=None,
+                   body_rx=11, body_ry=5.8, leg=11, leg_w=3, head_r=5.8, snout=(4.6, 2.4),
+                   snout_f=(3.4, 2.8), ear="droop", tail="bushy", top_w=7, collar="spike",
+                   blaze=True, tail_tip=True),     # liste blanche sur le front, bout de queue blanc
 }
 
 EYE_ANGRY = True
@@ -67,6 +72,8 @@ def side(S, p):
         d.add(circle(bx + 0.8, Y(cy - 2.5), 2.4, f"rotate({(ta + 35) * 0.3:.1f} {bx + 2} {Y(cy)})"), S["fur"])
     else:
         d.add(ellipse(px, py - 7, 2.8, 7.5, f"rotate({ta - 100:.1f} {px} {py})"), S["fur"])
+        if S.get("tail_tip"):
+            d.add(ellipse(px, py - 12.2, 2.3, 2.6, f"rotate({ta - 100:.1f} {px} {py})"), S["light"], sil=False)
 
     body = ellipse(cx, Y(cy), rx, ry)
     neck = ellipse(fx - 4.5 + ld, Y(cy - 5), 5, 6)
@@ -163,6 +170,8 @@ def down(S, p):
     d.add(circle(24, Y(27.5), hr, htr), S["fur"])
     if S["patch"]:
         d.add(circle(21.8, Y(26.5), hr * 0.5, htr), S["patch"], sil=False, opacity=0.9)
+    if S.get("blaze"):
+        d.add(ellipse(24, Y(27.5 - hr * 0.2), 1.3, hr * 0.78, htr), S["light"], sil=False)
     fr, fry = S["snout_f"]
     d.add(ellipse(24, Y(27.5 + hr * 0.62), fr, fry, htr), S["light"])
     if m > 0.05:
@@ -224,6 +233,8 @@ def up(S, p):
         d.add(circle(24, Y(26 + blen - 2.5), 2, ""), S["fur"], sil=False, edge=True)
     else:
         d.add(ellipse(24, Y(32), 2.7, 5.5, f"rotate({ta * 0.6:.1f} 24 {Y(26 + blen - 2)})"), S["dark"], sil=False, edge=True)
+        if S.get("tail_tip"):
+            d.add(ellipse(24, Y(35.6), 2.1, 1.9, f"rotate({ta * 0.6:.1f} 24 {Y(26 + blen - 2)})"), S["light"], sil=False)
 
     htr = f"translate({p['head_dx']:.2f} {p['head_dy']:.2f})"
     ear = p["ear"]

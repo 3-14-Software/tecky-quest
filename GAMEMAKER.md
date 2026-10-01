@@ -34,6 +34,7 @@ Mêmes animations pour Tecky (`spr_tecky_…`) et les trois ennemis :
 | Roquet (petit, blanc tacheté) | `spr_roquet_…` | rapide, 1 PV, aboie de loin |
 | Bouledogue (gris, trapu) | `spr_bouledogue_…` | lent, 3 PV, mord fort |
 | Molosse (doberman noir et feu) | `spr_molosse_…` | mini-boss, 5 PV, insensible aux aboiements : il faut le mordre |
+| Berger (border collie noir et blanc) | `spr_berger_…` | garde la ferme, 3 PV : s'accroupit (« ! », sprite écrasé verticalement), charge en ligne droite, puis souffle 1 s |
 
 | Anim | Images | FPS | Remarque |
 |---|---|---|---|
@@ -64,6 +65,9 @@ Mêmes animations pour Tecky (`spr_tecky_…`) et les trois ennemis :
 | `spr_item_medal` | score +100 |
 | `spr_item_squeaky` (canard pouic-pouic) | score +50 |
 | `spr_item_ball` | score +20 |
+| `spr_item_hairclip` (barrette) | indice 1 : semé par Alice à la ferme |
+| `spr_item_shoe` (chaussure) | indice 2 : dans la forêt |
+| `spr_item_plush` (doudou lapin) | indice 3 : au parc ; avec les trois, Alice sort de sa cachette |
 
 ### Effets (`fx/`) — origine au centre, sauf `spr_fx_bark` : (12, 48)
 | Sprite | Images | FPS |
@@ -79,7 +83,7 @@ Mêmes animations pour Tecky (`spr_tecky_…`) et les trois ennemis :
 
 ## Décor
 
-### Sol : tileset `tiles/ts_ground.png` (tuiles 64×64, 16 colonnes × 13 lignes)
+### Sol : tileset `tiles/ts_ground.png` (tuiles 64×64, 16 colonnes × 16 lignes)
 Crée un *Tile Set* avec cette image (tuiles 64×64, sans marge). La tuile 0 est vide, comme
 GameMaker l'exige. La planche numérotée est dans `previews/ts_ground_legend.png`.
 
@@ -99,13 +103,16 @@ GameMaker l'exige. La planche numérotée est dans `previews/ts_ground_legend.pn
 | 9 | 144–159 | route / chemin de terre |
 | 10 | 160–175 | route / béton |
 | 11 | 176–191 | béton / trottoir |
-| 12 | 192–207 | **détails transparents** (à poser sur un 2e calque de tuiles) |
+| 12 | 192–207 | champ labouré / herbe (sillons et jeunes pousses) |
+| 13 | 208–223 | sous-bois / herbe (herbe sombre, aiguilles de pin) |
+| 14 | 224–239 | chemin de terre / sous-bois |
+| 15 | 240–255 | **détails transparents** (à poser sur un 2e calque de tuiles) |
 
 **Transitions** : dans chaque ligne de paire, la colonne indique les coins recouverts par le
 terrain « du dessus » : **haut-gauche = 1, haut-droite = 2, bas-gauche = 4, bas-droite = 8**.
 Exemples : 15 = tout recouvert, 3 = moitié haute, 1 = coin haut-gauche arrondi.
 
-**Détails** (ligne 12, dans l'ordre) : ligne d'arrêt H, ligne d'arrêt V, flèche au sol,
+**Détails** (ligne 15, dans l'ordre) : ligne d'arrêt H, ligne d'arrêt V, flèche au sol,
 plaque d'égout, grille d'évacuation, flaque, tache d'huile, fissures, feuilles mortes, fleurs,
 touffe d'herbe, cailloux, ligne de parking, bande de danger jaune et noire, traces de pattes,
 trou creusé (pour un trésor enterré). Les tuiles peuvent être tournées ou retournées dans
@@ -117,20 +124,21 @@ Tu peux peindre à la main, ou générer le sol par code à partir d'une grille 
 
 ```gml
 // Terrains, du plus bas au plus haut (l'ordre compte : le plus haut passe dessus)
-enum TER { herbe, terre, eau, trottoir, beton, paves, route }
+enum TER { herbe, foret, champ, terre, eau, trottoir, beton, paves, route }
 
 /// Ligne du tileset pour la paire (dessus, dessous), ou -1 si elle n'existe pas
 function ground_pair_row(_up, _lo) {
     static _rows = undefined;
     if (_rows == undefined) {
-        _rows = array_create(7 * 7, -1);
+        _rows = array_create(9 * 9, -1);
         var _p = [[TER.terre, TER.herbe], [TER.route, TER.herbe], [TER.paves, TER.herbe],
                   [TER.beton, TER.herbe], [TER.trottoir, TER.herbe], [TER.route, TER.trottoir],
                   [TER.eau, TER.herbe], [TER.paves, TER.trottoir], [TER.route, TER.terre],
-                  [TER.route, TER.beton], [TER.beton, TER.trottoir]];
-        for (var _i = 0; _i < array_length(_p); _i++) _rows[_p[_i][0] * 7 + _p[_i][1]] = _i + 1;
+                  [TER.route, TER.beton], [TER.beton, TER.trottoir], [TER.champ, TER.herbe],
+                  [TER.foret, TER.herbe], [TER.terre, TER.foret]];
+        for (var _i = 0; _i < array_length(_p); _i++) _rows[_p[_i][0] * 9 + _p[_i][1]] = _i + 1;
     }
-    return _rows[_up * 7 + _lo];
+    return _rows[_up * 9 + _lo];
 }
 
 /// @param _tm       tilemap (ex. layer_tilemap_get_id(layer_get_id("Sol")))
@@ -195,8 +203,27 @@ L'origine est au pied de l'objet.
 | `spr_decor_barrel_blue` / `barrel_red` | 64×64 | (32, 58) |
 | `spr_decor_crate` | 64×64 | (32, 56) |
 | `spr_decor_fence_metal_h` / `_v` | 64×64 | (0, 56) / (32, 64) |
+| `spr_decor_barn` (grange) | 256×224 | (128, 216) |
+| `spr_decor_chicken_coop` (poulailler) | 128×128 | (64, 120) |
+| `spr_decor_hen` / `hen_white` (poule rousse / blanche) | 64×64 | (32, 56) |
+| `spr_decor_tractor` | 128×96 | (64, 88) |
+| `spr_decor_scarecrow` (épouvantail) | 64×128 | (32, 120) |
+| `spr_decor_bridge` (pont, **à plat**) | 192×320 | (96, 320) |
+| `spr_decor_reeds` (roseaux) | 64×64 | (32, 56) |
+| `spr_decor_boat` (barque) | 128×64 | (64, 52) |
+| `spr_decor_fir` (sapin) | 128×160 | (64, 152) |
+| `spr_decor_stump` (souche) | 64×64 | (32, 54) |
+| `spr_decor_log` (tronc couché) | 128×64 | (64, 54) |
+| `spr_decor_mushrooms` / `fern` (champignons / fougère, traversables) | 64×64 | (32, 56) |
+| `spr_decor_slide` / `swing` (toboggan / balançoire) | 128×128 | (64, 120) |
+| `spr_decor_sandbox` (bac à sable, **à plat**) | 128×96 | (64, 88) |
+| `spr_decor_fountain` (fontaine) | 128×128 | (64, 116) |
+| `spr_decor_playhouse` (cabane de jeu, cachette d'Alice) | 128×128 | (64, 120) |
 
 Les clôtures et la haie `_h` se répètent tous les 64 px ; les `_v` se posent en colonne.
+Les décors **à plat** (pont, bac à sable) se dessinent sous les personnages : profondeur fixe, pas `depth = -y`.
+Le pont enjambe une rivière de 4 tuiles (256 px) : son tablier (x de −64 à +64 autour de l'origine) doit être
+praticable, ses garde-corps (de ±64 à ±80) bloquent.
 
 ---
 
@@ -219,7 +246,8 @@ Pensé pour l'event **Draw GUI** avec `display_set_gui_size(1920, 1080)` et les 
 | `spr_hud_action` | 8 | (0, 0) | boutons : aboyer, aboyer grisé, mordre, mordre grisé, gratter, gratter grisé, lire, lire grisé |
 | `spr_hud_cooldown` | 8 | (0, 0) | voile de recharge à poser sur un bouton (0 = vient d'être utilisé) |
 | `spr_hud_enemy_bar_bg` / `_fill` | 1 | (28, 0) / (0, 0) | barre de vie au-dessus d'un ennemi |
-| `spr_hud_alice_arrow` | 4 | centre (40, 40) | flèche au bord de l'écran vers Alice, pointe à droite |
+| `spr_hud_arrow` | 4 | centre (40, 40) | flèche au bord de l'écran (pointe à droite, pastille vide) : seule elle tourne |
+| `spr_hud_arrow_icon` | 4 | centre (20, 20) | contenu de la pastille, toujours droit : barrette, chaussure, doudou, tête d'Alice |
 | `spr_title_logo` | 1 | centre | logo « Tecky Quest » pour l'écran titre |
 
 **9-slice** : dans l'éditeur de sprite, active *Nine Slice* avec 32 px de chaque côté (16 en x1),
@@ -284,17 +312,22 @@ if (dialog_text != "") {
     draw_sprite(spr_hud_next, current_time div 120, 1426, 990);
 }
 
-// --- flèche vers Alice si elle est hors de l'écran
+// --- flèche vers la cible (prochain indice, puis Alice) si elle est hors de l'écran, pendant arrow_time
+// (quelques secondes après chaque indice, pas en permanence). _target : instance visée, _icon : 0..2 indice, 3 Alice.
 var _cam = view_camera[0];
 var _cx = camera_get_view_x(_cam), _cy = camera_get_view_y(_cam);
 var _cw = camera_get_view_width(_cam), _ch = camera_get_view_height(_cam);
-with (obj_alice) {
+if (arrow_time > 0) with (_target) {
     if (x < _cx || x > _cx + _cw || y < _cy || y > _cy + _ch) {
         var _k = 1920 / _cw;                              // monde -> GUI
-        var _ax = clamp((x - _cx) * _k, 60, 1860);
-        var _ay = clamp((y - _cy) * _k, 60, 1020);
+        var _ax = clamp((x - _cx) * _k, 80, 1840);
+        var _ay = clamp((y - _cy) * _k, 300, 1000);
         var _dir = point_direction(960, 540, (x - _cx) * _k, (y - _cy) * _k);
-        draw_sprite_ext(spr_hud_alice_arrow, current_time div 150, _ax, _ay, 1, 1, _dir, c_white, 1);
+        var _a = min(1, other.arrow_time);                // fondu sur la dernière seconde
+        draw_sprite_ext(spr_hud_arrow, current_time div 150, _ax, _ay, 1, 1, _dir, c_white, _a);
+        // l'icône ne tourne pas : centre de la pastille, 6 px derrière le centre de rotation
+        draw_sprite_ext(spr_hud_arrow_icon, _icon, _ax - lengthdir_x(6, _dir), _ay - lengthdir_y(6, _dir),
+                        1, 1, 0, c_white, _a);
     }
 }
 ```

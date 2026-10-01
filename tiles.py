@@ -7,6 +7,7 @@ n°k a le terrain du dessus dans les coins dont le bit est à 1 :  NO=1, NE=2, S
 Le contour est calculé à partir d'un champ bilinéaire des 4 coins : les bords
 droits sont droits, les coins sont arrondis, et tout raccorde d'une tuile à l'autre.
 """
+import math
 import random
 
 import numpy as np
@@ -32,13 +33,16 @@ TERRAINS = {
     "sidewalk": dict(fill="#CDD0D5", edge="#B3B7BE", out="#6E727A", edge_w=1.4, out_w=0.9),
     "water":    dict(fill="#5DADE2", edge="#8FD0F0", out="#2F6F9A", edge_w=2.6, out_w=1.0,
                      halo=("#E8D39A", 2.2)),          # berge sableuse côté herbe
+    "field":    dict(fill="#B07A45", edge="#9A6638", out="#6E4628", edge_w=1.6, out_w=0.9),   # champ labouré
+    "forest":   dict(fill="#5A9A4E", edge="#4F8C45", out="#3F7537", edge_w=1.2, out_w=0.7),   # sous-bois
 }
 
 # Paires disponibles (dessus, dessous), dans l'ordre des lignes de la planche.
 # Les 4 premières gardent les index de la version précédente.
 PAIRS = [("dirt", "grass"), ("road", "grass"), ("paving", "grass"), ("concrete", "grass"),
          ("sidewalk", "grass"), ("road", "sidewalk"), ("water", "grass"), ("paving", "sidewalk"),
-         ("road", "dirt"), ("road", "concrete"), ("concrete", "sidewalk")]
+         ("road", "dirt"), ("road", "concrete"), ("concrete", "sidewalk"), ("field", "grass"),
+         ("forest", "grass"), ("dirt", "forest")]
 
 # Retouches de style pour certaines paires (sinon : style du terrain du dessus)
 PAIR_STYLE = {
@@ -47,7 +51,7 @@ PAIR_STYLE = {
 }
 
 # Priorité d'empilement (utile pour la génération automatique)
-PRIORITY = ["grass", "dirt", "water", "sidewalk", "concrete", "paving", "road"]
+PRIORITY = ["grass", "forest", "field", "dirt", "water", "sidewalk", "concrete", "paving", "road"]
 
 
 # ------------------------------------------------------------------ textures (sur-échantillonnées)
@@ -181,12 +185,46 @@ def tex_water(scale, seed=0):
     return im
 
 
+def tex_field(scale, seed=0):
+    """Champ labouré : sillons horizontaux et rangs de jeunes pousses."""
+    im = _canvas(scale, TERRAINS["field"]["fill"])
+    d = ImageDraw.Draw(im)
+    k = scale * SS
+    rnd = random.Random(4000 + seed)
+    for y in range(4, 32, 8):
+        d.rectangle([0, (y + 2.2) * k, T * k, (y + 4.4) * k], fill=hexrgb("#8E5F33"))
+        d.rectangle([0, y * k, T * k, (y + 1.1) * k], fill=hexrgb("#C68F58"))
+        for x in range(3, 32, 6):
+            xx = x + rnd.uniform(-0.8, 0.8)
+            for dx in (-1.1, 1.1):
+                d.ellipse([(xx + dx - 0.9) * k, (y - 0.5) * k, (xx + dx + 0.9) * k, (y + 0.9) * k], fill=hexrgb("#6FB25E"))
+    return im
+
+
+def tex_forest(scale, seed=0):
+    """Sous-bois : herbe sombre, aiguilles de pin, quelques brindilles."""
+    im = _canvas(scale, TERRAINS["forest"]["fill"])
+    d = ImageDraw.Draw(im)
+    k = scale * SS
+    rnd = random.Random(5000 + seed)
+    for _ in range(26):
+        x, y, a = rnd.uniform(1, 31), rnd.uniform(1, 31), rnd.uniform(0, math.pi)
+        dx, dy = math.cos(a) * 1.4, math.sin(a) * 1.4
+        d.line([((x - dx) * k, (y - dy) * k), ((x + dx) * k, (y + dy) * k)],
+               fill=hexrgb(rnd.choice(("#4A8240", "#4A8240", "#6AAA5C", "#8A6A3E"))), width=int(0.55 * k))
+    for _ in range(3):
+        x, y, r = rnd.uniform(5, 27), rnd.uniform(5, 27), rnd.uniform(1.6, 2.6)
+        d.ellipse([(x - r) * k, (y - r * 0.6) * k, (x + r) * k, (y + r * 0.6) * k], fill=hexrgb("#4F8F46"))
+    return im
+
+
 def tex_lower_grass(scale, seed=0):
     return tex_grass(scale, seed % 4 if seed % 4 != 3 else 0, seed)
 
 
 TEX = {"dirt": tex_dirt, "road": tex_road, "paving": tex_paving, "concrete": tex_concrete,
-       "sidewalk": tex_sidewalk, "water": tex_water, "grass": tex_lower_grass}
+       "sidewalk": tex_sidewalk, "water": tex_water, "grass": tex_lower_grass, "field": tex_field,
+       "forest": tex_forest}
 
 
 # ------------------------------------------------------------------ transitions
@@ -364,8 +402,8 @@ def overlay(scale, i):
 # ------------------------------------------------------------------ planche
 # GameMaker réserve la tuile 0 (toujours vide). Disposition, 16 colonnes :
 #   ligne 0      : [vide] herbe x4, marquages x4, variantes pleines x7
-#   lignes 1..11 : une paire (dessus/dessous) par ligne, colonne = bits de coins (0..15)
-#   ligne 12     : détails transparents à poser sur un 2e calque de tuiles
+#   lignes 1..14 : une paire (dessus/dessous) par ligne, colonne = bits de coins (0..15)
+#   ligne 15     : détails transparents à poser sur un 2e calque de tuiles
 COLS = 16
 ROW0 = ["(vide)", "herbe", "herbe + brins", "herbe + fleurs", "herbe + cailloux",
         "route ligne H", "route ligne V", "passage piéton (route H)", "passage piéton (route V)",

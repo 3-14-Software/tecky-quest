@@ -31,7 +31,10 @@ S = 2
 TS = 32 * S
 
 # ====================================================================== NIVEAU
-MW, MH = 40, 24
+# 80 x 48 tuiles. Le quart nord-ouest (40 x 24) est la carte d'origine : départ, campagne, village, route,
+# zone industrielle. Puis la ferme à l'est, une rivière qui coupe toute la carte (un seul pont, côté ferme),
+# la forêt au sud-est et le parc au sud-ouest, où Alice se cache.
+MW, MH = 80, 48
 
 
 def corner_grid():
@@ -52,17 +55,45 @@ def corner_grid():
     # route principale
     paint("road", 0, 12, MW, 15)
     # village
-    paint("sidewalk", 20, 11, MW, 11)
+    paint("sidewalk", 20, 11, 40, 11)
     paint("paving", 23, 3, 38, 10)
-    # campagne sud-ouest
-    paint("dirt", 6, 17, 7, MH)
+    # campagne sud-ouest : le chemin descend jusqu'à la rivière (barque, pas de pont)
+    paint("dirt", 6, 17, 7, 26)
     paint("dirt", 7, 20, 14, 21)
     paint("water", 1, 18, 4, 22)
     # zone industrielle
-    paint("sidewalk", 22, 16, MW, 16)
-    paint("concrete", 22, 17, MW, MH)
+    paint("sidewalk", 22, 16, 40, 16)
+    paint("concrete", 22, 17, 40, 24)
     paint("road", 30, 16, 31, 17)
+    # ferme (nord-est) : cour en terre, chemin vers la route, champs labourés
+    paint("dirt", 50, 5, 62, 10)
+    paint("dirt", 55, 10, 56, 12)
+    paint("field", 43, 2, 48, 9)
+    paint("field", 65, 2, 77, 9)
+    paint("field", 52, 18, 60, 23)
+    paint("water", 70, 18, 74, 21)          # mare
+    paint("dirt", 63, 16, 65, 25)           # chemin de la route au pont
+    # rivière d'est en ouest ; le pont (BRIDGES) la franchit en x 63..65
+    paint("water", 0, 26, MW, 29)
+    # forêt (sud-est) : sous-bois, sentier sinueux du pont vers le parc, clairière et recoins à l'est
+    paint("forest", 40, 31, MW, MH)
+    paint("dirt", 63, 30, 65, 35)
+    paint("dirt", 50, 33, 65, 35)
+    paint("dirt", 50, 33, 52, 41)
+    paint("dirt", 42, 39, 52, 41)
+    paint("dirt", 65, 39, 72, 40)
+    paint("dirt", 44, 33, 50, 34)           # recoin ouest (trésor)
+    paint("dirt", 72, 39, 77, 40)           # vers la chaussure d'Alice et le recoin est
+    paint("dirt", 76, 40, 77, 44)
+    # parc (sud-ouest) : allée, place de la fontaine, aire de jeux (séparée de l'allée par l'herbe)
+    paint("paving", 13, 39, 38, 40)
+    paint("paving", 16, 34, 28, 44)
+    paint("dirt", 3, 35, 11, 45)
     return g
+
+
+# pont : coins (x0, y0, x1, y1) qui ne sont plus de l'eau, sous le tablier du décor « bridge »
+BRIDGES = [(63, 25, 65, 30)]
 
 
 DECOR = [
@@ -94,6 +125,45 @@ DECOR = [
     ("tree", 18.8, 22.4), ("bush", 5.2, 16.6), ("bush", 17.3, 19.8), ("bush", 9.2, 23.4),
     ("hay", 12.2, 18.7), ("hay", 13.4, 19), ("rock", 19.6, 17.6),
     ("signpost", 7.3, 16.6),
+    # bord de la rivière, au bout du chemin : barque, roseaux, panneau « pas de pont ici »
+    ("boat", 6.6, 27.7), ("reeds", 4.6, 25.8), ("reeds", 9.2, 25.9), ("reeds", 2.2, 25.7), ("signpost", 8.8, 24.8),
+    ("tree", 1.2, 25.2), ("bush", 11.5, 25), ("tree", 16, 25.3), ("reeds", 20.5, 25.8), ("bush", 26, 25.2),
+    ("reeds", 31.4, 25.9), ("tree", 36.5, 25.3), ("reeds", 45, 25.8), ("bush", 50, 25.2), ("reeds", 57, 25.9),
+    ("reeds", 69, 25.8), ("tree", 75, 25.3), ("reeds", 78.5, 25.9),
+
+    # ================= FERME (nord-est)
+    ("barn", 56, 4.9), ("chicken_coop", 60.8, 6.4), ("hen", 59.4, 8.4), ("hen_white", 62.2, 8.9), ("hen", 60.6, 9.6),
+    ("tractor", 52, 8.7), ("hay", 50.8, 5.6), ("hay", 52, 6), ("hay", 61.5, 4.2),
+    ("scarecrow", 70.5, 6), ("scarecrow", 45.5, 5.6),
+    ("tree", 41.5, 2), ("tree", 49.5, 1.3), ("tree", 63, 1.3), ("tree", 78.6, 1.6), ("tree", 41.5, 10.8),
+    ("tree", 78.8, 10.6), ("bush", 63.6, 10.6), ("bush", 49, 10.5), ("rock", 66, 10.8),
+    ("signpost", 57.6, 11.2),
+    # au sud de la route : verger, champ, mare, chemin du pont
+    ("tree", 43, 18.6), ("tree", 46.4, 18.4), ("tree", 49.8, 18.6), ("tree", 43.2, 21.8), ("tree", 46.6, 22),
+    ("tree", 50, 21.8), ("tree", 76.5, 17.6), ("tree", 78.5, 22.6), ("bush", 61.6, 17.4), ("bush", 67.4, 23.3),
+    ("reeds", 69.6, 18.6), ("reeds", 74.6, 21.4), ("hay", 61.8, 21.4), ("scarecrow", 56, 21.4),
+    ("hen_white", 66.6, 18.2), ("signpost", 62, 24.6),
+    ("bridge", 64, 30),
+
+    # ================= FORÊT (sud-est)
+    ("tree", 52.4, 46.8), ("tree", 61.2, 47.4), ("tree", 46.4, 37.2), ("tree", 58.4, 37.2),
+    ("stump", 53.8, 36.6), ("stump", 67.6, 42.2), ("stump", 44.6, 42.6), ("log", 59.6, 40.8), ("log", 73.4, 35.6),
+    ("mushrooms", 54.4, 38.4), ("mushrooms", 69.8, 36.8), ("mushrooms", 47.2, 42), ("mushrooms", 76.2, 42.6),
+    ("mushrooms", 62.8, 33), ("fern", 49.4, 37.6), ("fern", 60.4, 35.6), ("fern", 66.2, 38.2), ("fern", 43.4, 38),
+    ("fern", 71.6, 46.6), ("fern", 57.2, 43.8), ("signpost", 53.2, 32.6),
+
+    # ================= PARC (sud-ouest), Alice dans la cabane
+    ("playhouse", 5, 37.3), ("slide", 9, 37.6), ("swing", 5.6, 42.4), ("sandbox", 9.6, 44.4),
+    ("fountain", 22, 39.9), ("bench", 18, 35.9), ("bench", 26, 35.9), ("bench", 18, 43.9), ("bench", 26, 43.9),
+    ("flower_pot", 16.6, 34.6), ("flower_pot", 27.6, 34.6), ("flower_pot", 16.6, 44.6), ("flower_pot", 27.6, 44.6),
+    ("lamppost", 13, 38.7), ("lamppost", 31, 38.7), ("lamppost", 37, 41.6),
+    ("tree", 2, 31.6), ("tree", 8, 31.2), ("tree", 14, 31.6), ("tree", 30.6, 31.6), ("tree", 36.6, 31.2),
+    ("tree", 33.4, 35.4), ("tree", 13.2, 47.4), ("tree", 33.6, 46.6), ("tree", 1.6, 46.8), ("tree", 38.4, 46.8),
+    ("bush", 12.4, 34.2), ("bush", 31.6, 43.4), ("bush", 36.2, 35.6), ("bush", 2.2, 34.2),
+    ("bush", 38.6, 37.6), ("bush", 38.6, 42.6), ("signpost", 36.6, 38.4),
+    ("tree", 33.2, 38.2), ("tree", 35.8, 43.6), ("tree", 30.2, 46.6), ("tree", 9, 33.6), ("bush", 30.4, 33.8),
+    ("bush", 34.2, 45.6), ("bush", 12.6, 46.2), ("flower_pot", 14.4, 38.2), ("flower_pot", 14.4, 42.2),
+    ("bench", 35, 33.9), ("tree", 24.2, 47.4), ("bush", 20.4, 31.4), ("bush", 27, 31.6),
 ]
 for x in range(9, 16):
     DECOR.append(("fence_wood_h", x, 11.25))
@@ -101,6 +171,10 @@ for x in list(range(22, 30)) + list(range(32, 40)):
     DECOR.append(("fence_metal_h", x, 17.3))
 for x in range(8, 16):
     DECOR.append(("fence_wood_h", x, 16.35))
+for x in list(range(64, 70)) + list(range(72, 77)):   # clôture du grand champ, avec une barrière ouverte
+    DECOR.append(("fence_wood_h", x, 10.3))
+for y in range(17, 24):                               # entre la zone industrielle et le verger
+    DECOR.append(("fence_metal_v", 40.6, y + 1))
 
 ITEMS = [
     ("bone", 6, 7.5), ("bone", 12, 17.6), ("bone", 28.5, 7.2), ("bone", 23.5, 19.8), ("bone", 19.5, 11.3),
@@ -108,20 +182,72 @@ ITEMS = [
     ("medal", 1.4, 9.4), ("medal", 38.6, 18.3),
     ("squeaky", 9.5, 6.2), ("squeaky", 2.5, 16.9), ("squeaky", 33, 5.2),
     ("ball", 6.3, 5.4), ("ball", 15, 6.3), ("ball", 19.5, 20), ("ball", 25, 13.8), ("ball", 36.8, 9.4),
+    # ferme
+    ("bone", 53.6, 7.4), ("bone", 66.4, 21.6), ("sausage", 78.4, 4.6), ("medal", 78.2, 19.6),
+    ("squeaky", 72.4, 22.6), ("ball", 44.8, 20.2), ("ball", 59, 11.3),
+    # forêt
+    ("bone", 63.6, 36.6), ("bone", 51, 44.4), ("sausage", 74.4, 38.6), ("medal", 43.2, 47),
+    ("squeaky", 69.6, 41.2), ("ball", 56.6, 39.8),
+    # parc
+    ("bone", 30.4, 41.6), ("sausage", 20.4, 46.4), ("squeaky", 24.6, 33.2), ("ball", 12.6, 42.6),
+    ("medal", 35.6, 44.6),
+    # indices d'Alice : barrette à la ferme, chaussure dans la clairière de la forêt, doudou au parc
+    ("hairclip", 58.4, 9.4), ("shoe", 73.6, 41.2), ("plush", 29.6, 37.4),
 ]
 ENEMIES = [
     ("roquet", 9, 6.4), ("roquet", 14, 3.5), ("roquet", 10.5, 19.2), ("roquet", 27, 6.5),
     ("bouledogue", 20, 13.6), ("bouledogue", 15.5, 22.2),
     ("molosse", 33.5, 20.2),
+    # ferme : les chiens de berger gardent la cour et les prés
+    ("berger", 57.5, 8), ("berger", 66, 19.5), ("berger", 72, 6.5), ("bouledogue", 47.5, 20.4), ("roquet", 60.5, 23),
+    # forêt
+    ("roquet", 57, 34), ("roquet", 69, 39.6), ("bouledogue", 46.5, 40.4), ("molosse", 74.5, 40.6),
+    # parc
+    ("roquet", 26.5, 37.2), ("bouledogue", 15, 41.6), ("berger", 33, 40),
 ]
 # trésors enterrés : au centre de la tuile des traces de pattes (scintillement et trou creusé s'y alignent)
-DIG = [(12.5, 6.5), (5.5, 19.5), (21.5, 18.5)]
+DIG = [(12.5, 6.5), (5.5, 19.5), (21.5, 18.5),
+       (47.5, 20.5), (68.5, 11.5), (44.5, 33.5), (76.5, 44.5), (34.5, 33.5)]
 START = (4.5, 4.2)
-ALICE = (33.5, 7.3)
+ALICE = (5, 37.3 + 14 / 64)   # juste devant la porte de la cabane du parc (cachée jusqu'aux trois indices)
+TITLE = (33.5, 7.3)        # caméra de l'écran titre : la place du village
 SIGNS = [
     (5.6, 11.1, "Niche de Tecky : en haut. Village : suivre la route vers l'est."),
     (7.3, 16.6, "Les champs du Père Gaston. Attention, chiens pas commodes !"),
+    (8.8, 24.8, "Pas de pont ici ! Le seul pont est loin à l'est, après la ferme."),
+    (57.6, 11.2, "Ferme des Tilleuls. Attention aux chiens de berger : quand ils s'accroupissent, ils vont charger !"),
+    (62, 24.6, "Pont de la rivière. Au sud : la grande forêt."),
+    (53.2, 32.6, "Sentier de la forêt. Le parc des enfants est à l'ouest."),
+    (36.6, 38.4, "Parc des enfants : toboggan, balançoire, bac à sable et cabane !"),
 ]
+
+
+def forest_firs():
+    """Sapins serrés dans la forêt (sud-est) : en quinconce un peu désordonné, hors des sentiers et à l'écart des
+    objets, chiens, trésors, panneaux et autres décors (check_placement.js vérifie que tout reste atteignable)."""
+    g = corner_grid()
+    rnd = random.Random(11)
+    keep = ([(x, y) for _, x, y in ITEMS] + [(x, y) for _, x, y in ENEMIES] + list(DIG)
+            + [(x, y) for x, y, _ in SIGNS] + [(x, y) for n, x, y in DECOR if x > 39 and y > 30])
+
+    def near_path(px, py):
+        return any(g[cy][cx] == "dirt" for cy in range(int(py - 1.8), int(py + 1.4) + 1)
+                   for cx in range(int(px - 1.3), int(px + 1.3) + 2) if 0 <= cy <= MH and 0 <= cx <= MW)
+    out = []
+    y, row = 31.6, 0
+    while y < MH:
+        x = 40.8 + (row % 2) * 1.0
+        while x < MW - 0.4:
+            px, py = x + rnd.uniform(-0.4, 0.4), min(MH - 0.1, y + rnd.uniform(-0.25, 0.25))
+            if not near_path(px, py) and all((px - kx) ** 2 + (py - ky) ** 2 > 1.8 ** 2 for kx, ky in keep):
+                out.append(("fir", round(px, 2), round(py, 2)))
+            x += 2.0
+        y += 1.55
+        row += 1
+    return out
+
+
+DECOR += forest_firs()
 FULL_VARIANTS = {"dirt": [9, 10], "road": [11, 12], "paving": [13], "concrete": [14, 15]}
 OV = {n: i for i, (n, _) in enumerate(tiles.OVERLAYS)}
 
@@ -144,7 +270,7 @@ def build_map():
     # marquages de la route
     for tx in range(MW):
         ground[13 * MW + tx] = 5 if tx % 2 == 0 else tiles.tile_index("road", 15)
-    for tx in (10, 11, 34, 35):
+    for tx in (10, 11, 34, 35, 55, 56, 63, 64):      # passages piétons (dont chemin de la ferme et du pont)
         for ty in (12, 13, 14):
             ground[ty * MW + tx] = 7
     # détails
@@ -173,8 +299,24 @@ def build_map():
     put("ligne de parking", 36, 19)
     put("ligne de parking", 37, 19)
     put("feuilles mortes", 23, 8)
+    # nouvelles zones
+    for tx, ty in ((44, 33), (47, 38), (53, 31), (58, 36), (61, 41), (66, 33), (70, 43), (74, 39), (77, 34),
+                   (45, 46), (55, 45), (63, 46), (49, 42), (68, 37)):
+        put("feuilles mortes", tx, ty)
+    for tx, ty in ((57, 40), (72, 45), (43, 41)):
+        put("touffe d'herbe", tx, ty)
+    for tx, ty in ((14, 36), (30, 36), (14, 43), (31, 45), (35, 33), (2, 40), (12, 46), (24, 31), (46, 22), (77, 15)):
+        put("fleurs", tx, ty)
+    for tx, ty in ((51, 9), (58, 6), (64, 22)):
+        put("cailloux", tx, ty)
+    put("flaque", 53, 9)
+    put("flaque", 60, 34)
     for x, y in DIG:
         over[int(y) * MW + int(x)] = ovrow + OV["traces de pattes"]
+    for x0, y0, x1, y1 in BRIDGES:
+        for y in range(y0, y1 + 1):
+            for x in range(x0, x1 + 1):
+                g[y][x] = "bridge"           # n'est plus de l'eau pour les collisions (le sol a déjà été choisi)
     water = [1 if g[y][x] == "water" else 0 for y in range(MH + 1) for x in range(MW + 1)]
     px = lambda v: round(v * TS, 1)
     return {
@@ -186,6 +328,7 @@ def build_map():
         "dig": [[px(x), px(y)] for x, y in DIG],
         "start": [px(START[0]), px(START[1])],
         "alice": [px(ALICE[0]), px(ALICE[1])],
+        "title": [px(TITLE[0]), px(TITLE[1])],
         "signs": [[px(x), px(y), t] for x, y, t in SIGNS],
     }
 
@@ -225,7 +368,7 @@ def collect():
         out.append((f"decor/{n}", [render_svg(fn().svg(), w, h, S, PAD)], (ox * S + M, oy * S + M), True))
     for n, ims in hud.all_sprites(S).items():
         key = "hud/" + n.replace("spr_hud_", "").replace("spr_", "")
-        o = (40, 40) if n == "spr_hud_alice_arrow" else (0, 0)
+        o = {"spr_hud_arrow": (40, 40), "spr_hud_arrow_icon": (20, 20)}.get(n, (0, 0))
         if n == "spr_title_logo":
             o = (ims[0].width // 2, ims[0].height // 2)
         out.append((key, ims, o, n in ("spr_hud_digits",)))

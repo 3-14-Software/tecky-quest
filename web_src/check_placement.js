@@ -1,5 +1,6 @@
 // Usage : node web_src/check_placement.js web/index.html
-// Vérifie que rien n'est posé dans l'eau ou dans un obstacle, et que chaque trésor est atteignable.
+// Vérifie que rien n'est posé dans l'eau ou dans un obstacle, et que tout (objets, indices, trésors, panneaux,
+// Alice) est atteignable à pied depuis la niche de Tecky.
 const vm = require('vm'), fs = require('fs');
 const html = fs.readFileSync(process.argv[2], 'utf8');
 const code = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'));
@@ -19,8 +20,26 @@ setTimeout(() => {
     const tile = (x, y) => '(' + (x / 64).toFixed(1) + ', ' + (y / 64).toFixed(1) + ')';
     // un point du sol est "praticable" si Tecky peut s'y tenir
     const standable = (x, y) => !blockedFeet(x, y, 16);
-    const reachable = (x, y, R) => { for (let a = 0; a < 16; a++) for (const d of [30, 50, 70]) if (d < R) {
-        const px = x + Math.cos(a * Math.PI / 8) * d, py = y + Math.sin(a * Math.PI / 8) * d; if (standable(px, py)) return true; } return false; };
+    // parcours en largeur depuis la niche, sur une grille de 16 px : ce que Tecky peut atteindre en marchant
+    const G = 16, GW_ = Math.floor(MAP.w * TS / G), GH_ = Math.floor(MAP.h * TS / G);
+    const seen = new Uint8Array(GW_ * GH_), ok = new Uint8Array(GW_ * GH_);
+    for (let j = 0; j < GH_; j++) for (let i = 0; i < GW_; i++) ok[j * GW_ + i] = standable(i * G + G / 2, j * G + G / 2) ? 1 : 0;
+    const q = [Math.floor(P.y / G) * GW_ + Math.floor(P.x / G)];
+    seen[q[0]] = 1;
+    while (q.length) {
+      const c = q.pop(), i = c % GW_, j = (c - i) / GW_;
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const ni = i + di, nj = j + dj, n = nj * GW_ + ni;
+        if (ni < 0 || nj < 0 || ni >= GW_ || nj >= GH_ || seen[n] || !ok[n]) continue;
+        seen[n] = 1; q.push(n);
+      }
+    }
+    const reachable = (x, y, R) => {
+      for (let j = Math.max(0, Math.floor((y - R) / G)); j <= Math.min(GH_ - 1, Math.floor((y + R) / G)); j++)
+        for (let i = Math.max(0, Math.floor((x - R) / G)); i <= Math.min(GW_ - 1, Math.floor((x + R) / G)); i++)
+          if (seen[j * GW_ + i] && dist(i * G + G / 2, j * G + G / 2, x, y) < R - 8) return true;
+      return false;
+    };
     for (const it of items) if (waterAt(it.x, it.y + 22) || !reachable(it.x, it.y + 22, 52)) out.push('objet ' + it.n + ' ' + tile(it.x, it.y));
     for (const d of digs) if (waterAt(d.x, d.y) || !reachable(d.x, d.y + 6, 86)) out.push('trésor ' + tile(d.x, d.y));
     for (const d of dogs) if (!standable(d.x, d.y)) out.push('chien ' + d.kind + ' ' + tile(d.x, d.y));

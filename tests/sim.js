@@ -86,8 +86,8 @@ setTimeout(() => {
   ok(run('treasures') === 1, 'trésor déterré après le grattage');
   advanceDialog();
   run('dogs = saveDogs;');
-  // éloigner les chiens pour la fin
-  run('P.x = alice.x - 100; P.y = alice.y + 10; P.mode = "free"; P.inv = 9;');
+  // fin : les trois indices font sortir Alice de sa cachette (voir clues.js)
+  run('clues = [true, true, true]; revealAlice(); P.x = alice.x - 100; P.y = alice.y + 10; P.mode = "free"; P.inv = 9;');
   step(2);
   ok(run('state') === 'dialog' && run('alice.found'), 'retrouvailles avec Alice');
   ok(run('Music.on') && run('Music.cur') === 'win', 'la fanfare de victoire démarre');

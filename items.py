@@ -73,13 +73,61 @@ def ball(d, spin=0.0):
     d.add(ellipse(13.2, 13.6, 2, 1.2, "rotate(-35 13.2 13.6)"), "#EDF7A6", sil=False, opacity=0.8)
 
 
+# --- indices semés par Alice (couleurs de sa tenue : rose de la jupe, jaune du t-shirt)
+def hairclip(d):
+    """Barrette : nœud rose sur une pince."""
+    tr = "rotate(-12 16 18)"
+    d.add(rect(6.5, 19.2, 19, 2.6, 1.3, tr), "#C9CED6")
+    d.add(path("M16,18 Q9.5,8.5 5.6,12.6 Q3.6,18 5.6,23.4 Q9.5,27.5 16,18 Z", tr), "#F4A7C3")
+    d.add(path("M16,18 Q22.5,8.5 26.4,12.6 Q28.4,18 26.4,23.4 Q22.5,27.5 16,18 Z", tr), "#F4A7C3")
+    for s in (-1, 1):
+        d.add(path(f"M{16 + s * 3},18 Q{16 + s * 7},12.5 {16 + s * 9.2},14.6 Q{16 + s * 10},18 {16 + s * 9.2},21.4 "
+                   f"Q{16 + s * 7},23.5 {16 + s * 3},18 Z", tr), "#F9C6D9", sil=False)
+    d.add(circle(16, 18, 3, tr), "#DE85A8")
+    d.add(circle(15.2, 17.2, 0.9, tr), "#FBE36A", sil=False)
+
+
+def shoe(d):
+    """Petite chaussure rose à bride (Alice finit pieds nus…)."""
+    d.add(path("M6,24 Q5,16.5 10.5,15.8 L14.5,15.8 Q16.5,19.5 21,18.8 Q27.5,18 28,22.4 Q28.2,25 26,25 L8,25 Q6,25 6,24 Z"),
+          "#F4A7C3")
+    d.add(rect(5.4, 24.2, 23.4, 2.6, 1.3), "#DE85A8")
+    d.add(ellipse(12.4, 17.2, 3.4, 1.4), "#B8505A", sil=False)
+    d.raw(line("M10.6,18.4 Q15.6,13.4 20,18.2", "#C9658E", 1.8))
+    d.add(circle(20, 18.2, 1.2), "#FBE36A", sil=False, edge=True)
+    d.add(ellipse(23.5, 20.4, 2.2, 0.9, "rotate(-15 23.5 20.4)"), "#F9C6D9", sil=False)
+
+
+def plush(d):
+    """Doudou lapin."""
+    fur, ink = "#F3E7CF", "#E28CA6"
+    for s in (-1, 1):
+        d.add(ellipse(16 + s * 4, 7.6, 2.6, 6.4, f"rotate({s * 12} {16 + s * 4} 12)"), fur)
+        d.add(ellipse(16 + s * 4, 8.2, 1.2, 4.4, f"rotate({s * 12} {16 + s * 4} 12)"), "#F4A7C3", sil=False)
+    d.add(ellipse(16, 23.4, 7.4, 6.4), fur)
+    for s in (-1, 1):
+        d.add(ellipse(16 + s * 6.4, 22, 2, 3.3, f"rotate({-s * 20} {16 + s * 6.4} 22)"), fur)
+        d.add(ellipse(16 + s * 4.6, 28.4, 2.9, 1.8), fur)
+    d.add(circle(16, 15.4, 6), fur)
+    d.add(ellipse(16, 24.6, 4, 3.6), "#FFF7E6", sil=False)
+    d.add(path("M12.4,20.4 L16,21.8 L19.6,20.4 L19.6,23 L16,21.8 L12.4,23 Z"), "#F4A7C3", sil=False, edge=True)
+    for s in (-1, 1):
+        d.add(circle(16 + s * 2.5, 14.6, 0.95), OUTLINE, sil=False)
+        d.add(circle(16 + s * 4, 17, 1.1), "#F4A1A1", sil=False, opacity=0.7)
+    d.add(ellipse(16, 16.8, 1.1, 0.75), ink, sil=False)
+
+
 ITEMS = {   # nom : (fonction de dessin, rôle)
     "bone": (bone, "soin +1"),
     "sausage": (sausage, "soin +3"),
     "medal": (medal, "score +100"),
     "squeaky": (duck, "score +50"),
     "ball": (ball, "score +20"),
+    "hairclip": (hairclip, "indice : barrette d'Alice"),
+    "shoe": (shoe, "indice : chaussure d'Alice"),
+    "plush": (plush, "indice : doudou d'Alice"),
 }
+CLUES = ("hairclip", "shoe", "plush")   # dans l'ordre du jeu
 
 
 def item_frames(name, n=6):

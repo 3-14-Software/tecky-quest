@@ -57,6 +57,7 @@ function drawSpr(key, i, x, y, opt) {
   if (o.angle) ctx.rotate(o.angle);
   if (o.flip) ctx.scale(-1, 1);
   if (o.sc) ctx.scale(o.sc, o.sc);
+  if (o.sy) ctx.scale(1, o.sy);       // écrasement vertical autour des pieds (berger accroupi)
   ctx.drawImage(atlas, f[0], f[1], f[2], f[3], f[4] - s.o[0], f[5] - s.o[1], f[2], f[3]);
   ctx.restore();
 }
@@ -378,16 +379,34 @@ cv.addEventListener('pointerup', endStick);
 cv.addEventListener('pointercancel', endStick);
 
 /* ------------------------------------------------------------------ sol (pré-rendu) */
-let groundCv = null;
+/* Le sol est pré-rendu en blocs de CHUNK tuiles (1024 px) : une seule image de toute la carte dépasserait
+   la taille de canevas permise sur certains téléphones. Chaque bloc déborde de CM px sur ses voisins
+   (mêmes pixels) pour qu'aucune jointure n'apparaisse à l'échelle d'affichage. */
+const CHUNK = 16, CM = 2;
+let groundChunks = [];
 function buildGround() {
-  groundCv = document.createElement('canvas');
-  groundCv.width = MAP.w * TS; groundCv.height = MAP.h * TS;
-  const g = groundCv.getContext('2d');
-  const blit = (idx, tx, ty) => g.drawImage(tilesImg, (idx % 16) * TS, Math.floor(idx / 16) * TS, TS, TS, tx * TS, ty * TS, TS, TS);
-  for (let i = 0; i < MAP.ground.length; i++) {
-    const tx = i % MAP.w, ty = Math.floor(i / MAP.w);
-    blit(MAP.ground[i], tx, ty);
-    if (MAP.over[i]) blit(MAP.over[i], tx, ty);
+  groundChunks = [];
+  for (let cy = 0; cy < MAP.h; cy += CHUNK) for (let cx = 0; cx < MAP.w; cx += CHUNK) {
+    const w = Math.min(CHUNK, MAP.w - cx), h = Math.min(CHUNK, MAP.h - cy);
+    const c = document.createElement('canvas');
+    c.width = w * TS + 2 * CM; c.height = h * TS + 2 * CM;
+    const g = c.getContext('2d');
+    const blit = (idx, tx, ty) => g.drawImage(tilesImg, (idx % 16) * TS, Math.floor(idx / 16) * TS, TS, TS,
+      (tx - cx) * TS + CM, (ty - cy) * TS + CM, TS, TS);
+    for (let ty = Math.max(0, cy - 1); ty < Math.min(MAP.h, cy + h + 1); ty++)
+      for (let tx = Math.max(0, cx - 1); tx < Math.min(MAP.w, cx + w + 1); tx++) {
+        const i = ty * MAP.w + tx;
+        blit(MAP.ground[i], tx, ty);
+        if (MAP.over[i]) blit(MAP.over[i], tx, ty);
+      }
+    groundChunks.push({ c, x: cx * TS - CM, y: cy * TS - CM, w: c.width, h: c.height });
+  }
+}
+function drawGround(vx, vy) {
+  for (const k of groundChunks) {
+    const x0 = Math.max(k.x, vx), y0 = Math.max(k.y, vy);
+    const x1 = Math.min(k.x + k.w, vx + VW), y1 = Math.min(k.y + k.h, vy + VH);
+    if (x1 > x0 && y1 > y0) ctx.drawImage(k.c, x0 - k.x, y0 - k.y, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
   }
 }
 function drawHole(x, y) {
@@ -405,7 +424,16 @@ const FOOT = {
   warehouse: [-116, -104, 116, -4], container: [-92, -54, 92, 0], pallet: [-26, -16, 26, 0],
   barrel_blue: [-18, -16, 18, 0], barrel_red: [-18, -16, 18, 0], crate: [-24, -22, 24, 0],
   fence_metal_h: [0, -12, 64, 0], fence_metal_v: [-6, -64, 6, 0],
+  // ferme et rivière (roseaux, barque et pont : pas de collision)
+  barn: [-96, -84, 96, -2], chicken_coop: [-36, -14, 36, 0], hen: [-14, -10, 14, 0], hen_white: [-14, -10, 14, 0],
+  tractor: [-52, -20, 52, 0], scarecrow: [-7, -8, 7, 0],
+  // forêt et parc (champignons, fougère et bac à sable : pas de collision)
+  fir: [-18, -16, 18, 0], stump: [-20, -16, 20, 0], log: [-54, -22, 56, 0], slide: [-56, -14, 58, 0],
+  swing: [-58, -12, 58, 0], fountain: [-52, -40, 52, 0], playhouse: [-44, -50, 44, -2],
 };
+const FLAT = new Set(['bridge', 'sandbox']);   // posés à plat : dessinés sous les personnages
+// pont : garde-corps de chaque côté (son tablier n'est pas de l'eau, voir BRIDGES dans pack_web.py)
+const RAILS = { bridge: [[-80, -320, -62, 0], [62, -320, 80, 0]] };
 let solids = [];
 function waterAt(x, y) {
   const fx = x / TS, fy = y / TS;
@@ -448,6 +476,12 @@ function moveActor(a, dx, dy, hw, noSlide) {
 
 /* Déplacement d'un chien avec contournement : s'il est bloqué, il longe l'obstacle
    par le côté le plus dégagé et garde ce côté le temps de passer (pas d'aller-retour). */
+// ligne droite praticable entre deux points (pour la charge du berger)
+function clearPath(x0, y0, x1, y1) {
+  const n = Math.ceil(dist(x0, y0, x1, y1) / 24);
+  for (let i = 1; i < n; i++) if (blockedFeet(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, 14)) return false;
+  return true;
+}
 function steer(d, vx, vy, s, dt) {
   const ox = d.x, oy = d.y;
   if (d.detT > 0) {
@@ -514,7 +548,8 @@ class Actor {
   }
   done() { return this.t * (this.fps || FPS)[this.anim] >= this.frames(); }
   draw(alpha) {
-    drawSpr(this.key(), this.frame(), this.x, this.y, { flip: this.dir === 'left', alpha: alpha === undefined ? this.alpha : alpha });
+    drawSpr(this.key(), this.frame(), this.x + (this.shake || 0), this.y, { flip: this.dir === 'left',
+      alpha: alpha === undefined ? this.alpha : alpha, sy: this.mode === 'crouch' ? 0.84 : undefined });
   }
 }
 
@@ -524,25 +559,54 @@ const DOGS = {
   bouledogue: { hp: 4, spd: 100, aggro: 290, range: 84, dmg: 2, cd: 1.5, windup: 0.3, score: 60, pitch: 0.8 },
   molosse:    { hp: 7, spd: 150, aggro: 400, range: 90, dmg: 2, cd: 1.2, windup: 0.25, score: 150, pitch: 0.65, barks: true,
                 barkImmune: true },   // le doberman ne craint pas les aboiements : il faut le mordre
+  // chien de berger : s'accroupit (« ! ») puis charge en ligne droite ; on peut l'esquiver, il souffle ensuite
+  berger:     { hp: 3, spd: 175, aggro: 360, range: 78, dmg: 1, cd: 1.0, windup: 0.22, score: 80, pitch: 1.1, charge: true },
 };
+const CHARGE = { min: 130, max: 300, crouch: 0.5, speed: 560, time: 0.55, tired: 1.1, cd: 3.2 };
 /* Vie : 2 PV par os. Tecky démarre avec 3 os ; chaque saucisse ajoute un os
    (déjà plein) jusqu'à MAX_BONES ; un os ramassé rend un os perdu, sans dépasser le maximum. */
 const START_BONES = 3, MAX_BONES = 8;
 const ITEM = {
   bone: { heal: 2 }, sausage: { grow: true },
   medal: { pts: 100 }, squeaky: { pts: 50 }, ball: { pts: 20 },
+  hairclip: { clue: 0 }, shoe: { clue: 1 }, plush: { clue: 2 },
 };
+/* Indices : Alice joue à cache-cache et a semé trois affaires. Chacune oriente vers la suivante (la flèche
+   au bord de l'écran aussi) ; Alice ne sort de sa cachette, la cabane du parc, qu'une fois les trois trouvées. */
+const CLUES = ['hairclip', 'shoe', 'plush'];
+const CLUE_FOUND = [
+  "La barrette d'Alice ! Elle est passée par la ferme.",
+  "Une chaussure d'Alice ! Elle a traversé la rivière par le pont.",
+  "Le doudou d'Alice ! Elle ne doit plus être bien loin.",
+];
+const CLUE_NEXT = [                  // où chercher ensuite : le prochain indice, puis Alice
+  "Je vais chercher du côté de la ferme, tout à l'est, en suivant la grande route.",
+  "Ses traces partent vers le pont, au sud de la ferme… Elle est allée dans la forêt !",
+  "Elle a continué à travers la forêt, vers l'ouest. Ça sent le parc, par là !",
+  "Et maintenant, je sens son odeur ! Elle se cache au parc, du côté de la cabane.",
+];
+let clues = [false, false, false];
+function nextClue() { const i = clues.indexOf(false); return i < 0 ? 3 : i; }
+/* La flèche n'est pas permanente : elle s'affiche quelques secondes quand Tecky apprend où chercher (intro, indice),
+   et revient brièvement s'il tourne en rond trop longtemps sans trouver la suite. */
+const ARROW = { show: 8, nudgeAfter: 45, nudge: 5 };
+let arrowT = 0, stuckT = 0;
+function showArrow(t) { arrowT = Math.max(arrowT, t || ARROW.show); stuckT = 0; }
+function arrowTarget() {
+  const k = nextClue();
+  if (k === 3) return alice;
+  return items.find(it => it.n === CLUES[k]) || alice;
+}
 
 let state = 'loading';          // loading | title | play | dialog | pause | over | win
 let P, alice, dogs, items, fxs, pops, rings, digs, decor, camX = 0, camY = 0, shake = 0;
-let score = 0, timePlayed = 0, fled = 0, treasures = 0, dialog = null, dialogReturn = 'play';
+let score = 0, timePlayed = 0, fled = 0, treasures = 0, dialog = null, dialogReturn = 'play', aliceSniffed = false;
 let hintText = null, digHint = null, overT = 0, titleT = 0;
 
 function reset() {
   solids = [];
   decor = MAP.decor.map(([n, x, y]) => {
-    const f = FOOT[n];
-    if (f) solids.push([x + f[0], y + f[1], x + f[2], y + f[3]]);
+    for (const f of [FOOT[n], ...(RAILS[n] || [])]) if (f) solids.push([x + f[0], y + f[1], x + f[2], y + f[3]]);
     return { key: 'decor/' + n, x, y, n };
   });
   P = new Actor('tecky', MAP.start[0], MAP.start[1]);
@@ -551,11 +615,11 @@ function reset() {
   alice = new Actor('alice', MAP.alice[0], MAP.alice[1]);
   alice.fps = Object.assign({}, FPS, { walk: 10 });
   alice.found = false;
-  solids.push([alice.x - 16, alice.y - 12, alice.x + 16, alice.y]);
+  alice.hidden = true;               // dans la cabane jusqu'aux trois indices
   dogs = MAP.enemies.map(([n, x, y]) => {
     const d = new Actor(n, x, y);
     Object.assign(d, { T: DOGS[n], hp: DOGS[n].hp, mode: 'idle', timer: Math.random() * 2, hx: x, hy: y,
-      vx: 0, vy: 0, kx: 0, ky: 0, cd: 0, barkCd: 2, hitDone: false, fade: 0 });
+      vx: 0, vy: 0, kx: 0, ky: 0, cd: 0, barkCd: 2, chargeCd: 1.5, hitDone: false, fade: 0 });
     d.t = Math.random();
     return d;
   });
@@ -563,6 +627,7 @@ function reset() {
   digs = MAP.dig.map(([x, y]) => ({ x, y, dug: false, t: Math.random() * 2 }));
   fxs = []; pops = []; rings = [];
   score = 0; timePlayed = 0; fled = 0; treasures = 0; shake = 0; barkImmuneSeen = false; pendingSay = null;
+  clues = [false, false, false]; aliceSniffed = false; arrowT = 0; stuckT = 0;
   camX = clamp(P.x - VW / 2, 0, MAP.w * TS - VW);
   camY = clamp(P.y - VH / 2, 0, MAP.h * TS - VH);
 }
@@ -595,8 +660,9 @@ function updateDialog(dt) {
 }
 function introLines() {
   return [
-    { who: 'tecky', face: 0, text: "Ouaf ! Alice est partie jouer au village… et elle n'est pas rentrée !" },
-    { who: 'tecky', face: 2, text: "Je vais la retrouver. Gare aux chiens du quartier, ils ne sont pas commodes." },
+    { who: 'tecky', face: 0, text: "Ouaf ! Alice est partie jouer… et elle n'est pas rentrée !" },
+    { who: 'tecky', face: 2, text: "Elle a dû semer des affaires en chemin. En les retrouvant, je saurai où elle se cache !" },
+    { who: 'tecky', face: 0, text: "La flèche au bord de l'écran me guide. Gare aux chiens du coin, ils ne sont pas commodes." },
     { who: 'info', text: touchMode
         ? "Glisse le doigt à gauche pour marcher. Boutons à droite pour aboyer et mordre. Près d'un panneau, le bouton de morsure devient « lire »."
         : "Flèches ou ZQSD pour marcher, X pour aboyer, C pour mordre ou lire un panneau. P pour la pause, M pour le son, F pour le plein écran." },
@@ -710,9 +776,9 @@ function doBite() {
 /* ------------------------------------------------------------------ gratter, lire */
 // menace immédiate : un chien lancé contre Tecky et tout proche. Mordre passe alors avant gratter ou lire.
 const THREAT_R = 240;
+const ENGAGED = new Set(['chase', 'attack', 'bark', 'hurt', 'crouch', 'charge', 'tired']);
 function threatened() {
-  return dogs.some(d => (d.mode === 'chase' || d.mode === 'attack' || d.mode === 'bark' || d.mode === 'hurt')
-    && dist(P.x, P.y, d.x, d.y) < THREAT_R);
+  return dogs.some(d => ENGAGED.has(d.mode) && dist(P.x, P.y, d.x, d.y) < THREAT_R);
 }
 function nearDig() {
   for (const g of digs) if (!g.dug && dist(P.x, P.y, g.x, g.y + 6) < 86) return g;
@@ -846,7 +912,13 @@ function updatePlayer(dt) {
   if (act === 'read') hintText = { x: sign[0], y: sign[1] - 110 };
   if (act === 'dig') digHint = nearDig();
   // Alice
-  if (!alice.found && dist(P.x, P.y, alice.x, alice.y) < 120) finale();
+  if (!alice.found && !alice.hidden && dist(P.x, P.y, alice.x, alice.y) < 120) finale();
+  // devant la cachette trop tôt : Tecky la sent mais il lui manque des indices
+  if (alice.hidden && !aliceSniffed && dist(P.x, P.y, alice.x, alice.y) < 170) {
+    aliceSniffed = true;
+    say([{ who: 'tecky', face: 0, text: "Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !" }],
+      () => showArrow());
+  }
 }
 
 function updateDog(d, dt) {
@@ -859,10 +931,31 @@ function updateDog(d, dt) {
   }
   d.cd = Math.max(0, d.cd - dt);
   d.barkCd = Math.max(0, d.barkCd - dt);
+  d.chargeCd = Math.max(0, d.chargeCd - dt);
   const dx = P.x - d.x, dy = P.y - d.y, l = Math.hypot(dx, dy);
   const alive = P.mode !== 'ko';
 
   switch (d.mode) {
+    case 'crouch':                     // berger : il se ramasse et tremble avant de charger
+      d.timer -= dt;
+      d.shake = Math.sin(d.t * 70) * 2;
+      if (d.timer <= 0) { d.shake = 0; d.mode = 'charge'; d.timer = CHARGE.time; d.hitDone = false; d.setAnim('walk');
+        addFx('fx/dirt', d.x - d.cx * 20, d.y, { fps: 16 }); }
+      return;
+    case 'charge': {
+      d.timer -= dt;
+      const ox = d.x, oy = d.y, st = CHARGE.speed * dt;
+      moveActor(d, d.cx * st, d.cy * st, 14, true);
+      if (!d.hitDone && dist(d.x, d.y, P.x, P.y) < 52) { d.hitDone = true; hurtPlayer(T.dmg, d.x, d.y); }
+      if (d.timer <= 0 || Math.hypot(d.x - ox, d.y - oy) < st * 0.3) {   // fin de course ou obstacle
+        d.mode = 'tired'; d.timer = CHARGE.tired; d.chargeCd = CHARGE.cd; d.setAnim('idle');
+      }
+      return;
+    }
+    case 'tired':                      // essoufflé après la charge : le moment de le mordre
+      d.timer -= dt;
+      if (d.timer <= 0) d.mode = 'chase';
+      return;
     case 'ko':
       d.timer += dt;
       if (d.timer > 1.6) d.fade += dt * 1.6;
@@ -905,6 +998,11 @@ function updateDog(d, dt) {
     else if (l < T.range && d.cd <= 0) {
       d.dir = dirFrom(dx, dy, d.dir);
       d.mode = 'attack'; d.setAnim('bite'); d.hitDone = false;
+      return;
+    } else if (T.charge && d.chargeCd <= 0 && l > CHARGE.min && l < CHARGE.max && clearPath(d.x, d.y, P.x, P.y)) {
+      d.dir = dirFrom(dx, dy, d.dir);
+      d.mode = 'crouch'; d.timer = CHARGE.crouch; d.cx = dx / l; d.cy = dy / l; d.setAnim('idle');
+      addWordPop('!', d.x, d.y - 120);
       return;
     } else if (T.barks && l > 150 && l < 300 && d.barkCd <= 0) {
       d.dir = dirFrom(dx, dy, d.dir);
@@ -980,6 +1078,13 @@ function updateItems(dt) {
         } else SFX.heal();
         P.hp = Math.min(P.hpMax, P.hp + 2);
         addFx('fx/heal', P.x, P.y - 60, { fps: 10 });
+      } else if (e.clue !== undefined) {
+        clues[e.clue] = true;
+        addFx('fx/pickup', it.x, it.y, { fps: 14 });
+        SFX.treasure();
+        const k = nextClue();
+        if (k === 3) revealAlice();
+        say([{ who: 'tecky', face: 2, text: CLUE_FOUND[e.clue] }, { who: 'tecky', face: 0, text: CLUE_NEXT[k] }], () => showArrow());
       } else if (e.heal) {
         if (P.hp >= P.hpMax) continue;   // vie pleine : on laisse l'os pour plus tard
         P.hp = Math.min(P.hpMax, P.hp + e.heal);
@@ -1010,6 +1115,11 @@ function updateFx(dt) {
   for (const g of digs) g.t += dt;
 }
 
+function revealAlice() {
+  alice.hidden = false;
+  if (dist(P.x, P.y, alice.x, alice.y) > 40) solids.push([alice.x - 16, alice.y - 12, alice.x + 16, alice.y]);
+}
+
 function finale() {
   alice.found = true;
   P.mode = 'free'; P.setAnim('idle');
@@ -1019,8 +1129,9 @@ function finale() {
   Music.stop();
   Music.start('win');
   say([
-    { who: 'alice', face: 2, text: "Tecky ! Tu m'as retrouvée ! Je t'attendais sur la place." },
+    { who: 'alice', face: 2, text: "Tecky ! Tu m'as trouvée ! Tu as vu ma super cachette dans la cabane ?" },
     { who: 'tecky', face: 2, text: "Ouaf ! Ouaf ouaf !" },
+    { who: 'alice', face: 0, text: "Et tu as ramassé ma barrette, ma chaussure et mon doudou ! Merci mon Tecky." },
     { who: 'alice', face: 0, text: "Viens, on rentre à la maison. Tu as bien mérité une grosse saucisse !" },
   ], () => { state = 'win'; overT = 0; });
 }
@@ -1041,7 +1152,7 @@ function update(dt) {
       alice.t += dt; P.t += dt;
       if (pressed.ok || pressed.bark || pressed.bite || pressed.act) {
         state = 'play';
-        say(introLines());
+        say(introLines(), () => showArrow());
       }
       break;
     case 'dialog':
@@ -1058,12 +1169,14 @@ function update(dt) {
       if (pressed.pause) { state = 'pause'; Music.refresh(); break; }
       timePlayed += dt;
       if (pendingSay && (pendingSay.t -= dt) <= 0) { const l = pendingSay.lines; pendingSay = null; say(l); break; }
+      arrowT = Math.max(0, arrowT - dt);
+      if (!alice.found && (stuckT += dt) > ARROW.nudgeAfter) showArrow(ARROW.nudge);
       updatePlayer(dt);
       for (const d of dogs) updateDog(d, dt);
       separateDogs();
       dogs = dogs.filter(d => d.fade < 1);
       alice.t += dt;
-      if (!alice.found) {
+      if (!alice.found && !alice.hidden) {
         alice.dir = dist(P.x, P.y, alice.x, alice.y) < 500 ? dirFrom(P.x - alice.x, P.y - alice.y, 'down') : 'down';
       }
       updateItems(dt);
@@ -1079,7 +1192,8 @@ function update(dt) {
         reset();
         state = 'play';
         Music.start();
-        say([{ who: 'tecky', face: 0, text: "C'est reparti ! Alice m'attend au village." }]);
+        say([{ who: 'tecky', face: 0, text: "C'est reparti ! Je vais retrouver les affaires d'Alice, et Alice avec." }],
+          () => showArrow());
       }
       break;
   }
@@ -1093,18 +1207,19 @@ function drawWorld() {
   const cx = clamp(Math.round((camX + sx) * scale) / scale, 0, MAP.w * TS - VW);
   const cy = clamp(Math.round((camY + sy) * scale) / scale, 0, MAP.h * TS - VH);
   ctx.setTransform(scale, 0, 0, scale, offX - cx * scale, offY - cy * scale);
-  ctx.drawImage(groundCv, cx, cy, VW, VH, cx, cy, VW, VH);
+  drawGround(cx, cy);
 
+  const vis = (x, y, m) => x > cx - m && x < cx + VW + m && y > cy - m && y < cy + VH + m + 140;
   // trous et scintillements des trésors
   for (const g of digs) {
     if (g.dug) drawHole(g.x, g.y);
     else if (g.t % 2.4 < 0.7) drawSpr('fx/pickup', Math.floor((g.t % 2.4) * 7), g.x, g.y - 24, { sc: 0.55, alpha: 0.9 });
   }
+  for (const d of decor) if (FLAT.has(d.n) && vis(d.x, d.y, 400)) drawSpr(d.key, 0, d.x, d.y);   // pont, bac à sable
   drawRings();   // ondes d'aboiement, au sol sous les personnages
 
-  const vis = (x, y, m) => x > cx - m && x < cx + VW + m && y > cy - m && y < cy + VH + m + 140;
   const list = [];
-  for (const d of decor) if (vis(d.x, d.y, 280)) list.push({ y: d.y, draw: () => drawSpr(d.key, 0, d.x, d.y) });
+  for (const d of decor) if (!FLAT.has(d.n) && vis(d.x, d.y, 280)) list.push({ y: d.y, draw: () => drawSpr(d.key, 0, d.x, d.y) });
   for (const it of items) if (vis(it.x, it.y, 80)) {
     const i = Math.floor(it.t * 8);
     let dy = 0;
@@ -1112,7 +1227,7 @@ function drawWorld() {
     list.push({ y: it.y + 24, draw: () => drawSpr('item/' + it.n, i, it.x, it.y + dy) });
   }
   for (const d of dogs) if (vis(d.x, d.y, 120)) list.push({ y: d.y, draw: () => d.draw(Math.max(0, 1 - d.fade)) });
-  if (vis(alice.x, alice.y, 120)) list.push({ y: alice.y, draw: () => alice.draw() });
+  if (!alice.hidden && vis(alice.x, alice.y, 120)) list.push({ y: alice.y, draw: () => alice.draw() });
   const blink = P.inv > 0 && P.mode !== 'ko' && Math.floor(P.inv * 12) % 2 === 0;
   list.push({ y: P.y, draw: () => P.draw(blink ? 0.35 : 1) });
   list.sort((a, b) => a.y - b.y);
@@ -1231,13 +1346,20 @@ function drawHUD() {
   ctx.restore();
   drawDigits(treasures + '/' + MAP.dig.length, GW - 24 - 210 + 82, 146, 0.8);
 
-  // flèche vers Alice
-  if (!alice.found && state === 'play') {
-    const ax = (alice.x - camX) * GW / VW, ay = (alice.y - 50 - camY) * GH / VH;
+  // indices d'Alice : trois cases sous la vie, l'objet apparaît quand il est retrouvé
+  drawNine('hud/panel_dark', 24, 166, 24 + CLUES.length * 76, 88, 32);
+  CLUES.forEach((n, i) => drawSpr('item/' + n, 0, 24 + 12 + 38 + i * 76, 166 + 44 + 4, { alpha: clues[i] ? 1 : 0.22 }));
+
+  // flèche (quelques secondes) vers le prochain indice, puis vers Alice ; seule la pointe tourne, l'icône reste droite
+  if (!alice.found && state === 'play' && arrowT > 0) {
+    const tg = arrowTarget();
+    const ax = (tg.x - camX) * GW / VW, ay = (tg.y - 50 - camY) * GH / VH;
     if (ax < 0 || ax > GW || ay < 0 || ay > GH) {
-      const ang = Math.atan2(ay - GH / 2, ax - GW / 2);
-      const px = clamp(ax, 80, GW - 80), py = clamp(ay, 230, GH - 80);
-      drawSpr('hud/alice_arrow', Math.floor(performance.now() / 150), px, py, { angle: ang });
+      const ang = Math.atan2(ay - GH / 2, ax - GW / 2), a = Math.min(1, arrowT);
+      const px = clamp(ax, 80, GW - 80), py = clamp(ay, 300, GH - 80);
+      drawSpr('hud/arrow', Math.floor(performance.now() / 150), px, py, { angle: ang, alpha: a });
+      // centre de la pastille : 6 px derrière le centre de rotation ; icône 0..2 = indices, 3 = Alice
+      drawSpr('hud/arrow_icon', tg === alice ? 3 : nextClue(), px - Math.cos(ang) * 6, py - Math.sin(ang) * 6, { alpha: a });
     }
   }
 
@@ -1402,9 +1524,9 @@ function start() {
   Promise.all([whenLoaded(atlas), whenLoaded(tilesImg), fontReady]).then(() => {
     buildGround();
     reset();
-    // caméra de l'écran titre : le village
-    camX = clamp(MAP.alice[0] - VW / 2, 0, MAP.w * TS - VW);
-    camY = clamp(MAP.alice[1] - VH / 2, 0, MAP.h * TS - VH);
+    // caméra de l'écran titre : la place du village
+    camX = clamp(MAP.title[0] - VW / 2, 0, MAP.w * TS - VW);
+    camY = clamp(MAP.title[1] - VH / 2, 0, MAP.h * TS - VH);
     state = 'title';
   });
   requestAnimationFrame(frame);

@@ -31,10 +31,17 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   tuile 0 vide, 16 colonnes, `PAIRS`, `PRIORITY`, `resolve()`.
 - `music.py` : **source unique** de la musique (thème « Promenade de Tecky », 32 mesures, boucle ; fanfare de victoire de 3 mesures).
   Génère les WAV GameMaker et les données `SONG`/`WINSONG` jouées par le séquenceur WebAudio du jeu.
-- `pack_web.py` : atlas (frames rognées), niveau (`MW=40`, `MH=24` tuiles, positions des décors/objets/chiens/trésors `DIG`),
+- `pack_web.py` : atlas (frames rognées), niveau (`MW=80`, `MH=48` tuiles, positions des décors/objets/chiens/trésors `DIG`),
   `index.html` à partir de `web_src/index.template.html` + `game.js`, paquet autonome (manifest, service worker, icônes, `serve.sh`).
-  Lance `web_src/check_placement.js` : rien dans l'eau ou un obstacle, trésors atteignables.
+  Lance `web_src/check_placement.js` : rien dans l'eau ou un obstacle, et tout atteignable **à pied depuis la niche**
+  (parcours en largeur sur une grille de 16 px ; c'est lui qui garantit que le pont et les sentiers suffisent).
+- Carte : le quart nord-ouest (40 x 24) est la carte d'origine (mêmes coordonnées, les tests s'y appuient). Ferme au
+  nord-est, rivière d'un bord à l'autre (y 26..29) avec **un seul pont** (`BRIDGES`, x 63..65 : coins rendus non-eau ;
+  garde-corps = `RAILS` dans game.js), forêt au sud-est (sous-bois, sapins générés par `forest_firs()` hors des sentiers),
+  parc au sud-ouest (cabane d'Alice). Terrains ajoutés : `field` (champ), `forest` (sous-bois).
 - `web_src/game.js` : tout le moteur. Monde en pixels x2 (tuile = 64), caméra 960x540, interface 1920x1080 (`GW`/`GH`).
+  Sol pré-rendu en blocs de 16 tuiles (`groundChunks`, 1024 px) : une seule image de la carte dépasserait la taille
+  de canevas permise sur certains téléphones. Décors `FLAT` (pont, bac à sable) dessinés sous les personnages.
 
 ## Règles de jeu (à ne pas casser)
 
@@ -42,14 +49,21 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   vie pleine, il reste au sol). Une **saucisse** ajoute un os au maximum et soigne tout.
 - Actions : X aboie (repousse) ; C (`biteAction()`) **gratte** près d'un trésor enterré (traces de pattes), **lit** près
   d'un panneau (E aussi), sinon **mord** ; le bouton tactile et les bulles « Gratter » / « Lire » suivent la même règle.
-  **Mordre passe avant tout** si un chien menace Tecky (`threatened()` : chien en chasse, attaque, aboiement ou
-  sonné à moins de `THREAT_R` = 240 px) ; C interrompt alors aussi un grattage en cours. Tests : `threat.js`, `read.js`.
+  **Mordre passe avant tout** si un chien menace Tecky (`threatened()` : chien « engagé » — `ENGAGED` : chasse,
+  attaque, aboiement, sonné, accroupi, charge, essoufflé — à moins de `THREAT_R` = 240 px) ; C interrompt alors aussi un grattage en cours. Tests : `threat.js`, `read.js`.
   Le **doberman est immunisé aux aboiements** (`barkImmune`) : il faut le mordre (Tecky l'explique, bulle « Même pas peur ! »).
 - Aboiement : touche dans un cône devant soi, jusqu'à `BARK` (Tecky, 300 px) ou `DOG_BARK` (doberman, 320 px).
   Une onde au sol (`addBarkRing` / `drawRings`, crème ou rouge) montre exactement cette zone : toujours passer par ces
   constantes pour changer une portée. Test : `tests/ring.js`.
 - Son : thème à 0,35 (`Music.level()`), fanfare de fin à 0,55 ; bruitages multipliés par `SFX_VOL` (1,4).
 - Trésors (médaille 100, jouet pouic-pouic 50, balle 20) : jamais dans l'eau — `check_placement.js` le vérifie.
+- Indices (`CLUES` : barrette à la ferme, chaussure dans la forêt, doudou au parc) : chacun dit où chercher ensuite
+  (`CLUE_NEXT`), la flèche du HUD vise le prochain indice puis Alice (`arrowTarget()`). Elle n'est **pas permanente** :
+  `showArrow()` l'affiche 8 s après l'intro et chaque indice, et en rappel après 45 s sans progrès (`ARROW`). Seule la
+  pointe (`hud/arrow`) tourne ; l'icône de la cible (`hud/arrow_icon` : 3 indices + tête d'Alice) reste droite. Alice est **cachée**
+  (`alice.hidden`, ni dessinée ni solide) jusqu'aux trois ; devant la cabane trop tôt, Tecky dit qu'il manque des indices.
+- Chien de berger (`berger`, `CHARGE`) : s'accroupit (« ! », sprite écrasé), charge en ligne droite si `clearPath()`,
+  puis souffle (`tired`) ; un aboiement pendant l'accroupissement annule la charge. Tests : `clues.js`, `berger.js`, `map.js`.
 - Fin : retrouver Alice → dialogue + fanfare (`Music.start('win')`, une seule fois, le thème ne repart pas) → écran de victoire.
 
 ## Pièges connus

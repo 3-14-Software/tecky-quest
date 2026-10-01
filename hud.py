@@ -256,9 +256,9 @@ def enemy_bar(scale):
     return render_svg(bg.svg(outline_w=1.2), 30, 10, scale), render_svg(fill.svg(), 24, 4, scale)
 
 
-def alice_arrow(scale):
-    """Flèche 40x40 (pointe à droite) avec la tête d'Alice ; 4 images de pulsation."""
-    face = _crop_face(alice.front(alice.A()).svg(), 24, 16.5, 12, scale)
+def arrow(scale):
+    """Flèche 40x40 (pointe à droite) : pointe rouge et pastille blanche, 4 images de pulsation.
+    Elle tourne vers la cible ; son contenu (spr_hud_arrow_icon) se dessine à part, toujours droit."""
     out = []
     for i in range(4):
         k = 1 + 0.08 * math.sin(i / 4 * 2 * math.pi)
@@ -266,13 +266,25 @@ def alice_arrow(scale):
         tr = f"translate(20 20) scale({k:.3f}) translate(-20 -20)"
         d.add(poly([(23, 10), (35.5, 20), (23, 30)], tr), "#D7332B")
         d.add(circle(17, 20, 12, tr), "#FFFFFF")
-        im = render_svg(d.svg(), 40, 40, scale)
-        s = int(20 * k * scale)
-        f = face.resize((s, s), Image.LANCZOS)
-        m = Image.new("L", (s, s), 0)
-        ImageDraw.Draw(m).ellipse([0, 0, s - 1, s - 1], fill=255)
-        im.paste(f, (int(17 * scale - s / 2), int(20 * scale - s / 2)), Image.composite(f.getchannel("A"), Image.new("L", (s, s), 0), m))
-        out.append(im)
+        out.append(render_svg(d.svg(), 40, 40, scale))
+    return out
+
+
+def arrow_icons(scale):
+    """Contenu de la pastille (20x20, rond) : barrette, chaussure, doudou (indices dans l'ordre), puis tête d'Alice."""
+    n = 20 * scale
+    mask = Image.new("L", (n, n), 0)
+    ImageDraw.Draw(mask).ellipse([0, 0, n - 1, n - 1], fill=255)
+    out = []
+    for name in items.CLUES:
+        d = Drawing(32, 32)
+        items.ITEMS[name][0](d)
+        im = render_svg(d.svg(), 32, 32, scale).resize((int(21 * scale), int(21 * scale)), Image.LANCZOS)
+        cell = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+        cell.alpha_composite(im, ((n - im.width) // 2, (n - im.height) // 2))
+        out.append(cell)
+    face = _crop_face(alice.front(alice.A()).svg(), 24, 16.5, 12, scale).resize((n, n), Image.LANCZOS)
+    out.append(Image.composite(face, Image.new("RGBA", (n, n), (0, 0, 0, 0)), Image.composite(face.getchannel("A"), mask, mask)))
     return out
 
 
@@ -314,6 +326,7 @@ def all_sprites(scale):
         "spr_hud_cooldown": cooldown_frames(scale),
         "spr_hud_enemy_bar_bg": [bar_bg],
         "spr_hud_enemy_bar_fill": [bar_fill],
-        "spr_hud_alice_arrow": alice_arrow(scale),
+        "spr_hud_arrow": arrow(scale),
+        "spr_hud_arrow_icon": arrow_icons(scale),
         "spr_title_logo": [logo(scale)],
     }

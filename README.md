@@ -1,8 +1,11 @@
 # Tecky Quest
 
-Mini RPG en vue de dessus : **Tecky**, le teckel au harnais rouge, part à la recherche d'**Alice**.
-Il aboie pour repousser les chiens, gratte la terre pour déterrer des trésors, ramasse des os (qui rendent de la vie)
-et des saucisses (qui ajoutent un os de vie maximum), et traverse campagne, route, village et zone industrielle.
+Mini RPG en vue de dessus : **Tecky**, le teckel au harnais rouge, part à la recherche d'**Alice**, qui joue à
+cache-cache. Il suit les affaires qu'elle a semées (sa barrette, sa chaussure, son doudou) : chacune indique où chercher
+ensuite, et Alice ne sort de sa cachette qu'une fois les trois retrouvées. En chemin, Tecky aboie pour repousser les
+chiens (dont les chiens de berger, qui chargent), gratte la terre pour déterrer des trésors, ramasse des os (qui rendent
+de la vie) et des saucisses (qui ajoutent un os de vie maximum). Il traverse campagne, route, village, zone industrielle,
+ferme, rivière (un seul pont), forêt et parc.
 
 Tout est généré par du code : sprites en SVG (aplats + contour), tileset, décors, HUD, musique chiptune, niveau.
 
@@ -33,8 +36,8 @@ Jouer en local : `cd web/tecky_quest_web && ./serve.sh` (serveur sur le réseau 
 Simulation sans navigateur (Node, canvas et audio simulés) : déroulé complet de la partie, collisions, combat, grattage,
 règles de vie, immunité du doberman aux aboiements, onde montrant la portée des aboiements, bouton « Lire »,
 morsure prioritaire sur le grattage quand un chien menace, contournement des obstacles par les chiens, placement des
-objets (rien dans l'eau, trésors atteignables), séquenceur musical et fanfare. `tests/edges.py` détecte les sprites
-dont des pixels touchent le bord du cadre.
+objets (rien dans l'eau, tout atteignable à pied depuis la niche), indices d'Alice, charge du chien de berger, pont,
+séquenceur musical et fanfare. `tests/edges.py` détecte les sprites dont des pixels touchent le bord du cadre.
 
 ## Organisation
 
