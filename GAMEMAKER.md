@@ -109,6 +109,8 @@ fleurs, et s'envolent quand Tecky s'approche ou aboie.
 | `spr_fx_dirt` | 5 | 14 — mottes de terre projetées quand Tecky gratte (origine en bas au centre : (32, 56)) |
 | `spr_fx_ripple` | 8 | 3 — petit arc qui naît, s'étire et s'efface : à semer avec parcimonie sur l'eau profonde, loin des berges (le jeu web en met une par tuile d'eau, un cycle de 2,4 s sur deux, à un endroit qui change à chaque cycle) |
 | `spr_fx_glint` | 8 | 8 — mini-étoile qui scintille : en plus des vaguelettes, avec sa propre cadence (le jeu web : une par tuile, cycle de 2,8 s, 4 cycles sur 10, éclat d'environ 1 s au milieu du cycle) |
+| `spr_fx_heart` | 6 | 10 — petit cœur qui gonfle, monte et s'efface : au-dessus d'un chien qui veut jouer (mode balade) |
+| `spr_fx_leaf` | 4 | 0 — feuille qui tombe (16×16 en x1) : une image par couleur (vert, vert tendre, jaune, orange), `image_speed = 0` ; la faire tourner (`image_angle`) et basculer (`image_yscale`) en descendant |
 
 ---
 
@@ -273,7 +275,8 @@ Pensé pour l'event **Draw GUI** avec `display_set_gui_size(1920, 1080)` et les 
 | `spr_hud_next` | 4 | (0, 0) | flèche « suite » qui rebondit |
 | `spr_hud_digits` | 16 | (0, 0) | police en sprite : `0123456789+-x/:%` |
 | `spr_hud_key` | 10 | (0, 0) | touches : X, C, E, Z, ↑, ↓, ←, →, Esc, Entrée |
-| `spr_hud_action` | 8 | (0, 0) | boutons : aboyer, aboyer grisé, mordre, mordre grisé, gratter, gratter grisé, lire, lire grisé |
+| `spr_hud_pad` | 5 | (0, 0) | boutons de manette, même cadre que les touches : A, B, X, Y, Start |
+| `spr_hud_action` | 10 | (0, 0) | boutons : aboyer, aboyer grisé, mordre, mordre grisé, gratter, gratter grisé, lire, lire grisé, jouer (cœur, mode balade), jouer grisé |
 | `spr_hud_cooldown` | 8 | (0, 0) | voile de recharge à poser sur un bouton (0 = vient d'être utilisé) |
 | `spr_hud_enemy_bar_bg` / `_fill` | 1 | (28, 0) / (0, 0) | barre de vie au-dessus d'un ennemi |
 | `spr_hud_arrow` | 4 | centre (40, 40) | flèche au bord de l'écran (pointe à droite, pastille vide) : seule elle tourne |
@@ -400,6 +403,42 @@ audio_play_sound(snd_music_defaite, 10, false);
 
 La partition est dans `music.py` (mélodie, accords, batterie ; `fanfare_events()` pour la victoire, `defeat_events()` pour la défaite) : modifie-la puis relance
 `python3 music.py` pour regénérer les WAV. Le jeu web joue exactement la même partition.
+
+## Ambiance, modes et options (version web)
+
+Ces fonctions de la version web n'ont pas besoin de nouveaux assets (ou seulement ceux listés plus haut) ; voici
+comment les retrouver dans GameMaker. Les réglages exacts sont dans `web_src/game.js` (`SUN`, `DUST`, `LEAF`,
+`CLOUD`, `PLAY`, `PAD_MAP`).
+
+- **Coucher de soleil** : un cran de lumière par indice (plein jour, après-midi, fin d'après-midi, soleil couchant),
+  plus chaud encore aux retrouvailles. Une teinte multipliée sur la vue, après le monde et avant la GUI :
+  ```gml
+  gpu_set_blendmode_ext(bm_dest_colour, bm_zero);   // multiplication
+  draw_rectangle_colour(cam_x, cam_y, cam_x + 960, cam_y + 540, teinte, teinte, teinte, teinte, false);
+  gpu_set_blendmode(bm_normal);
+  ```
+  Teintes du jeu web : `#FFFFFF`, `#FFF1DC`, `#FFDEB6`, `#EEB496`, puis `#FFC8A0` aux retrouvailles. Les lampadaires
+  s'allument à partir du deuxième indice (halo additif autour de la lanterne, 93 px au-dessus de l'origine en x2).
+- **Poussière** : petits disques crème (`#F1E7D0`) semés derrière Tecky toutes les 0,12 s quand il avance, qui
+  grossissent et s'effacent en 0,45 s (un *particle system* fait très bien l'affaire).
+- **Feuilles** : chaque arbre ou sapin visible lâche de temps en temps une `spr_fx_leaf` (aiguilles vertes pour les
+  sapins) qui tombe en se balançant avec une petite ombre, se pose, puis s'efface.
+- **Ombres de nuages** : quelques grandes taches floues très transparentes (10 %) qui glissent lentement sur la carte.
+- **Mode balade** : personne ne se fait mal. Les chiens ne mordent, n'aboient ni ne chargent : ils viennent attendre
+  près de Tecky en sautillant (8 s, puis ils rentrent). Près d'un chien, le bouton de morsure devient « Jouer »
+  (`spr_hud_action` 8) : Tecky et le chien sautillent 2,2 s en semant des `spr_fx_heart`, et le chien devient un copain
+  (ses points, « Copains de jeu » à la fin) qui ne le poursuit plus mais lui fait la fête. L'aboiement ne blesse
+  personne : il appelle les chiens, qui accourent pour jouer.
+- **Sauvegarde et records** : la version web enregistre position, vie, score, temps, indices, trésors, objets au sol et
+  chiens restants (toutes les 4 s hors de danger, à chaque indice ou trésor, en quittant la page), et garde le meilleur
+  score et le meilleur temps de chaque mode. En GML : `json_stringify` d'une struct, écrite avec `file_text_write_string`.
+- **Manette** : A mord (ou gratte, ou lit) et valide, X ou B aboie, Y lit, Start met en pause, Select coupe le son :
+  ```gml
+  gamepad_set_axis_deadzone(0, 0.25);
+  var mx = gamepad_axis_value(0, gp_axislh), my = gamepad_axis_value(0, gp_axislv);
+  if (gamepad_button_check_pressed(0, gp_face1)) { /* mordre */ }
+  if (gamepad_button_check_pressed(0, gp_face3) || gamepad_button_check_pressed(0, gp_face2)) { /* aboyer */ }
+  ```
 
 ## Import dans GameMaker
 

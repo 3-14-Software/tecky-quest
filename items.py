@@ -1,7 +1,8 @@
 """
 Objets (32x32) et effets.
 Objets : bobbent en l'air avec une ombre au sol et un éclat de brillance.
-Effets : aboiement (48x48, orienté vers la droite), morsure, impact, soin, ramassage, terre, vaguelette, scintillement (32x32).
+Effets : aboiement (48x48, orienté vers la droite), morsure, impact, soin, ramassage, terre, vaguelette, scintillement,
+cœur (32x32) ; feuilles qui tombent (16x16, une image par couleur).
 """
 import math
 
@@ -297,6 +298,34 @@ def fx_glint():
     return out
 
 
+def fx_heart():
+    """Petit cœur (32x32, 6 images) qui gonfle, monte et s'efface : un chien qui veut jouer (mode balade)."""
+    out = []
+    heart = ("M16,23.5 C9,18.6 7,15.2 7,12.6 C7,9.9 9.1,8 11.6,8 C13.6,8 15.1,9.2 16,10.9 "
+             "C16.9,9.2 18.4,8 20.4,8 C22.9,8 25,9.9 25,12.6 C25,15.2 23,18.6 16,23.5 Z")
+    for s, dy, op in ((0.55, 4, 1), (0.92, 2, 1), (1.1, 0, 1), (1.0, -3, 1), (0.98, -6, 0.7), (0.95, -9, 0.35)):
+        d = Drawing(32, 32)
+        d.add(path(heart), "#F2607E")
+        d.add(ellipse(11.8, 11.6, 2.2, 1.5, "rotate(-30 11.8 11.6)"), "#FFFFFF", sil=False, opacity=0.8)
+        svg = d.svg(f"translate(16 {16 + dy}) scale({s}) translate(-16 -16)")
+        out.append(svg.replace("<g transform=", f'<g opacity="{op}" transform=', 1))
+    return out
+
+
+LEAF_COLORS = ("#6DB656", "#A7C94A", "#F2C14E", "#E58A3A")    # vert, vert tendre, jaune, orange
+
+
+def fx_leaf():
+    """Feuille qui tombe d'un arbre (16x16) : une image par couleur. Le jeu la fait tourner et basculer en tombant."""
+    out = []
+    for c in LEAF_COLORS:
+        d = Drawing(16, 16)
+        d.add(path("M3,11.5 C3.5,6 8,3 13,3.2 C13,8.6 9.4,12.6 3,11.5 Z"), c)
+        d.raw(line("M4,10.6 Q8,8 12,4.2", OUTLINE, 0.7))
+        out.append(d.svg())
+    return out
+
+
 EFFECTS = {   # nom : (fonction, taille, fps)
     "bark": (fx_bark, 48, 12),
     "bite": (fx_bite, 32, 14),
@@ -306,4 +335,6 @@ EFFECTS = {   # nom : (fonction, taille, fps)
     "dirt": (fx_dirt, 32, 14),
     "ripple": (fx_ripple, 32, 3),
     "glint": (fx_glint, 32, 7),
+    "heart": (fx_heart, 32, 10),
+    "leaf": (fx_leaf, 16, 0),        # pas une animation : image = couleur
 }

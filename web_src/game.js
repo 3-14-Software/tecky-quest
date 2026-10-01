@@ -158,6 +158,7 @@ const SFX = {
   blip() { tone(1200, 0.02, 'square', 0.02); },
   honk(p) { const k = p || 1; tone(415 * k, 0.13, 'square', 0.06); tone(330 * k, 0.13, 'square', 0.05);
     tone(415 * k, 0.2, 'square', 0.06, 0, 0.18); tone(330 * k, 0.2, 'square', 0.05, 0, 0.18); },
+  yip(p) { const k = p || 1; tone(820 * k, 0.07, 'square', 0.045, 420 * k); tone(980 * k, 0.09, 'square', 0.045, 380 * k, 0.11); },
   cluck() { tone(950, 0.05, 'square', 0.05, 250); tone(1150, 0.05, 'square', 0.05, 200, 0.08); tone(1400, 0.12, 'square', 0.05, -600, 0.17); },
   win() { [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, 0.18, 'triangle', 0.09, 0, i * 0.14)); },
 };
@@ -317,9 +318,9 @@ function actionOfKey(e) {
 }
 addEventListener('keydown', e => {
   audioOn();
-  touchMode = false;
+  touchMode = false; pad.on = false;
   const m = MOVE_CODES[e.code];
-  if (m) { held[m] = true; e.preventDefault(); }
+  if (m) { held[m] = true; if (!e.repeat) pressed[m] = true; e.preventDefault(); }
   const a = actionOfKey(e);
   if (a === 'fullscreen') { if (!e.repeat) toggleFullscreen(); e.preventDefault(); return; }
   if (a) {
@@ -336,6 +337,34 @@ addEventListener('keyup', e => {
 });
 addEventListener('blur', () => { for (const k in held) held[k] = false; });
 
+/* manette (API Gamepad, disposition « standard ») : stick gauche ou croix pour marcher et choisir dans les menus,
+   A = mordre / gratter / lire et valider, X ou B = aboyer, Y = lire, Start = pause, Select = son.
+   Les boutons sont lus à chaque image (pollPad) : un appui = une impulsion dans `pressed`, comme une touche. */
+const PAD_MAP = { 0: ['bite', 'ok'], 1: ['bark'], 2: ['bark'], 3: ['act'], 8: ['mute'], 9: ['pause'],
+                  12: ['up'], 13: ['down'], 14: ['left'], 15: ['right'] };
+const PAD_DEAD = 0.25;
+const pad = { on: false, vx: 0, vy: 0, prev: {}, sy: 0 };
+function pollPad() {
+  const list = (navigator.getGamepads && navigator.getGamepads()) || [];
+  const down = {};
+  let vx = 0, vy = 0, used = false;
+  for (const gp of list) {
+    if (!gp || gp.connected === false) continue;
+    const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0;
+    if (Math.hypot(ax, ay) > PAD_DEAD) { vx = ax; vy = ay; }
+    gp.buttons.forEach((b, i) => { if (b && (b.pressed || b.value > 0.5)) down[i] = true; });
+  }
+  const cx = (down[15] ? 1 : 0) - (down[14] ? 1 : 0), cy = (down[13] ? 1 : 0) - (down[12] ? 1 : 0);
+  if (cx || cy) { vx = cx; vy = cy; }
+  for (const i in PAD_MAP) if (down[i] && !pad.prev[i]) { for (const a of PAD_MAP[i]) pressed[a] = true; used = true; }
+  // dans les menus, le stick donne une impulsion par mouvement franc (la croix passe par PAD_MAP)
+  const sy = Math.abs(vy) > 0.6 ? Math.sign(vy) : 0;
+  if (sy && sy !== pad.sy && !cy) pressed[sy < 0 ? 'up' : 'down'] = true;
+  pad.sy = sy; pad.prev = down; pad.vx = vx; pad.vy = vy;
+  if (used) audioOn();
+  if (used || Math.hypot(vx, vy) > 0.5) { pad.on = true; touchMode = false; }
+}
+
 /* tactile : joystick à gauche, boutons à droite (repère GUI) */
 let touchMode = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
 const stick = { id: null, ox: 0, oy: 0, x: 0, y: 0, vx: 0, vy: 0 };
@@ -349,11 +378,17 @@ function toGui(ev) {
 cv.addEventListener('pointerdown', e => {
   audioOn();
   if (e.pointerType !== 'mouse') touchMode = true;
+  pad.on = false;
   const [gx, gy] = toGui(e);
   // au premier toucher de l'écran titre, on passe en plein écran (Android)
   if (touchMode && state === 'title') goFullscreen();
   if (touchMode && canFullscreen() && !fsElement() && (state === 'play' || state === 'pause') &&
       gx > FS_BTN.x && gx < FS_BTN.x + FS_BTN.w && gy > FS_BTN.y && gy < FS_BTN.y + FS_BTN.h) { goFullscreen(); return; }
+  if (menu && (state === 'title' || state === 'over')) {     // menus : toucher (ou cliquer) une entrée la choisit
+    const i = menuHit(gx, gy);
+    if (i >= 0) { menu.sel = i; pressed.ok = true; }
+    return;
+  }
   if (state !== 'play' || !touchMode) { pressed.ok = true; return; }
   if (gx > GW - 160 && gy > 210 && gy < 310) { pressed.pause = true; return; }
   for (const k of ['bark', 'bite']) {
@@ -592,7 +627,7 @@ class Actor {
   }
   done() { return this.t * (this.fps || FPS)[this.anim] >= this.frames(); }
   draw(alpha) {
-    drawSpr(this.key(), this.frame(), this.x + (this.shake || 0), this.y, { flip: this.dir === 'left',
+    drawSpr(this.key(), this.frame(), this.x + (this.shake || 0), this.y - (this.hop || 0), { flip: this.dir === 'left',
       alpha: alpha === undefined ? this.alpha : alpha, sy: this.mode === 'crouch' ? 0.84 : undefined });
   }
 }
@@ -607,6 +642,14 @@ const DOGS = {
   berger:     { hp: 3, spd: 175, aggro: 360, range: 78, dmg: 1, cd: 1.0, windup: 0.22, score: 80, pitch: 1.1, charge: true },
 };
 const CHARGE = { min: 130, max: 300, crouch: 0.5, speed: 560, time: 0.55, tired: 1.1, cd: 3.2 };
+/* Mode balade (choisi à l'écran titre) : personne ne se fait mal. Les chiens ne mordent pas, n'aboient pas et ne
+   chargent pas : ils viennent près de Tecky et attendent en sautillant qu'il joue avec eux (patience). Près d'un chien,
+   le bouton de morsure devient « Jouer » : les deux sautillent en semant des cœurs, et le chien devient un copain
+   (points, compté dans fled) ; il ne le poursuit plus, mais lui fait la fête quand il passe. L'aboiement ne repousse
+   plus personne : il appelle les chiens qu'il touche (sautillement, cœur), qui accourent pour jouer. */
+const PLAY = { time: 2.2, calm: 9, hop: 14, heartEvery: 0.55, reach: 120, patience: 8, tecky: 0.9, waitHop: 1.1, friendR: 170 };
+let gameMode = 'aventure';                  // 'aventure' | 'balade'
+const balade = () => gameMode === 'balade';
 /* Vie : 2 PV par os. Tecky démarre avec 3 os ; chaque saucisse ajoute un os
    (déjà plein) jusqu'à MAX_BONES ; un os ramassé rend un os perdu, sans dépasser le maximum. */
 const START_BONES = 3, MAX_BONES = 8;
@@ -644,8 +687,10 @@ function arrowTarget() {
 
 let state = 'loading';          // loading | title | play | dialog | pause | over | win
 let P, alice, dogs, hens, cars, butterflies, items, fxs, pops, rings, digs, decor, camX = 0, camY = 0, shake = 0;
+let dusts = [], leaves = [], leafTrees = null, clouds = [], sun = 0, saveT = 0;
+// fled : chiens mis en fuite (aventure) ou devenus copains (balade)
 let score = 0, timePlayed = 0, fled = 0, treasures = 0, dialog = null, dialogReturn = 'play', aliceSniffed = false;
-let hintText = null, digHint = null, overT = 0, titleT = 0;
+let hintText = null, digHint = null, playHint = null, overT = 0, titleT = 0;
 
 function reset() {
   solids = [];
@@ -660,9 +705,9 @@ function reset() {
   alice.fps = Object.assign({}, FPS, { walk: 10 });
   alice.found = false;
   alice.hidden = true;               // dans la cabane jusqu'aux trois indices
-  dogs = MAP.enemies.map(([n, x, y]) => {
+  dogs = MAP.enemies.map(([n, x, y], id) => {
     const d = new Actor(n, x, y);
-    Object.assign(d, { T: DOGS[n], hp: DOGS[n].hp, mode: 'idle', timer: Math.random() * 2, hx: x, hy: y,
+    Object.assign(d, { id, T: DOGS[n], hp: DOGS[n].hp, mode: 'idle', timer: Math.random() * 2, hx: x, hy: y,
       vx: 0, vy: 0, kx: 0, ky: 0, cd: 0, barkCd: 2, chargeCd: 1.5, hitDone: false, fade: 0 });
     d.t = Math.random();
     return d;
@@ -672,9 +717,9 @@ function reset() {
   butterflies = MAP.butterflies.map(newButterfly);
   items = MAP.items.map(([n, x, y]) => ({ n, x, y, t: Math.random() * 3 }));
   digs = MAP.dig.map(([x, y]) => ({ x, y, dug: false, t: Math.random() * 2 }));
-  fxs = []; pops = []; rings = [];
+  fxs = []; pops = []; rings = []; dusts = []; leaves = []; leafTrees = null;
   score = 0; timePlayed = 0; fled = 0; treasures = 0; shake = 0; barkImmuneSeen = false; pendingSay = null;
-  clues = [false, false, false]; aliceSniffed = false; arrowT = 0; stuckT = 0;
+  clues = [false, false, false]; aliceSniffed = false; arrowT = 0; stuckT = 0; sun = 0; saveT = 0;
   camX = clamp(P.x - VW / 2, 0, MAP.w * TS - VW);
   camY = clamp(P.y - VH / 2, 0, MAP.h * TS - VH);
 }
@@ -709,14 +754,23 @@ function introLines() {
   return [
     { who: 'tecky', face: 0, text: "Ouaf ! Alice est partie jouer… et elle n'est pas rentrée !" },
     { who: 'tecky', face: 2, text: "Elle a dû semer des affaires en chemin. En les retrouvant, je saurai où elle se cache !" },
-    { who: 'tecky', face: 0, text: "La flèche au bord de l'écran me guide. Gare aux chiens du coin, ils ne sont pas commodes." },
+    { who: 'tecky', face: 0, text: balade()
+        ? "La flèche au bord de l'écran me guide. Et les chiens du coin ont l'air d'avoir envie de jouer !"
+        : "La flèche au bord de l'écran me guide. Gare aux chiens du coin, ils ne sont pas commodes." },
     { who: 'info', text: touchMode
         ? "Glisse le doigt à gauche pour marcher. Boutons à droite pour aboyer et mordre. Près d'un panneau, le bouton de morsure devient « lire »."
+        : pad.on
+        ? "Stick ou croix pour marcher, X pour aboyer, A pour mordre ou lire un panneau. Start pour la pause, Select pour le son."
         : "Flèches ou ZQSD pour marcher, X pour aboyer, C pour mordre ou lire un panneau. P pour la pause, M pour le son, F pour le plein écran." },
     { who: 'info', text: touchMode
         ? "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Près des traces de pattes, le bouton de morsure devient « gratter » : un trésor est peut-être enterré !"
-        : "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Près des traces de pattes, C sert à gratter le sol : un trésor est peut-être enterré !" },
-  ];
+        : "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Près des traces de pattes, " + (pad.on ? 'A' : 'C') +
+          " sert à gratter le sol : un trésor est peut-être enterré !" },
+  ].concat(balade() ? [
+    { who: 'info', text: touchMode
+        ? "En balade, près d'un chien, le bouton de morsure devient « jouer » : vous deviendrez copains ! Aboyer appelle les chiens."
+        : "En balade, près d'un chien, " + (pad.on ? 'A' : 'C') + " sert à jouer avec lui : vous deviendrez copains ! X appelle les chiens." },
+  ] : []);
 }
 
 /* ------------------------------------------------------------------ combat */
@@ -759,7 +813,7 @@ function drawRings() {
 
 function hurtDog(d, dmg, kx, ky, stun) {
   if (d.mode === 'ko') return;
-  d.hp -= dmg;
+  d.hp -= dmg; d.hop = 0;
   d.kx = kx; d.ky = ky;
   addFx('fx/hit', d.x, d.y - 40, { fps: 16 });
   SFX.hit();
@@ -788,6 +842,7 @@ function doBark() {
     if (l > BARK.range || l < 1) continue;
     const cos = (dx * vx + dy * vy) / l;
     if (cos <= BARK.cos) continue;
+    if (balade()) { callDog(d); continue; }
     if (d.T.barkImmune) {
       // aucun effet : il se fâche et répond
       if (!pops.some(p => p.word && p.dog === d)) { addWordPop('Même pas peur !', d.x, d.y - 130); pops[pops.length - 1].dog = d; }
@@ -869,6 +924,7 @@ function updateVehicle(v, dt) {
     P.kx = v.dir * 220; P.ky = (P.y < mid ? -1 : 1) * TRAFFIC.knock;
     P.mode = 'hurt'; P.setAnim('hurt'); P.timer = 0.25; P.bumpT = 1;
     shake = 0.15;
+    for (let k = 0; k < 4; k++) addDust(P.x + (Math.random() - 0.5) * 30, P.y - 2, (Math.random() - 0.5) * 90, -10 - Math.random() * 20, 6 + Math.random() * 3);
     addWordPop('Ouf !', P.x, P.y - 130);
   }
   for (const d of dogs) if (d.mode !== 'ko' && inLane(v, d.y) && Math.abs(d.x - v.x) < half + 6 && v.v > 30) {
@@ -988,6 +1044,7 @@ function doBite() {
   const hx = P.x + vx * 58, hy = P.y - 22 + vy * 46;
   addFx('fx/bite', hx, hy, { fps: 18 });
   SFX.bite();
+  if (balade()) return;                // en balade, une morsure dans le vide ne blesse personne
   let hit = false;
   for (const d of dogs) {
     if (d.mode === 'ko') continue;
@@ -1004,6 +1061,7 @@ function doBite() {
 const THREAT_R = 240;
 const ENGAGED = new Set(['chase', 'attack', 'bark', 'hurt', 'crouch', 'charge', 'tired']);
 function threatened() {
+  if (balade()) return false;          // en balade, les chiens ne menacent personne
   return dogs.some(d => ENGAGED.has(d.mode) && dist(P.x, P.y, d.x, d.y) < THREAT_R);
 }
 function nearDig() {
@@ -1017,13 +1075,42 @@ function nearSign() {
 }
 // ce que fait C (le bouton de morsure) : mordre si un chien menace, sinon gratter un trésor
 // ou lire un panneau à portée, sinon mordre
+// en balade : un chien à portée de jeu (les copains passent après les trésors et les panneaux)
+function playTarget(friends) {
+  let best = null, bd = PLAY.reach;
+  for (const d of dogs) {
+    if (d.mode === 'ko' || d.mode === 'play' || !!d.friend !== friends) continue;
+    const l = dist(P.x, P.y, d.x, d.y);
+    if (l < bd) { best = d; bd = l; }
+  }
+  return best;
+}
+const playDog = () => playTarget(false) || playTarget(true);
 function biteAction() {
   if (threatened()) return 'bite';
+  if (balade() && playTarget(false)) return 'play';
   if (nearDig()) return 'dig';
   if (nearSign()) return 'read';
+  if (balade() && playTarget(true)) return 'play';
   return 'bite';
 }
-const ACTION_FRAME = { bite: 2, dig: 4, read: 6 };   // images de hud/action
+const ACTION_FRAME = { bite: 2, dig: 4, read: 6, play: 8 };   // images de hud/action
+// Tecky et le chien sautillent ensemble ; à la fin, le chien devient un copain (voir updateDog, mode 'play')
+function startPlay(d) {
+  P.mode = 'play'; P.timer = PLAY.tecky; P.setAnim('idle'); P.cdBite = 0.5; P.cdBiteMax = 0.5;
+  P.dir = dirFrom(d.x - P.x, d.y - P.y, P.dir);
+  d.mode = 'play'; d.timer = PLAY.time; d.heartT = 0; d.hop = 0; d.wait = 0;
+  d.dir = dirFrom(P.x - d.x, P.y - d.y, d.dir);
+  d.setAnim('idle');
+  SFX.yip(d.T.pitch);
+}
+// aboiement en balade : le chien répond (petit bond, cœur) et accourt pour jouer
+function callDog(d) {
+  if (d.mode === 'play') return;
+  d.hopT = 0.4; d.calm = 0; d.wait = 0;
+  addFx('fx/heart', d.x, d.y - 96, { fps: 10 });
+  if (d.mode !== 'wait') { d.mode = 'chase'; d.setAnim('walk'); }
+}
 function startDig(g) {
   P.mode = 'dig'; P.setAnim('dig'); P.timer = 1.0; P.digSpot = g; P.digTick = 0;
   P.dir = dirFrom(g.x - P.x, g.y - P.y, P.dir);
@@ -1048,11 +1135,11 @@ function uncover(g) {
   addPop('+100', g.x - 30, g.y - 90);
   SFX.treasure();
   shake = 0.15;
-  say([{ who: 'tecky', face: 2, text: "Wouf ! Un trésor enterré ! (" + treasures + " / " + MAP.dig.length + ")" }]);
+  say([{ who: 'tecky', face: 2, text: "Wouf ! Un trésor enterré ! (" + treasures + " / " + MAP.dig.length + ")" }], saveGame);
 }
 
 function hurtPlayer(dmg, fromX, fromY) {
-  if (P.inv > 0 || P.mode === 'ko' || state !== 'play') return;
+  if (P.inv > 0 || P.mode === 'ko' || state !== 'play' || balade()) return;
   P.hp = Math.max(0, P.hp - dmg);
   const l = Math.max(1, dist(P.x, P.y, fromX, fromY));
   P.kx = (P.x - fromX) / l * 420; P.ky = (P.y - fromY) / l * 420;
@@ -1068,11 +1155,308 @@ function hurtPlayer(dmg, fromX, fromY) {
   }
 }
 
+/* ------------------------------------------------------------------ petits effets */
+/* Poussière : petits nuages clairs sous les pattes de Tecky quand il marche (et quand une voiture le bouscule,
+   ou quand le berger charge). Au sol, sous les personnages. */
+const DUST = { every: 0.12, life: 0.45, max: 40 };
+function addDust(x, y, vx, vy, r) { if (dusts.length < DUST.max) dusts.push({ x, y, vx, vy, r, t: 0 }); }
+function updateDust(dt) {
+  const damp = Math.pow(0.02, dt);
+  for (let i = dusts.length - 1; i >= 0; i--) {
+    const d = dusts[i];
+    if ((d.t += dt) > DUST.life) { dusts.splice(i, 1); continue; }
+    d.x += d.vx * dt; d.y += d.vy * dt; d.vx *= damp; d.vy *= damp;
+  }
+}
+function drawDust() {
+  ctx.save();
+  ctx.fillStyle = '#F1E7D0';
+  for (const d of dusts) {
+    const u = d.t / DUST.life;
+    ctx.globalAlpha = 0.55 * (1 - u);
+    ctx.beginPath(); ctx.ellipse(d.x, d.y - u * 6, d.r * (1 + u * 1.3), d.r * (0.8 + u), 0, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* Feuilles : les arbres et les sapins à l'écran en lâchent de temps en temps (fx/leaf, une image par couleur).
+   Elles tournoient en descendant avec une petite ombre au sol, se posent, puis s'effacent. */
+const LEAF = { rate: 0.08, max: 50, fall: 34, sway: 14, rest: 2.2, fade: 0.8 };
+function updateLeaves(dt) {
+  if (!leafTrees) leafTrees = decor.filter(d => d.n === 'tree' || d.n === 'fir');
+  for (const tr of leafTrees) {
+    if (leaves.length >= LEAF.max) break;
+    if (tr.x < camX - 60 || tr.x > camX + VW + 60 || tr.y < camY - 20 || tr.y > camY + VH + 160) continue;
+    if (Math.random() < LEAF.rate * dt) {
+      const fir = tr.n === 'fir';                     // aiguilles vertes pour les sapins, toutes les couleurs ailleurs
+      leaves.push({ x: tr.x + (Math.random() - 0.5) * (fir ? 56 : 80), y: tr.y + 2 + Math.random() * 36,
+        h: (fir ? 70 : 80) + Math.random() * 50, t: 0, ph: Math.random() * 6.28, landed: 0,
+        c: fir ? Math.floor(Math.random() * 2) : Math.floor(Math.random() * 4) });
+    }
+  }
+  for (let i = leaves.length - 1; i >= 0; i--) {
+    const l = leaves[i];
+    l.t += dt;
+    if (l.h > 0) { l.h = Math.max(0, l.h - LEAF.fall * dt); if (!l.h) l.landed = l.t; }
+    else if (l.t - l.landed > LEAF.rest + LEAF.fade) leaves.splice(i, 1);
+  }
+}
+const leafX = l => l.x + Math.sin((l.h ? l.t : l.landed) * 1.8 + l.ph) * LEAF.sway;
+function drawLeavesOnGround() {                       // feuilles posées, ombres des feuilles qui tombent
+  for (const l of leaves) {
+    if (l.h > 0) {
+      ctx.save(); ctx.globalAlpha = 0.16; ctx.fillStyle = '#000';
+      ctx.beginPath(); ctx.ellipse(leafX(l), l.y, 5, 2, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    } else {
+      const a = 1 - Math.max(0, l.t - l.landed - LEAF.rest) / LEAF.fade;
+      drawSpr('fx/leaf', l.c, leafX(l), l.y, { angle: l.ph, alpha: a });
+    }
+  }
+}
+function drawFallingLeaves() {
+  for (const l of leaves) if (l.h > 0)
+    drawSpr('fx/leaf', l.c, leafX(l), l.y - l.h, { angle: Math.sin(l.t * 2.4 + l.ph) * 0.9,
+      sy: 0.3 + 0.7 * Math.abs(Math.cos(l.t * 3.1 + l.ph)) });
+}
+
+/* Ombres de nuages : de grandes taches douces (amas de disques flous pré-rendus) qui glissent lentement sur la
+   carte, et sur tout ce qui s'y trouve. */
+const CLOUD = { n: 14, vx: 14, vy: 4, alpha: 0.1, w: 560, h: 320 };
+let cloudImgs = [];
+function buildClouds() {
+  cloudImgs = [0, 1, 2].map(k => {
+    const c = document.createElement('canvas');
+    c.width = CLOUD.w; c.height = CLOUD.h;
+    const g = c.getContext('2d');
+    for (let i = 0; i < 9; i++) {
+      const r = 70 + hash3(k, i, 1) * 60;
+      const x = 120 + hash3(k, i, 2) * (CLOUD.w - 240), y = 110 + hash3(k, i, 3) * (CLOUD.h - 220);
+      const gr = g.createRadialGradient(x, y, r * 0.45, x, y, r);
+      gr.addColorStop(0, 'rgba(24, 30, 56, 1)'); gr.addColorStop(1, 'rgba(24, 30, 56, 0)');
+      g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+    }
+    return c;
+  });
+  const W = MAP.w * TS + CLOUD.w, H = MAP.h * TS + CLOUD.h;
+  clouds = Array.from({ length: CLOUD.n }, (_, i) => ({ img: i % 3, x: hash3(i, 5, 9) * W - CLOUD.w, y: hash3(i, 7, 3) * H - CLOUD.h }));
+}
+function updateClouds(dt) {
+  const W = MAP.w * TS, H = MAP.h * TS;
+  for (const c of clouds) {
+    c.x += CLOUD.vx * dt; c.y += CLOUD.vy * dt;
+    if (c.x > W) c.x -= W + CLOUD.w;                  // ressort de l'autre côté
+    if (c.y > H) c.y -= H + CLOUD.h;
+  }
+}
+function drawClouds(cx, cy) {
+  ctx.save();
+  ctx.globalAlpha = CLOUD.alpha;
+  for (const c of clouds)
+    if (c.x < cx + VW && c.x + CLOUD.w > cx && c.y < cy + VH && c.y + CLOUD.h > cy) ctx.drawImage(cloudImgs[c.img], c.x, c.y);
+  ctx.restore();
+}
+
+/* Coucher de soleil : la lumière suit la progression, un cran par indice (0 : plein jour, 3 : soleil couchant), et se
+   réchauffe encore aux retrouvailles avec Alice (4). Teinte multipliée sur le monde (pas sur l'interface), halo doré
+   venant de l'ouest, vignette au crépuscule ; les lampadaires s'allument à partir du deuxième indice. */
+const SUN = { speed: 0.25, tints: [[255, 255, 255], [255, 241, 220], [255, 222, 182], [238, 180, 150], [255, 200, 160]],
+  glow: [0, 0.08, 0.16, 0.22, 0.3], vignette: [0, 0, 0.06, 0.2, 0.1] };
+const sunGoal = () => alice.found ? 4 : clues.filter(Boolean).length;
+function updateSun(dt) { sun += clamp(sunGoal() - sun, -SUN.speed * dt, SUN.speed * dt); }
+const sunAt = (arr, k) => { const i = Math.min(arr.length - 2, Math.floor(k)), f = k - i; return arr[i] + (arr[i + 1] - arr[i]) * f; };
+function drawLight(cx, cy) {
+  if (sun < 0.01) return;
+  const k = clamp(sun, 0, 4);
+  const tint = [0, 1, 2].map(j => Math.round(sunAt(SUN.tints.map(t => t[j]), k)));
+  ctx.save();
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.fillStyle = `rgb(${tint[0]}, ${tint[1]}, ${tint[2]})`;
+  ctx.fillRect(cx, cy, VW, VH);
+  const vig = sunAt(SUN.vignette, k);
+  if (vig > 0) {
+    const g = ctx.createRadialGradient(cx + VW / 2, cy + VH / 2, VH * 0.45, cx + VW / 2, cy + VH / 2, VW * 0.62);
+    g.addColorStop(0, 'rgba(90, 50, 110, 0)'); g.addColorStop(1, `rgba(90, 50, 110, ${vig})`);
+    ctx.fillStyle = g; ctx.fillRect(cx, cy, VW, VH);
+  }
+  ctx.globalCompositeOperation = 'screen';
+  const glow = sunAt(SUN.glow, k);
+  const g = ctx.createLinearGradient(cx, cy, cx + VW, cy + VH * 0.5);
+  g.addColorStop(0, `rgba(255, 190, 110, ${glow})`); g.addColorStop(1, 'rgba(255, 190, 110, 0)');
+  ctx.fillStyle = g; ctx.fillRect(cx, cy, VW, VH);
+  // lampadaires allumés en fin de journée : halo autour de la lanterne et flaque de lumière au sol
+  const lamp = clamp(k - 1.5, 0, 1);
+  if (lamp > 0) for (const d of decor) {
+    if (d.n !== 'lamppost' || d.x < cx - 120 || d.x > cx + VW + 120 || d.y < cy - 40 || d.y > cy + VH + 160) continue;
+    for (const [x, y, r, a] of [[d.x, d.y - 93, 64, 0.55], [d.x, d.y - 4, 70, 0.3]]) {
+      const h = ctx.createRadialGradient(x, y, 4, x, y, r);
+      h.addColorStop(0, `rgba(255, 214, 130, ${a * lamp})`); h.addColorStop(1, 'rgba(255, 214, 130, 0)');
+      ctx.fillStyle = h; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+  }
+  // retrouvailles : une lumière chaude autour d'Alice et de Tecky
+  const hug = clamp(k - 3, 0, 1);
+  if (hug > 0) {
+    const x = (alice.x + P.x) / 2, y = (alice.y + P.y) / 2 - 50;
+    const h = ctx.createRadialGradient(x, y, 20, x, y, 260);
+    h.addColorStop(0, `rgba(255, 210, 150, ${0.45 * hug})`); h.addColorStop(1, 'rgba(255, 210, 150, 0)');
+    ctx.fillStyle = h; ctx.fillRect(x - 260, y - 260, 520, 520);
+  }
+  ctx.restore();
+}
+
+/* ------------------------------------------------------------------ sauvegarde, records */
+/* La partie est enregistrée dans le navigateur (localStorage, en mémoire si le stockage est refusé) : toutes les
+   SAVE_EVERY secondes de jeu quand aucun chien ne menace Tecky, à chaque indice et chaque trésor, et quand on quitte
+   la page. L'écran titre propose alors « Continuer » ; après un KO, « Reprendre la partie » repart de cette
+   sauvegarde, vie pleine. La victoire efface la sauvegarde et met à jour les records de son mode (meilleur score,
+   meilleur temps). */
+const SAVE_KEY = 'tecky-quest-save', RECORDS_KEY = 'tecky-quest-records', SAVE_EVERY = 4;
+const STORE = {
+  mem: {},
+  get(k) {
+    try { const v = localStorage.getItem(k); if (v !== null) return JSON.parse(v); } catch (e) { /* stockage refusé */ }
+    return this.mem[k] || null;
+  },
+  set(k, v) { this.mem[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* idem */ } },
+  del(k) { delete this.mem[k]; try { localStorage.removeItem(k); } catch (e) { /* idem */ } },
+};
+function loadSave() { const s = STORE.get(SAVE_KEY); return s && s.v === 1 ? s : null; }
+const r1 = v => Math.round(v * 10) / 10;
+function saveGame() {
+  if (!P || P.mode === 'ko' || P.hp <= 0 || alice.found) return;
+  STORE.set(SAVE_KEY, {
+    v: 1, mode: gameMode, at: Date.now(), x: r1(P.x), y: r1(P.y), dir: P.dir, hp: P.hp, hpMax: P.hpMax,
+    score, time: r1(timePlayed), fled, treasures, clues: clues.slice(), sniffed: aliceSniffed, immune: barkImmuneSeen,
+    dug: digs.map(g => g.dug ? 1 : 0),
+    items: items.map(it => [it.n, r1(it.x), r1(it.y)]),
+    dogs: dogs.filter(d => d.mode !== 'ko').map(d => d.id),
+    friends: dogs.filter(d => d.friend).map(d => d.id),        // balade : chiens devenus copains
+  });
+}
+// pas de sauvegarde automatique en plein combat : on reprendrait au milieu des crocs
+const safeToSave = () => P.mode !== 'ko' && (balade() || !dogs.some(d => ENGAGED.has(d.mode) && dist(P.x, P.y, d.x, d.y) < 600));
+function saveOnLeave() { if (P && (state === 'play' || state === 'dialog' || state === 'pause')) saveGame(); }
+addEventListener('pagehide', saveOnLeave);
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveOnLeave(); });
+
+/* rested : reprise après un KO (Tecky a fait une sieste : vie pleine) */
+function loadGame(s, rested) {
+  reset();
+  gameMode = s.mode === 'balade' ? 'balade' : 'aventure';
+  Object.assign(P, { x: s.x, y: s.y, dir: s.dir || 'down', hpMax: s.hpMax, hp: rested ? s.hpMax : Math.max(1, s.hp) });
+  score = s.score; timePlayed = s.time; fled = s.fled; treasures = s.treasures;
+  clues = [0, 1, 2].map(i => !!s.clues[i]); aliceSniffed = !!s.sniffed; barkImmuneSeen = !!s.immune;
+  digs.forEach((g, i) => { g.dug = !!s.dug[i]; });
+  items = s.items.map(([n, x, y]) => ({ n, x, y, t: Math.random() * 3 }));
+  dogs = dogs.filter(d => s.dogs.includes(d.id));
+  for (const d of dogs) d.friend = (s.friends || []).includes(d.id);
+  if (nextClue() === 3) revealAlice();
+  sun = sunGoal();
+  camX = clamp(P.x - VW / 2, 0, MAP.w * TS - VW);
+  camY = clamp(P.y - 40 - VH / 2, 0, MAP.h * TS - VH);
+  state = 'play';
+  Music.start();
+  say([{ who: 'tecky', face: rested ? 0 : 2, text: rested ? "Ouf, une petite sieste et ça repart !" : "Me revoilà ! Je reprends mes recherches." },
+       { who: 'tecky', face: 0, text: CLUE_NEXT[nextClue()] }], () => showArrow());
+}
+function newGame(mode, again) {
+  const cx = camX, cy = camY;
+  reset();
+  gameMode = mode;
+  if (!again) { camX = cx; camY = cy; }          // depuis l'écran titre, la caméra glisse du village jusqu'à la niche
+  state = 'play';
+  Music.start();
+  say(again ? [{ who: 'tecky', face: 0, text: "C'est reparti ! Je vais retrouver les affaires d'Alice, et Alice avec." }] : introLines(),
+    () => { showArrow(); saveGame(); });
+}
+
+let recs = {}, newRecord = { score: false, time: false };
+function recordRun() {
+  const all = STORE.get(RECORDS_KEY) || {}, r = all[gameMode] || {}, t = Math.floor(timePlayed);
+  newRecord = { score: !(r.score >= score), time: !(r.time <= t) };
+  if (newRecord.score) r.score = score;
+  if (newRecord.time) r.time = t;
+  r.wins = (r.wins || 0) + 1;
+  all[gameMode] = r;
+  STORE.set(RECORDS_KEY, all);
+  recs = all;
+}
+const fmtTime = t => Math.floor(t / 60) + ' min ' + String(Math.floor(t % 60)).padStart(2, '0') + ' s';
+const MODE_NAME = { aventure: 'Aventure', balade: 'Balade' };
+function recordLine(mode) {
+  const r = recs[mode];
+  if (!r || !r.wins) return '';
+  return 'Records en ' + mode + ' : ' + r.score + ' points · ' + fmtTime(r.time);
+}
+
+/* ------------------------------------------------------------------ menus (écran titre, KO) */
+/* Une liste d'entrées : flèches, croix ou stick pour choisir, Entrée / A pour valider ; au toucher ou à la souris,
+   l'entrée touchée est choisie et validée. */
+let menu = null;              // { items: [{ id, label, sub, mode }], sel, y0, w, h, gap }
+function openTitleMenu() {
+  recs = STORE.get(RECORDS_KEY) || {};
+  const s = loadSave(), items = [];
+  if (s) {
+    const n = s.clues.filter(Boolean).length;
+    items.push({ id: 'continue', label: 'Continuer', mode: s.mode,
+      sub: MODE_NAME[s.mode] + ' · ' + (n ? n + (n > 1 ? ' indices' : ' indice') + ' sur 3' : 'aucun indice') + ' · ' + fmtTime(s.time) });
+  }
+  items.push({ id: 'aventure', label: 'Nouvelle aventure', sub: 'Gare aux chiens du coin !', mode: 'aventure' });
+  items.push({ id: 'balade', label: 'Nouvelle balade', sub: 'Les chiens veulent seulement jouer', mode: 'balade' });
+  menu = { items, sel: 0, y0: 520, w: 760, h: 104, gap: 20 };
+}
+function openOverMenu() {
+  const items = [];
+  if (loadSave()) items.push({ id: 'resume', label: 'Reprendre la partie', sub: 'Après une petite sieste, avec les indices trouvés' });
+  items.push({ id: 'restart', label: 'Recommencer', sub: 'Depuis la niche, sans les indices' });
+  items.push({ id: 'title', label: 'Menu principal', sub: 'Pour changer de mode' });
+  menu = { items, sel: 0, y0: 600, w: 760, h: 96, gap: 18 };
+}
+function menuBox(i) {
+  return { x: GW / 2 - menu.w / 2, y: menu.y0 + i * (menu.h + menu.gap), w: menu.w, h: menu.h };
+}
+function menuHit(gx, gy) {
+  for (let i = 0; i < menu.items.length; i++) {
+    const b = menuBox(i);
+    if (gx > b.x && gx < b.x + b.w && gy > b.y && gy < b.y + b.h) return i;
+  }
+  return -1;
+}
+function menuInput() {
+  const n = menu.items.length;
+  if (pressed.up) { menu.sel = (menu.sel + n - 1) % n; SFX.blip(); }
+  if (pressed.down) { menu.sel = (menu.sel + 1) % n; SFX.blip(); }
+  return pressed.ok || pressed.bark || pressed.bite || pressed.act ? menu.items[menu.sel].id : null;
+}
+function chooseMenu(id) {
+  const s = loadSave();
+  menu = null;
+  if (id === 'continue' && s) loadGame(s, false);
+  else if (id === 'resume' && s) loadGame(s, true);
+  else if (id === 'restart') newGame(gameMode, true);
+  else if (id === 'aventure' || id === 'balade') newGame(id, false);
+  else toTitle();
+}
+function toTitle() {
+  reset();
+  gameMode = 'aventure';
+  camX = clamp(MAP.title[0] - VW / 2, 0, MAP.w * TS - VW);   // caméra de l'écran titre : la place du village
+  camY = clamp(MAP.title[1] - VH / 2, 0, MAP.h * TS - VH);
+  state = 'title'; titleT = 0;
+  openTitleMenu();
+  Music.start();
+}
+
 /* ------------------------------------------------------------------ mise à jour */
 function inputVector() {
   let x = (held.right ? 1 : 0) - (held.left ? 1 : 0);
   let y = (held.down ? 1 : 0) - (held.up ? 1 : 0);
   if (stick.id !== null && Math.hypot(stick.vx, stick.vy) > 0.15) { x = stick.vx; y = stick.vy; }
+  const pl = Math.hypot(pad.vx, pad.vy);
+  if (pl > PAD_DEAD) {                    // stick de manette : zone morte retirée, la vitesse suit l'inclinaison
+    const k = Math.min(1, (pl - PAD_DEAD) / (0.9 - PAD_DEAD));
+    x = pad.vx / pl * k; y = pad.vy / pl * k;
+  }
   const l = Math.hypot(x, y);
   if (l > 1) { x /= l; y /= l; }
   return [x, y];
@@ -1082,6 +1466,7 @@ function updatePlayer(dt) {
   P.t += dt;
   hintText = null;
   digHint = null;
+  playHint = null;
   P.inv = Math.max(0, P.inv - dt);
   P.bumpT = Math.max(0, P.bumpT - dt);           // une voiture ne bouscule Tecky qu'une fois à la fois
   P.cdBark = Math.max(0, P.cdBark - dt);
@@ -1095,7 +1480,7 @@ function updatePlayer(dt) {
   }
   if (P.mode === 'ko') {
     P.timer += dt;
-    if (P.timer > 2.2) { state = 'over'; overT = 0; }
+    if (P.timer > 2.2) { state = 'over'; overT = 0; openOverMenu(); }
     return;
   }
   if (P.mode === 'hurt') {
@@ -1104,6 +1489,12 @@ function updatePlayer(dt) {
     return;
   }
   if (P.mode === 'bark') { if (P.done()) P.mode = 'free'; return; }
+  if (P.mode === 'play') {             // balade : il sautille avec son copain
+    P.timer -= dt;
+    P.hop = Math.abs(Math.sin(P.timer * 10)) * 10;
+    if (P.timer <= 0) { P.mode = 'free'; P.hop = 0; }
+    return;
+  }
   if (P.mode === 'dig') {
     // un chien arrive pendant qu'on gratte : C interrompt le grattage pour mordre
     if (!(pressed.bite && threatened())) { updateDig(dt); return; }
@@ -1117,9 +1508,15 @@ function updatePlayer(dt) {
   const [ix, iy] = inputVector();
   const spd = 250;
   if (ix || iy) {
+    const ox = P.x, oy = P.y;
     moveActor(P, ix * spd * dt, iy * spd * dt);
     P.dir = dirFrom(ix, iy, P.dir);
     P.setAnim('walk');
+    // petits nuages de poussière derrière les pattes
+    if ((P.dustT = (P.dustT || 0) - dt) <= 0 && Math.hypot(P.x - ox, P.y - oy) > spd * dt * 0.5) {
+      P.dustT = DUST.every;
+      addDust(P.x - ix * 16 + (Math.random() - 0.5) * 10, P.y - 2, -ix * 30, -iy * 30 - 6, 5 + Math.random() * 3);
+    }
   } else P.setAnim('idle');
 
   if (pressed.bark && P.cdBark <= 0) {
@@ -1128,7 +1525,8 @@ function updatePlayer(dt) {
     const a = biteAction();
     if (a === 'read') say([{ who: 'info', text: nearSign()[2] }]);
     else if (P.cdBite <= 0) {
-      if (a === 'dig') startDig(nearDig());
+      if (a === 'play') startPlay(playDog());
+      else if (a === 'dig') startDig(nearDig());
       else { P.mode = 'bite'; P.setAnim('bite'); P.cdBite = 0.5; P.cdBiteMax = 0.5; P.hitDone = false; }
     }
   }
@@ -1138,6 +1536,7 @@ function updatePlayer(dt) {
   if (sign && pressed.act) say([{ who: 'info', text: sign[2] }]);
   if (act === 'read') hintText = { x: sign[0], y: sign[1] - 110 };
   if (act === 'dig') digHint = nearDig();
+  if (act === 'play') playHint = playDog();
   // Alice
   if (!alice.found && !alice.hidden && dist(P.x, P.y, alice.x, alice.y) < 120) finale();
   // devant la cachette trop tôt : Tecky la sent mais il lui manque des indices
@@ -1159,6 +1558,11 @@ function updateDog(d, dt) {
   d.cd = Math.max(0, d.cd - dt);
   d.barkCd = Math.max(0, d.barkCd - dt);
   d.chargeCd = Math.max(0, d.chargeCd - dt);
+  d.calm = Math.max(0, (d.calm || 0) - dt);
+  if (d.hopT > 0) {                    // petit bond (appelé par un aboiement, ou impatient de jouer)
+    d.hopT -= dt;
+    d.hop = d.hopT > 0 ? Math.sin((1 - d.hopT / 0.4) * Math.PI) * 16 : 0;
+  }
   const dx = P.x - d.x, dy = P.y - d.y, l = Math.hypot(dx, dy);
   const alive = P.mode !== 'ko';
 
@@ -1173,6 +1577,7 @@ function updateDog(d, dt) {
       d.timer -= dt;
       const ox = d.x, oy = d.y, st = CHARGE.speed * dt;
       moveActor(d, d.cx * st, d.cy * st, 14, true);
+      if ((d.dustT = (d.dustT || 0) - dt) <= 0) { d.dustT = 0.05; addDust(d.x - d.cx * 22, d.y - 2, -d.cx * 40, -d.cy * 40 - 8, 6); }
       if (!d.hitDone && dist(d.x, d.y, P.x, P.y) < 52) { d.hitDone = true; hurtPlayer(T.dmg, d.x, d.y); }
       if (d.timer <= 0 || Math.hypot(d.x - ox, d.y - oy) < st * 0.3) {   // fin de course ou obstacle
         d.mode = 'tired'; d.timer = CHARGE.tired; d.chargeCd = CHARGE.cd; d.setAnim('idle');
@@ -1183,6 +1588,31 @@ function updateDog(d, dt) {
       d.timer -= dt;
       if (d.timer <= 0) d.mode = 'chase';
       return;
+    case 'play': {                     // balade : il joue avec Tecky en semant des cœurs, puis devient son copain
+      d.timer -= dt;
+      d.dir = dirFrom(dx, dy, d.dir);
+      d.hop = Math.abs(Math.sin(d.timer * 9)) * PLAY.hop;
+      if ((d.heartT -= dt) <= 0) { d.heartT = PLAY.heartEvery; addFx('fx/heart', d.x + (Math.random() - 0.5) * 30, d.y - 96, { fps: 10 }); }
+      if (d.timer <= 0) {
+        d.hop = 0; d.mode = 'return'; d.calm = PLAY.calm; d.setAnim('walk');
+        if (!d.friend) {
+          d.friend = true; fled++; score += T.score;
+          addPop('+' + T.score, d.x - 20, d.y - 120);
+          addWordPop('Copain !', d.x, d.y - 150);
+          SFX.treasure();
+        }
+      }
+      return;
+    }
+    case 'wait': {                     // balade : il attend que Tecky joue avec lui, en sautillant
+      d.dir = dirFrom(dx, dy, d.dir);
+      d.setAnim('idle');
+      d.wait += dt;
+      if ((d.timer -= dt) <= 0) { d.timer = PLAY.waitHop; d.hopT = 0.4; }
+      if (d.wait > PLAY.patience || !alive) { d.mode = 'return'; d.calm = PLAY.calm; d.wait = 0; }
+      else if (l > T.range * 1.8) d.mode = 'chase';
+      return;
+    }
     case 'ko':
       d.timer += dt;
       if (d.timer > 1.6) d.fade += dt * 1.6;
@@ -1218,20 +1648,26 @@ function updateDog(d, dt) {
   }
 
   const homeD = dist(d.x, d.y, d.hx, d.hy);
-  if (alive && l < T.aggro && homeD < 700) d.mode = 'chase';
+  const keen = !d.calm && !(balade() && d.friend);     // un copain ne poursuit plus Tecky (sauf s'il l'appelle)
+  if (alive && l < T.aggro && homeD < 700 && keen && d.mode !== 'chase') { d.mode = 'chase'; d.wait = 0; }
 
   if (d.mode === 'chase') {
-    if (!alive || l > T.aggro * 1.5 || homeD > 750) { d.mode = 'return'; }
-    else if (l < T.range && d.cd <= 0) {
+    if (balade() && (d.wait = (d.wait || 0) + dt) > PLAY.patience) { d.mode = 'return'; d.calm = PLAY.calm; d.wait = 0; }
+    else if (!alive || l > T.aggro * 1.5 || homeD > 750) { d.mode = 'return'; }
+    else if (balade() && l < T.range) {
+      d.dir = dirFrom(dx, dy, d.dir);
+      d.mode = 'wait'; d.timer = 0.3; d.setAnim('idle'); SFX.yip(T.pitch);
+      return;
+    } else if (l < T.range && d.cd <= 0) {
       d.dir = dirFrom(dx, dy, d.dir);
       d.mode = 'attack'; d.setAnim('bite'); d.hitDone = false;
       return;
-    } else if (T.charge && d.chargeCd <= 0 && l > CHARGE.min && l < CHARGE.max && clearPath(d.x, d.y, P.x, P.y)) {
+    } else if (T.charge && !balade() && d.chargeCd <= 0 && l > CHARGE.min && l < CHARGE.max && clearPath(d.x, d.y, P.x, P.y)) {
       d.dir = dirFrom(dx, dy, d.dir);
       d.mode = 'crouch'; d.timer = CHARGE.crouch; d.cx = dx / l; d.cy = dy / l; d.setAnim('idle');
       addWordPop('!', d.x, d.y - 120);
       return;
-    } else if (T.barks && l > 150 && l < 300 && d.barkCd <= 0) {
+    } else if (T.barks && !balade() && l > 150 && l < 300 && d.barkCd <= 0) {
       d.dir = dirFrom(dx, dy, d.dir);
       d.mode = 'bark'; d.setAnim('bark'); d.hitDone = false;
       return;
@@ -1251,7 +1687,14 @@ function updateDog(d, dt) {
     steer(d, hx / homeD, hy / homeD, T.spd * 0.7 * dt, dt);
     d.dir = d.detT > 0 ? dirFrom(d.detX, d.detY, d.dir) : dirFrom(hx, hy, d.dir);
     d.setAnim('walk');
-    if (alive && l < T.aggro * 0.8) d.mode = 'chase';
+    if (alive && l < T.aggro * 0.8 && keen) { d.mode = 'chase'; d.wait = 0; }
+    return;
+  }
+  // balade : un copain fait la fête à Tecky quand il passe près de chez lui
+  if (balade() && d.friend && alive && l < PLAY.friendR) {
+    d.dir = dirFrom(dx, dy, d.dir);
+    d.setAnim('idle');
+    if ((d.heartT = (d.heartT || 0) - dt) <= 0) { d.heartT = 2; d.hopT = 0.4; addFx('fx/heart', d.x, d.y - 96, { fps: 10 }); }
     return;
   }
   // flânerie
@@ -1311,7 +1754,8 @@ function updateItems(dt) {
         SFX.treasure();
         const k = nextClue();
         if (k === 3) revealAlice();
-        say([{ who: 'tecky', face: 2, text: CLUE_FOUND[e.clue] }, { who: 'tecky', face: 0, text: CLUE_NEXT[k] }], () => showArrow());
+        say([{ who: 'tecky', face: 2, text: CLUE_FOUND[e.clue] }, { who: 'tecky', face: 0, text: CLUE_NEXT[k] }],
+          () => { showArrow(); saveGame(); });
       } else if (e.heal) {
         if (P.hp >= P.hpMax) continue;   // vie pleine : on laisse l'os pour plus tard
         P.hp = Math.min(P.hpMax, P.hp + e.heal);
@@ -1340,6 +1784,7 @@ function updateFx(dt) {
     if (pops[i].t > 1.1) pops.splice(i, 1);
   }
   for (const g of digs) g.t += dt;
+  updateDust(dt);
 }
 
 function revealAlice() {
@@ -1349,6 +1794,8 @@ function revealAlice() {
 
 function finale() {
   alice.found = true;
+  recordRun();
+  STORE.del(SAVE_KEY);                 // partie terminée : plus rien à continuer
   P.mode = 'free'; P.setAnim('idle');
   P.dir = dirFrom(alice.x - P.x, alice.y - P.y, P.dir);
   alice.dir = dirFrom(P.x - alice.x, P.y - alice.y, 'down');
@@ -1373,17 +1820,19 @@ function updateCamera(dt) {
 
 function update(dt) {
   if (pressed.mute) { muted = !muted; Music.refresh(); }
+  updateClouds(dt);
+  if (state !== 'title') updateSun(dt);
   switch (state) {
-    case 'title':
+    case 'title': {
       titleT += dt;
       alice.t += dt; P.t += dt;
       for (const v of cars) updateVehicle(v, dt);
       for (const b of butterflies) updateButterfly(b, dt);
-      if (pressed.ok || pressed.bark || pressed.bite || pressed.act) {
-        state = 'play';
-        say(introLines(), () => showArrow());
-      }
+      updateLeaves(dt);
+      const id = menuInput();
+      if (id) chooseMenu(id);
       break;
+    }
     case 'dialog':
       updateDialog(dt);
       alice.t += dt; P.t += dt;
@@ -1402,6 +1851,7 @@ function update(dt) {
       arrowT = Math.max(0, arrowT - dt);
       if (!alice.found && (stuckT += dt) > ARROW.nudgeAfter) showArrow(ARROW.nudge);
       updatePlayer(dt);
+      if ((saveT += dt) >= SAVE_EVERY && safeToSave()) { saveT = 0; saveGame(); }
       for (const d of dogs) updateDog(d, dt);
       for (const h of hens) updateHen(h, dt);
       for (const v of cars) updateVehicle(v, dt);
@@ -1414,6 +1864,7 @@ function update(dt) {
       }
       updateItems(dt);
       updateFx(dt);
+      updateLeaves(dt);
       updateCamera(dt);
       break;
     case 'over':
@@ -1421,12 +1872,9 @@ function update(dt) {
       overT += dt;
       alice.t += dt; P.t += dt;
       updateFx(dt);
-      if (overT > 1 && (pressed.ok || pressed.bark || pressed.bite || pressed.act)) {
-        reset();
-        state = 'play';
-        Music.start();
-        say([{ who: 'tecky', face: 0, text: "C'est reparti ! Je vais retrouver les affaires d'Alice, et Alice avec." }],
-          () => showArrow());
+      if (overT > 1) {
+        if (state === 'over') { const id = menuInput(); if (id) chooseMenu(id); }
+        else if (pressed.ok || pressed.bark || pressed.bite || pressed.act) toTitle();
       }
       break;
   }
@@ -1450,6 +1898,8 @@ function drawWorld() {
     else if (g.t % 2.4 < 0.7) drawSpr('fx/pickup', Math.floor((g.t % 2.4) * 7), g.x, g.y - 24, { sc: 0.55, alpha: 0.9 });
   }
   for (const d of decor) if (FLAT.has(d.n) && vis(d.x, d.y, 400)) drawSpr(d.key, 0, d.x, d.y);   // pont, bac à sable
+  drawLeavesOnGround();
+  drawDust();
   drawRings();   // ondes d'aboiement, au sol sous les personnages
   for (const b of butterflies) if (vis(b.x, b.y, 60)) {             // ombres des papillons, plus pâles en altitude
     ctx.save();
@@ -1482,7 +1932,10 @@ function drawWorld() {
   // papillons : au-dessus de tout, tournés dans le sens du vol
   for (const b of butterflies) if (vis(b.x, b.y, 80))
     drawSpr('butterfly/' + b.color, Math.floor(b.flap) % 4, b.x, b.y - b.alt, { angle: b.heading + Math.PI / 2, sc: BFLY.sc });
+  drawFallingLeaves();
   for (const f of fxs) drawSpr(f.key, Math.floor(f.t * f.fps), f.x, f.y, { angle: f.angle });
+  drawClouds(cx, cy);
+  drawLight(cx, cy);
 
   // barres de vie ennemies
   for (const d of dogs) {
@@ -1514,13 +1967,14 @@ function drawWorld() {
     actionBubble('Gratter', mx, my - 36 + bob);
   }
   if (hintText && state === 'play') actionBubble('Lire', hintText.x, hintText.y + bob);
+  if (playHint && state === 'play' && P.mode !== 'play') actionBubble('Jouer', playHint.x, playHint.y - 125 + bob);
 }
 function actionBubble(label, bx, by) {
   ctx.font = '600 22px Fredoka, "Trebuchet MS", sans-serif';
   ctx.textAlign = 'center'; ctx.lineWidth = 5; ctx.strokeStyle = '#3A1E12'; ctx.lineJoin = 'round';
   // même écart touche-mot que pour « Gratter », l'ensemble restant centré
   const shift = (ctx.measureText('Gratter').width - ctx.measureText(label).width) / 2;
-  if (!touchMode) drawSpr('hud/key', 1, bx - 40 - 34 + shift, by - 4, { sc: 0.9 });
+  if (!touchMode) drawSpr(pad.on ? 'hud/pad' : 'hud/key', pad.on ? 0 : 1, bx - 40 - 34 + shift, by - 4, { sc: 0.9 });
   const tx = touchMode ? bx : bx + 26;
   ctx.strokeText(label, tx, by + 26); ctx.fillStyle = '#FFF7E6'; ctx.fillText(label, tx, by + 26);
 }
@@ -1646,10 +2100,11 @@ function drawHUD() {
       drawSpr('hud/action', fr, x, y);
       const cd = k === 'bark' ? P.cdBark / (P.cdBarkMax || 1) : P.cdBite / (P.cdBiteMax || 1);
       if (cd > 0) drawSpr('hud/cooldown', Math.floor((1 - cd) * 8), x, y);
-      drawSpr('hud/key', key, x, y + 86);
+      if (pad.on) drawSpr('hud/pad', key ? 0 : 2, x, y + 86);      // A mord, X aboie
+      else drawSpr('hud/key', key, x, y + 86);
     });
   }
-  if (muted) text('son coupé (M)', 40, GH - 30, 28, '#FFF7E6', 'left', 500);
+  if (muted) text(pad.on ? 'son coupé (Select)' : 'son coupé (M)', 40, GH - 30, 28, '#FFF7E6', 'left', 500);
 }
 
 function drawFsButton() {
@@ -1693,36 +2148,64 @@ function veil(a) {
 function drawTitle() {
   veil(0.35);
   const bob = Math.sin(titleT * 2) * 8;
-  drawSpr('hud/title_logo', 0, GW / 2, 330 + bob, { sc: 2.1 });
-  const on = Math.floor(titleT * 1.6) % 2 === 0;
-  if (on) outlined(touchMode ? 'Touche l’écran pour jouer' : 'Appuie sur Entrée pour jouer', GW / 2, 760, 56, '#FFF7E6');
-  para('Aide Tecky le teckel à retrouver Alice', GW / 2, 850, 36, '#FFF7E6', 'center', 500, GW - 240, 46);
+  drawSpr('hud/title_logo', 0, GW / 2, 250 + bob, { sc: 1.75 });
+  outlined('Aide Tecky le teckel à retrouver Alice', GW / 2, 472, 38, '#FFF7E6');
+  drawMenu(titleT);
+  const r = recordLine(menu.items[menu.sel].mode);
+  const last = menuBox(menu.items.length - 1);
+  if (r) outlined(r, GW / 2, last.y + last.h + 58, 30, '#F2C14E');
+  if (!touchMode) text(pad.on ? 'Croix pour choisir, A pour valider' : '↑ ↓ pour choisir, Entrée pour valider',
+    GW / 2, GH - 28, 26, '#E9DCC8', 'center', 500);
+}
+/* entrées du menu : l'entrée choisie est claire, encadrée de deux os qui la montrent */
+function drawMenu(t) {
+  menu.items.forEach((it, i) => {
+    const b = menuBox(i), sel = i === menu.sel;
+    drawNine(sel ? 'hud/panel' : 'hud/panel_dark', b.x, b.y, b.w, b.h, 32);
+    const ink = sel ? '#3A1E12' : '#FFF7E6';
+    text(it.label, GW / 2, b.y + b.h * 0.48, 40, ink, 'center', 700);
+    if (it.sub) text(it.sub, GW / 2, b.y + b.h * 0.48 + 34, 26, sel ? '#6B5A4E' : '#E9DCC8', 'center', 500);
+    if (sel) {
+      const k = Math.sin(t * 6) * 6;
+      drawSpr('hud/bone', 0, b.x - 76 - k, b.y + b.h / 2 - 32);
+      drawSpr('hud/bone', 0, b.x + b.w + 12 + k, b.y + b.h / 2 - 32);
+    }
+  });
 }
 
 function drawEnd(win) {
-  veil(Math.min(0.65, overT));
+  veil(Math.min(win ? 0.65 : 0.72, overT));
   if (overT < 0.4) return;
-  const pw = 900, ph = 540, px = (GW - pw) / 2, py = (GH - ph) / 2;
-  drawNine('hud/panel', px, py, pw, ph, 32);
-  if (win) {
-    outlined('Tecky a retrouvé Alice !', GW / 2, py + 100, 64, '#F2C14E');
-    drawSpr('hud/portrait_tecky', 2, GW / 2 - 130, py + 140);
-    drawSpr('hud/portrait_alice', 2, GW / 2 + 34, py + 140);
-    const m = Math.floor(timePlayed / 60), s = Math.floor(timePlayed % 60);
-    const rows = [['Score', String(score)], ['Temps', m + ' min ' + String(s).padStart(2, '0') + ' s'],
-      ['Trésors déterrés', treasures + ' / ' + MAP.dig.length], ['Chiens mis en fuite', String(fled)]];
-    rows.forEach(([k, v], i) => {
-      text(k, px + 180, py + 320 + i * 46, 34, '#6B5A4E', 'left', 500);
-      text(v, px + pw - 180, py + 320 + i * 46, 34, '#3A1E12', 'right', 600);
-    });
-  } else {
-    outlined('Tecky est épuisé…', GW / 2, py + 120, 64, '#E24B4B');
-    drawSpr('hud/portrait_tecky', 3, GW / 2 - 48, py + 170);
-    const ny = para('Il reste des os et des saucisses sur le chemin pour reprendre des forces.', GW / 2, py + 330, 32, '#3A1E12', 'center', 500, pw - 160, 42);
-    text('Score : ' + score, GW / 2, ny + 30, 36, '#3A1E12', 'center', 600);
+  if (!win) {
+    // KO : le menu (reprendre, recommencer, menu principal) sur le voile
+    outlined('Tecky est épuisé…', GW / 2, 190, 72, '#E24B4B');
+    drawSpr('hud/portrait_tecky', 3, GW / 2 - 48, 230);
+    const ny = para('Il reste des os et des saucisses sur le chemin pour reprendre des forces.', GW / 2, 440, 32, '#FFF7E6', 'center', 500, 900, 42);
+    text('Score : ' + score, GW / 2, ny + 22, 36, '#F2C14E', 'center', 600);
+    if (overT > 1 && menu) drawMenu(overT);
+    return;
   }
+  const pw = 900, ph = 600, px = (GW - pw) / 2, py = (GH - ph) / 2;
+  drawNine('hud/panel', px, py, pw, ph, 32);
+  outlined('Tecky a retrouvé Alice !', GW / 2, py + 100, 64, '#F2C14E');
+  drawSpr('hud/portrait_tecky', 2, GW / 2 - 130, py + 140);
+  drawSpr('hud/portrait_alice', 2, GW / 2 + 34, py + 140);
+  const rows = [['Score', String(score)], ['Temps', fmtTime(timePlayed)],
+    ['Trésors déterrés', treasures + ' / ' + MAP.dig.length], [balade() ? 'Copains de jeu' : 'Chiens mis en fuite', String(fled)]];
+  rows.forEach(([k, v], i) => {
+    text(k, px + 180, py + 320 + i * 46, 34, '#6B5A4E', 'left', 500);
+    text(v, px + pw - 180, py + 320 + i * 46, 34, '#3A1E12', 'right', 600);
+    // meilleur score, meilleur temps : une étiquette dorée à côté de la valeur
+    if ((i === 0 && newRecord.score) || (i === 1 && newRecord.time)) {
+      ctx.save(); ctx.translate(px + pw - 98, py + 308 + i * 46); ctx.rotate(-0.08);
+      outlined('Record !', 0, 0, 26, '#F2C14E'); ctx.restore();
+    }
+  });
+  const r = recordLine(gameMode);
+  if (r) text(r, GW / 2, py + ph - 96, 26, '#6B5A4E', 'center', 500);
   if (overT > 1 && Math.floor(overT * 1.6) % 2 === 0)
-    text(touchMode ? 'Touche l’écran pour rejouer' : 'Entrée pour rejouer', GW / 2, py + ph - 40, 34, '#D7332B', 'center', 600);
+    text(touchMode ? 'Touche l’écran pour revenir au menu' : pad.on ? 'A pour revenir au menu' : 'Entrée pour revenir au menu',
+      GW / 2, py + ph - 40, 34, '#D7332B', 'center', 600);
 }
 
 function render() {
@@ -1744,7 +2227,9 @@ function render() {
     if (state === 'pause') {
       veil(0.5);
       outlined('Pause', GW / 2, GH / 2, 96, '#FFF7E6');
-      para(touchMode ? 'Touche l’écran pour reprendre' : 'P ou Entrée pour reprendre, F pour le plein écran', GW / 2, GH / 2 + 80, 36, '#FFF7E6', 'center', 500, GW - 240, 46);
+      para(touchMode ? 'Touche l’écran pour reprendre' : pad.on ? 'Start ou A pour reprendre' : 'P ou Entrée pour reprendre, F pour le plein écran',
+        GW / 2, GH / 2 + 80, 36, '#FFF7E6', 'center', 500, GW - 240, 46);
+      text('Mode ' + gameMode + ' · partie enregistrée automatiquement', GW / 2, GH / 2 + 160, 28, '#E9DCC8', 'center', 500);
       if (touchMode && canFullscreen() && !fsElement()) drawFsButton();
     }
     if (state === 'over') drawEnd(false);
@@ -1758,7 +2243,7 @@ let last = 0;
 function frame(ts) {
   const dt = Math.min(0.05, (ts - last) / 1000 || 0);
   last = ts;
-  if (state !== 'loading') update(dt);
+  if (state !== 'loading') { pollPad(); update(dt); }
   render();
   requestAnimationFrame(frame);
 }
@@ -1772,11 +2257,8 @@ function start() {
     : Promise.resolve();
   Promise.all([whenLoaded(atlas), whenLoaded(tilesImg), fontReady]).then(() => {
     buildGround();
-    reset();
-    // caméra de l'écran titre : la place du village
-    camX = clamp(MAP.title[0] - VW / 2, 0, MAP.w * TS - VW);
-    camY = clamp(MAP.title[1] - VH / 2, 0, MAP.h * TS - VH);
-    state = 'title';
+    buildClouds();
+    toTitle();
   });
   requestAnimationFrame(frame);
 }

@@ -183,10 +183,39 @@ def key_frames(scale):
     return out
 
 
-def action_frames(scale):
-    """Boutons ronds 40x40 : aboyer, mordre, gratter, lire (+ versions grisées)."""
+# boutons de manette (disposition Xbox : A en bas, B à droite, X à gauche, Y en haut), même cadre 40x24 que les touches
+PAD_BUTTONS = [("A", "#5DBB63"), ("B", "#E24B4B"), ("X", "#4A90D9"), ("Y", "#F2C14E"), ("Start", "#5E636C")]
+
+
+def pad_frames(scale):
     out = []
-    for kind in ("bark", "bite", "dig", "read"):
+    for k, col in PAD_BUTTONS:
+        wide = len(k) > 1
+        w = 40 if wide else 24
+        d = Drawing(w, 24)
+        if wide:
+            d.add(rect(1.5, 2.5, w - 3, 19, 9.5), col)
+            d.add(rect(3, 3.5, w - 6, 13, 6.5), "#FFFFFF", sil=False, opacity=0.18)
+        else:
+            d.add(circle(12, 12, 10.5), col)
+            d.add(ellipse(12, 9.5, 8, 6), "#FFFFFF", sil=False, opacity=0.22)
+        im = render_svg(d.svg(), w, 24, scale)
+        dr = ImageDraw.Draw(im)
+        f = font((13 if not wide else 10) * scale)
+        bb = dr.textbbox((0, 0), k, font=f)
+        ink = BROWN if k == "Y" else "#FFFFFF"
+        dr.text(((im.width - (bb[2] - bb[0])) / 2 - bb[0], (24 * scale - (bb[3] - bb[1])) / 2 - bb[1]),
+                k, font=f, fill=rgb(ink))
+        cell = Image.new("RGBA", (40 * scale, 24 * scale), (0, 0, 0, 0))
+        cell.alpha_composite(im, ((cell.width - im.width) // 2, 0))
+        out.append(cell)
+    return out
+
+
+def action_frames(scale):
+    """Boutons ronds 40x40 : aboyer, mordre, gratter, lire, jouer (mode balade) (+ versions grisées)."""
+    out = []
+    for kind in ("bark", "bite", "dig", "read", "play"):
         for dim in (False, True):
             d = Drawing(40, 40)
             d.add(circle(20, 20, 17.5), "#F2C14E" if not dim else "#8A8F99")
@@ -215,6 +244,13 @@ def action_frames(scale):
                       "#C98A4B" if not dim else "#8A8F99", sil=False, edge=True)
                 for x1, y in ((24, 13.4), (21, 17.1)):
                     d.raw(line(f"M11,{y} L{x1},{y}", ink, 1.6))
+            elif kind == "play":
+                # cœur (comme fx/heart) : jouer avec un chien en mode balade
+                heart = ("M16,23.5 C9,18.6 7,15.2 7,12.6 C7,9.9 9.1,8 11.6,8 C13.6,8 15.1,9.2 16,10.9 "
+                         "C16.9,9.2 18.4,8 20.4,8 C22.9,8 25,9.9 25,12.6 C25,15.2 23,18.6 16,23.5 Z")
+                tr = "translate(20 20.5) scale(1.12) translate(-16 -16)"
+                d.add(path(heart, tr), "#F2607E" if not dim else "#C9CCD2", sil=False, edge=True)
+                d.add(ellipse(11.8, 11.6, 2.2, 1.5, tr + " rotate(-30 11.8 11.6)"), "#FFFFFF", sil=False, opacity=0.8)
             else:
                 d.add(poly([(9, 11), (31, 11), (31, 17.5), (28.8, 21.5), (26.6, 17.5), (24.4, 21.5), (22.2, 17.5),
                             (20, 21.5), (17.8, 17.5), (15.6, 21.5), (13.4, 17.5), (11.2, 21.5), (9, 17.5)]),
@@ -326,6 +362,7 @@ def all_sprites(scale):
         "spr_hud_portrait_alice": alice_portrait(scale),
         "spr_hud_digits": digit_frames(scale),
         "spr_hud_key": key_frames(scale),
+        "spr_hud_pad": pad_frames(scale),
         "spr_hud_action": action_frames(scale),
         "spr_hud_cooldown": cooldown_frames(scale),
         "spr_hud_enemy_bar_bg": [bar_bg],

@@ -1,7 +1,9 @@
 const vm = require('vm'), fs = require('fs');
 const code = fs.readFileSync(__dirname + '/' + (process.argv[2] || 'game_full.js'), 'utf8');
 const noop = () => {};
-const ctxStub = new Proxy({}, { get: (t, k) => k === 'measureText' ? (s => ({ width: String(s).length * 18 })) : (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
+const grad = () => ({ addColorStop: noop });
+const ctxStub = new Proxy({}, { get: (t, k) => k === 'measureText' ? (s => ({ width: String(s).length * 18 })) :
+  k === 'createRadialGradient' || k === 'createLinearGradient' ? grad : (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 const canvas = () => ({ width: 0, height: 0, style: {}, getContext: () => ctxStub, addEventListener: noop, setPointerCapture: noop,
   getBoundingClientRect: () => ({ left: 0, top: 0 }) });
 class Img { set src(v) { this._s = v; this.complete = true; this.naturalWidth = 10; } get src() { return this._s; } }
@@ -77,9 +79,10 @@ setTimeout(() => {
   step(60 * 8);
   ok(run('state') === 'over', 'game over quand la vie tombe à 0 (état : ' + run('state') + ')');
   ok(intervals.length === 0, 'la musique de défaite ne boucle pas (séquenceur arrêté)');
-  run('pressed.ok = true'); step(1);
+  ok(run('menu.items.map(i => i.id).join()') === 'resume,restart,title', 'KO : reprendre (partie enregistrée), recommencer ou menu principal');
+  run('menu.sel = 1; pressed.ok = true'); step(1);
   advanceDialog();
-  ok(run('state') === 'play' && run('P.hp') === 6, 'on peut rejouer, avec 3 os sur 5');
+  ok(run('state') === 'play' && run('P.hp') === 6, 'on peut recommencer, avec 3 os sur 5');
   ok(run('Music.on') && run('Music.cur') === 'main', 'le thème reprend');
   // ramasser une balle
   run('var it = items.find(i => i.n === "ball"); P.x = it.x; P.y = it.y + 30; P.mode="free"; var sc = score;');

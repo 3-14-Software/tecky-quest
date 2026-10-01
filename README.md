@@ -6,10 +6,16 @@ ensuite, et Alice ne sort de sa cachette qu'une fois les trois retrouvées. En c
 chiens (dont les chiens de berger, qui chargent), gratte la terre pour déterrer des trésors, ramasse des os (qui rendent
 de la vie) et des saucisses (qui ajoutent un os de vie maximum). Il traverse campagne, route (gare aux voitures :
 mieux vaut passer par les passages piétons), village, zone industrielle, ferme, rivière (un seul pont), forêt et parc.
+La journée avance avec la recherche : la lumière baisse à chaque indice jusqu'au coucher du soleil.
+
+Deux modes au choix sur l'écran titre : **aventure** (les chiens mordent) et **balade**, pour les plus petits (personne ne
+se fait mal : les chiens attendent qu'on joue avec eux et deviennent des copains). La partie est enregistrée automatiquement dans le navigateur
+(« Continuer » sur l'écran titre, « Reprendre la partie » après un KO) et les records (meilleur score, meilleur temps)
+sont gardés pour chaque mode.
 
 Tout est généré par du code : sprites en SVG (aplats + contour), tileset, décors, HUD, musique chiptune, niveau.
 
-- **Jouer** : https://3-14-software.github.io/tecky-quest/ (clavier : flèches/ZQSD, X aboyer, C mordre (ou gratter, ou lire un panneau), P pause, F plein écran, M son ; tactile sur téléphone).
+- **Jouer** : https://3-14-software.github.io/tecky-quest/ (clavier : flèches/ZQSD, X aboyer, C mordre (ou gratter, ou lire un panneau), P pause, F plein écran, M son ; manette : stick ou croix, X/B aboyer, A mordre/gratter/lire et valider, Start pause, Select son ; tactile sur téléphone).
 - **Kit GameMaker Studio 2** (sprites en strips x1/x2, tileset, décor, HUD, sons) : voir [GAMEMAKER.md](GAMEMAKER.md).
 
 ## Construire
@@ -38,7 +44,8 @@ règles de vie, immunité du doberman aux aboiements, onde montrant la portée d
 morsure prioritaire sur le grattage quand un chien menace, contournement des obstacles par les chiens, placement des
 objets (rien dans l'eau, tout atteignable à pied depuis la niche), indices d'Alice, charge du chien de berger, poules,
 papillons, fontaine animée, circulation (bousculade, passages piétons), pont, eau animée, séquenceur musical, fanfare
-et musique de défaite. `tests/edges.py` détecte les sprites dont des pixels touchent le bord du cadre.
+et musique de défaite, sauvegarde (continuer, reprise après KO, stockage refusé), records par mode, mode balade,
+manette simulée, poussière, feuilles, ombres de nuages et coucher de soleil. `tests/edges.py` détecte les sprites dont des pixels touchent le bord du cadre.
 
 ## Organisation
 

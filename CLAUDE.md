@@ -50,6 +50,14 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   vaguelettes `fx/ripple` légères (une par tuile, un cycle sur deux, position tirée par `hash3`) et, en plus, des
   scintillements `fx/glint` (mini-étoiles, cadence propre), seulement en eau profonde (`deepWater()` : tout le contour plus une
   marge, sinon ils mordent sur le liseré des berges).
+- Ambiance (`game.js`, section « petits effets ») : poussière sous les pattes (`dusts`, `DUST`), feuilles qui tombent des
+  arbres et sapins visibles (`leaves`, `LEAF`, sprite `fx/leaf` : une image par couleur), ombres de nuages pré-rendues
+  (`clouds`, `CLOUD`, `buildClouds()`), coucher de soleil (`sun`, `SUN`, `drawLight()` : teinte multipliée sur le
+  monde seulement, halo, vignette, lampadaires, lumière des retrouvailles). `sun` suit `sunGoal()` = nombre d'indices
+  (4 aux retrouvailles) : il est donc restauré avec la sauvegarde.
+- Menus (`menu`, `openTitleMenu()`, `openOverMenu()`, `menuInput()`, `menuHit()`, `chooseMenu()`) : écran titre
+  (Continuer s'il y a une sauvegarde, Nouvelle aventure, Nouvelle balade, records du mode choisi) et KO (Reprendre la
+  partie, Recommencer, Menu principal). La victoire ramène au menu (`toTitle()`).
 
 ## Règles de jeu (à ne pas casser)
 
@@ -85,6 +93,26 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - Chien de berger (`berger`, `CHARGE`) : s'accroupit (« ! », sprite écrasé), charge en ligne droite si `clearPath()`,
   puis souffle (`tired`) ; un aboiement pendant l'accroupissement annule la charge. Tests : `clues.js`, `berger.js`, `map.js`.
 - Fin : retrouver Alice → dialogue + fanfare (`Music.start('win')`, une seule fois, le thème ne repart pas) → écran de victoire.
+- Sauvegarde (`STORE` : localStorage, repli en mémoire si refusé ; clés `tecky-quest-save` v1 et `tecky-quest-records`) :
+  `saveGame()` toutes les `SAVE_EVERY` (4) s de jeu si `safeToSave()` (aucun chien engagé à moins de 600 px), à chaque
+  indice et trésor (fin de réplique), en quittant la page (`pagehide`, onglet caché) ; jamais KO ni après la victoire.
+  Contenu : mode, place, os, score, temps, indices, trésors, objets au sol, chiens restants (`d.id` = index dans
+  `MAP.enemies`). `loadGame(s, rested)` : Continuer, ou reprise après KO (`rested` = vie pleine). La victoire efface la
+  sauvegarde et met à jour les records du mode (`recordRun()` : meilleur score, meilleur temps, nombre de victoires ;
+  `newRecord` pour les étiquettes « Record ! »). Toute nouvelle donnée de partie doit entrer dans `saveGame()` /
+  `loadGame()` (test : `save.js`).
+- Mode balade (`gameMode`, `balade()`, `PLAY`) : **personne ne se fait mal**. `hurtPlayer()` sans effet, `threatened()`
+  toujours faux, `doBite()` ne blesse aucun chien ; pas d'aboiement (doberman) ni de charge (berger). Les chiens viennent
+  attendre près de Tecky en sautillant (`wait`, patience `PLAY.patience`, puis ils rentrent, `d.calm`). Près d'un chien,
+  C devient « Jouer » (`biteAction()` → `'play'`, `playTarget()` : un nouveau chien passe avant trésor et panneau, un
+  copain après ; bulle « Jouer », icône `hud/action` 8) : `startPlay()`, Tecky et le chien sautillent (`fx/heart`), et le
+  chien devient un copain (`d.friend`, points du chien, compté dans `fled` = « Copains de jeu » à la fin, sauvegardé
+  dans `friends`). Un copain ne poursuit plus Tecky mais lui fait la fête quand il passe ; on peut rejouer sans points.
+  L'aboiement n'éloigne personne : il appelle les chiens touchés (`callDog()` : bond, cœur, ils accourent). Test : `balade.js`.
+- Manette (`pollPad()` appelé par `frame()` avant `update()`, `PAD_MAP`, `pad.on` → indices `hud/pad` au lieu de
+  `hud/key`) : un appui = une impulsion dans `pressed`, la croix et le stick donnent `pressed.up/down` pour les menus,
+  le stick gauche fait marcher (zone morte `PAD_DEAD`, vitesse selon l'inclinaison). Le clavier donne aussi
+  `pressed.up/down/left/right`. Test : `pad.js` (dans les tests, appeler `pollPad()` avant `update()`).
 
 ## Pièges connus
 
@@ -103,6 +131,10 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   copie générée (`tests/regen.py`) — la régénérer après toute modif de `game.js` (fait par `run_all.sh`).
 - Dialogues : 3 lignes maximum affichées ; chaîne longue = la découper en plusieurs répliques.
 - Le service worker de `docs/` est réseau d'abord avec repli cache : pas de version à incrémenter à chaque livraison.
+- Canvas simulé des tests (`sim.js`, `check_placement.js`) : il doit renvoyer un objet pour `createRadialGradient` /
+  `createLinearGradient` (nuages, lumière) ; tout nouvel appel de canvas qui renvoie un objet doit y être ajouté.
+- Tests sans `localStorage` : `STORE` passe en mémoire. Après un KO dans un test, le menu propose d'abord
+  « Reprendre la partie » : choisir `menu.sel` explicitement pour « Recommencer ».
 
 ## Reste à faire
 

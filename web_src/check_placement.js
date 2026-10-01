@@ -5,7 +5,8 @@ const vm = require('vm'), fs = require('fs');
 const html = fs.readFileSync(process.argv[2], 'utf8');
 const code = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'));
 const noop = () => {};
-const ctxStub = new Proxy({}, { get: (t, k) => k === 'measureText' ? (() => ({ width: 10 })) : noop });
+const ctxStub = new Proxy({}, { get: (t, k) => k === 'measureText' ? (() => ({ width: 10 })) :
+  k === 'createRadialGradient' || k === 'createLinearGradient' ? (() => ({ addColorStop: noop })) : noop });
 const canvas = () => ({ width: 0, height: 0, style: {}, getContext: () => ctxStub, addEventListener: noop, getBoundingClientRect: () => ({ left: 0, top: 0 }) });
 class Img { set src(v) { this.complete = true; this.naturalWidth = 1; } }
 const g = { console, Math, Promise, setTimeout, JSON, String, Number, Array, Object, navigator: {}, screen: {},
