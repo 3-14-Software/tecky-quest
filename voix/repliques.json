@@ -627,6 +627,28 @@
     },
     {
       "voix": "tecky",
+      "fichier": "tecky-8ef8d480",
+      "personnage": "Tecky",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Le tunnel, c’est pour les voitures !",
+      "affiche": "Le tunnel, c’est pour les voitures !",
+      "contexte": "Tecky pousse contre le bord de la carte"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-439ced13",
+      "personnage": "Tecky",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Alice n’a pas pu aller si loin !",
+      "affiche": "Alice n’a pas pu aller si loin !",
+      "contexte": "Tecky pousse contre le bord de la carte"
+    },
+    {
+      "voix": "tecky",
       "fichier": "tecky-8afd030a",
       "personnage": "Tecky",
       "type": "bulle",

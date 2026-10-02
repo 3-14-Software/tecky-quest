@@ -4,8 +4,8 @@ eval(base + `setTimeout(() => {
   run('audioOn(); pressed.ok = true'); step(1); advanceDialog();
   run('dogs = []; P.inv = 99;');
   ok(run('MAP.w') === 96 && run('MAP.h') === 64, 'carte de 96 x 64 tuiles');
-  ok(run('groundChunks.length') === 24 && run('groundChunks.every(k => k.w <= 1024 + 2 * CM && k.h <= 1024 + 2 * CM)'),
-     'sol pré-rendu en 24 blocs de 1024 px au plus');
+  ok(run('groundChunks.length') === 24 + 22 && run('groundChunks.every(k => k.w <= 1024 + 2 * CM && k.h <= 1024 + 2 * CM)'),
+     'sol pré-rendu en 24 blocs de 1024 px au plus (et 22 pour la marge de la lisière)');
   const walkDown = (x, n) => { run('P.x = ' + x + '; P.y = 40.4*64; P.mode = "free";'); step(n, 'held.down = true'); run('held.down = false'); return run('P.y') / 64; };
   ok(walkDown('80*64', 200) > 47, 'on traverse la rivière par le pont');
   ok(walkDown('76*64', 200) < 42.2, 'ailleurs, la rivière bloque');

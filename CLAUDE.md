@@ -33,7 +33,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   `villageois.py` (villageois sans quête, vus de face comme ceux de npcs.py, dont il réutilise les outils),
   `npcs.py` (le facteur Marcel et la voisine Mamie Rose, comme `farmer.py` ; `letter_frames()` : la lettre),
   `critters.py` (écureuil, chats roux et noir, de profil, 32x32), `vehicles.py` (voitures, camionnette, bus),
-  `butterflies.py` (papillons, vus de dessus), `items.py`, `decor.py`, `tiles.py`, `hud.py` :
+  `butterflies.py` (papillons, vus de dessus), `lisiere.py` (le bord de la carte : fourrés, tunnel de la route, et
+  `decor()`, le placement de la lisière), `items.py`, `decor.py`, `tiles.py`, `hud.py` :
   dessins et animations. `tiles.py` : tileset Wang/marching squares de 16 tuiles par transition (bits NO=1, NE=2, SO=4, SE=8),
   tuile 0 vide, 16 colonnes, `PAIRS`, `PRIORITY`, `resolve()`. Là où trois terrains se rencontrent (ou deux sans
   paire), `needs_composite()` : la version web pose une tuile composée (`composite()` : chaque terrain par-dessus le
@@ -69,9 +70,20 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   de la rivière (x 30..64) : chariot élévateur, camion,
   conteneurs sous le portique (pieds dans `RAILS`), cabane du gardien, voie ferrée du quai (`rail`, à plat), bittes,
   péniche. Terrains ajoutés : `field` (champ), `forest` (sous-bois).
+- Bord de la carte (pas de mur invisible muet) : la caméra déborde de `EDGE.cam` (une tuile) au-delà de la carte
+  (`camClampX()` / `camClampY()`, partout sauf le cadrage fixe de la scène de fin) et montre une lisière
+  (`MAP.edge.decor` = `EDGE_DECOR`, générée par `edge_decor(corner_grid(), edge_keep())` dans pack_web : fourrés et
+  arbres, sapins le long de la forêt, jamais par-dessus ce que liste `edge_keep()`) sur un sol qui prolonge celui du
+  bord (`MAP.edge.ring`, `lisiere.RING` tuiles : `pick()` de `build_map()` avec les coins ramenés sur le bord ; la
+  route, la rivière et le ruisseau continuent, `waterAt()` aussi). Aux deux bouts de la grande route, un tunnel
+  (`ROAD_TUNNELS`, sprite `decor/tunnel`, en miroir à l'est) où les voitures disparaissent ; sa butte est un obstacle
+  (`FOOT.tunnel`, `EDGE_SOLIDS`) : Tecky s'arrête devant la bouche. La lisière n'est pas un obstacle : c'est `BOUND`
+  (`offMap()`, dans `blockedFeet()`) qui arrête au bord. Tecky qui y pousse sans avancer le dit (`edgeBump()`,
+  `EDGE.push` s, au plus une fois toutes les `EDGE.again` s). Les bulles de mots restent dans l'écran. Test : `edge.js`.
 - `web_src/game.js` : tout le moteur. Monde en pixels x2 (tuile = 64), caméra 960x540, interface 1920x1080 (`GW`/`GH`).
-  Sol pré-rendu en blocs de 16 tuiles (`groundChunks`, 1024 px) : une seule image de la carte dépasserait la taille
-  de canevas permise sur certains téléphones. Décors `FLAT` (pont, bac à sable) dessinés sous les personnages.
+  Sol pré-rendu en blocs de 16 tuiles (`groundChunks`, 1024 px ; `buildChunk()`, `groundTile()`, plus des bandes
+  pour la marge de la lisière) : une seule image de la carte dépasserait la taille de canevas permise sur certains
+  téléphones. Décors `FLAT` (pont, bac à sable) dessinés sous les personnages.
   Décors animés (`decor.ANIMATED`, ex. la fontaine : la fonction reçoit la phase 0..1 ; fps dans `MAP.decorFps`).
   Eau animée : le tileset web a une eau unie (`tiles.tileset(S, water_marks=False)`) et `drawWater()` y sème des
   vaguelettes `fx/ripple` légères (une par tuile, un cycle sur deux, position tirée par `hash3`) et, en plus, des

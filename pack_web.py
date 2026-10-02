@@ -28,6 +28,7 @@ import farmer
 import hens
 import hud
 import items
+import lisiere
 import tecky
 import vehicles
 import music
@@ -113,6 +114,9 @@ def corner_grid():
 
 # pont : coins (x0, y0, x1, y1) qui ne sont plus de l'eau, sous le tablier du décor « bridge »
 BRIDGES = [(79, 41, 81, 46)]
+# tunnels aux deux bouts de la grande route (lisiere.py) : x du bord, y du pied de la butte (la route : y 17,5..21,5),
+# en miroir ? Les voitures y disparaissent ; Tecky s'arrête devant.
+ROAD_TUNNELS = [(0, 22.0, False), (MW, 22.0, True)]
 
 
 DECOR = [
@@ -402,6 +406,24 @@ def forest_firs():
 
 
 DECOR += forest_firs()
+
+
+def edge_keep():
+    """Ce que la lisière ne doit jamais cacher : objets, personnages, bêtes, panneaux, terriers…"""
+    return ([(x, y) for _, x, y, *_ in ITEMS + ENEMIES + HENS + DUCKS + CRITTERS + BUTTERFLIES + COWS + VILLAGERS]
+            + list(DIG)
+            + LETTERS + TOYS + BALLS + BABIES + [p for ab in TUNNELS for p in ab] + [(x, y) for x, y, _ in SIGNS]
+            + [FARMER, POSTMAN, NEIGHBOR, POMPON, LEON, IRIS, PIQUETTE, START, ALICE])
+
+
+def edge_decor(g, keep):
+    """Lisière (lisiere.py) : fourrés, arbres, sapins et tunnels de la route dans la marge autour de la carte.
+    g : grille des coins (corner_grid) ; keep : points (x, y) à ne pas cacher (edge_keep)."""
+    forest = lambda x, y: g[min(max(round(y), 0), MH)][min(max(round(x), 0), MW)] == "forest"
+    return lisiere.decor(g, MW, MH, keep, forest, ROAD_TUNNELS)
+
+
+EDGE = edge_decor(corner_grid(), edge_keep())
 FULL_VARIANTS = {"dirt": [9, 10], "road": [11, 12], "paving": [13], "concrete": [14, 15]}
 OV = {n: i for i, (n, _) in enumerate(tiles.OVERLAYS)}
 
@@ -414,24 +436,34 @@ def build_map():
     rnd = random.Random(7)
     ground = []
     COMPOSITES.clear()
+
+    def pick(cs, rnd):                                # tuile pour ses quatre coins (NO, NE, SO, SE)
+        up, lo, bits = tiles.resolve(cs)
+        if tiles.needs_composite(cs):
+            if tuple(cs) not in COMPOSITES:
+                COMPOSITES.append(tuple(cs))
+            return tiles.COMPOSITE_BASE + COMPOSITES.index(tuple(cs))
+        if up == "grass":
+            return rnd.choice([1, 1, 1, 1, 2, 2, 3, 4])
+        idx = tiles.tile_index(up, bits, "grass" if bits == 15 else lo)
+        if bits == 15 and up in FULL_VARIANTS and rnd.random() < 0.35:
+            idx = rnd.choice(FULL_VARIANTS[up])
+        return idx
     for ty in range(MH):
         for tx in range(MW):
-            cs = [g[ty][tx], g[ty][tx + 1], g[ty + 1][tx], g[ty + 1][tx + 1]]
-            up, lo, bits = tiles.resolve(cs)
-            if tiles.needs_composite(cs):
-                if tuple(cs) not in COMPOSITES:
-                    COMPOSITES.append(tuple(cs))
-                idx = tiles.COMPOSITE_BASE + COMPOSITES.index(tuple(cs))
-            elif up == "grass":
-                idx = rnd.choice([1, 1, 1, 1, 2, 2, 3, 4])
-            else:
-                idx = tiles.tile_index(up, bits, "grass" if bits == 15 else lo)
-                if bits == 15 and up in FULL_VARIANTS and rnd.random() < 0.35:
-                    idx = rnd.choice(FULL_VARIANTS[up])
-            ground.append(idx)
+            ground.append(pick([g[ty][tx], g[ty][tx + 1], g[ty + 1][tx], g[ty + 1][tx + 1]], rnd))
     # marquages de la route
     for tx in range(MW):
         ground[19 * MW + tx] = 5 if tx % 2 == 0 else tiles.tile_index("road", 15)
+    # sol de la lisière : lisiere.RING tuiles autour de la carte, qui prolongent celles du bord (coins ramenés sur le
+    # bord : la route, ses marquages, la rivière et le ruisseau continuent tout droit)
+    R, rr, ring = lisiere.RING, random.Random(13), []
+    at = lambda x, y: g[min(max(y, 0), MH)][min(max(x, 0), MW)]
+    for ty in range(-R, MH + R):
+        for tx in range(-R, MW + R):
+            if not (0 <= tx < MW and 0 <= ty < MH):
+                idx = pick([at(tx, ty), at(tx + 1, ty), at(tx, ty + 1), at(tx + 1, ty + 1)], rr)
+                ring.append([tx, ty, (5 if tx % 2 == 0 else tiles.tile_index("road", 15)) if ty == 19 else idx])
     for tx in CROSSINGS:                              # passages piétons (dont chemin de la ferme et du pont)
         for ty in (18, 19, 20):
             ground[ty * MW + tx] = ground[ty * MW + tx + 1] = 7
@@ -482,6 +514,8 @@ def build_map():
         "w": MW, "h": MH, "ts": TS, "ground": ground, "over": over, "water": water,
         "hole": ovrow + OV["trou creusé (trésor)"],
         "decor": [[n, px(x), px(y)] for n, x, y in DECOR],
+        # lisière (lisiere.py) : sol de la marge autour de la carte (tx, ty, tuile) et ses décors (nom, x, y, miroir)
+        "edge": {"r": R, "ring": ring, "decor": [[n, px(x), px(y), f] for n, x, y, f in EDGE]},
         "items": [[n, px(x), px(y)] for n, x, y in ITEMS],
         "enemies": [[n, px(x), px(y)] for n, x, y in ENEMIES],
         "hens": [[n, px(x), px(y), q] for n, x, y, q in HENS],
@@ -592,6 +626,8 @@ def collect():
         out.append((f"fx/{n}", [render_svg(s, size, size, S, PAD) for s in fn()], o, True))
     for n, (fn, (w, h), (ox, oy)) in decor.DECOR.items():
         out.append((f"decor/{n}", [render_svg(dr.svg(), w, h, S, PAD) for dr in decor.frames(n)], (ox * S + M, oy * S + M), True))
+    for n, (fn, (w, h), (ox, oy)) in lisiere.DECOR.items():        # la lisière, au bord de la carte
+        out.append((f"decor/{n}", [render_svg(fn().svg(), w, h, S, PAD)], (ox * S + M, oy * S + M), True))
     for n, ims in hud.all_sprites(S).items():
         key = "hud/" + n.replace("spr_hud_", "").replace("spr_", "")
         o = {"spr_hud_arrow": (40, 40), "spr_hud_arrow_icon": (22, 22)}.get(n, (0, 0))
@@ -644,23 +680,31 @@ def pack(entries, width=2048, pad=2):
 
 
 def preview(m, atlas, meta, tileset):
-    img = Image.new("RGBA", (MW * TS, MH * TS))
+    e = m["edge"]
+    o = e["r"] * TS                       # la marge de la lisière, autour de la carte
+    img = Image.new("RGBA", (MW * TS + 2 * o, MH * TS + 2 * o))
+    tile = lambda idx: tileset.crop(((idx % 16) * TS, (idx // 16) * TS, (idx % 16 + 1) * TS, (idx // 16 + 1) * TS))
     for i, idx in enumerate(m["ground"]):
-        tile = tileset.crop(((idx % 16) * TS, (idx // 16) * TS, (idx % 16 + 1) * TS, (idx // 16 + 1) * TS))
-        img.paste(tile, ((i % MW) * TS, (i // MW) * TS))
-        o = m["over"][i]
-        if o:
-            ov = tileset.crop(((o % 16) * TS, (o // 16) * TS, (o % 16 + 1) * TS, (o // 16 + 1) * TS))
-            img.alpha_composite(ov, ((i % MW) * TS, (i // MW) * TS))
-    things = [("decor/" + n, x, y) for n, x, y in m["decor"]]
-    things += [("item/" + n, x, y) for n, x, y in m["items"]]
-    things += [(f"{n}/idle/down", x, y) for n, x, y in m["enemies"]]
-    things += [(f"{n}/idle/right", x, y) for n, x, y, *_ in m["hens"]]
-    things += [("tecky/idle/down", *m["start"]), ("alice/idle/down", *m["alice"])]
-    for key, x, y in sorted(things, key=lambda t: t[2]):
-        e = meta[key]
-        sx, sy, sw, sh, dx, dy = e["f"][0]
-        img.alpha_composite(atlas.crop((sx, sy, sx + sw, sy + sh)), (int(x - e["o"][0] + dx), int(y - e["o"][1] + dy)))
+        img.paste(tile(idx), ((i % MW) * TS + o, (i // MW) * TS + o))
+        if m["over"][i]:
+            img.alpha_composite(tile(m["over"][i]), ((i % MW) * TS + o, (i // MW) * TS + o))
+    for tx, ty, idx in e["ring"]:
+        img.paste(tile(idx), (tx * TS + o, ty * TS + o))
+    things = [("decor/" + n, x, y, False) for n, x, y in m["decor"]]
+    things += [("decor/" + n, x, y, f) for n, x, y, f in e["decor"]]
+    things += [("item/" + n, x, y, False) for n, x, y in m["items"]]
+    things += [(f"{n}/idle/down", x, y, False) for n, x, y in m["enemies"]]
+    things += [(f"{n}/idle/right", x, y, False) for n, x, y, *_ in m["hens"]]
+    things += [("tecky/idle/down", *m["start"], False), ("alice/idle/down", *m["alice"], False)]
+    for key, x, y, flip in sorted(things, key=lambda t: t[2]):
+        sp = meta[key]
+        sx, sy, sw, sh, dx, dy = sp["f"][0]
+        im = atlas.crop((sx, sy, sx + sw, sy + sh))
+        if flip:                          # comme drawSpr(…, { flip: true }) : miroir autour de l'origine
+            im, x0 = im.transpose(Image.FLIP_LEFT_RIGHT), x + sp["o"][0] - dx - sw
+        else:
+            x0 = x - sp["o"][0] + dx
+        img.alpha_composite(im, (int(x0) + o, int(y - sp["o"][1] + dy) + o))
     img.convert("RGB").resize((img.width // 2, img.height // 2), Image.LANCZOS).save(os.path.join(WEB, "map_preview.png"))
 
 

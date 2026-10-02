@@ -655,25 +655,42 @@ cv.addEventListener('pointercancel', endStick);
 /* ------------------------------------------------------------------ sol (pré-rendu) */
 /* Le sol est pré-rendu en blocs de CHUNK tuiles (1024 px) : une seule image de toute la carte dépasserait
    la taille de canevas permise sur certains téléphones. Chaque bloc déborde de CM px sur ses voisins
-   (mêmes pixels) pour qu'aucune jointure n'apparaisse à l'échelle d'affichage. */
+   (mêmes pixels) pour qu'aucune jointure n'apparaisse à l'échelle d'affichage. Autour de la carte, la marge de la
+   lisière (MAP.edge.ring : MAP.edge.r tuiles qui prolongent le bord) a ses propres blocs, en bandes. */
 const CHUNK = 16, CM = 2;
-let groundChunks = [];
+let groundChunks = [], ringTiles = null;
+function groundTile(tx, ty) {              // [tuile, détail] du sol, dans la carte ou dans la marge (null au-delà)
+  if (tx >= 0 && ty >= 0 && tx < MAP.w && ty < MAP.h) { const i = ty * MAP.w + tx; return [MAP.ground[i], MAP.over[i]]; }
+  const idx = ringTiles.get(tx + ',' + ty);
+  return idx === undefined ? null : [idx, 0];
+}
+function buildChunk(cx, cy, w, h) {
+  const c = document.createElement('canvas');
+  c.width = w * TS + 2 * CM; c.height = h * TS + 2 * CM;
+  const g = c.getContext('2d');
+  const blit = (idx, tx, ty) => g.drawImage(tilesImg, (idx % 16) * TS, Math.floor(idx / 16) * TS, TS, TS,
+    (tx - cx) * TS + CM, (ty - cy) * TS + CM, TS, TS);
+  for (let ty = cy - 1; ty < cy + h + 1; ty++) for (let tx = cx - 1; tx < cx + w + 1; tx++) {
+    const t = groundTile(tx, ty);
+    if (!t) continue;
+    blit(t[0], tx, ty);
+    if (t[1]) blit(t[1], tx, ty);
+  }
+  groundChunks.push({ c, x: cx * TS - CM, y: cy * TS - CM, w: c.width, h: c.height });
+}
 function buildGround() {
   groundChunks = [];
-  for (let cy = 0; cy < MAP.h; cy += CHUNK) for (let cx = 0; cx < MAP.w; cx += CHUNK) {
-    const w = Math.min(CHUNK, MAP.w - cx), h = Math.min(CHUNK, MAP.h - cy);
-    const c = document.createElement('canvas');
-    c.width = w * TS + 2 * CM; c.height = h * TS + 2 * CM;
-    const g = c.getContext('2d');
-    const blit = (idx, tx, ty) => g.drawImage(tilesImg, (idx % 16) * TS, Math.floor(idx / 16) * TS, TS, TS,
-      (tx - cx) * TS + CM, (ty - cy) * TS + CM, TS, TS);
-    for (let ty = Math.max(0, cy - 1); ty < Math.min(MAP.h, cy + h + 1); ty++)
-      for (let tx = Math.max(0, cx - 1); tx < Math.min(MAP.w, cx + w + 1); tx++) {
-        const i = ty * MAP.w + tx;
-        blit(MAP.ground[i], tx, ty);
-        if (MAP.over[i]) blit(MAP.over[i], tx, ty);
-      }
-    groundChunks.push({ c, x: cx * TS - CM, y: cy * TS - CM, w: c.width, h: c.height });
+  ringTiles = new Map(MAP.edge.ring.map(([tx, ty, idx]) => [tx + ',' + ty, idx]));
+  for (let cy = 0; cy < MAP.h; cy += CHUNK) for (let cx = 0; cx < MAP.w; cx += CHUNK)
+    buildChunk(cx, cy, Math.min(CHUNK, MAP.w - cx), Math.min(CHUNK, MAP.h - cy));
+  const R = MAP.edge.r;                    // la marge : bandes nord et sud (coins compris), puis ouest et est
+  for (let cx = -R; cx < MAP.w + R; cx += CHUNK) {
+    const w = Math.min(CHUNK, MAP.w + R - cx);
+    buildChunk(cx, -R, w, R); buildChunk(cx, MAP.h, w, R);
+  }
+  for (let cy = 0; cy < MAP.h; cy += CHUNK) {
+    const h = Math.min(CHUNK, MAP.h - cy);
+    buildChunk(-R, cy, R, h); buildChunk(MAP.w, cy, R, h);
   }
 }
 function drawGround(vx, vy) {
@@ -687,7 +704,7 @@ function drawGround(vx, vy) {
    s'étirent en dérivant un peu, puis s'effacent, à un endroit qui change à chaque cycle (une par tuile, un cycle sur
    deux, chaque tuile avec son décalage). En plus, des scintillements (fx/glint, mini-étoiles) avec leur propre
    cadence et leur propre place, en bref éclat au milieu de leur cycle. Uniquement en eau profonde : tout le contour,
-   plus une marge pour le liseré clair du bord, doit être dans l'eau. */
+   plus une marge pour le liseré clair du bord, doit être dans l'eau. Marge de la lisière comprise (l'eau y continue). */
 const RIPPLE = { cycle: 2.4, show: 0.5, drift: 8, glintCycle: 2.8, glintShow: 0.4 };
 const deepWater = (x, y) => [[-30, 0], [30, 0], [0, -18], [0, 22], [-22, -12], [22, -12], [-22, 16], [22, 16]]
   .every(([dx, dy]) => waterAt(x + dx, y + dy));
@@ -698,16 +715,17 @@ function hash3(a, b, c) {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 function drawWater(vx, vy, time) {
-  if (!waterTiles) {                       // tuiles ayant au moins un coin d'eau
-    waterTiles = new Uint8Array(MAP.w * MAP.h);
-    const W1 = MAP.w + 1, c = (a, b) => MAP.water[b * W1 + a];
-    for (let j = 0; j < MAP.h; j++) for (let i = 0; i < MAP.w; i++)
-      waterTiles[j * MAP.w + i] = c(i, j) | c(i + 1, j) | c(i, j + 1) | c(i + 1, j + 1);
+  const R = MAP.edge.r, WR = MAP.w + 2 * R;
+  if (!waterTiles) {                       // tuiles ayant au moins un coin d'eau (marge comprise)
+    waterTiles = new Uint8Array(WR * (MAP.h + 2 * R));
+    const W1 = MAP.w + 1, c = (a, b) => MAP.water[clamp(b, 0, MAP.h) * W1 + clamp(a, 0, MAP.w)];
+    for (let j = -R; j < MAP.h + R; j++) for (let i = -R; i < MAP.w + R; i++)
+      waterTiles[(j + R) * WR + i + R] = c(i, j) | c(i + 1, j) | c(i, j + 1) | c(i + 1, j + 1);
   }
   const n = ATLAS['fx/ripple'].f.length, ng = ATLAS['fx/glint'].f.length;
-  for (let ty = Math.max(0, Math.floor(vy / TS)); ty <= Math.min(MAP.h - 1, Math.floor((vy + VH) / TS)); ty++)
-    for (let tx = Math.max(0, Math.floor(vx / TS)); tx <= Math.min(MAP.w - 1, Math.floor((vx + VW) / TS)); tx++) {
-      if (!waterTiles[ty * MAP.w + tx]) continue;
+  for (let ty = Math.max(-R, Math.floor(vy / TS)); ty <= Math.min(MAP.h + R - 1, Math.floor((vy + VH) / TS)); ty++)
+    for (let tx = Math.max(-R, Math.floor(vx / TS)); tx <= Math.min(MAP.w + R - 1, Math.floor((vx + VW) / TS)); tx++) {
+      if (!waterTiles[(ty + R) * WR + tx + R]) continue;
       // vaguelette : un cycle sur deux en moyenne
       let c = time / RIPPLE.cycle + hash3(tx, ty, 7), cyc = Math.floor(c), u = c - cyc;
       if (hash3(tx, cyc, ty) < RIPPLE.show) {
@@ -752,6 +770,8 @@ const FOOT = {
   // forêt et parc (champignons, fougère et bac à sable : pas de collision)
   fir: [-18, -16, 18, 0], stump: [-20, -16, 20, 0], log: [-54, -22, 56, 0], slide: [-56, -14, 58, 0],
   swing: [-58, -12, 58, 0], fountain: [-52, -40, 52, 0], playhouse: [-44, -50, 44, -2],
+  // lisière : la butte du tunnel, jusqu'à la bouche (Tecky s'arrête devant au lieu d'y fourrer la tête)
+  tunnel: [-200, -420, 40, 0],
 };
 const FLAT = new Set(['bridge', 'sandbox', 'burrow', 'rail', 'dog_bed']);   // posés à plat : dessinés sous les personnages
 // collisions en plusieurs morceaux : garde-corps du pont (son tablier n'est pas de l'eau, voir BRIDGES dans
@@ -759,17 +779,20 @@ const FLAT = new Set(['bridge', 'sandbox', 'burrow', 'rail', 'dog_bed']);   // p
 const RAILS = { bridge: [[-80, -320, -62, 0], [62, -320, 80, 0]], crane: [[-204, -16, -156, 0], [156, -16, 204, 0]],
   goal_net: [[-90, -58, -72, 0], [72, -58, 90, 0], [-80, -64, 80, -52]] };   // filet de Léon : côtés et fond
 let solids = [];
-function waterAt(x, y) {
+// limites des pieds (rectangle [x0, y0] -> [x1, y1]) au bord de la carte ; au-delà, la lisière (voir « bord de la carte »)
+const BOUND = { side: 12, top: 28, bottom: 4 };
+const offMap = (x0, y0, x1, y1) =>
+  x0 < BOUND.side || y0 < BOUND.top || x1 > MAP.w * TS - BOUND.side || y1 > MAP.h * TS - BOUND.bottom;
+function waterAt(x, y) {           // (au-delà du bord, l'eau continue tout droit, comme le sol de la lisière)
   const fx = x / TS, fy = y / TS;
   const i = Math.floor(fx), j = Math.floor(fy);
-  if (i < 0 || j < 0 || i >= MAP.w || j >= MAP.h) return false;
-  const W1 = MAP.w + 1, c = (a, b) => MAP.water[b * W1 + a];
+  const W1 = MAP.w + 1, c = (a, b) => MAP.water[clamp(b, 0, MAP.h) * W1 + clamp(a, 0, MAP.w)];
   const u = fx - i, v = fy - j;
   const val = c(i, j) * (1 - u) * (1 - v) + c(i + 1, j) * u * (1 - v) + c(i, j + 1) * (1 - u) * v + c(i + 1, j + 1) * u * v;
   return val > 0.42;
 }
 function blockedPoint(x, y) {
-  if (x < 12 || y < 40 || x > MAP.w * TS - 12 || y > MAP.h * TS - 4) return true;
+  if (offMap(x, y - 12, x, y)) return true;
   if (waterAt(x, y)) return true;
   for (const s of solids) if (x > s[0] && x < s[2] && y > s[1] && y < s[3]) return true;
   return false;
@@ -779,7 +802,7 @@ function blockedPoint(x, y) {
    Eau : échantillonnage du bord, suffisant car ses contours sont arrondis. */
 function blockedFeet(x, y, hw) {
   const x0 = x - hw, x1 = x + hw, y0 = y - 12, y1 = y;
-  if (x0 < 12 || y0 < 28 || x1 > MAP.w * TS - 12 || y1 > MAP.h * TS - 4) return true;
+  if (offMap(x0, y0, x1, y1)) return true;
   for (const s of solids) if (x1 > s[0] && x0 < s[2] && y1 > s[1] && y0 < s[3]) return true;
   if (train && trainHit(x0, y0, x1, y1)) return true;      // Titine, le petit train du port (obstacle qui bouge)
   for (const [px, py] of [[x0, y1], [x1, y1], [x0, y0], [x1, y0], [x, y0], [x, y1], [x0, y - 6], [x1, y - 6]])
@@ -797,6 +820,32 @@ function moveActor(a, dx, dy, hw, noSlide) {
   else if (dy && !noSlide) {
     for (const s of [6, -6]) if (!blockedFeet(a.x + s, a.y + dy, hw)) { a.x += s * 0.5; break; }
   }
+}
+
+/* ------------------------------------------------------------------ bord de la carte */
+/* La carte est bordée d'une lisière (MAP.edge.decor, lisiere.py : fourrés, arbres, sapins le long de la forêt) et, aux
+   deux bouts de la grande route, de l'entrée d'un tunnel où les voitures disparaissent. Elle est dessinée dans une
+   marge que la caméra peut montrer au-delà des bords (EDGE.cam), sur un sol qui prolonge celui du bord (buildGround).
+   Ce n'est pas un obstacle : c'est le bord de la carte (BOUND) qui arrête Tecky, juste devant. S'il pousse contre le
+   bord sans avancer pendant EDGE.push s, il le dit (pas plus d'une fois toutes les EDGE.again s de jeu). */
+const EDGE = { cam: 64, push: 0.6, again: 8, near: 8 };
+const EDGE_DECOR = MAP.edge.decor.map(([n, x, y, flip]) => ({ key: 'decor/' + n, n, x, y, flip }));
+const EDGE_SOLIDS = EDGE_DECOR.filter(d => FOOT[d.n]).map(({ n, x, y, flip }) => {   // (ajoutés à solids par reset)
+  const [a, b, c, e] = FOOT[n];
+  return flip ? [x - c, y + b, x - a, y + e] : [x + a, y + b, x + c, y + e];
+});
+const camClampX = x => clamp(x, -EDGE.cam, MAP.w * TS - VW + EDGE.cam);
+const camClampY = y => clamp(y, -EDGE.cam, MAP.h * TS - VH + EDGE.cam);
+function edgeBump(dt, ix, iy, ox, oy) {
+  // un pas de plus vers l'extérieur sortirait de la carte, ou entrerait dans la butte d'un tunnel
+  const hw = 16, x = P.x + Math.sign(ix) * EDGE.near, y = P.y + Math.sign(iy) * EDGE.near;
+  const x0 = x - hw, x1 = x + hw, y0 = y - 12, y1 = y;
+  const out = offMap(x0, y0, x1, y1) || EDGE_SOLIDS.some(s => x1 > s[0] && x0 < s[2] && y1 > s[1] && y0 < s[3]);
+  P.edgeT = out && Math.hypot(P.x - ox, P.y - oy) < 1 ? P.edgeT + dt : 0;
+  if (P.edgeT < EDGE.push || timePlayed - P.edgeAt < EDGE.again) return;
+  P.edgeT = 0; P.edgeAt = timePlayed;
+  const [r0, r1] = MAP.traffic.road, tunnel = ix !== 0 && P.y > r0 && P.y < r1 + 24;   // au bout de la grande route
+  addWordPop(tunnel ? 'Le tunnel, c’est pour les voitures !' : 'Alice n’a pas pu aller si loin !', P.x, P.y - 120, 'tecky');
 }
 
 /* Déplacement d'un chien avec contournement : s'il est bloqué, il longe l'obstacle
@@ -951,11 +1000,12 @@ function reset() {
     for (const f of [FOOT[n], ...(RAILS[n] || [])]) if (f) solids.push([x + f[0], y + f[1], x + f[2], y + f[3]]);
     return { key: 'decor/' + n, x, y, n };
   });
+  solids.push(...EDGE_SOLIDS);                       // les buttes des tunnels, au bord de la carte
   P = new Actor('tecky', MAP.start[0], MAP.start[1]);
   // 5 emplacements d'os (2 PV par os) ; Tecky démarre avec 3 os pleins
   const bones = facile() ? 5 : START_BONES;
   Object.assign(P, { hp: bones * 2, hpMax: bones * 2, boneFx: 0, inv: 0, bumpT: 0, cdBark: 0, cdBite: 0, cdSniff: 0,
-    mode: 'free', kx: 0, ky: 0, hitDone: false });
+    mode: 'free', kx: 0, ky: 0, hitDone: false, edgeT: 0, edgeAt: -99 });
   alice = new Actor('alice', MAP.alice[0], MAP.alice[1]);
   alice.fps = Object.assign({}, FPS, { walk: 10 });
   alice.found = false;
@@ -994,8 +1044,8 @@ function reset() {
   fxs = []; pops = []; rings = []; dusts = []; leaves = []; leafTrees = null;
   score = 0; timePlayed = 0; fled = 0; treasures = 0; shake = 0; barkImmuneSeen = false; pendingSay = null;
   clues = [false, false, false]; aliceSniffed = false; arrowT = 0; stuckT = 0; sun = 0; hug = 0; saveT = 0;
-  camX = clamp(P.x - VW / 2, 0, MAP.w * TS - VW);
-  camY = clamp(P.y - VH / 2, 0, MAP.h * TS - VH);
+  camX = camClampX(P.x - VW / 2);
+  camY = camClampY(P.y - VH / 2);
 }
 
 /* ------------------------------------------------------------------ dialogues */
@@ -2801,7 +2851,7 @@ function drawDust() {
    Elles tournoient en descendant avec une petite ombre au sol, se posent, puis s'effacent. */
 const LEAF = { rate: 0.08, max: 50, fall: 34, sway: 14, rest: 2.2, fade: 0.8 };
 function updateLeaves(dt) {
-  if (!leafTrees) leafTrees = decor.filter(d => d.n === 'tree' || d.n === 'apple_tree' || d.n === 'fir');
+  if (!leafTrees) leafTrees = decor.concat(EDGE_DECOR).filter(d => d.n === 'tree' || d.n === 'apple_tree' || d.n === 'fir');
   for (const tr of leafTrees) {
     if (leaves.length >= LEAF.max) break;
     if (tr.x < camX - 60 || tr.x > camX + VW + 60 || tr.y < camY - 20 || tr.y > camY + VH + 160) continue;
@@ -3274,8 +3324,8 @@ function loadGame(s, rested) {
   questHens().forEach((h, i) => { const q = (s.hens || [])[i]; if (q) { h.x = h.hx = q[0]; h.y = h.hy = q[1]; h.penned = !!q[2]; } });
   if (nextClue() === 3) revealAlice();
   sun = sunGoal();
-  camX = clamp(P.x - VW / 2, 0, MAP.w * TS - VW);
-  camY = clamp(P.y - 40 - VH / 2, 0, MAP.h * TS - VH);
+  camX = camClampX(P.x - VW / 2);
+  camY = camClampY(P.y - 40 - VH / 2);
   state = 'play';
   Music.start();
   say([{ who: 'tecky', face: rested ? 0 : 2, text: rested ? "Ouf, une petite sieste et ça repart !" : "Me revoilà ! Je reprends mes recherches." },
@@ -3383,8 +3433,8 @@ function toTitle() {
   transition();
   reset();
   gameMode = 'aventure';
-  camX = clamp(MAP.title[0] - VW / 2, 0, MAP.w * TS - VW);   // caméra de l'écran titre : la place du village
-  camY = clamp(MAP.title[1] - VH / 2, 0, MAP.h * TS - VH);
+  camX = camClampX(MAP.title[0] - VW / 2);   // caméra de l'écran titre : la place du village
+  camY = camClampY(MAP.title[1] - VH / 2);
   state = 'title'; titleT = 0;
   openTitleMenu();
   Music.start();
@@ -3741,6 +3791,7 @@ function updatePlayer(dt) {
     P.restT = 0;
     const ox = P.x, oy = P.y;
     moveActor(P, ix * spd * dt, iy * spd * dt);
+    edgeBump(dt, ix, iy, ox, oy);
     P.dir = dirFrom(ix, iy, P.dir);
     P.setAnim('walk');
     puddleSplash(dt);
@@ -3749,7 +3800,7 @@ function updatePlayer(dt) {
       P.dustT = DUST.every;
       addDust(P.x - ix * 16 + (Math.random() - 0.5) * 10, P.y - 2, -ix * 30, -iy * 30 - 6, 5 + Math.random() * 3);
     }
-  } else restPose(dt);
+  } else { P.edgeT = 0; restPose(dt); }
 
   if (pressed.sniff && P.cdSniff <= 0 && !alice.found) startSniff();
   else if (pressed.bark && P.cdBark <= 0) {
@@ -4094,6 +4145,7 @@ function endingHome() {
   ending.home = true;
   alice.x = E.alice[0]; alice.y = E.from; alice.dir = 'up'; alice.setAnim('walk');
   P.x = E.tecky[0]; P.y = E.from + 30; P.dir = 'up'; P.mode = 'free'; P.setAnim('walk');
+  // (cadrage fixe, dans la carte : la lisière n'y entre pas)
   camX = clamp(E.alice[0] - VW / 2, 0, MAP.w * TS - VW); camY = clamp(E.alice[1] - 40 - VH / 2, 0, MAP.h * TS - VH);
   fxs = []; pops = []; rings = []; dusts = []; leaves = []; butterflies = []; drops = []; flakes = [];
   dogs = dogs.filter(d => d.x < camX - 150 || d.x > camX + VW + 150 || d.y < camY - 100 || d.y > camY + VH + 200);   // pas de chiens
@@ -4194,8 +4246,8 @@ function drawFade() {
 }
 
 function updateCamera(dt) {
-  const tx = clamp(P.x - VW / 2, 0, MAP.w * TS - VW);
-  const ty = clamp(P.y - 40 - VH / 2, 0, MAP.h * TS - VH);
+  const tx = camClampX(P.x - VW / 2);
+  const ty = camClampY(P.y - 40 - VH / 2);
   const k = 1 - Math.pow(0.0005, dt);
   camX = lerp(camX, tx, k); camY = lerp(camY, ty, k);
   shake = Math.max(0, shake - dt);
@@ -4309,8 +4361,8 @@ function update(dt) {
 function drawWorld() {
   const sx = shake > 0 ? (Math.random() - 0.5) * 10 * shake / 0.25 : 0;
   const sy = shake > 0 ? (Math.random() - 0.5) * 10 * shake / 0.25 : 0;
-  const cx = clamp(Math.round((camX + sx) * scale) / scale, 0, MAP.w * TS - VW);
-  const cy = clamp(Math.round((camY + sy) * scale) / scale, 0, MAP.h * TS - VH);
+  const cx = camClampX(Math.round((camX + sx) * scale) / scale);
+  const cy = camClampY(Math.round((camY + sy) * scale) / scale);
   ctx.setTransform(scale, 0, 0, scale, offX - cx * scale, offY - cy * scale);
   drawGround(cx, cy);
   drawWater(cx, cy, performance.now() / 1000);
@@ -4346,6 +4398,8 @@ function drawWorld() {
   const now = performance.now() / 1000;            // décors animés (fontaine) : MAP.decorFps
   for (const d of decor) if (!FLAT.has(d.n) && vis(d.x, d.y, 280))
     list.push({ y: d.y, draw: () => drawSpr(d.key, Math.floor(now * (MAP.decorFps[d.n] || 0)), d.x, d.y) });
+  for (const d of EDGE_DECOR) if (vis(d.x, d.y, d.n === 'tunnel' ? 460 : 280))     // la lisière, au bord de la carte
+    list.push({ y: d.y, draw: () => drawSpr(d.key, 0, d.x, d.y, d.flip ? { flip: true } : undefined) });
   for (const it of items) if (vis(it.x, it.y, 80)) {
     const i = Math.floor(it.t * 8);
     let dy = 0;
@@ -4407,8 +4461,8 @@ function drawWorld() {
       ctx.globalAlpha = Math.max(0, a);
       ctx.font = '700 26px Fredoka, "Trebuchet MS", sans-serif';
       ctx.textAlign = 'center'; ctx.lineJoin = 'round'; ctx.lineWidth = 6; ctx.strokeStyle = '#3A1E12';
-      const y = p.y - p.t * 40;
-      ctx.strokeText(p.text, p.x, y); ctx.fillStyle = '#F2C14E'; ctx.fillText(p.text, p.x, y);
+      const y = p.y - p.t * 40, hw = ctx.measureText(p.text).width / 2 + 8, x = clamp(p.x, cx + hw, cx + VW - hw);
+      ctx.strokeText(p.text, x, y); ctx.fillStyle = '#F2C14E'; ctx.fillText(p.text, x, y);
       ctx.restore();
     } else drawDigits(p.text, p.x, p.y - p.t * 60, 0.75, a);
   }
