@@ -197,7 +197,7 @@ POSTMAN = (26.4, 10.45)             # Marcel le facteur, près de la boîte aux 
 NEIGHBOR = (32.4, 4.95)             # Mamie Rose, devant sa maison bleue
 POMPON = (24.6, 23.6)               # son chat, caché entre les caisses, près des entrepôts
 # les lettres du facteur, emportées par le vent : campagne, village, zone industrielle, près de la niche
-LETTERS = [(9.0, 9.6), (22.0, 6.6), (35.6, 9.2), (31.0, 23.6), (2.6, 5.6)]
+LETTERS = [(18.4, 10.8), (22.0, 6.6), (35.6, 9.2), (31.0, 23.6), (15.2, 21.4)]   # avant le village, … , campagne
 # terriers sous les grillages : Tecky passe d'une extrémité à l'autre (raccourcis)
 TUNNELS = [((40.0, 21.0), (41.25, 21.0)),        # zone industrielle <-> verger de la ferme
            ((36.5, 16.75), (36.5, 18.0)),        # trottoir <-> zone industrielle
@@ -272,7 +272,7 @@ DUCKS = [("duck_f", 9.9, 2.4, 1), ("duckling", 9.4, 2.55, 1), ("duckling", 9.0, 
 CRITTERS = [("squirrel", 57.4, 37.9), ("squirrel", 66.2, 36.9), ("squirrel", 48.6, 44.4), ("squirrel", 71.2, 44.4),
             ("squirrel", 10.6, 32.6), ("cat", 29.6, 9.0), ("cat_black", 31.6, 19.4)]
 DIG = [(12.5, 6.5), (11.5, 21.5), (21.5, 18.5),
-       (47.5, 20.5), (74.5, 10.5), (44.5, 33.5), (76.5, 44.5), (34.5, 33.5)]
+       (47.5, 20.5), (74.5, 10.5), (44.5, 33.5), (76.5, 44.5), (11.5, 44.5)]   # le dernier : à côté du bac à sable
 START = (4.5, 4.2)
 ALICE = (5, 37.3 + 14 / 64)   # juste devant la porte de la cabane du parc (cachée jusqu'aux trois indices)
 TITLE = (33.5, 7.3)        # caméra de l'écran titre : la place du village
