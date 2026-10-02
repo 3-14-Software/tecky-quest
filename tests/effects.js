@@ -24,7 +24,7 @@ function main() {
   ok(run('P.x === xs && P.y === ys') && run('dusts.length') === 0, 'bloqué contre un obstacle : pas de poussière');
 
   // feuilles : caméra sur la forêt
-  run('P.x = 56 * 64; P.y = 40 * 64; camX = P.x - VW / 2; camY = P.y - 40 - VH / 2; leaves = [];');
+  run('P.x = 70 * 64; P.y = 36 * 64; camX = P.x - VW / 2; camY = P.y - 40 - VH / 2; leaves = [];');   // (forêt dense, loin de la clairière)
   let most = 0, landed = 0;
   for (let i = 0; i < 60 * 20; i++) { step(1); most = Math.max(most, run('leaves.length')); if (i % 30 === 0) landed += run('leaves.filter(l => l.h === 0).length'); }
   ok(most > 5 && most <= run('LEAF.max'), 'les arbres de la forêt lâchent des feuilles (jusqu’à ' + most + ' à la fois)');

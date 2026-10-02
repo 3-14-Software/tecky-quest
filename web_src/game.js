@@ -973,6 +973,8 @@ function reset() {
   nestor = Object.assign(newNpc('nestor', MAP.nestor, 0.62), { markY: NESTOR.markY, woof: true }); nest = { state: 'new' };
   toys = MAP.toys.map(newToy);
   train = newTrain();
+  piquette = Object.assign(newNpc('piquette', MAP.piquette, 1.3), { markY: BABY.markY }); piq = { state: 'new' };
+  babies = MAP.babies.map(newBaby); babySeq = 0;
   critters = MAP.critters.map(newCritter);
   ducks = MAP.ducks.map(newDuck); linkDucks();
   bitten = false; newBadges = []; toasts = []; napped = false;
@@ -999,6 +1001,7 @@ const WHO = {
   neighbor: { name: 'Mamie Rose', portrait: 'hud/portrait_neighbor' },
   leon: { name: 'Léon', portrait: 'hud/portrait_leon' },
   nestor: { name: 'Nestor', portrait: 'hud/portrait_nestor' },
+  piquette: { name: 'Maman Piquette', portrait: 'hud/portrait_piquette' },
   info:  { name: '', portrait: null },
 };
 // une réplique demandée pendant un dialogue passe à la suite (ex. : le fermier parle, et Tecky ramasse la barrette)
@@ -1145,6 +1148,10 @@ function doBark() {
   for (const c of critters) {
     const dx = c.x - P.x, dy = c.y - P.y, l = Math.hypot(dx, dy);
     if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) scareCritter(c);
+  }
+  for (const b of babies) {            // les bébés hérissons se roulent en boule
+    const dx = b.x - P.x, dy = b.y - P.y, l = Math.hypot(dx, dy);
+    if (b.mode !== 'home' && l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) b.ballT = BABY.ball;
   }
   for (const b of balls) {             // les ballons de Léon roulent, plus fort de près
     const dx = b.x - P.x, dy = b.y - P.y, l = Math.hypot(dx, dy);
@@ -1717,6 +1724,7 @@ function updateFarmer(dt) {           // tous les personnages
   neighbor.worried = rose.state !== 'done' && pompon.mode !== 'home';
   leon.worried = ballsLeft() > 0;
   nestor.worried = toysLeft() > 0;
+  piquette.worried = babiesLeft() > 0;
 }
 function drawNpc(n) {
   const k = n.kind + '/' + n.anim;
@@ -1730,13 +1738,14 @@ function drawNpc(n) {
    saluent d'une petite exclamation (bulle de mots, sans bloquer le jeu). NPC_DO : par personnage, bulle (0 « ! »,
    1 « ? », -1 aucune), salut et conversation. */
 const NPC = { talk: 150, markY: 150 };
-const npcList = () => [farmer, postman, neighbor, leon, nestor];
+const npcList = () => [farmer, postman, neighbor, leon, nestor, piquette];
 const NPC_DO = {
   farmer: { mark: farmerMark, greet: farmerGreet, talk: talkFarmer },
   postman: { mark: postmanMark, greet: postmanGreet, talk: talkPostman },
   neighbor: { mark: neighborMark, greet: neighborGreet, talk: talkNeighbor },
   leon: { mark: leonMark, greet: leonGreet, talk: talkLeon },
   nestor: { mark: nestorMark, greet: nestorGreet, talk: talkNestor },
+  piquette: { mark: piquetteMark, greet: piquetteGreet, talk: talkPiquette },
 };
 const markY = n => n.markY || NPC.markY;            // hauteur de la bulle (Nestor, assis, est plus petit)
 function nearNpc() {
@@ -2125,6 +2134,109 @@ function talkNestor() {
   ], saveGame);
 }
 
+/* ------------------------------------------------------------------ Maman Piquette et ses petits */
+/* Maman Piquette, la maman hérisson de la clairière de la forêt (MAP.piquette, zone calme), a perdu ses trois petits :
+   ils jouaient à cache-cache sous les fougères (MAP.babies, herissons.py). Une fois qu'elle a demandé de l'aide, un
+   petit que Tecky trouve (BABY.find) le suit sur ses traces, en file indienne derrière les autres (dans l'ordre où ils
+   ont été trouvés, après Pompon s'il suit aussi : crumbAt), attend s'il va trop vite (BABY.lost) et reste près de sa
+   maman en arrivant (babyHome, BABY.home). Un aboiement le fait se rouler en boule un instant. Caché, il pousse un
+   petit « Couic ? » quand Tecky passe près. Elle remercie : un os et des points. Sauvegardé (piq, babies). */
+const BABY = { find: 110, gap: 60, lost: 650, home: 170, walk: 110, run: 300, ball: 1.4, squeak: [2.5, 5], markY: 100,
+  slots: [[-46, 16], [46, 18], [-14, 34]] };
+let piq = { state: 'new' }, piquette = null, babies = [], babySeq = 0;
+const babiesLeft = () => babies.filter(b => b.mode !== 'home').length;
+function newBaby([x, y], i) {
+  return { i, x, y, mode: 'hidden', anim: 'idle', t: Math.random() * 2, dir: 'left', ballT: 0, squeakT: 1, seq: 0, slot: 0 };
+}
+function babyAnim(b, a) { if (b.anim !== a) { b.anim = a; b.t = 0; } }
+function babyMove(b, tx, ty, dt) {     // comme Pompon : d'autant plus vite que c'est loin
+  const dx = tx - b.x, dy = ty - b.y, l = Math.hypot(dx, dy);
+  if (l < 8) { babyAnim(b, 'idle'); return; }
+  const sp = clamp(l * 3, BABY.walk * 0.6, BABY.run), st = Math.min(l, sp * dt);
+  b.x += dx / l * st; b.y += dy / l * st; b.dir = dx < 0 ? 'left' : 'right';
+  babyAnim(b, 'walk');
+}
+function babyHome(b) {
+  b.mode = 'home'; b.slot = babies.filter(o => o.mode === 'home' && o !== b).length;
+  piquette.cheerT = 2.5;
+  const left = babiesLeft();
+  npcShout(piquette, left ? 'Mon petit ! Encore ' + left + ' !' : piq.state === 'asked' ? 'Tous mes petits ! Viens me voir !' : 'Mes petits !');
+  saveGame();
+}
+function updateBaby(b, dt) {
+  const dP = dist(b.x, b.y, P.x, P.y);
+  b.t += dt;
+  if (b.ballT > 0) { b.ballT -= dt; babyAnim(b, 'ball'); return; }
+  switch (b.mode) {
+    case 'hidden':
+    case 'wait':
+      babyAnim(b, 'idle');
+      if (dP < 300) b.dir = P.x < b.x ? 'left' : 'right';
+      if (dP < BABY.find && piq.state === 'asked' && P.alpha !== 0) {
+        b.mode = 'follow'; b.seq = ++babySeq; addWordPop('Couic !', b.x, b.y - 50, 'hedgehog');
+      } else if (dP < 240 && (b.squeakT -= dt) <= 0) {
+        b.squeakT = rnd(BABY.squeak); addWordPop(b.mode === 'hidden' ? 'Couic ?' : 'Couic !', b.x, b.y - 50, 'hedgehog');
+      }
+      return;
+    case 'follow': {          // en file indienne, derrière Pompon et les petits trouvés avant lui
+      const rank = babies.filter(o => o.mode === 'follow' && o.seq < b.seq).length;
+      const [tx, ty] = crumbAt(BABY.gap * (rank + 1) + (pompon.mode === 'follow' ? CAT.gap : 0));
+      babyMove(b, tx, ty, dt);
+      if (dist(b.x, b.y, piquette.x, piquette.y) < BABY.home) babyHome(b);
+      else if (dP > BABY.lost) { b.mode = 'wait'; addWordPop('Couic !', b.x, b.y - 50, 'hedgehog'); }
+      return;
+    }
+    case 'home': {            // blotti contre sa maman, tourné vers elle
+      const [sx, sy] = BABY.slots[b.slot];
+      babyMove(b, piquette.x + sx, piquette.y + sy, dt);
+      if (b.anim === 'idle') b.dir = sx < 0 ? 'right' : 'left';
+      return;
+    }
+  }
+}
+function drawBaby(b) {
+  drawSpr('hedgehog/' + b.anim, Math.floor(b.t * (MAP.babyFps[b.anim] || 6)), b.x, b.y, { flip: b.dir === 'left' });
+}
+function piquetteMark() { return piq.state === 'done' ? -1 : piq.state === 'asked' && babiesLeft() ? 1 : 0; }
+function piquetteGreet() {
+  if (piq.state === 'new') npcShout(piquette, 'Mes petits ! Où êtes-vous ?');
+  else if (piq.state === 'asked') {
+    const n = babiesLeft();
+    npcShout(piquette, !n ? 'Tous mes petits ! Viens me voir !' : 'Encore ' + n + (n > 1 ? ' petits !' : ' petit !'));
+  } else { npcShout(piquette, 'Bonjour, Tecky !'); piquette.waveT = 1.5; }
+}
+const piquetteThanks = () => [
+  { who: 'piquette', face: 2, text: "Mes trois petits ! Merci, gentil teckel. Ils ont bien joué, mais maintenant, c'est l'heure de la sieste !" },
+  { who: 'piquette', face: 0, text: "Tiens, un bon os que j'ai trouvé sous les feuilles. Et bonne chance pour retrouver ta petite fille !" },
+];
+function finishPiquette() {
+  piq.state = 'done'; score += 150;
+  addPop('+150', P.x - 30, P.y - 140);
+  items.push({ n: 'bone', x: P.x + 40, y: P.y - 30, t: 0, pop: 0.001 });
+  piquette.cheerT = 3;
+  saveGame();
+}
+function talkPiquette() {
+  if (piq.state === 'done') {
+    piquette.waveT = 2;
+    say([{ who: 'piquette', face: 2, text: "Mes petits dorment à poings fermés. Merci encore, Tecky !" }]);
+    return;
+  }
+  if (!babiesLeft()) { piq.state = 'asked'; say(piquetteThanks(), finishPiquette); return; }
+  if (piq.state === 'asked') {
+    const n = babiesLeft();
+    say([{ who: 'piquette', face: 3, text: (n > 1 ? `Il m'en manque encore ${n}.` : "Plus qu'un !") +
+      " Ils se cachent sous les fougères : approche-toi doucement, ils te suivront. Mais n'aboie pas, ça leur fait peur !" }]);
+    return;
+  }
+  piq.state = 'asked';
+  say([
+    { who: 'piquette', face: 3, text: "Oh, bonjour, petit chien ! Je suis Maman Piquette. Mes trois petits jouaient à cache-cache dans la forêt…" },
+    { who: 'piquette', face: 0, text: "Ils se sont cachés sous les fougères, et ils n'osent plus sortir. Tu veux bien me les ramener ? Ils te suivront !" },
+    { who: 'tecky', face: 2, text: "Ouaf ! Moi aussi, je cherche quelqu'un qui joue à cache-cache !" },
+  ], saveGame);
+}
+
 /* ------------------------------------------------------------------ Titine, le petit train du port */
 /* Une locomotive à vapeur (vehicle/loco) et trois wagons font l'aller-retour sur la voie du quai (MAP.track : x des
    heurtoirs ouest et est, y des rails), avec une pause à chaque bout. La locomotive est à l'est : elle tire vers l'est,
@@ -2444,6 +2556,7 @@ function afterTunnel() {               // les copains qui suivent passent sous l
   crumbs = [];
   for (const d of dogs) if (d.mode === 'follow') { d.x = P.x; d.y = P.y; }
   if (pompon.mode === 'follow') { pompon.x = P.x; pompon.y = P.y; }
+  for (const b of babies) if (b.mode === 'follow') { b.x = P.x; b.y = P.y; }
 }
 // aboiement en balade : le chien répond (petit bond, cœur) et accourt pour jouer
 function callDog(d) {
@@ -2952,6 +3065,7 @@ function saveGame() {
     fete: fete.state, balls: balls.map(b => [r1(b.x), r1(b.y), b.inNet ? 1 : 0]),
     nest: nest.state, toys: toys.map(t => t.carried ? [r1(P.x), r1(P.y), 0] : [r1(t.x), r1(t.y), t.home ? 1 : 0]),
     train: train.scored ? 1 : 0,
+    piq: piq.state, babies: babies.map(b => [r1(b.x), r1(b.y), b.mode === 'follow' ? 'wait' : b.mode, b.slot]),
   });
 }
 // pas de sauvegarde automatique en plein combat : on reprendrait au milieu des crocs
@@ -2984,6 +3098,8 @@ function loadGame(s, rested) {
   (s.balls || []).forEach((q, i) => { const b = balls[i]; if (b && q) { b.x = q[0]; b.y = q[1]; b.inNet = !!q[2]; } });
   nest.state = s.nest || 'new';
   train.scored = !!s.train;
+  piq.state = s.piq || 'new';
+  (s.babies || []).forEach((q, i) => { const b = babies[i]; if (b && q) { b.x = q[0]; b.y = q[1]; b.mode = q[2]; b.slot = q[3] || 0; } });
   (s.toys || []).forEach((q, i) => { const t = toys[i]; if (t && q) { t.x = q[0]; t.y = q[1]; t.home = !!q[2]; } });
   bitten = !!s.bitten || rested;
   if (s.cat) { pompon.x = s.cat[0]; pompon.y = s.cat[1]; pompon.mode = s.cat[2] === 'follow' ? 'wait' : s.cat[2]; }
@@ -3145,6 +3261,7 @@ const BADGE_INFO = {
   ballons: ['Champion du ballon', 'Pousser tous les ballons de Léon dans le filet.'],
   nestor: ['Va chercher !', 'Rapporter ses trois jouets à Nestor.'],
   train: ['Tchou-tchou !', 'Faire siffler Titine, le petit train du port.'],
+  herissons: ['Nounou des hérissons', 'Ramener ses trois petits à Maman Piquette.'],
 };
 const TOAST = { life: 3.6 };
 let badges = {}, toasts = [], newBadges = [], badgeT = 0, bitten = false;
@@ -3166,6 +3283,7 @@ function checkBadges() {
   if (fete.state === 'done') unlockBadge('ballons');
   if (nest.state === 'done') unlockBadge('nestor');
   if (train.scored) unlockBadge('train');
+  if (piq.state === 'done') unlockBadge('herissons');
   if (critters.every(c => c.scored)) unlockBadge('betes');
   if (ducks.filter(d => !d.lead).every(d => d.scored)) unlockBadge('canards');
   if (seenCells.reduce((a, v) => a + v, 0) >= seenCells.length * 0.95) unlockBadge('explorateur');
@@ -3175,7 +3293,7 @@ function checkBadges() {
    petites bêtes, canards, carte explorée (95 % suffisent, comme pour le badge), et les copains en balade. Une nouvelle
    quête : l'ajouter à QUESTS_DONE. */
 const QUESTS_DONE = [() => farm.state === 'done', () => post.state === 'done', () => rose.state === 'done',
-  () => fete.state === 'done', () => nest.state === 'done'];
+  () => fete.state === 'done', () => nest.state === 'done', () => piq.state === 'done'];
 function completion() {
   const part = (n, of) => of ? Math.min(1, n / of) : 1, count = (a, f) => a.filter(f).length;
   const adults = ducks.filter(d => !d.lead);          // comme le badge : sans les canetons
@@ -3982,6 +4100,7 @@ function update(dt) {
       for (const b of balls) updateBall(b, dt);
       updateToys(dt);
       updateTrain(dt);
+      for (const b of babies) updateBaby(b, dt);
       for (const c of critters) updateCritter(c, dt);
       for (const d of ducks) updateDuck(d, dt);
       updateTrail(dt);
@@ -4063,6 +4182,7 @@ function drawWorld() {
   for (const n of npcList()) if (vis(n.x, n.y, 140)) list.push({ y: n.y, draw: () => drawNpc(n) });
   for (const l of letters) if (!l.got && vis(l.x, l.y, 60)) list.push({ y: l.y + 20, draw: () => drawSpr('item/letter', Math.floor(l.t * 6), l.x, l.y) });
   if (vis(pompon.x, pompon.y, 60)) list.push({ y: pompon.y, draw: drawPompon });
+  for (const b of babies) if (vis(b.x, b.y, 60)) list.push({ y: b.y, draw: () => drawBaby(b) });
   for (const b of balls) if (vis(b.x, b.y, 80)) list.push({ y: b.y, draw: () => drawBall(b) });
   if (trainEast() > cx - 100 && trainWest() < cx + VW + 100 && vis(train.x, trainY(), 200))
     list.push({ y: trainY() + TRAIN.ground, draw: drawTrain });
@@ -4282,6 +4402,7 @@ function hudCounters() {
   if (rose.state === 'asked') c.push(['cat_white/idle', 46, 58, 0.9, pompon.mode === 'lost' ? 0 : 1, 1]);
   if (fete.state === 'asked') c.push(['port/balloon', 42, 35, 0.8, balls.length - ballsLeft(), balls.length]);
   if (nest.state === 'asked') c.push(['port/toy', 42, 35, 0.8, toys.length - toysLeft(), toys.length]);
+  if (piq.state === 'asked') c.push(['hedgehog/idle', 44, 58, 1.1, babies.length - babiesLeft(), babies.length]);
   return c;
 }
 function drawHUD() {

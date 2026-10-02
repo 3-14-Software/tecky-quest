@@ -24,18 +24,20 @@ const VOICES = {
   neighbor: ['Mamie Rose', 'la voisine : douce vieille dame'],
   leon: ['Léon', 'le cariste du port : sympathique, voix forte'],
   nestor: ['Nestor', 'le vieux chien du gardien : voix lente, grave et bonhomme'],
+  piquette: ['Maman Piquette', 'la maman hérisson de la forêt : douce, tendre, un peu inquiète'],
   doberman: ['Le doberman', 'gros chien bourru, voix grave'],
   dog: ['Les chiens du coin', 'chiens grognons (« Grrr… »), ou contents en balade (« Copain ! »)'],
   cat: ['Les chats', 'Pompon et les chats du coin : miaulements, feulements'],
   squirrel: ['Les écureuils', 'petite voix aiguë et rapide'],
   duck: ['Les canards', 'coin-coin'],
   train: ['Titine', 'la petite locomotive du port : voix joyeuse et chantante'],
+  hedgehog: ['Les bébés hérissons', 'toute petite voix aiguë (« Couic ! »)'],
 };
 // répliques dont le texte est calculé (pas une chaîne écrite en dur) : chacune doit être produite ci-dessous ; si ce
 // nombre change, une réplique calculée a été ajoutée ou retirée dans game.js : adapter ce fichier
-const DYNAMIC_SITES = 17;
-const DYNAMIC_POPS = 8;          // de même pour les bulles (texte calculé : comptes, noms des jouets, mot passé à dropToy)
-const NPC_VARS = { farmer: 'farmer', postman: 'postman', neighbor: 'neighbor', leon: 'leon', nestor: 'nestor' };
+const DYNAMIC_SITES = 18;
+const DYNAMIC_POPS = 10;          // de même pour les bulles (texte calculé : comptes, noms des jouets, mot passé à dropToy)
+const NPC_VARS = { farmer: 'farmer', postman: 'postman', neighbor: 'neighbor', leon: 'leon', nestor: 'nestor', piquette: 'piquette' };
 // répliques relevées dans le code (écrites en dur, dites en cours de route) : contexte selon la fonction qui les dit
 const WHERE = { doBark: 'Premier aboiement sur le doberman', updatePompon: 'Tecky retrouve Pompon',
   updateTunnel: 'Premier terrier', updatePlayer: 'Devant la cachette d’Alice, avant les trois indices' };
@@ -110,6 +112,9 @@ function main() {
   greet('nestor', 'Tecky arrive', 'nest.state = "new";');
   for (let n = 3; n >= 0; n--) greet('nestor', 'Tecky arrive', `nest.state = "asked"; toys.forEach((t, i) => t.home = i >= ${n});`);
   greet('nestor', 'Tecky arrive', 'nest.state = "done";');
+  greet('piquette', 'Tecky arrive', 'piq.state = "new";');
+  for (let n = 3; n >= 0; n--) greet('piquette', 'Tecky arrive', `piq.state = "asked"; babies.forEach((b, i) => b.mode = i >= ${n} ? "home" : "hidden");`);
+  greet('piquette', 'Tecky arrive', 'piq.state = "done";');
   // les poules rentrent, Tecky ramasse les lettres, les ballons entrent dans le filet (avant ou après la demande)
   for (const st of ['new', 'asked']) {
     ask('Une poule rentre dans l’enclos', `farm.state = "${st}"; questHens().forEach(h => h.penned = false); var R = penRect();` +
@@ -119,9 +124,15 @@ function main() {
     ask('Un ballon entre dans le filet', `fete.state = "${st}"; balls.forEach(b => { b.inNet = false; b.x = MAP.goal[0]; b.y = MAP.goal[1] - 20; checkGoal(b); });`);
     ask('Tecky prend un jouet de Nestor', `nest.state = "${st}"; toys.forEach(t => { t.home = t.carried = false; t.cd = 0; });` +
         ' toys.forEach(t => { P.x = t.x; P.y = t.y; updateToys(0); const c = carried(); if (c) c.carried = false; t.cd = 9; });');
+    ask('Un petit hérisson rejoint sa maman', `piq.state = "${st}"; babies.forEach(b => b.mode = "hidden"); babies.forEach(b => babyHome(b));`);
     ask('Tecky rapporte un jouet à Nestor', `nest.state = "${st}"; toys.forEach(t => { t.home = t.carried = false; }); toys.forEach(t => giveToy(t));`);
   }
   ask('Tecky aboie avec un jouet dans la gueule', 'toys[0].home = false; toys[0].carried = true; dropToy("Oups !");');
+  ask('Maman Piquette : demande', 'piq.state = "new"; talkPiquette();');
+  for (let n = 3; n >= 1; n--)
+    ask('Maman Piquette : rappel', `piq.state = "asked"; babies.forEach((b, i) => b.mode = i >= ${n} ? "home" : "hidden"); talkPiquette();`);
+  ask('Maman Piquette : merci', 'babies.forEach(b => b.mode = "home"); talkPiquette();');
+  ask('Maman Piquette : après la quête', 'piq.state = "done"; talkPiquette();');
   ask('Retrouvailles avec Alice', 'finale();');
   const rec = JSON.parse(run('JSON.stringify(REC)'));
 

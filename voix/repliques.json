@@ -32,6 +32,10 @@
       "nom": "Nestor",
       "voix": "le vieux chien du gardien : voix lente, grave et bonhomme"
     },
+    "piquette": {
+      "nom": "Maman Piquette",
+      "voix": "la maman hérisson de la forêt : douce, tendre, un peu inquiète"
+    },
     "doberman": {
       "nom": "Le doberman",
       "voix": "gros chien bourru, voix grave"
@@ -55,6 +59,10 @@
     "train": {
       "nom": "Titine",
       "voix": "la petite locomotive du port : voix joyeuse et chantante"
+    },
+    "hedgehog": {
+      "nom": "Les bébés hérissons",
+      "voix": "toute petite voix aiguë (« Couic ! »)"
     }
   },
   "repliques": [
@@ -387,6 +395,17 @@
       "texte": "Te voilà, Pompon ! Viens, on rentre chez Mamie Rose.",
       "affiche": "Te voilà, Pompon ! Viens, on rentre chez Mamie Rose.",
       "contexte": "Tecky retrouve Pompon"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-348e99e9",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Ouaf ! Moi aussi, je cherche quelqu'un qui joue à cache-cache !",
+      "affiche": "Ouaf ! Moi aussi, je cherche quelqu'un qui joue à cache-cache !",
+      "contexte": "dans talkPiquette()"
     },
     {
       "voix": "tecky",
@@ -1896,6 +1915,193 @@
       "contexte": "Tecky rapporte un jouet à Nestor"
     },
     {
+      "voix": "piquette",
+      "fichier": "piquette-c4b4e22f",
+      "personnage": "Maman Piquette",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Mes trois petits ! Merci, gentil teckel. Ils ont bien joué, mais maintenant, c'est l'heure de la sieste !",
+      "affiche": "Mes trois petits ! Merci, gentil teckel. Ils ont bien joué, mais maintenant, c'est l'heure de la sieste !",
+      "contexte": "Maman Piquette : demande ; Maman Piquette : merci"
+    },
+    {
+      "voix": "piquette",
+      "fichier": "piquette-86e2639a",
+      "personnage": "Maman Piquette",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tiens, un bon os que j'ai trouvé sous les feuilles. Et bonne chance pour retrouver ta petite fille !",
+      "affiche": "Tiens, un bon os que j'ai trouvé sous les feuilles. Et bonne chance pour retrouver ta petite fille !",
+      "contexte": "Maman Piquette : demande ; Maman Piquette : merci"
+    },
+    {
+      "voix": "piquette",
+      "fichier": "piquette-99f48922",
+      "personnage": "Maman Piquette",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Il m'en manque encore 3. Ils se cachent sous les fougères : approche-toi doucement, ils te suivront. Mais n'aboie pas, ça leur fait peur !",
+      "affiche": "Il m'en manque encore 3. Ils se cachent sous les fougères : approche-toi doucement, ils te suivront. Mais n'aboie pas, ça leur fait peur !",
+      "contexte": "Maman Piquette : rappel"
+    },
+    {
+      "voix": "piquette",
+      "fichier": "piquette-0168d02b",
+      "personnage": "Maman Piquette",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Il m'en manque encore 2. Ils se cachent sous les fougères : approche-toi doucement, ils te suivront. Mais n'aboie pas, ça leur fait peur !",
+      "affiche": "Il m'en manque encore 2. Ils se cachent sous les fougères : approche-toi doucement, ils te suivront. Mais n'aboie pas, ça leur fait peur !",
+      "contexte": "Maman Piquette : rappel"
+    },
+    {
+      "voix": "piquette",
+      "fichier": "piquette-10bcb51d",
+      "personnage": "Maman Piquette",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Plus qu'un ! Ils se cachent sous les fougères : approche-toi doucement, ils te suivront. Mais n'aboie pas, ça leur fait peur !",
+      "affiche": "Plus qu'un ! Ils se cachent sous les fougères : approche-toi doucement, ils te suivront. Mais n'aboie pas, ça leur fait peur !",
+      "contexte": "Maman Piquette : rappel"
+    },
+    {
+      "voix": "piquette",
+      "fichier": "piquette-36d20a85",
+      "personnage": "Maman Piquette",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Mes petits dorment à poings fermés. Merci encore, Tecky !",
+      "affiche": "Mes petits dorment à poings fermés. Merci encore, Tecky !",
+      "contexte": "Maman Piquette : après la quête"
+    },
+    {
+      "voix": "piquette",
+      "fichier": "piquette-5bc4cae4",
+      "personnage": "Maman Piquette",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Oh, bonjour, petit chien ! Je suis Maman Piquette. Mes trois petits jouaient à cache-cache dans la forêt…",
+      "affiche": "Oh, bonjour, petit chien ! Je suis Maman Piquette. Mes trois petits jouaient à cache-cache dans la forêt…",
+      "contexte": "dans talkPiquette()"
+    },
+    {
+      "voix": "piquette",
+      "fichier": "piquette-3fdedeb7",
+      "personnage": "Maman Piquette",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Ils se sont cachés sous les fougères, et ils n'osent plus sortir. Tu veux bien me les ramener ? Ils te suivront !",
+      "affiche": "Ils se sont cachés sous les fougères, et ils n'osent plus sortir. Tu veux bien me les ramener ? Ils te suivront !",
+      "contexte": "dans talkPiquette()"
+    },
+    {
+      "voix": "piquette",
+      "fichier": "piquette-bbbde099",
+      "personnage": "Maman Piquette",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Mes petits ! Où êtes-vous ?",
+      "affiche": "Mes petits ! Où êtes-vous ?",
+      "contexte": "Maman Piquette : Tecky arrive"
+    },
+    {
+      "voix": "piquette",
+      "fichier": "piquette-5d902226",
+      "personnage": "Maman Piquette",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 3 petits !",
+      "affiche": "Encore 3 petits !",
+      "contexte": "Maman Piquette : Tecky arrive"
+    },
+    {
+      "voix": "piquette",
+      "fichier": "piquette-775b834b",
+      "personnage": "Maman Piquette",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 2 petits !",
+      "affiche": "Encore 2 petits !",
+      "contexte": "Maman Piquette : Tecky arrive"
+    },
+    {
+      "voix": "piquette",
+      "fichier": "piquette-533a85f1",
+      "personnage": "Maman Piquette",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 1 petit !",
+      "affiche": "Encore 1 petit !",
+      "contexte": "Maman Piquette : Tecky arrive"
+    },
+    {
+      "voix": "piquette",
+      "fichier": "piquette-699f44f5",
+      "personnage": "Maman Piquette",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tous mes petits ! Viens me voir !",
+      "affiche": "Tous mes petits ! Viens me voir !",
+      "contexte": "Maman Piquette : Tecky arrive ; Un petit hérisson rejoint sa maman"
+    },
+    {
+      "voix": "piquette",
+      "fichier": "piquette-2cdd7c97",
+      "personnage": "Maman Piquette",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Bonjour, Tecky !",
+      "affiche": "Bonjour, Tecky !",
+      "contexte": "Maman Piquette : Tecky arrive"
+    },
+    {
+      "voix": "piquette",
+      "fichier": "piquette-e298be3b",
+      "personnage": "Maman Piquette",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Mon petit ! Encore 2 !",
+      "affiche": "Mon petit ! Encore 2 !",
+      "contexte": "Un petit hérisson rejoint sa maman"
+    },
+    {
+      "voix": "piquette",
+      "fichier": "piquette-9d4cd4f6",
+      "personnage": "Maman Piquette",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Mon petit ! Encore 1 !",
+      "affiche": "Mon petit ! Encore 1 !",
+      "contexte": "Un petit hérisson rejoint sa maman"
+    },
+    {
+      "voix": "piquette",
+      "fichier": "piquette-f9484c96",
+      "personnage": "Maman Piquette",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Mes petits !",
+      "affiche": "Mes petits !",
+      "contexte": "Un petit hérisson rejoint sa maman"
+    },
+    {
       "voix": "doberman",
       "fichier": "doberman-5107b16b",
       "personnage": "Le doberman",
@@ -2015,6 +2221,28 @@
       "texte": "Tchou-tchou !",
       "affiche": "Tchou-tchou !",
       "contexte": "Tecky aboie vers Titine"
+    },
+    {
+      "voix": "hedgehog",
+      "fichier": "hedgehog-e68f28ad",
+      "personnage": "Les bébés hérissons",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Couic !",
+      "affiche": "Couic !",
+      "contexte": "dans updateBaby()"
+    },
+    {
+      "voix": "hedgehog",
+      "fichier": "hedgehog-c88ef973",
+      "personnage": "Les bébés hérissons",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Couic ?",
+      "affiche": "Couic ?",
+      "contexte": "dans updateBaby()"
     }
   ]
 }

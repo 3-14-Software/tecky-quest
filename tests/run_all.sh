@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 python3 pack_web.py
 python3 tests/regen.py
 fail=0
-for t in sim immune threat read ring clues berger map hens traffic butterflies save balade pad glyphs effects farm leon nestor train tunnel world music ducks rest options quests badges weather calm ending obstacles fence fence_scan placement; do
+for t in sim immune threat read ring clues berger map hens traffic butterflies save balade pad glyphs effects farm leon nestor train piquette tunnel world music ducks rest options quests badges weather calm ending obstacles fence fence_scan placement; do
   echo "== $t"
   out=$(node tests/$t.js 2>&1) || fail=1
   echo "$out" | grep -E "ÉCHEC|^PB |problèmes [1-9]|Error" && fail=1 || true

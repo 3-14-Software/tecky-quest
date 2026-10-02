@@ -200,6 +200,13 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   passant dessus (un seul à la fois, `carried()`, dessiné à `MOUTH[dir]`), le lâche s'il aboie, mord ou est KO
   (`dropToy()`, `NESTOR.regrab`), le donne en arrivant près de Nestor (`giveToy()`). Saucisse + points, badge
   « nestor ». Sauvegardés (`nest`, `toys` ; un jouet porté l'est aux pieds de Tecky). Test : `nestor.js`.
+- Maman Piquette, la maman hérisson (`piq`, `piquette`, `BABY`, `MAP.piquette`, npcs.py « piquette ») : dans une
+  clairière de la forêt (`CLEARING` dans pack_web : herbe, pas de sapins, sentier depuis le chemin ouest, nid
+  `leaf_nest` ; zone calme). Ses trois petits (`babies`, `MAP.babies`, herissons.py, sprites `hedgehog/*`) se cachent
+  sous des fougères (« Couic ? » quand Tecky passe) ; une fois la quête demandée, un petit trouvé (`BABY.find`) suit
+  Tecky sur ses traces, en file indienne dans l'ordre où ils ont été trouvés (`seq`, après Pompon), attend s'il va
+  trop vite, se roule en boule à un aboiement, et rejoint sa maman (`babyHome()`, places `BABY.slots`). Os + points,
+  badge « herissons ». Sauvegardés (`piq`, `babies`). Test : `piquette.js`.
 - Titine, le petit train du port (`train`, `TRAIN`, `MAP.track`, sprites `vehicle/loco` et `vehicle/wagon_*`,
   `fx/steam`) : aller-retour sur la voie du quai, pause à chaque heurtoir, la locomotive à l'est (elle tire, puis
   pousse). Elle s'arrête devant Tecky (« Tut-tut ! »), un chien, Pompon, un chat (`trainBlocker()`), écarte un ballon

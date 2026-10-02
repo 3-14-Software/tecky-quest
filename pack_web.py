@@ -22,6 +22,7 @@ import critters
 import ducks
 import npcs
 import port
+import herissons
 import farmer
 import hens
 import hud
@@ -93,6 +94,9 @@ def corner_grid():
     paint("dirt", 44, 33, 50, 34)           # recoin ouest (trésor)
     paint("dirt", 72, 39, 77, 40)           # vers la chaussure d'Alice et le recoin est
     paint("dirt", 76, 40, 77, 44)
+    paint("grass", 57, 42, 63, 46)          # clairière de Maman Piquette (la maman hérisson)
+    paint("dirt", 51, 41, 52, 43)           # et son sentier, depuis le chemin ouest
+    paint("dirt", 51, 42, 57, 43)
     # parc (sud-ouest) : allée, place de la fontaine, aire de jeux (séparée de l'allée par l'herbe)
     paint("paving", 13, 39, 38, 40)
     paint("paving", 16, 34, 28, 44)
@@ -166,7 +170,8 @@ DECOR = [
     ("stump", 53.8, 36.6), ("stump", 67.6, 42.2), ("stump", 44.6, 42.6), ("log", 59.6, 40.8), ("log", 73.4, 35.6),
     ("mushrooms", 54.4, 38.4), ("mushrooms", 69.8, 36.8), ("mushrooms", 47.2, 42), ("mushrooms", 76.2, 42.6),
     ("mushrooms", 62.8, 33), ("fern", 49.4, 37.6), ("fern", 60.4, 35.6), ("fern", 66.2, 38.2), ("fern", 43.4, 38),
-    ("fern", 71.6, 46.6), ("fern", 57.2, 43.8), ("signpost", 53.2, 32.6),
+    ("fern", 71.6, 46.6), ("signpost", 53.2, 32.6),
+    ("leaf_nest", 61.9, 43.4), ("mushrooms", 58.2, 45.6), ("stump", 62.6, 46.2),       # clairière de Maman Piquette
 
     # ================= PARC (sud-ouest), Alice dans la cabane
     ("playhouse", 5, 37.3), ("slide", 9, 37.6), ("swing", 5.6, 42.4), ("sandbox", 9.6, 44.4),
@@ -215,6 +220,10 @@ NESTOR = (57.0, 19.1)               # Nestor, le vieux chien du gardien, près d
 # ses trois jouets (port.TOYS : canard, anneau, corde) : sur la berge du port, au dépôt, sur le chemin du pont
 TOYS = [(47.2, 24.7), (28.0, 18.8), (64.0, 18.0)]
 TRACK = (41.25, 60.75, 23.6)        # voie de Titine, le petit train : x des heurtoirs ouest et est, y des rails
+PIQUETTE = (60.4, 44.3)             # Maman Piquette, la maman hérisson, dans sa clairière (forêt)
+CLEARING = (56.6, 41.6, 63.6, 46.6)  # la clairière : pas de sapins
+# ses trois petits, cachés sous des fougères (juste à côté, un peu derrière : on voit dépasser leur museau)
+BABIES = [(49.7, 37.48), (66.5, 38.08), (71.9, 46.48)]
 # les lettres du facteur, emportées par le vent : campagne, village, zone industrielle, près de la niche
 LETTERS = [(18.4, 10.8), (22.0, 6.6), (35.6, 9.2), (31.0, 23.6), (15.2, 21.4)]   # avant le village, … , campagne
 # terriers sous les grillages : Tecky passe d'une extrémité à l'autre (raccourcis)
@@ -247,7 +256,8 @@ ITEMS = [
 # zones calmes (x0, y0, x1, y1 en tuiles) : comme les villes d'un RPG, aucun chien hostile n'y vit ni n'y poursuit
 # Tecky. Le village, au nord de la grande route, et la cour de la ferme (Gaston, l'enclos).
 CALM = [(19.6, 0, 40.4, 12), (49, 2.6, 65.4, 11.4),   # le village jusqu'au bord de la route (trottoir compris), la ferme
-        (41.0, 17.4, 49.4, 23.0), (55.0, 17.4, 61.5, 21.2)]   # au port : le coin de Léon, celui de Nestor
+        (41.0, 17.4, 49.4, 23.0), (55.0, 17.4, 61.5, 21.2),   # au port : le coin de Léon, celui de Nestor
+        CLEARING]                                     # la clairière de Maman Piquette
 ENEMIES = [
     # le 1er roquet est assez loin de la niche pour ne pas attaquer dès la fin de l'intro
     ("roquet", 12, 8.8), ("roquet", 14, 3.5), ("roquet", 10.5, 19.2), ("roquet", 31.5, 18.0),   # (ce dernier, aux entrepôts)
@@ -324,7 +334,8 @@ def forest_firs():
         x = 40.8 + (row % 2) * 1.0
         while x < MW - 0.4:
             px, py = x + rnd.uniform(-0.4, 0.4), min(MH - 0.1, y + rnd.uniform(-0.25, 0.25))
-            if not near_path(px, py) and all((px - kx) ** 2 + (py - ky) ** 2 > 1.8 ** 2 for kx, ky in keep):
+            in_clearing = CLEARING[0] - 0.8 < px < CLEARING[2] + 0.8 and CLEARING[1] - 0.6 < py < CLEARING[3] + 1.2
+            if not near_path(px, py) and not in_clearing and all((px - kx) ** 2 + (py - ky) ** 2 > 1.8 ** 2 for kx, ky in keep):
                 out.append(("fir", round(px, 2), round(py, 2)))
             x += 2.0
         y += 1.55
@@ -424,6 +435,8 @@ def build_map():
         "leon": [px(LEON[0]), px(LEON[1])], "goal": [px(GOAL[0]), px(GOAL[1])], "balls": [[px(x), px(y)] for x, y in BALLS],
         "nestor": [px(NESTOR[0]), px(NESTOR[1])], "toys": [[px(x), px(y)] for x, y in TOYS],
         "track": [px(TRACK[0]), px(TRACK[1]), px(TRACK[2])],
+        "piquette": [px(PIQUETTE[0]), px(PIQUETTE[1])], "babies": [[px(x), px(y)] for x, y in BABIES],
+        "babyFps": {a: fps for a, (_, fps, _) in herissons.ANIMS.items()},
         "npcFps": dict({"farmer": {a: v[1] for a, v in farmer.ANIMS.items()}},
                        **{k: {a: v[1] for a, v in npcs.ANIMS[k].items()} for k in npcs.KINDS}),
         "critters": [[n, px(x), px(y)] for n, x, y in CRITTERS],
@@ -488,6 +501,8 @@ def collect():
     out.append(("item/letter", [render_svg(sv, 32, 32, S, PAD) for sv in npcs.letter_frames()], (32 + M, 32 + M), True))
     out.append(("port/balloon", [render_svg(sv, 32, 32, S, PAD) for sv in port.balloon_frames()], (16 * S + M, 16 * S + M), True))
     out.append(("port/toy", [render_svg(sv, 32, 32, S, PAD) for sv in port.toy_frames()], (16 * S + M, 16 * S + M), True))
+    for a in herissons.ANIMS:                           # les bébés hérissons, de profil, pieds en (16, 28)
+        out.append((f"hedgehog/{a}", [render_svg(sv, 32, 32, S, PAD) for sv in herissons.frames(a)], (16 * S + M, 28 * S + M), True))
     for kind in critters.KINDS:                         # écureuil, chats : de profil vers la droite, pieds en (16, 28)
         for a in critters.anims(kind):
             out.append((f"{kind}/{a}", [render_svg(sv, 32, 32, S, PAD) for sv in critters.frames(kind, a)], (16 * S + M, 28 * S + M), True))

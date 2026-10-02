@@ -4,7 +4,7 @@ function main() {
   const ids = () => run('menu.items.map(i => i.id).join()');
   run('audioOn(); STORE.mem = {}; loadBadges(); toTitle();');
   const N = run('MAP.badges.length');
-  ok(N === 15 && run('ATLAS["hud/badge"].f.length') === N + 1, N + ' badges (et l’image « verrouillé »)');
+  ok(N === 16 && run('ATLAS["hud/badge"].f.length') === N + 1, N + ' badges (et l’image « verrouillé »)');
   ok(run('MAP.badges.every(id => BADGE_INFO[id])'), 'chacun a un nom et un objectif');
   ok(ids().endsWith('options,badges') && run('menu.items[menu.items.length - 1].sub').includes('0 sur ' + N), 'menu principal : « Badges », 0 sur ' + N);
   run('menu.sel = menu.items.findIndex(i => i.id === "aventure"); pressed.ok = true'); step(1); advanceDialog();
@@ -44,7 +44,7 @@ function main() {
   ok(run('!!badges.copains'), 'balade : tous copains');
   // écran des badges
   run('toTitle();');
-  ok(new RegExp('(' + [1, 2, 3, 4].map(k => N - k).join('|') + ') sur ' + N).test(run('menu.items[menu.items.length - 1].sub')), 'menu : ' + run('menu.items[menu.items.length - 1].sub'));
+  ok(new RegExp('(' + [1, 2, 3, 4, 5].map(k => N - k).join('|') + ') sur ' + N).test(run('menu.items[menu.items.length - 1].sub')), 'menu : ' + run('menu.items[menu.items.length - 1].sub'));
   run('menu.sel = menu.items.length - 1; pressed.ok = true'); step(1);
   ok(run('state') === 'badges', 'écran des badges');
   run('used = []; drawSpr = function (k) { used.push(k); return ds0.apply(this, arguments); }; render(); drawSpr = ds0;');

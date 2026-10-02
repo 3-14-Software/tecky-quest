@@ -39,14 +39,15 @@ from spritelib import Drawing, circle, ellipse, rect, path, poly, leg, line, OUT
 W, H = 48, 64
 G = 60.0                      # ligne des pieds
 HK = 1.08                     # agrandissement de la tête (style chibi), autour du menton — comme Gaston
-KINDS = ("postman", "neighbor", "leon", "nestor")
+KINDS = ("postman", "neighbor", "leon", "nestor", "piquette")
 FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-côté conseillé
     "postman": (24, 18.5, 15.5),      # casquette, visage, moustache et menton (comme Gaston)
     "neighbor": (24, 21.5, 15.5),     # chignon, lunettes, menton (elle est plus petite : tout est 3 unités plus bas)
     "leon": (24, 18.0, 15.5),         # casque, visage, barbe
     "nestor": (24, 34.0, 13.0),       # le vieux chien : tête, oreilles, museau gris
+    "piquette": (24, 31.0, 13.0),     # la maman hérisson : piquants, fleur, museau
 }
-PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6", "leon": "#FDE3C2", "nestor": "#DCEBD2"}   # fond du médaillon (Gaston : "#CFE8B0")
+PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6", "leon": "#FDE3C2", "nestor": "#DCEBD2", "piquette": "#F6E3EC"}   # fond du médaillon (Gaston : "#CFE8B0")
 
 PAL = {
     "postman": dict(skin="#F5C8A6", skin_dk="#E2A986", nose="#EA9C82", blush="#F28A8A",
@@ -74,6 +75,10 @@ PAL = {
                  shirt="#3B6FB6", shirt_dk="#2B5290",
                  pants="#4A4F57", pants_dk="#363A40", shoe="#2B2B33", shoe_lt="#5C6168", toe="#F2C14E",
                  eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#9ED8F5"),
+    "piquette": dict(spike="#7C5536", spike_lt="#A57A50", face="#F3DFC0", face_dk="#DCC19A", paw="#5A3C24",
+                     apron="#F28CB8", apron_dk="#D86A9A", dot="#FFFFFF", flower="#F7D154", petal="#FFFFFF",
+                     nose="#2A1E1A", eye="#2A1E1A", blush="#F2A0A0", mouth="#B8505A", tongue="#E9858B",
+                     sweat="#9ED8F5"),
     "nestor": dict(fur="#D9A65E", fur_dk="#C08A45", ear="#A87436", light="#F4E8CF", gray="#ECE7DD",
                    nose="#2A1E1A", collar="#D7332B", tag="#F2C14E",
                    eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B"),
@@ -534,6 +539,98 @@ def _nestor(p):
     return d
 
 
+# ================================================================== MAMAN PIQUETTE, LA MAMAN HÉRISSON
+def _spiky(cx, cy, rx, ry, a0, a1, n, out=1.3):
+    """Contour hérissé : n pointes le long de l'ellipse entre les angles a0 et a1 (degrés), refermé par le centre."""
+    pts = []
+    for k in range(2 * n + 1):
+        a = math.radians(a0 + (a1 - a0) * k / (2 * n))
+        r = out if k % 2 else 1.0
+        pts.append((cx + rx * r * math.cos(a), cy + ry * r * math.sin(a)))
+    return "M" + " L".join(f"{x:.2f},{y:.2f}" for x, y in pts) + f" L{cx},{cy} Z"
+
+
+def _piquette(p):
+    """Maman Piquette, la maman hérisson de la forêt : debout, de face, piquants bruns tout autour, frimousse et ventre
+    crème, museau pointu, tablier rose à pois, fleur jaune à l'oreille. Mêmes poses que les autres personnages (bras
+    courts : salut, joie, mains sur les joues, geste qui accompagne la parole)."""
+    c = PAL["piquette"]
+    d = Drawing(W, H)
+    L = p["lift"]
+    Y = lambda v: v + p["bob"] - L
+    T = lambda v: v - L
+    k = max(0.6, 1 - L / 10)
+    d.under.append(f'<ellipse cx="24" cy="{G + 0.2}" rx="{12 * k:.2f}" ry="{2.4 * k:.2f}" fill="#000" opacity="0.2"/>')
+    # piquants, derrière tout le corps
+    d.add(path(_spiky(24, Y(42), 13.5, 15.5, 160, 380, 11)), c["spike"])
+    d.add(ellipse(24, Y(39), 10.5, 11.5), c["spike_lt"], sil=False, opacity=0.6)
+    # pieds, ventre, tablier
+    for x in (19.6, 28.4):
+        d.add(ellipse(x, T(G - 1.2), 3.2, 1.8), c["paw"])
+    d.add(ellipse(24, Y(47.5), 10.2 + p["breath"], 11.2), c["face"])
+    apron = path(f"M16.6,{Y(43)} L31.4,{Y(43)} Q33.6,{Y(52)} 31.6,{Y(57.4)} Q24,{Y(59.4)} 16.4,{Y(57.4)} Q14.4,{Y(52)} 16.6,{Y(43)} Z")
+    d.add(apron, c["apron"], edge=True)
+    d.clip("apron", [apron])
+    for x, y in ((19, 47), (25, 46), (29.6, 50), (21, 53), (27, 55.4), (17.6, 56)):
+        d.add(circle(x, Y(y), 0.9), c["dot"], sil=False, clip="apron")
+    d.add(rect(20.6, Y(49.6), 6.8, 4.6, 1.2), c["apron_dk"], sil=False, edge=True)      # poche
+    d.raw(line(f"M16.4,{Y(43.4)} Q24,{Y(41.2)} 31.6,{Y(43.4)}", c["apron_dk"], 1.2))    # cordon
+    # bras courts
+    def paw(x, y):
+        d.add(ellipse(x, y, 2.4, 2.6), c["face_dk"], edge=True)
+    for s, sx in ((-1, 14.6), (1, 33.4)):
+        if p["cheer"] > 0:
+            paw(24 + s * 13.2, Y(33.5))
+        elif p["cheeks"]:
+            paw(24 + s * 6.8, Y(34.5))
+        elif s == -1 and p["wave"] > 0:
+            paw(10.6 + math.sin(math.radians(p["wave_a"])) * 2, Y(35))
+        elif s == 1 and p["gesture"] > 0:
+            paw(35 + p["gesture"] * 1.4, Y(43.5 - p["gesture"] * 3))
+        else:
+            paw(sx, Y(46.5))
+    # tête : frimousse crème, oreilles, fleur
+    hy = Y(31.5) + p["nod"] * 0.6
+    for s in (-1, 1):
+        d.add(circle(24 + s * 7.0, hy - 6.2, 2.1), c["face_dk"])
+    d.add(ellipse(24, hy, 8.2, 7.4), c["face"])
+    d.add(ellipse(24, hy + 3.0, 3.4, 2.8), "#FBEBD3", sil=False)                         # museau
+    d.add(ellipse(24, hy + 2.6, 1.7, 1.3), c["nose"], sil=False)
+    d.add(circle(23.5, hy + 2.2, 0.4), "#FFFFFF", sil=False, opacity=0.8)
+    for a in range(5):                                                                  # fleur à l'oreille droite
+        r = math.radians(a * 72 - 90)
+        d.add(circle(31.4 + 1.6 * math.cos(r), hy - 7.6 + 1.6 * math.sin(r), 1.3), c["petal"], sil=False, edge=True)
+    d.add(circle(31.4, hy - 7.6, 1.0), c["flower"], sil=False, edge=True)
+    # yeux, joues, bouche
+    q = p["worry"]
+    for s in (-1, 1):
+        x, y = 24 + s * 3.4, hy - 1.2
+        if p["happy"]:
+            d.raw(line(f"M{x - 1.3:.2f},{y + 0.5:.2f} Q{x:.2f},{y - 1.0:.2f} {x + 1.3:.2f},{y + 0.5:.2f}", c["eye"], 1.0))
+        elif p["blink"] > 0.5:
+            d.raw(line(f"M{x - 1.2:.2f},{y:.2f} Q{x:.2f},{y + 0.9:.2f} {x + 1.2:.2f},{y:.2f}", c["eye"], 0.9))
+        else:
+            lk = p["look"] * 0.5
+            d.add(ellipse(x + lk, y, 1.2, 1.5), c["eye"], sil=False)
+            d.add(circle(x + lk + 0.4, y - 0.5, 0.42), "#FFFFFF", sil=False)
+        if q:      # sourcils inquiets : le bout intérieur remonte
+            d.raw(line(f"M{x - s * 1.4:.2f},{y - 3.0 - q * 0.7:.2f} L{x + s * 1.4:.2f},{y - 2.2:.2f}", c["eye"], 0.8))
+        d.add(ellipse(24 + s * 5.6, hy + 2.6, 1.7, 1.0), c["blush"], sil=False, opacity=0.7)
+    m = p["mouth"]
+    if p["happy"] or m > 0.05:
+        mm = max(m, 0.45 if p["happy"] else 0)
+        d.add(ellipse(24, hy + 5.6 + mm * 0.4, 1.3 + mm * 0.4, 0.4 + mm * 1.0), c["mouth"], sil=False, edge=True)
+    elif q > 0.3:
+        d.raw(line(f"M22.6,{hy + 6.0:.2f} Q24,{hy + 5.2:.2f} 25.4,{hy + 6.0:.2f}", c["eye"], 0.7))
+    else:
+        d.raw(line(f"M22.6,{hy + 5.0:.2f} Q24,{hy + 6.0:.2f} 25.4,{hy + 5.0:.2f}", c["eye"], 0.7))
+    if p["sweat"]:
+        x, y = 31.2, hy - 2.6
+        d.add(path(f"M{x},{y - 1.8} Q{x + 1.4},{y + 0.4} {x},{y + 1.1} Q{x - 1.4},{y + 0.4} {x},{y - 1.8} Z"),
+              c["sweat"], sil=False, edge=True)
+    return d
+
+
 # ================================================================== LA VOISINE
 DY = 3.0      # la mamie est plus petite : tout le haut du corps est 3 unités plus bas que chez Gaston
 
@@ -639,7 +736,7 @@ def _neighbor(p):
 
 
 # ================================================================== animations
-_DRAW = {"postman": _postman, "neighbor": _neighbor, "leon": _leon, "nestor": _nestor}
+_DRAW = {"postman": _postman, "neighbor": _neighbor, "leon": _leon, "nestor": _nestor, "piquette": _piquette}
 
 _WAVE = [P(wave=1, wave_a=-28, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2),
          P(wave=1, wave_a=4, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2)]
@@ -663,6 +760,16 @@ ANIMS = {   # PNJ : {nom : (poses, fps, boucle)}
                    P(cheer=1, happy=True, lift=2.6), P(cheer=0.85, happy=True, lift=1.0)], 8, True),
         "worry": ([P(worry=1, look=-1, sweat=True), P(worry=1, look=-1, bob=0.25, sweat=True),
                    P(worry=1, look=1, sweat=True), P(worry=1, look=1, bob=0.25, blink=1, sweat=True)], 5, True),
+    },
+    "piquette": {
+        "idle": (_IDLE, 5, True),
+        "talk": (_TALK, 8, True),
+        "wave": (_WAVE, 8, True),
+        "cheer": ([P(cheer=0.6, happy=True, bob=0.4), P(cheer=1, happy=True, lift=1.6),
+                   P(cheer=1, happy=True, lift=2.4), P(cheer=0.85, happy=True, lift=0.9)], 8, True),
+        "worry": ([P(worry=1, cheeks=True, look=-1, sweat=True), P(worry=1, cheeks=True, look=-1, bob=0.25, sweat=True),
+                   P(worry=1, cheeks=True, look=1, sweat=True), P(worry=1, cheeks=True, look=1, bob=0.25, blink=1, sweat=True)],
+                  5, True),
     },
     "nestor": {     # wave : il remue la queue ; cheer : il saute de joie ; worry : triste (sans ses jouets)
         "idle": ([P(), P(bob=0.3, wag=8), P(bob=0.5), P(bob=0.3, blink=1, wag=-6)], 4, True),

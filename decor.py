@@ -417,6 +417,21 @@ def goal_net():
     return d
 
 
+def leaf_nest():
+    """Le nid de Maman Piquette : un tas de feuilles mortes (orange, jaune, brun) avec une petite entrée sombre."""
+    d = Drawing(48, 32)
+    _shadow(d, 24, 28.5, 20, 2.6)
+    d.add(path("M5,28 Q6,14 18,10 Q26,7 33,11 Q43,15 43,28 Z"), "#B9783E")
+    for cx, cy, rx, ry, a, col in ((12, 22, 6, 3, -20, "#E08A3A"), (21, 16, 6.5, 3.2, 15, "#F2C14E"),
+                                   (31, 18, 6, 3, -25, "#C8642E"), (36, 25, 5.5, 2.8, 20, "#E3A954"),
+                                   (17, 25, 5, 2.6, 30, "#D4A23A"), (27, 12.5, 5, 2.4, -10, "#E08A3A")):
+        d.add(ellipse(cx, cy, rx, ry, f"rotate({a} {cx} {cy})"), col, sil=False, edge=True)
+        d.raw(line(f"M{cx - rx * 0.7:.1f},{cy} L{cx + rx * 0.7:.1f},{cy}", "#8A5A3A", 0.5)
+              .replace("/>", f' transform="rotate({a} {cx} {cy})"/>'))
+    d.add(path("M20,28 Q20,21.5 24,21.5 Q28,21.5 28,28 Z"), "#4A2E1A", sil=False, edge=True)   # entrée
+    return d
+
+
 def rail():
     """Voie ferrée posée à plat, une tuile qui se répète vers la droite : traverses en bois, deux rails."""
     d = Drawing(32, 32)
@@ -1256,6 +1271,7 @@ DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x)
     "bollard": (bollard, (32, 32), (16, 28)),
     "barge": (barge, (176, 48), (88, 42)),
     "goal_net": (goal_net, (96, 64), (48, 60)),
+    "leaf_nest": (leaf_nest, (48, 32), (24, 28)),
     "rail": (rail, (32, 32), (0, 16)),
     "buffer_stop": (buffer_stop, (32, 40), (16, 36)),
     "pallet": (pallet, (32, 32), (16, 27)),

@@ -61,6 +61,8 @@ setTimeout(() => {
     if (!reachable(MAP.goal[0], MAP.goal[1] + 60, 60)) out.push('ouverture du filet');
     if (!reachable(nestor.x, nestor.y, 150)) out.push('Nestor');
     for (const t of toys) if (waterAt(t.x, t.y) || !reachable(t.x, t.y, NESTOR.pick)) out.push('jouet ' + tile(t.x, t.y));
+    if (!reachable(piquette.x, piquette.y, 150)) out.push('Maman Piquette');
+    for (const b of babies) if (!standable(b.x, b.y) || !reachable(b.x, b.y, BABY.find)) out.push('bébé hérisson ' + tile(b.x, b.y));
     for (const l of letters) if (waterAt(l.x, l.y + 20) || !reachable(l.x, l.y + 20, 52)) out.push('lettre ' + tile(l.x, l.y));
     if (!standable(pompon.x, pompon.y) || !reachable(pompon.x, pompon.y, 120)) out.push('Pompon ' + tile(pompon.x, pompon.y));
     // terriers : les deux bouts praticables et atteignables à pied (le terrier est un raccourci, pas un passage obligé)
@@ -80,6 +82,7 @@ setTimeout(() => {
     for (const l of letters) A.push(['lettre', 'lettre', l.x, l.y + 20, POST.pick]);
     A.push(['chat', 'Pompon', pompon.x, pompon.y, CAT.find]);
     for (const t of toys) A.push(['jouet', 'jouet', t.x, t.y, NESTOR.pick]);
+    for (const b of babies) A.push(['hérisson', 'hérisson', b.x, b.y, BABY.find]);
     for (let i = 0; i < A.length; i++) for (let j = i + 1; j < A.length; j++) {
       const a = A[i], b = A[j];
       if (a[0] === b[0] && a[0] !== 'personnage') continue;

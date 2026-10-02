@@ -38,6 +38,8 @@ python3 pack_web.py && node tools/export_voix.js
 | Les écureuils | petite voix aiguë et rapide |
 | Les canards | coin-coin |
 | Titine | la petite locomotive du port : voix joyeuse et chantante |
+| Maman Piquette | la maman hérisson de la forêt : douce, tendre, un peu inquiète |
+| Les bébés hérissons | toute petite voix aiguë (« Couic ! ») |
 
 ## Fichiers audio
 
