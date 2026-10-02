@@ -37,7 +37,7 @@ function main() {
   run('var said = []; ctx.fillText = s => said.push(String(s)); overT = 2; render(); delete ctx.fillText;');
   ok(pc >= 0 && pc < 100 && run('winDone') === pc && run(`said.includes("Aventure complétée") && said.includes("${pc}\u00a0%")`), 'écran de victoire : aventure complétée à ' + pc + ' %');
   ok(run('newRecord.done') && run('said.filter(s => s === "Record !").length') === 3, 'premier record de complétion : « Record ! »');
-  run('treasures = MAP.dig.length; farm.state = post.state = rose.state = fete.state = nest.state = piq.state = "done";' +
+  run('treasures = MAP.dig.length; farm.state = post.state = rose.state = fete.state = jouets.state = piq.state = "done";' +
       'critters.forEach(c => c.scored = true); ducks.forEach(d => d.scored = true); seenCells.fill(1);');
   ok(run('completion()') === 100, 'tout trouvé, toutes les quêtes, toute la carte : 100 %');
   run('farm.state = "new";');

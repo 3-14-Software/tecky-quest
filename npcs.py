@@ -39,15 +39,15 @@ from spritelib import Drawing, circle, ellipse, rect, path, poly, leg, line, OUT
 W, H = 48, 64
 G = 60.0                      # ligne des pieds
 HK = 1.08                     # agrandissement de la tête (style chibi), autour du menton — comme Gaston
-KINDS = ("postman", "neighbor", "leon", "nestor", "piquette")
+KINDS = ("postman", "neighbor", "leon", "iris", "piquette")
 FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-côté conseillé
     "postman": (24, 18.5, 15.5),      # casquette, visage, moustache et menton (comme Gaston)
     "neighbor": (24, 21.5, 15.5),     # chignon, lunettes, menton (elle est plus petite : tout est 3 unités plus bas)
     "leon": (24, 18.0, 15.5),         # casque, visage, barbe
-    "nestor": (24, 34.0, 13.0),       # le vieux chien : tête, oreilles, museau gris
+    "iris": (24, 33.5, 13.0),         # le vieux Jack Russell : tête, oreilles, sourcils blancs
     "piquette": (24, 31.0, 13.0),     # la maman hérisson : piquants, fleur, museau
 }
-PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6", "leon": "#FDE3C2", "nestor": "#DCEBD2", "piquette": "#F6E3EC"}   # fond du médaillon (Gaston : "#CFE8B0")
+PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6", "leon": "#FDE3C2", "iris": "#DDE9F6", "piquette": "#F6E3EC"}   # fond du médaillon (Gaston : "#CFE8B0")
 
 PAL = {
     "postman": dict(skin="#F5C8A6", skin_dk="#E2A986", nose="#EA9C82", blush="#F28A8A",
@@ -79,9 +79,8 @@ PAL = {
                      apron="#F28CB8", apron_dk="#D86A9A", dot="#FFFFFF", flower="#F7D154", petal="#FFFFFF",
                      nose="#2A1E1A", eye="#2A1E1A", blush="#F2A0A0", mouth="#B8505A", tongue="#E9858B",
                      sweat="#9ED8F5"),
-    "nestor": dict(fur="#D9A65E", fur_dk="#C08A45", ear="#A87436", light="#F4E8CF", gray="#ECE7DD",
-                   nose="#2A1E1A", collar="#D7332B", tag="#F2C14E",
-                   eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B"),
+    "iris": dict(white="#FFFDF7", white_dk="#D9CFC0", tan="#D99A52", tan_dk="#B47838", gray="#E3DED5", brow="#FBF8F2",
+                 band="#4C86C6", dot="#FFFFFF", nose="#2A1E1A", eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B"),
 }
 
 
@@ -97,7 +96,7 @@ def P(**kw):
     accompagne la parole ; cheer : 0..1 les deux bras levés ; cheeks : les deux mains sur les joues."""
     base = dict(bob=0.0, breath=0.0, lift=0.0, nod=0.0, blink=0.0, look=0.0, mouth=0.0, happy=False,
                 worry=0.0, sweat=False, wave=0.0, wave_a=0.0, gesture=0.0, cheer=0.0, cheeks=False,
-                wag=0.0, droop=0.0)       # Nestor : angle de la queue (°), oreilles plus basses (triste)
+                wag=0.0, droop=0.0)       # Iris : angle de la queue (°), oreilles plus basses (triste)
     base.update(kw)
     return base
 
@@ -479,63 +478,83 @@ def _leon(p):
 
 
 # ================================================================== NESTOR, LE VIEUX CHIEN DU GARDIEN
-def _nestor(p):
-    """Nestor, le vieux chien du gardien du port : assis, de face, poil doré, longues oreilles tombantes, museau et
-    sourcils gris, collier rouge et sa médaille. Il remue la queue (wag) ; triste (worry), ses oreilles tombent."""
-    c = PAL["nestor"]
+def _iris(p):
+    """Iris, le vieux Jack Russell, ami et mentor de Tecky : assis, de face, poil blanc, taches feu sur les yeux et
+    les oreilles (liste blanche au milieu du front), une tache sur le flanc, oreilles pliées vers l'avant, queue
+    dressée feu au bout blanc, museau grisonnant et gros sourcils blancs de vieux sage, bandana bleu à pois.
+    Il remue la queue (wag) ; triste (worry), ses oreilles tombent (droop)."""
+    c = PAL["iris"]
     d = Drawing(W, H)
     L = p["lift"]
     Y = lambda v: v + p["bob"] - L          # buste et tête (respire, saute)
     T = lambda v: v - L                     # pattes (sautent seulement)
     k = max(0.6, 1 - L / 10)
-    d.under.append(f'<ellipse cx="24" cy="{G + 0.2}" rx="{13 * k:.2f}" ry="{2.6 * k:.2f}" fill="#000" opacity="0.2"/>')
-    # queue touffue, derrière, qui remue
-    d.add(ellipse(34.6, T(49.6), 2.5, 6.6, f"rotate({18 + p['wag']:.1f} 31.5 {T(55):.2f})"), c["fur"])
-    d.add(ellipse(35.2, T(44.8), 1.4, 2.0, f"rotate({18 + p['wag']:.1f} 31.5 {T(55):.2f})"), c["light"], sil=False)
-    # cuisses (assis), corps, poitrail clair
-    for x in (16, 32):
-        d.add(ellipse(x, T(55.4), 6.2, 5.0), c["fur"])
-    d.add(ellipse(24, Y(47.4), 9.6, 10.4), c["fur"])
-    d.add(ellipse(24, Y(46.6), 5.0, 4.6), c["light"], sil=False)
-    # pattes avant
-    for x in (20.2, 27.8):
-        d.add(leg(x, Y(51), x, T(59.0), 3.9), c["fur"])
-        d.add(ellipse(x, T(59.3), 2.8, 1.5), c["light"])
-    # collier rouge et médaille
-    d.add(path(f"M15.6,{Y(39.4):.2f} Q24,{Y(43.4):.2f} 32.4,{Y(39.4):.2f} L32.4,{Y(41.8):.2f} Q24,{Y(45.8):.2f} 15.6,{Y(41.8):.2f} Z"),
-          c["collar"], sil=False, edge=True)
-    d.add(circle(24, Y(45.2), 1.7), c["tag"], sil=False, edge=True)
-    # tête
-    hy = Y(33.0)
-    d.add(circle(24, hy, 8.8), c["fur"])
-    d.add(ellipse(24, hy - 6.6, 2.2, 0.9), c["gray"], sil=False, opacity=0.5)       # quelques poils gris sur le crâne
-    dr = 14 + p["droop"]
-    for s in (-1, 1):                                                                 # oreilles tombantes
-        d.add(ellipse(24 + s * 8.6, hy + 3.4 + p["droop"] * 0.3, 3.5, 7.4, f"rotate({-s * dr:.1f} {24 + s * 8.6} {hy - 2:.2f})"), c["ear"])
-    # museau gris, truffe, bouche
-    d.add(ellipse(24, hy + 4.4, 5.6, 4.3), c["gray"])
+    d.under.append(f'<ellipse cx="24" cy="{G + 0.2}" rx="{12 * k:.2f}" ry="{2.5 * k:.2f}" fill="#000" opacity="0.2"/>')
+    # queue dressée, derrière, qui remue : feu, le bout blanc
+    rot = f"rotate({16 + p['wag']:.1f} 30.6 {T(53):.2f})"
+    d.add(ellipse(32.2, T(46.2), 1.9, 6.4, rot), c["tan"])
+    d.add(ellipse(32.2, T(40.6), 1.5, 1.9, rot), c["white"], sil=False)
+    # cuisses (assis), corps blanc, tache feu sur le flanc, ventre un peu ombré
+    for s in (-1, 1):
+        d.add(ellipse(24 + s * 7.4, T(55.6), 5.2, 4.4), c["white"])
+    d.add(ellipse(24, Y(47.6), 8.4, 10.2), c["white"])
+    d.add(ellipse(30.0, Y(45.6), 2.3, 3.6, f"rotate(-14 30 {Y(45.6):.2f})"), c["tan"], sil=False)
+    for s in (-1, 1):                                            # pli des cuisses
+        d.raw(line(f"M{24 + s * 3.6:.2f},{T(57.6):.2f} Q{24 + s * 4.6:.2f},{T(53.4):.2f} {24 + s * 8.6:.2f},{T(52.2):.2f}",
+                   c["white_dk"], 0.9))
+    # pattes avant, fines et longues, doigts marqués
+    for x in (20.6, 27.4):
+        d.add(leg(x, Y(51), x, T(59.0), 3.3), c["white"])
+        d.add(ellipse(x, T(59.3), 2.5, 1.4), c["white"])
+        for t in (-0.8, 0.8):
+            d.raw(line(f"M{x + t:.2f},{T(58.6):.2f} L{x + t:.2f},{T(60.0):.2f}", c["white_dk"], 0.6))
+    # bandana bleu à pois, noué sous la tête
+    d.add(path(f"M15.8,{Y(39.6):.2f} Q24,{Y(43.0):.2f} 32.2,{Y(39.6):.2f} L24,{Y(47.6):.2f} Z"), c["band"], sil=False, edge=True)
+    for x, y in ((20.6, 41.6), (24, 43.6), (27.4, 41.6), (24, 46.0)):
+        d.add(circle(x, Y(y), 0.55), c["dot"], sil=False)
+    # tête blanche, taches feu autour des yeux (liste blanche au milieu)
+    hy = Y(32.8)
+    d.add(circle(24, hy, 8.9), c["white"])
+    for s in (-1, 1):
+        d.add(ellipse(24 + s * 4.9, hy - 1.6, 3.6, 4.4, f"rotate({s * 10} {24 + s * 4.9:.2f} {hy - 1.6:.2f})"), c["tan"], sil=False)
+    # oreilles pliées vers l'avant (feu, bord plus foncé) ; triste, elles tombent un peu plus
+    dr = p["droop"]
+    for s in (-1, 1):
+        x0, x1 = 24 + s * 4.4, 24 + s * 9.3
+        tx, ty = 24 + s * (10.6 + dr * 0.1), hy + 1.2 + dr * 0.5
+        d.add(path(f"M{x0:.2f},{hy - 7.4:.2f} Q{24 + s * 7.6:.2f},{hy - 9.6:.2f} {x1:.2f},{hy - 6.0:.2f} "
+                   f"Q{tx + s * 0.6:.2f},{ty - 2.6:.2f} {tx:.2f},{ty:.2f} Q{24 + s * 6.6:.2f},{hy - 1.8:.2f} {x0:.2f},{hy - 7.4:.2f} Z"),
+              c["tan"])
+        d.raw(line(f"M{24 + s * 5.0:.2f},{hy - 6.8:.2f} Q{24 + s * 7.4:.2f},{hy - 5.0:.2f} {tx - s * 0.6:.2f},{ty - 0.8:.2f}",
+                   c["tan_dk"], 0.8))
+    # museau grisonnant, petite barbiche, truffe, bouche
+    d.add(ellipse(24, hy + 4.4, 4.6, 3.6), c["gray"])
+    d.add(path(f"M22.0,{hy + 7.4:.2f} L23.0,{hy + 9.4:.2f} L24.0,{hy + 7.9:.2f} L25.0,{hy + 9.4:.2f} L26.0,{hy + 7.4:.2f} Z"),
+          c["gray"], sil=False)
     m = p["mouth"]
     if p["happy"] or m > 0.05:
         mm = max(m, 0.5 if p["happy"] else 0)
-        d.add(ellipse(24, hy + 6.6 + mm * 0.6, 1.9 + mm * 0.5, 0.6 + mm * 1.6), c["mouth"], sil=False, edge=True)
-        d.add(ellipse(24, hy + 7.4 + mm * 1.0, 1.2, 0.5 + mm * 0.7), c["tongue"], sil=False)
+        d.add(ellipse(24, hy + 6.4 + mm * 0.6, 1.8 + mm * 0.5, 0.6 + mm * 1.5), c["mouth"], sil=False, edge=True)
+        d.add(ellipse(24, hy + 7.2 + mm * 1.0, 1.1, 0.5 + mm * 0.7), c["tongue"], sil=False)
     else:
-        d.raw(line(f"M21.6,{hy + 5.6:.2f} Q24,{hy + 7.2:.2f} 26.4,{hy + 5.6:.2f}", c["eye"], 0.8))
-    d.add(ellipse(24, hy + 2.4, 2.3, 1.7), c["nose"])
-    d.add(ellipse(23.3, hy + 1.9, 0.7, 0.45), "#FFFFFF", sil=False, opacity=0.7)
-    # yeux et sourcils gris de vieux chien
+        d.raw(line(f"M21.8,{hy + 5.6:.2f} Q24,{hy + 7.0:.2f} 26.2,{hy + 5.6:.2f}", c["eye"], 0.8))
+    d.add(ellipse(24, hy + 2.5, 2.1, 1.6), c["nose"])
+    d.add(ellipse(23.4, hy + 2.0, 0.65, 0.42), "#FFFFFF", sil=False, opacity=0.7)
+    # yeux et gros sourcils blancs, touffus, de vieux sage (le bout vers l'extérieur tombe : il a l'air gentil)
     q = p["worry"]
     for s in (-1, 1):
-        x, y = 24 + s * 3.6, hy - 1.4
+        x, y = 24 + s * 3.6, hy - 1.2
         if p["happy"]:
             d.raw(line(f"M{x - 1.4:.2f},{y + 0.6:.2f} Q{x:.2f},{y - 1.1:.2f} {x + 1.4:.2f},{y + 0.6:.2f}", c["eye"], 1.0))
         elif p["blink"] > 0.5:
             d.raw(line(f"M{x - 1.3:.2f},{y:.2f} Q{x:.2f},{y + 0.9:.2f} {x + 1.3:.2f},{y:.2f}", c["eye"], 0.9))
         else:
-            d.add(ellipse(x, y - q * 0.3, 1.3, 1.6), c["eye"], sil=False)
+            d.add(ellipse(x, y - q * 0.3, 1.25, 1.55), c["eye"], sil=False)
             d.add(circle(x + 0.4, y - 0.6 - q * 0.3, 0.45), "#FFFFFF", sil=False)
-        d.add(ellipse(x, y - 2.5 - q * 0.5, 1.6, 0.7, f"rotate({-s * (4 + q * 16):.1f} {x:.2f} {y - 2.5:.2f})"),
-              c["gray"], sil=False)
+        rb = f"rotate({s * (10 + q * 14):.1f} {x:.2f} {y - 2.6:.2f})"
+        d.add(ellipse(x - s * 0.7, y - 2.4 - q * 0.4, 1.3, 0.8, rb), c["brow"], sil=False)
+        d.add(ellipse(x + s * 0.6, y - 2.6 - q * 0.6, 1.4, 0.9, rb), c["brow"], sil=False)
+        d.add(ellipse(x + s * 1.6, y - 2.2 - q * 0.6, 0.9, 0.7, rb), c["brow"], sil=False)
     return d
 
 
@@ -736,7 +755,7 @@ def _neighbor(p):
 
 
 # ================================================================== animations
-_DRAW = {"postman": _postman, "neighbor": _neighbor, "leon": _leon, "nestor": _nestor, "piquette": _piquette}
+_DRAW = {"postman": _postman, "neighbor": _neighbor, "leon": _leon, "iris": _iris, "piquette": _piquette}
 
 _WAVE = [P(wave=1, wave_a=-28, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2),
          P(wave=1, wave_a=4, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2)]
@@ -771,15 +790,13 @@ ANIMS = {   # PNJ : {nom : (poses, fps, boucle)}
                    P(worry=1, cheeks=True, look=1, sweat=True), P(worry=1, cheeks=True, look=1, bob=0.25, blink=1, sweat=True)],
                   5, True),
     },
-    "nestor": {     # wave : il remue la queue ; cheer : il saute de joie ; worry : triste (sans ses jouets)
+    "iris": {       # wave : il remue la queue ; cheer : il saute de joie (il n'est jamais inquiet : c'est le sage)
         "idle": ([P(), P(bob=0.3, wag=8), P(bob=0.5), P(bob=0.3, blink=1, wag=-6)], 4, True),
         "talk": ([P(mouth=0.3), P(mouth=0.9, wag=6), P(mouth=0.4), P(mouth=0.8, bob=0.3, wag=-4)], 8, True),
         "wave": ([P(happy=True, wag=-22), P(happy=True, wag=26, bob=0.2), P(happy=True, wag=-22),
                   P(happy=True, wag=26, bob=0.2)], 10, True),
         "cheer": ([P(happy=True, wag=-22, lift=0.8), P(happy=True, wag=26, lift=2.4), P(happy=True, wag=-22, lift=3.0),
                    P(happy=True, wag=26, lift=1.2)], 8, True),
-        "worry": ([P(worry=1, droop=7), P(worry=1, droop=7, bob=0.3), P(worry=1, droop=7, bob=0.4),
-                   P(worry=1, droop=7, bob=0.3, blink=1)], 4, True),
     },
     "neighbor": {
         "idle": (_IDLE, 5, True),

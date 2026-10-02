@@ -187,8 +187,10 @@ DECOR = [
     ("bush", 71.0, 38.6), ("bush", 84.0, 36.4), ("bush", 95.0, 31.6), ("hay", 75.6, 37.2), ("hay", 76.8, 37.5),
     ("rock", 90.6, 36.0),
     # au sud de la route : verger, champ, mare, chemin du pont
-    ("tree", 59, 24.6), ("tree", 62.4, 24.4), ("tree", 65.8, 24.6), ("tree", 59.2, 27.8), ("tree", 62.6, 28),
-    ("tree", 66, 27.8), ("tree", 92.5, 23.6), ("tree", 94.5, 28.6), ("bush", 77.6, 23.4), ("bush", 83.4, 29.3),
+    # le verger : des arbres en rangées, et au milieu, la petite clairière où Iris a son panier
+    *[("tree", x, y) for y in (24.0, 29.2) for x in (58.0, 60.4, 62.8, 65.2)], ("tree", 58.0, 26.6), ("tree", 65.2, 26.6),
+    ("dog_bed", 61.6, 26.95),
+    ("tree", 92.5, 23.6), ("tree", 94.5, 28.6), ("bush", 77.6, 23.4), ("bush", 83.4, 29.3),
     ("reeds", 85.6, 24.6), ("reeds", 90.6, 27.4), ("hay", 77.8, 27.4), ("scarecrow", 72, 27.4),
     ("signpost", 78, 40.6),
     ("bridge", 80, 46),
@@ -249,9 +251,10 @@ LEON = (37.6, 34.0)                 # Léon, le cariste du port, à côté de so
 GOAL = (40.0, 35.2)                 # son grand filet (pied du cadre avant, ouverture vers le bas)
 # ses cinq gros ballons, qui ont roulé partout dans la zone industrielle (une couleur chacun, port.BALL_COLORS)
 BALLS = [(38.6, 37.6), (44.4, 34.6), (57.2, 33.6), (54.2, 27.0), (50.6, 29.4)]
-NESTOR = (60.0, 33.0)               # Nestor, le vieux chien du gardien, devant sa cabane
-# ses trois jouets (port.TOYS : canard, anneau, corde) : sur la berge du port, au dépôt, sur le chemin du pont
-TOYS = [(42.2, 40.8), (36.0, 24.8), (80.0, 24.0)]
+IRIS = (61.6, 26.9)                 # Iris, le vieux Jack Russell, sur son panier au milieu du verger
+# ses trois jouets (port.TOYS : canard, anneau, corde), cachés dans les prés de la ferme : près de la mare, dans le
+# champ, dans la pâture au bord de la rivière
+TOYS = [(86.0, 29.8), (74.4, 25.2), (69.4, 37.0)]
 TRACK = (31.25, 63.75, 38.6)        # voie de Titine, le petit train : x des heurtoirs ouest et est, y des rails
 PIQUETTE = (76.4, 60.3)             # Maman Piquette, la maman hérisson, dans sa clairière (forêt)
 CLEARING = (72.6, 57.6, 79.6, 62.6)  # la clairière : pas de sapins
@@ -276,7 +279,7 @@ ITEMS = [
     ("ball", 6.3, 5.4), ("ball", 23, 6.3), ("ball", 27.5, 26), ("ball", 33, 19.8), ("ball", 54.2, 7.0),
     # ferme
     ("bone", 69.6, 7.4), ("bone", 82.4, 27.6), ("sausage", 94.4, 4.6), ("medal", 94.2, 25.6),
-    ("squeaky", 88.4, 28.6), ("ball", 60.8, 26.2), ("ball", 75, 17.3),
+    ("squeaky", 88.4, 28.6), ("ball", 66.8, 23.0), ("ball", 75, 17.3),
     # forêt
     ("bone", 79.6, 52.6), ("bone", 67, 60.4), ("sausage", 90.4, 54.6), ("medal", 59.2, 63),
     ("squeaky", 85.6, 57.2), ("ball", 72.6, 55.8),
@@ -292,7 +295,7 @@ ITEMS = [
 # zones calmes (x0, y0, x1, y1 en tuiles) : comme les villes d'un RPG, aucun chien hostile n'y vit ni n'y poursuit
 # Tecky. Le village, au nord de la grande route, et la cour de la ferme (Gaston, l'enclos).
 CALM = [(27.6, 0, 56.4, 18), (65, 2.6, 81.4, 17.4),   # le village jusqu'au bord de la route (trottoir compris), la ferme
-        (33.4, 30.6, 42.6, 36.6), (58.0, 30.6, 64.4, 35.0),   # au port : le coin de Léon, celui de Nestor
+        (33.4, 30.6, 42.6, 36.6), (56.8, 22.4, 67.4, 30.2),   # au port, le coin de Léon ; le verger d'Iris
         CLEARING]                                     # la clairière de Maman Piquette
 ENEMIES = [
     # le 1er roquet est assez loin de la niche pour ne pas attaquer dès la fin de l'intro
@@ -300,7 +303,7 @@ ENEMIES = [
     ("bouledogue", 27.6, 22.9), ("bouledogue", 23.5, 28.2),
     ("molosse", 49.5, 26.2),
     # ferme : les chiens de berger gardent les prés (la cour, elle, est une zone calme)
-    ("berger", 61.6, 6.4), ("berger", 82, 25.5), ("berger", 88, 6.5), ("bouledogue", 63.5, 26.4), ("roquet", 76.5, 29),
+    ("berger", 61.6, 6.4), ("berger", 82, 25.5), ("berger", 88, 6.5), ("bouledogue", 70.6, 39.0), ("roquet", 76.5, 29),
     # forêt
     ("roquet", 73, 50), ("roquet", 85, 55.6), ("bouledogue", 62.5, 56.4), ("molosse", 90.5, 56.6),
     # parc
@@ -313,7 +316,7 @@ ENEMIES = [
 # voie 1 en bas vers l'est ; x de départ en tuiles). Les véhicules s'arrêtent aux passages quand Tecky y est.
 CROSSINGS = (10, 50, 71, 79)
 # massifs de fleurs au sol (tuiles) : dessinés en détail sur le sol, et perchoirs des papillons
-FLOWER_BEDS = ((7, 4), (23, 8), (3, 23), (10, 5), (6, 9), (24, 26), (60, 26), (62, 28), (93, 21), (84, 57),
+FLOWER_BEDS = ((7, 4), (23, 8), (3, 23), (10, 5), (6, 9), (24, 26), (59, 25), (63, 25), (93, 21), (84, 57),
                (14, 52), (46, 52), (14, 59), (47, 61), (51, 49), (2, 56), (12, 62), (32, 47), (52, 61), (27, 62),
                (6, 49), (8, 62),
                (18, 4), (21, 7), (16, 10), (10, 38), (26, 32), (4, 35), (70, 36), (92, 33), (36, 13), (53, 13), (40, 50))
@@ -326,7 +329,7 @@ BUTTERFLIES = [("yellow", 30.5, 47.8), ("blue", 34.8, 51.6), ("pink", 13, 56), (
                ("yellow", 9, 5.6), ("orange", 6, 8.6),
                ("pink", 36, 6.4), ("blue", 49, 5.4),
                ("blue", 4.5, 22.8), ("yellow", 22.6, 25.8),
-               ("orange", 62, 27), ("yellow", 60, 25.6),
+               ("orange", 63.6, 25.4), ("yellow", 59.6, 25.4),
                ("blue", 85.5, 56.6),
                ("orange", 19.5, 5.5), ("pink", 16.5, 10.6), ("yellow", 10.5, 38.4), ("blue", 26.0, 32.6),
                ("orange", 70.5, 36.4), ("pink", 53.5, 13.4)]
@@ -346,7 +349,7 @@ CRITTERS = [("squirrel", 73.4, 53.9), ("squirrel", 82.2, 52.9), ("squirrel", 64.
             ("squirrel", 10.6, 48.6), ("cat", 37.6, 9.0), ("cat_black", 47.6, 25.4), ("cat", 52.6, 34.0),
             ("squirrel", 13.4, 33.6)]
 DIG = [(12.5, 6.5), (11.5, 27.5), (29.5, 24.5),
-       (63.5, 26.5), (90.5, 16.5), (60.5, 49.5), (92.5, 60.5), (11.5, 60.5),   # celui-ci : à côté du bac à sable
+       (82.0, 34.4), (90.5, 16.5), (60.5, 49.5), (92.5, 60.5), (11.5, 60.5),   # celui-ci : à côté du bac à sable
        (19.5, 12.5), (16.5, 39.5), (86.5, 39.5), (45.5, 40.5)]   # jardin de la niche, campagne, prés, quai du port
 START = (4.5, 4.2)
 ALICE = (5, 53.3 + 14 / 64)   # juste devant la porte de la cabane du parc (cachée jusqu'aux trois indices)
@@ -478,7 +481,7 @@ def build_map():
         "postman": [px(POSTMAN[0]), px(POSTMAN[1])], "neighbor": [px(NEIGHBOR[0]), px(NEIGHBOR[1])],
         "pompon": [px(POMPON[0]), px(POMPON[1])], "letters": [[px(x), px(y)] for x, y in LETTERS],
         "leon": [px(LEON[0]), px(LEON[1])], "goal": [px(GOAL[0]), px(GOAL[1])], "balls": [[px(x), px(y)] for x, y in BALLS],
-        "nestor": [px(NESTOR[0]), px(NESTOR[1])], "toys": [[px(x), px(y)] for x, y in TOYS],
+        "iris": [px(IRIS[0]), px(IRIS[1])], "toys": [[px(x), px(y)] for x, y in TOYS],
         "track": [px(TRACK[0]), px(TRACK[1]), px(TRACK[2])],
         "piquette": [px(PIQUETTE[0]), px(PIQUETTE[1])], "babies": [[px(x), px(y)] for x, y in BABIES],
         "babyFps": {a: fps for a, (_, fps, _) in herissons.ANIMS.items()},

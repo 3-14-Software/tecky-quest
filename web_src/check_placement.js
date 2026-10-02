@@ -59,8 +59,8 @@ setTimeout(() => {
     for (const b of balls) if (!standable(b.x, b.y) || !reachable(b.x, b.y, 80) || ballBlocked(b, b.x, b.y)) out.push('ballon ' + tile(b.x, b.y));
     for (const b of balls) { checkGoal(b); if (b.inNet) out.push('ballon déjà dans le filet ' + tile(b.x, b.y)); }
     if (!reachable(MAP.goal[0], MAP.goal[1] + 60, 60)) out.push('ouverture du filet');
-    if (!reachable(nestor.x, nestor.y, 150)) out.push('Nestor');
-    for (const t of toys) if (waterAt(t.x, t.y) || !reachable(t.x, t.y, NESTOR.pick)) out.push('jouet ' + tile(t.x, t.y));
+    if (!reachable(iris.x, iris.y, 150)) out.push('Iris');
+    for (const t of toys) if (waterAt(t.x, t.y) || !reachable(t.x, t.y, IRIS.pick)) out.push('jouet ' + tile(t.x, t.y));
     if (!reachable(piquette.x, piquette.y, 150)) out.push('Maman Piquette');
     for (const b of babies) if (!standable(b.x, b.y) || !reachable(b.x, b.y, BABY.find)) out.push('bébé hérisson ' + tile(b.x, b.y));
     for (const l of letters) if (waterAt(l.x, l.y + 20) || !reachable(l.x, l.y + 20, 52)) out.push('lettre ' + tile(l.x, l.y));
@@ -81,7 +81,7 @@ setTimeout(() => {
     for (const it of items) if (CLUES.includes(it.n)) A.push(['indice', it.n, it.x, it.y + 32, REACH.item]);
     for (const l of letters) A.push(['lettre', 'lettre', l.x, l.y + 20, POST.pick]);
     A.push(['chat', 'Pompon', pompon.x, pompon.y, CAT.find]);
-    for (const t of toys) A.push(['jouet', 'jouet', t.x, t.y, NESTOR.pick]);
+    for (const t of toys) A.push(['jouet', 'jouet', t.x, t.y, IRIS.pick]);
     for (const b of babies) A.push(['hérisson', 'hérisson', b.x, b.y, BABY.find]);
     for (let i = 0; i < A.length; i++) for (let j = i + 1; j < A.length; j++) {
       const a = A[i], b = A[j];

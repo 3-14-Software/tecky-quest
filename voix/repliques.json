@@ -28,9 +28,9 @@
       "nom": "Léon",
       "voix": "le cariste du port : sympathique, voix forte"
     },
-    "nestor": {
-      "nom": "Nestor",
-      "voix": "le vieux chien du gardien : voix lente, grave et bonhomme"
+    "iris": {
+      "nom": "Iris",
+      "voix": "le vieux Jack Russell, ami et mentor de Tecky : voix posée et chaleureuse, un peu rocailleuse, celle d’un vieux sage"
     },
     "piquette": {
       "nom": "Maman Piquette",
@@ -398,6 +398,17 @@
     },
     {
       "voix": "tecky",
+      "fichier": "tecky-ff4938ca",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Ouaf ! Iris ! Elle joue à cache-cache, et je ne la trouve pas…",
+      "affiche": "Ouaf ! Iris ! Elle joue à cache-cache, et je ne la trouve pas…",
+      "contexte": "Iris : demande"
+    },
+    {
+      "voix": "tecky",
       "fichier": "tecky-f769abf8",
       "personnage": "Tecky",
       "type": "dialogue",
@@ -405,7 +416,7 @@
       "ton": "joyeux",
       "texte": "Ouaf ! « Va chercher », c'est mon jeu préféré !",
       "affiche": "Ouaf ! « Va chercher », c'est mon jeu préféré !",
-      "contexte": "Nestor : demande"
+      "contexte": "Iris : demande"
     },
     {
       "voix": "tecky",
@@ -493,7 +504,7 @@
       "ton": "",
       "texte": "Un jouet ?",
       "affiche": "Un jouet ?",
-      "contexte": "Tecky prend un jouet de Nestor"
+      "contexte": "Tecky prend un jouet d’Iris"
     },
     {
       "voix": "tecky",
@@ -552,36 +563,36 @@
     },
     {
       "voix": "tecky",
-      "fichier": "tecky-5a52e794",
+      "fichier": "tecky-1eabd6a0",
       "personnage": "Tecky",
       "type": "bulle",
       "appareil": "",
       "ton": "",
-      "texte": "Le canard de Nestor !",
-      "affiche": "Le canard de Nestor !",
-      "contexte": "Tecky prend un jouet de Nestor"
+      "texte": "Le canard d’Iris !",
+      "affiche": "Le canard d’Iris !",
+      "contexte": "Tecky prend un jouet d’Iris"
     },
     {
       "voix": "tecky",
-      "fichier": "tecky-573c777b",
+      "fichier": "tecky-616f5b09",
       "personnage": "Tecky",
       "type": "bulle",
       "appareil": "",
       "ton": "",
-      "texte": "L’anneau de Nestor !",
-      "affiche": "L’anneau de Nestor !",
-      "contexte": "Tecky prend un jouet de Nestor"
+      "texte": "L’anneau d’Iris !",
+      "affiche": "L’anneau d’Iris !",
+      "contexte": "Tecky prend un jouet d’Iris"
     },
     {
       "voix": "tecky",
-      "fichier": "tecky-ad8b68b8",
+      "fichier": "tecky-c2ae0d44",
       "personnage": "Tecky",
       "type": "bulle",
       "appareil": "",
       "ton": "",
-      "texte": "La corde de Nestor !",
-      "affiche": "La corde de Nestor !",
-      "contexte": "Tecky prend un jouet de Nestor"
+      "texte": "La corde d’Iris !",
+      "affiche": "La corde d’Iris !",
+      "contexte": "Tecky prend un jouet d’Iris"
     },
     {
       "voix": "tecky",
@@ -1750,202 +1761,323 @@
       "contexte": "Un ballon entre dans le filet"
     },
     {
-      "voix": "nestor",
-      "fichier": "nestor-55c3f120",
-      "personnage": "Nestor",
-      "type": "dialogue",
-      "appareil": "",
-      "ton": "inquiet",
-      "texte": "Wouf… Bonjour, petit. Moi, c'est Nestor, le chien du gardien. Mes vieilles pattes ne courent plus bien vite…",
-      "affiche": "Wouf… Bonjour, petit. Moi, c'est Nestor, le chien du gardien. Mes vieilles pattes ne courent plus bien vite…",
-      "contexte": "Nestor : demande"
-    },
-    {
-      "voix": "nestor",
-      "fichier": "nestor-9be869b9",
-      "personnage": "Nestor",
-      "type": "dialogue",
-      "appareil": "",
-      "ton": "",
-      "texte": "J'ai perdu mes trois jouets : mon canard, mon anneau et ma corde. Tu veux bien me les rapporter, un par un, dans ta gueule ?",
-      "affiche": "J'ai perdu mes trois jouets : mon canard, mon anneau et ma corde. Tu veux bien me les rapporter, un par un, dans ta gueule ?",
-      "contexte": "Nestor : demande"
-    },
-    {
-      "voix": "nestor",
-      "fichier": "nestor-6f33d173",
-      "personnage": "Nestor",
-      "type": "dialogue",
-      "appareil": "",
-      "ton": "",
-      "texte": "Il m'en manque encore 3. Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !",
-      "affiche": "Il m'en manque encore 3. Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !",
-      "contexte": "Nestor : rappel"
-    },
-    {
-      "voix": "nestor",
-      "fichier": "nestor-7ae66c66",
-      "personnage": "Nestor",
-      "type": "dialogue",
-      "appareil": "",
-      "ton": "",
-      "texte": "Il m'en manque encore 2. Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !",
-      "affiche": "Il m'en manque encore 2. Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !",
-      "contexte": "Nestor : rappel"
-    },
-    {
-      "voix": "nestor",
-      "fichier": "nestor-074ff1e4",
-      "personnage": "Nestor",
-      "type": "dialogue",
-      "appareil": "",
-      "ton": "",
-      "texte": "Plus qu'un ! Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !",
-      "affiche": "Plus qu'un ! Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !",
-      "contexte": "Nestor : rappel"
-    },
-    {
-      "voix": "nestor",
-      "fichier": "nestor-24ee070d",
-      "personnage": "Nestor",
+      "voix": "iris",
+      "fichier": "iris-3c9a6f0f",
+      "personnage": "Iris",
       "type": "dialogue",
       "appareil": "",
       "ton": "joyeux",
-      "texte": "Mes trois jouets ! Merci, petit. Tu as de bonnes pattes, toi !",
-      "affiche": "Mes trois jouets ! Merci, petit. Tu as de bonnes pattes, toi !",
-      "contexte": "Nestor : merci"
+      "texte": "Tiens, mon petit Tecky ! Ça me fait plaisir de te voir. Alors, tu cherches ta petite Alice ?",
+      "affiche": "Tiens, mon petit Tecky ! Ça me fait plaisir de te voir. Alors, tu cherches ta petite Alice ?",
+      "contexte": "Iris : demande"
     },
     {
-      "voix": "nestor",
-      "fichier": "nestor-90333c42",
-      "personnage": "Nestor",
+      "voix": "iris",
+      "fichier": "iris-66bdd545",
+      "personnage": "Iris",
       "type": "dialogue",
       "appareil": "",
       "ton": "",
-      "texte": "Tiens, prends ma saucisse. Moi, je vais faire une petite sieste avec mon canard.",
-      "affiche": "Tiens, prends ma saucisse. Moi, je vais faire une petite sieste avec mon canard.",
-      "contexte": "Nestor : merci"
+      "texte": "Un bon chien ne perd jamais une piste. Pour t'entraîner, j'ai caché mes trois jouets dans les prés de la ferme : mon canard, mon anneau et ma corde.",
+      "affiche": "Un bon chien ne perd jamais une piste. Pour t'entraîner, j'ai caché mes trois jouets dans les prés de la ferme : mon canard, mon anneau et ma corde.",
+      "contexte": "Iris : demande"
     },
     {
-      "voix": "nestor",
-      "fichier": "nestor-ddc1d8f5",
-      "personnage": "Nestor",
+      "voix": "iris",
+      "fichier": "iris-bcc4cc11",
+      "personnage": "Iris",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !",
+      "affiche": "Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !",
+      "contexte": "Iris : demande"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-9d48043d",
+      "personnage": "Iris",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 3 à trouver, mon petit. Ils sont dans les prés de la ferme. Et n'oublie pas : si tu aboies, tu les lâches !",
+      "affiche": "Encore 3 à trouver, mon petit. Ils sont dans les prés de la ferme. Et n'oublie pas : si tu aboies, tu les lâches !",
+      "contexte": "Iris : rappel"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-fde8ea5e",
+      "personnage": "Iris",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 2 à trouver, mon petit. Ils sont dans les prés de la ferme. Et n'oublie pas : si tu aboies, tu les lâches !",
+      "affiche": "Encore 2 à trouver, mon petit. Ils sont dans les prés de la ferme. Et n'oublie pas : si tu aboies, tu les lâches !",
+      "contexte": "Iris : rappel"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-87155e00",
+      "personnage": "Iris",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Plus qu'un ! Ils sont dans les prés de la ferme. Et n'oublie pas : si tu aboies, tu les lâches !",
+      "affiche": "Plus qu'un ! Ils sont dans les prés de la ferme. Et n'oublie pas : si tu aboies, tu les lâches !",
+      "contexte": "Iris : rappel"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-6cf09d1b",
+      "personnage": "Iris",
       "type": "dialogue",
       "appareil": "",
       "ton": "joyeux",
-      "texte": "Wouf… Merci encore, petit. Bonne chance pour retrouver ta petite Alice !",
-      "affiche": "Wouf… Merci encore, petit. Bonne chance pour retrouver ta petite Alice !",
-      "contexte": "Nestor : après la quête"
+      "texte": "Mes trois jouets ! Bravo, Tecky : quelle truffe ! Je n'aurais pas fait mieux à ton âge.",
+      "affiche": "Mes trois jouets ! Bravo, Tecky : quelle truffe ! Je n'aurais pas fait mieux à ton âge.",
+      "contexte": "Iris : merci"
     },
     {
-      "voix": "nestor",
-      "fichier": "nestor-4e097bd3",
-      "personnage": "Nestor",
+      "voix": "iris",
+      "fichier": "iris-d9636ed2",
+      "personnage": "Iris",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tiens, une bonne saucisse pour la route. Reviens me voir quand tu veux : j'ai toujours un conseil pour toi.",
+      "affiche": "Tiens, une bonne saucisse pour la route. Reviens me voir quand tu veux : j'ai toujours un conseil pour toi.",
+      "contexte": "Iris : merci"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-432d3fa8",
+      "personnage": "Iris",
+      "type": "dialogue",
+      "appareil": "clavier",
+      "ton": "",
+      "texte": "Un conseil de vieux chien : quand tu ne sais plus où aller, fais confiance à ta truffe. Appuie sur la touche R, et suis la piste !",
+      "affiche": "Un conseil de vieux chien : quand tu ne sais plus où aller, fais confiance à ta truffe. Appuie sur [sniff], et suis la piste !",
+      "contexte": "Iris : conseil après la quête"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-209fbcc8",
+      "personnage": "Iris",
+      "type": "dialogue",
+      "appareil": "manette",
+      "ton": "",
+      "texte": "Un conseil de vieux chien : quand tu ne sais plus où aller, fais confiance à ta truffe. Appuie sur le bouton Y, et suis la piste !",
+      "affiche": "Un conseil de vieux chien : quand tu ne sais plus où aller, fais confiance à ta truffe. Appuie sur [sniff], et suis la piste !",
+      "contexte": "Iris : conseil après la quête"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-55a0fad3",
+      "personnage": "Iris",
+      "type": "dialogue",
+      "appareil": "clavier",
+      "ton": "",
+      "texte": "Un chien te cherche des ennuis ? Un bon aboiement la touche X et il recule. Sauf le doberman : celui-là, il faut le mordre la touche C !",
+      "affiche": "Un chien te cherche des ennuis ? Un bon aboiement [bark] et il recule. Sauf le doberman : celui-là, il faut le mordre [bite] !",
+      "contexte": "Iris : conseil après la quête"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-0693ff63",
+      "personnage": "Iris",
+      "type": "dialogue",
+      "appareil": "manette",
+      "ton": "",
+      "texte": "Un chien te cherche des ennuis ? Un bon aboiement le bouton X et il recule. Sauf le doberman : celui-là, il faut le mordre le bouton A !",
+      "affiche": "Un chien te cherche des ennuis ? Un bon aboiement [bark] et il recule. Sauf le doberman : celui-là, il faut le mordre [bite] !",
+      "contexte": "Iris : conseil après la quête"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-a1d3a69c",
+      "personnage": "Iris",
+      "type": "dialogue",
+      "appareil": "clavier",
+      "ton": "",
+      "texte": "Les trous sous les grillages, ce sont des terriers : un vrai raccourci de teckel ! Approche-toi, et appuie sur la touche C.",
+      "affiche": "Les trous sous les grillages, ce sont des terriers : un vrai raccourci de teckel ! Approche-toi, et appuie sur [bite].",
+      "contexte": "Iris : conseil après la quête"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-df16b925",
+      "personnage": "Iris",
+      "type": "dialogue",
+      "appareil": "manette",
+      "ton": "",
+      "texte": "Les trous sous les grillages, ce sont des terriers : un vrai raccourci de teckel ! Approche-toi, et appuie sur le bouton A.",
+      "affiche": "Les trous sous les grillages, ce sont des terriers : un vrai raccourci de teckel ! Approche-toi, et appuie sur [bite].",
+      "contexte": "Iris : conseil après la quête"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-3eeb24fa",
+      "personnage": "Iris",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Pour traverser la grande route, prends les passages piétons : les voitures s'y arrêtent toujours.",
+      "affiche": "Pour traverser la grande route, prends les passages piétons : les voitures s'y arrêtent toujours.",
+      "contexte": "Iris : conseil après la quête ; Iris : conseil après la quête (au toucher)"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-8a22b131",
+      "personnage": "Iris",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tu es fatigué ? Les os te redonnent des forces, et une saucisse, encore plus. Ouvre l'œil, il y en a partout !",
+      "affiche": "Tu es fatigué ? Les os te redonnent des forces, et une saucisse, encore plus. Ouvre l'œil, il y en a partout !",
+      "contexte": "Iris : conseil après la quête ; Iris : conseil après la quête (au toucher)"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-a93ff3e5",
+      "personnage": "Iris",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Un conseil de vieux chien : quand tu ne sais plus où aller, fais confiance à ta truffe. Touche le bouton à truffe, et suis la piste !",
+      "affiche": "Un conseil de vieux chien : quand tu ne sais plus où aller, fais confiance à ta truffe. Touche le bouton à truffe, et suis la piste !",
+      "contexte": "Iris : conseil après la quête (au toucher)"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-1b838d64",
+      "personnage": "Iris",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Un chien te cherche des ennuis ? Un bon aboiement et il recule. Sauf le doberman : celui-là, il faut le mordre !",
+      "affiche": "Un chien te cherche des ennuis ? Un bon aboiement et il recule. Sauf le doberman : celui-là, il faut le mordre !",
+      "contexte": "Iris : conseil après la quête (au toucher)"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-b85fd8aa",
+      "personnage": "Iris",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Les trous sous les grillages, ce sont des terriers : un vrai raccourci de teckel ! Approche-toi, et touche « Passer ».",
+      "affiche": "Les trous sous les grillages, ce sont des terriers : un vrai raccourci de teckel ! Approche-toi, et touche « Passer ».",
+      "contexte": "Iris : conseil après la quête (au toucher)"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-80be5adf",
+      "personnage": "Iris",
       "type": "bulle",
       "appareil": "",
       "ton": "",
-      "texte": "Wouf… bonjour, petit.",
-      "affiche": "Wouf… bonjour, petit.",
-      "contexte": "Nestor : Tecky arrive"
+      "texte": "Salut, mon petit Tecky !",
+      "affiche": "Salut, mon petit Tecky !",
+      "contexte": "Iris : Tecky arrive"
     },
     {
-      "voix": "nestor",
-      "fichier": "nestor-6938fde7",
-      "personnage": "Nestor",
+      "voix": "iris",
+      "fichier": "iris-6938fde7",
+      "personnage": "Iris",
       "type": "bulle",
       "appareil": "",
       "ton": "",
       "texte": "Encore 3 jouets !",
       "affiche": "Encore 3 jouets !",
-      "contexte": "Nestor : Tecky arrive"
+      "contexte": "Iris : Tecky arrive"
     },
     {
-      "voix": "nestor",
-      "fichier": "nestor-192c1946",
-      "personnage": "Nestor",
+      "voix": "iris",
+      "fichier": "iris-192c1946",
+      "personnage": "Iris",
       "type": "bulle",
       "appareil": "",
       "ton": "",
       "texte": "Encore 2 jouets !",
       "affiche": "Encore 2 jouets !",
-      "contexte": "Nestor : Tecky arrive"
+      "contexte": "Iris : Tecky arrive"
     },
     {
-      "voix": "nestor",
-      "fichier": "nestor-6ee71f12",
-      "personnage": "Nestor",
+      "voix": "iris",
+      "fichier": "iris-6ee71f12",
+      "personnage": "Iris",
       "type": "bulle",
       "appareil": "",
       "ton": "",
       "texte": "Encore 1 jouet !",
       "affiche": "Encore 1 jouet !",
-      "contexte": "Nestor : Tecky arrive"
+      "contexte": "Iris : Tecky arrive"
     },
     {
-      "voix": "nestor",
-      "fichier": "nestor-07a8f95c",
-      "personnage": "Nestor",
+      "voix": "iris",
+      "fichier": "iris-07a8f95c",
+      "personnage": "Iris",
       "type": "bulle",
       "appareil": "",
       "ton": "",
       "texte": "Tous mes jouets ! Viens me voir !",
       "affiche": "Tous mes jouets ! Viens me voir !",
-      "contexte": "Nestor : Tecky arrive ; Tecky rapporte un jouet à Nestor"
+      "contexte": "Iris : Tecky arrive ; Tecky rapporte un jouet à Iris"
     },
     {
-      "voix": "nestor",
-      "fichier": "nestor-42523d43",
-      "personnage": "Nestor",
+      "voix": "iris",
+      "fichier": "iris-7fbabfff",
+      "personnage": "Iris",
       "type": "bulle",
       "appareil": "",
       "ton": "",
-      "texte": "Wouf ! Bonjour, petit !",
-      "affiche": "Wouf ! Bonjour, petit !",
-      "contexte": "Nestor : Tecky arrive"
+      "texte": "Bonne chasse, Tecky !",
+      "affiche": "Bonne chasse, Tecky !",
+      "contexte": "Iris : Tecky arrive"
     },
     {
-      "voix": "nestor",
-      "fichier": "nestor-b4998957",
-      "personnage": "Nestor",
+      "voix": "iris",
+      "fichier": "iris-012f6c74",
+      "personnage": "Iris",
       "type": "bulle",
       "appareil": "",
       "ton": "",
-      "texte": "Wouf ? Mon jouet !",
-      "affiche": "Wouf ? Mon jouet !",
-      "contexte": "Tecky rapporte un jouet à Nestor"
+      "texte": "Tiens, mon jouet !",
+      "affiche": "Tiens, mon jouet !",
+      "contexte": "Tecky rapporte un jouet à Iris"
     },
     {
-      "voix": "nestor",
-      "fichier": "nestor-2b00a627",
-      "personnage": "Nestor",
+      "voix": "iris",
+      "fichier": "iris-29227698",
+      "personnage": "Iris",
       "type": "bulle",
       "appareil": "",
       "ton": "",
-      "texte": "Mes jouets ! Wouf !",
-      "affiche": "Mes jouets ! Wouf !",
-      "contexte": "Tecky rapporte un jouet à Nestor"
+      "texte": "Mes jouets ! Bravo !",
+      "affiche": "Mes jouets ! Bravo !",
+      "contexte": "Tecky rapporte un jouet à Iris"
     },
     {
-      "voix": "nestor",
-      "fichier": "nestor-d5731454",
-      "personnage": "Nestor",
+      "voix": "iris",
+      "fichier": "iris-a68dff79",
+      "personnage": "Iris",
       "type": "bulle",
       "appareil": "",
       "ton": "",
-      "texte": "Wouf ! Encore 2 !",
-      "affiche": "Wouf ! Encore 2 !",
-      "contexte": "Tecky rapporte un jouet à Nestor"
+      "texte": "Bravo ! Encore 2 !",
+      "affiche": "Bravo ! Encore 2 !",
+      "contexte": "Tecky rapporte un jouet à Iris"
     },
     {
-      "voix": "nestor",
-      "fichier": "nestor-95bb3085",
-      "personnage": "Nestor",
+      "voix": "iris",
+      "fichier": "iris-65a74908",
+      "personnage": "Iris",
       "type": "bulle",
       "appareil": "",
       "ton": "",
-      "texte": "Wouf ! Encore 1 !",
-      "affiche": "Wouf ! Encore 1 !",
-      "contexte": "Tecky rapporte un jouet à Nestor"
+      "texte": "Bravo ! Encore 1 !",
+      "affiche": "Bravo ! Encore 1 !",
+      "contexte": "Tecky rapporte un jouet à Iris"
     },
     {
       "voix": "piquette",

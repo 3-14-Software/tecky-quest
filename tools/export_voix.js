@@ -23,7 +23,7 @@ const VOICES = {
   postman: ['Marcel', 'le facteur : enjoué, un peu pressé'],
   neighbor: ['Mamie Rose', 'la voisine : douce vieille dame'],
   leon: ['Léon', 'le cariste du port : sympathique, voix forte'],
-  nestor: ['Nestor', 'le vieux chien du gardien : voix lente, grave et bonhomme'],
+  iris: ['Iris', 'le vieux Jack Russell, ami et mentor de Tecky : voix posée et chaleureuse, un peu rocailleuse, celle d’un vieux sage'],
   piquette: ['Maman Piquette', 'la maman hérisson de la forêt : douce, tendre, un peu inquiète'],
   doberman: ['Le doberman', 'gros chien bourru, voix grave'],
   dog: ['Les chiens du coin', 'chiens grognons (« Grrr… »), ou contents en balade (« Copain ! »)'],
@@ -35,9 +35,9 @@ const VOICES = {
 };
 // répliques dont le texte est calculé (pas une chaîne écrite en dur) : chacune doit être produite ci-dessous ; si ce
 // nombre change, une réplique calculée a été ajoutée ou retirée dans game.js : adapter ce fichier
-const DYNAMIC_SITES = 18;
+const DYNAMIC_SITES = 19;
 const DYNAMIC_POPS = 10;          // de même pour les bulles (texte calculé : comptes, noms des jouets, mot passé à dropToy)
-const NPC_VARS = { farmer: 'farmer', postman: 'postman', neighbor: 'neighbor', leon: 'leon', nestor: 'nestor', piquette: 'piquette' };
+const NPC_VARS = { farmer: 'farmer', postman: 'postman', neighbor: 'neighbor', leon: 'leon', iris: 'iris', piquette: 'piquette' };
 // répliques relevées dans le code (écrites en dur, dites en cours de route) : contexte selon la fonction qui les dit
 const WHERE = { doBark: 'Premier aboiement sur le doberman', updatePompon: 'Tecky retrouve Pompon',
   updateTunnel: 'Premier terrier', updatePlayer: 'Devant la cachette d’Alice, avant les trois indices' };
@@ -90,12 +90,14 @@ function main() {
     ask('Léon : rappel', `fete.state = "asked"; balls.forEach((b, i) => b.inNet = i >= ${n}); talkLeon();`);
   ask('Léon : merci', 'balls.forEach(b => b.inNet = true); talkLeon();');
   ask('Léon : après la quête', 'fete.state = "done"; talkLeon();');
-  ask('Nestor : demande', 'nest.state = "new"; talkNestor();');
+  ask('Iris : demande', 'jouets.state = "new"; talkIris();');
   for (let n = 3; n >= 1; n--)
-    ask('Nestor : rappel', `nest.state = "asked"; toys.forEach((t, i) => t.home = i >= ${n}); talkNestor();`);
-  ask('Nestor : merci', 'toys.forEach(t => t.home = true); talkNestor();');
-  ask('Nestor : après la quête', 'nest.state = "done"; talkNestor();');
-  // bulles calculées : saluts des personnages (selon l'état de leur quête), comptes, jouets de Nestor
+    ask('Iris : rappel', `jouets.state = "asked"; toys.forEach((t, i) => t.home = i >= ${n}); talkIris();`);
+  ask('Iris : merci', 'toys.forEach(t => t.home = true); talkIris();');
+  for (const touch of [false, true])
+    for (let i = 0; i < 5; i++) ask(`Iris : conseil après la quête${touch ? ' (au toucher)' : ''}`, `jouets.state = "done"; touchMode = ${touch}; iris.tip = ${i}; talkIris();`);
+  run('touchMode = false;');
+  // bulles calculées : saluts des personnages (selon l'état de leur quête), comptes, jouets d'Iris
   const greet = (who, ctx, setup) => ask(`${VOICES[who][0]} : ${ctx}`, setup + ` NPC_DO[${JSON.stringify(NPC_VARS[who])}].greet();`);
   greet('farmer', 'Tecky arrive', 'farm.state = "new";');
   for (let n = 5; n >= 0; n--) greet('farmer', 'Tecky arrive', `farm.state = "asked"; questHens().forEach((h, i) => h.penned = i >= ${n});`);
@@ -109,9 +111,9 @@ function main() {
   greet('leon', 'Tecky arrive', 'fete.state = "new";');
   for (let n = 5; n >= 0; n--) greet('leon', 'Tecky arrive', `fete.state = "asked"; balls.forEach((b, i) => b.inNet = i >= ${n});`);
   greet('leon', 'Tecky arrive', 'fete.state = "done";');
-  greet('nestor', 'Tecky arrive', 'nest.state = "new";');
-  for (let n = 3; n >= 0; n--) greet('nestor', 'Tecky arrive', `nest.state = "asked"; toys.forEach((t, i) => t.home = i >= ${n});`);
-  greet('nestor', 'Tecky arrive', 'nest.state = "done";');
+  greet('iris', 'Tecky arrive', 'jouets.state = "new";');
+  for (let n = 3; n >= 0; n--) greet('iris', 'Tecky arrive', `jouets.state = "asked"; toys.forEach((t, i) => t.home = i >= ${n});`);
+  greet('iris', 'Tecky arrive', 'jouets.state = "done";');
   greet('piquette', 'Tecky arrive', 'piq.state = "new";');
   for (let n = 3; n >= 0; n--) greet('piquette', 'Tecky arrive', `piq.state = "asked"; babies.forEach((b, i) => b.mode = i >= ${n} ? "home" : "hidden");`);
   greet('piquette', 'Tecky arrive', 'piq.state = "done";');
@@ -122,11 +124,11 @@ function main() {
     ask('Tecky ramasse une lettre', `post.state = "${st}"; letters.forEach(l => l.got = false); P.mode = "free";` +
         ' letters.forEach(l => { P.x = l.x; P.y = l.y + 20; updateLetters(0); });');
     ask('Un ballon entre dans le filet', `fete.state = "${st}"; balls.forEach(b => { b.inNet = false; b.x = MAP.goal[0]; b.y = MAP.goal[1] - 20; checkGoal(b); });`);
-    ask('Tecky prend un jouet de Nestor', `nest.state = "${st}"; toys.forEach(t => { t.home = t.carried = false; t.cd = 0; });` +
+    ask('Tecky prend un jouet d’Iris', `jouets.state = "${st}"; toys.forEach(t => { t.home = t.carried = false; t.cd = 0; });` +
         ' toys.forEach(t => { P.x = t.x; P.y = t.y; updateToys(0); const c = carried(); if (c) c.carried = false; t.cd = 9; });');
     ask('Un petit hérisson rejoint sa maman', `piq.state = "${st}"; babies.forEach(b => b.mode = "hidden"); babies.forEach(b => { babyHome(b); piquetteCall(); });`);
     ask('Des petits hérissons rejoignent leur maman ensemble', `piq.state = "${st}"; babies.forEach(b => b.mode = "hidden"); babyHome(babies[0]); babyHome(babies[1]); piquetteCall();`);
-    ask('Tecky rapporte un jouet à Nestor', `nest.state = "${st}"; toys.forEach(t => { t.home = t.carried = false; }); toys.forEach(t => giveToy(t));`);
+    ask('Tecky rapporte un jouet à Iris', `jouets.state = "${st}"; toys.forEach(t => { t.home = t.carried = false; }); toys.forEach(t => giveToy(t));`);
   }
   ask('Tecky aboie avec un jouet dans la gueule', 'toys[0].home = false; toys[0].carried = true; dropToy("Oups !");');
   ask('Maman Piquette : demande', 'piq.state = "new"; talkPiquette();');

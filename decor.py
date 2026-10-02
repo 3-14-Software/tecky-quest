@@ -432,6 +432,24 @@ def leaf_nest():
     return d
 
 
+def dog_bed():
+    """Le panier d'Iris, au verger : un panier en osier ovale, vu de trois quarts, et son coussin rouge à carreaux."""
+    d = Drawing(48, 32)
+    _shadow(d, 24, 27.5, 21, 2.4)
+    d.add(ellipse(24, 20.6, 20.5, 7.4), "#9A6535")                    # flanc du panier (devant)
+    d.add(ellipse(24, 18.6, 20.5, 7.4), "#C08A4E")                    # bord en osier
+    for k in range(-4, 5):                                            # tressage du bord, devant
+        x = 24 + k * 4.3
+        y = 18.6 + 7.4 * (1 - (k * 4.3 / 20.5) ** 2) ** 0.5
+        d.raw(line(f"M{x:.1f},{y - 1.6:.1f} L{x + 0.8:.1f},{y + 1.4:.1f}", "#8A5A30", 0.6))
+    d.add(ellipse(24, 17.8, 16.4, 5.4), "#8A5A30", sil=False)         # le creux
+    d.add(ellipse(24, 18.4, 15.4, 4.8), "#E0675A", sil=False, edge=True)   # le coussin
+    for x in (16.5, 24, 31.5):
+        d.raw(line(f"M{x},14.2 L{x},22.6", "#F49C8E", 0.9))
+    d.raw(line("M9.6,18.4 L38.4,18.4", "#F49C8E", 0.9))
+    return d
+
+
 def rail():
     """Voie ferrée posée à plat, une tuile qui se répète vers la droite : traverses en bois, deux rails."""
     d = Drawing(32, 32)
@@ -1272,6 +1290,7 @@ DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x)
     "barge": (barge, (176, 48), (88, 42)),
     "goal_net": (goal_net, (96, 64), (48, 60)),
     "leaf_nest": (leaf_nest, (48, 32), (24, 28)),
+    "dog_bed": (dog_bed, (48, 32), (24, 22)),
     "rail": (rail, (32, 32), (0, 16)),
     "buffer_stop": (buffer_stop, (32, 40), (16, 36)),
     "pallet": (pallet, (32, 32), (16, 27)),

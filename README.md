@@ -10,7 +10,7 @@ La journée avance avec la recherche : un cran par indice, du plein jour au couc
 lampadaires s'allument, et la nuit tombe quand Tecky et Alice rentrent à la niche. De temps en temps,
 une averse (flaques, arc-en-ciel, Tecky qui s'ébroue) ; en décembre, il neige.
 En chemin : le fermier Gaston (allez lui parler, C) a besoin d'aide pour ramener ses poules dans l'enclos, Marcel le
-facteur a perdu ses lettres dans le vent, Mamie Rose cherche son chat Pompon, Léon, au port, a laissé rouler ses gros ballons (à pousser dans son filet, comme au foot), Nestor, le vieux chien du gardien, attend qu'on lui rapporte ses jouets, Maman Piquette, la maman hérisson, cherche ses trois petits cachés dans la forêt, Titine, le petit train du quai, siffle quand on lui aboie dessus, des écureuils et des chats
+facteur a perdu ses lettres dans le vent, Mamie Rose cherche son chat Pompon, Léon, au port, a laissé rouler ses gros ballons (à pousser dans son filet, comme au foot), Iris, le vieux Jack Russell, ami et mentor de Tecky, l'entraîne au verger (rapporter ses jouets cachés dans les prés) puis lui donne des conseils, Maman Piquette, la maman hérisson, cherche ses trois petits cachés dans la forêt, Titine, le petit train du quai, siffle quand on lui aboie dessus, des écureuils et des chats
 filent se percher quand Tecky les poursuit, des canards s'envolent de l'étang et de la rivière, des terriers permettent de passer sous les grillages, et Tecky peut
 flairer la piste d'Alice (de petits pieds nus apparaissent au sol). Les trésors enterrés sont des os dorés à
 collectionner, et la pause montre la carte des coins déjà explorés (avec les personnages qui ont quelque chose à dire). Chaque zone a son ambiance sonore, ses instruments

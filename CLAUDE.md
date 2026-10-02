@@ -200,12 +200,15 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   `goal_net`, côtés et fond dans `RAILS`, intérieur `GOAL_IN`) ; ils roulent, rebondissent (`moveBall()`, jamais hors de
   `BALL.box`), sont guidés vers l'ouverture (`funnelBall()`) et restent dans le filet (`checkGoal()`). Léon remercie
   (os + points), badge « ballons ». Sauvegardés (`fete`, `balls`). Test : `leon.js`.
-- Nestor, le vieux chien du gardien du port (`nest`, `nestor`, `NESTOR`, `MAP.nestor`, npcs.py « nestor » : un
+- Iris, le vieux Jack Russell, ami et mentor de Tecky (`jouets`, `iris`, `IRIS`, `MAP.iris`, npcs.py « iris » : un
   personnage, pas un chien de `dogs` ; bulle plus basse : `n.markY`, `markY()` ; il « parle » en jappant, `n.woof`) :
-  ses trois jouets (`toys`, `MAP.toys`, sprites `port/toy`) sont éparpillés. Tecky en prend un dans la gueule en
+  sur son panier (décor `dog_bed`, à plat) au milieu du verger, zone calme. Pour entraîner Tecky, il a caché ses trois
+  jouets (`toys`, `MAP.toys`, sprites `port/toy`) dans les prés de la ferme. Tecky en prend un dans la gueule en
   passant dessus (un seul à la fois, `carried()`, dessiné à `MOUTH[dir]`), le lâche s'il aboie, mord ou est KO
-  (`dropToy()`, `NESTOR.regrab`), le donne en arrivant près de Nestor (`giveToy()`). Saucisse + points, badge
-  « nestor ». Sauvegardés (`nest`, `toys` ; un jouet porté l'est aux pieds de Tecky). Test : `nestor.js`.
+  (`dropToy()`, `IRIS.regrab`), le donne en arrivant près d'Iris (`giveToy()`). Saucisse + points, badge « iris ».
+  Ensuite, un conseil de vieux chien à chaque visite, à tour de rôle (`IRIS_TIPS` : des fonctions, pour le texte
+  tactile sans icônes ; `iris.tip`). Sauvegardés (`jouets`, `toys` ; un jouet porté l'est aux pieds de Tecky). Test :
+  `iris.js`.
 - Maman Piquette, la maman hérisson (`piq`, `piquette`, `BABY`, `MAP.piquette`, npcs.py « piquette ») : dans une
   clairière de la forêt (`CLEARING` dans pack_web : herbe, pas de sapins, sentier depuis le chemin ouest, nid
   `leaf_nest` ; zone calme). Ses trois petits (`babies`, `MAP.babies`, herissons.py, sprites `hedgehog/*`) se cachent

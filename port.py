@@ -3,7 +3,7 @@ Le port (zone industrielle agrandie) : ce qui sert aux quêtes de ses habitants.
 
 - Les gros ballons de Léon (quête : les pousser dans le filet) : ballons de plage, une image par couleur, vus de
   dessus (le jeu les fait tourner quand ils roulent). Cadre 32 x 32, origine conseillée au centre (16, 16).
-- Les trois jouets de Nestor, le vieux chien du gardien (quête : les lui rapporter un par un dans la gueule) :
+- Les trois jouets d'Iris, le vieux Jack Russell, ami de Tecky (quête du verger : les lui rapporter un par un dans la gueule) :
   canard en caoutchouc (tourné vers la gauche), anneau, corde à nœuds. Cadre 32 x 32, origine au centre.
 """
 import math
@@ -39,7 +39,7 @@ TOYS = ["duck", "ring", "rope"]
 
 
 def rubber_duck(d, dx=0.0, dy=0.0):
-    """Canard en caoutchouc jaune, tourné vers la gauche (aussi l'icône du badge de Nestor)."""
+    """Canard en caoutchouc jaune, tourné vers la gauche (aussi l'icône du badge d'Iris)."""
     d.add(path(f"M{6 + dx},{19 + dy} Q{6 + dx},{27 + dy} {16 + dx},{27 + dy} L{22 + dx},{27 + dy} "
                f"Q{29 + dx},{26.5 + dy} {28 + dx},{18.5 + dy} Q{27 + dx},{14 + dy} {23.5 + dx},{16.5 + dy} "
                f"L{15 + dx},{17 + dy} Z"), "#F7D154")
@@ -52,7 +52,7 @@ def rubber_duck(d, dx=0.0, dy=0.0):
 
 
 def toy_frames():
-    """Les trois jouets de Nestor (dans l'ordre de TOYS)."""
+    """Les trois jouets d'Iris (dans l'ordre de TOYS)."""
     out = []
     d = Drawing(32, 32)
     rubber_duck(d)

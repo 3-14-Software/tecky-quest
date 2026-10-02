@@ -749,7 +749,7 @@ const FOOT = {
   fir: [-18, -16, 18, 0], stump: [-20, -16, 20, 0], log: [-54, -22, 56, 0], slide: [-56, -14, 58, 0],
   swing: [-58, -12, 58, 0], fountain: [-52, -40, 52, 0], playhouse: [-44, -50, 44, -2],
 };
-const FLAT = new Set(['bridge', 'sandbox', 'burrow', 'rail']);   // posés à plat : dessinés sous les personnages
+const FLAT = new Set(['bridge', 'sandbox', 'burrow', 'rail', 'dog_bed']);   // posés à plat : dessinés sous les personnages
 // collisions en plusieurs morceaux : garde-corps du pont (son tablier n'est pas de l'eau, voir BRIDGES dans
 // pack_web.py), pieds du portique du port
 const RAILS = { bridge: [[-80, -320, -62, 0], [62, -320, 80, 0]], crane: [[-204, -16, -156, 0], [156, -16, 204, 0]],
@@ -970,7 +970,7 @@ function reset() {
   letters = MAP.letters.map(([x, y]) => ({ x, y, t: Math.random() * 2, got: false }));
   neighbor = newNpc('neighbor', MAP.neighbor, 1.35); rose = { state: 'new' }; pompon = newPompon();
   leon = newNpc('leon', MAP.leon, 0.95); fete = { state: 'new' }; balls = MAP.balls.map(newBall);
-  nestor = Object.assign(newNpc('nestor', MAP.nestor, 0.62), { markY: NESTOR.markY, woof: true }); nest = { state: 'new' };
+  iris = Object.assign(newNpc('iris', MAP.iris, 0.8), { markY: IRIS.markY, woof: true, tip: 0 }); jouets = { state: 'new' };
   toys = MAP.toys.map(newToy);
   train = newTrain();
   piquette = Object.assign(newNpc('piquette', MAP.piquette, 1.3), { markY: BABY.markY }); piq = { state: 'new' };
@@ -1000,7 +1000,7 @@ const WHO = {
   postman: { name: 'Marcel', portrait: 'hud/portrait_postman' },
   neighbor: { name: 'Mamie Rose', portrait: 'hud/portrait_neighbor' },
   leon: { name: 'Léon', portrait: 'hud/portrait_leon' },
-  nestor: { name: 'Nestor', portrait: 'hud/portrait_nestor' },
+  iris: { name: 'Iris', portrait: 'hud/portrait_iris' },
   piquette: { name: 'Maman Piquette', portrait: 'hud/portrait_piquette' },
   info:  { name: '', portrait: null },
 };
@@ -1723,7 +1723,6 @@ function updateFarmer(dt) {           // tous les personnages
   for (const n of npcList()) updateNpcAnim(n, dt);
   neighbor.worried = rose.state !== 'done' && pompon.mode !== 'home';
   leon.worried = ballsLeft() > 0;
-  nestor.worried = toysLeft() > 0;
   piquette.worried = babiesLeft() > 0;
 }
 function drawNpc(n) {
@@ -1738,16 +1737,16 @@ function drawNpc(n) {
    saluent d'une petite exclamation (bulle de mots, sans bloquer le jeu). NPC_DO : par personnage, bulle (0 « ! »,
    1 « ? », -1 aucune), salut et conversation. */
 const NPC = { talk: 150, markY: 150 };
-const npcList = () => [farmer, postman, neighbor, leon, nestor, piquette];
+const npcList = () => [farmer, postman, neighbor, leon, iris, piquette];
 const NPC_DO = {
   farmer: { mark: farmerMark, greet: farmerGreet, talk: talkFarmer },
   postman: { mark: postmanMark, greet: postmanGreet, talk: talkPostman },
   neighbor: { mark: neighborMark, greet: neighborGreet, talk: talkNeighbor },
   leon: { mark: leonMark, greet: leonGreet, talk: talkLeon },
-  nestor: { mark: nestorMark, greet: nestorGreet, talk: talkNestor },
+  iris: { mark: irisMark, greet: irisGreet, talk: talkIris },
   piquette: { mark: piquetteMark, greet: piquetteGreet, talk: talkPiquette },
 };
-const markY = n => n.markY || NPC.markY;            // hauteur de la bulle (Nestor, assis, est plus petit)
+const markY = n => n.markY || NPC.markY;            // hauteur de la bulle (Iris, assis, est plus petit)
 function nearNpc() {
   let best = null, bd = NPC.talk;
   for (const n of npcList()) { const d = dist(P.x, P.y, n.x, n.y); if (d < bd) { best = n; bd = d; } }
@@ -2039,52 +2038,64 @@ function talkLeon() {
   ], saveGame);
 }
 
-/* ------------------------------------------------------------------ Nestor et ses jouets */
-/* Nestor, le vieux chien du gardien du port (un personnage, pas un chien de `dogs`), ne court plus : ses trois jouets
-   (MAP.toys : canard, anneau, corde ; port.py) sont éparpillés. Tecky en prend un dans la gueule en passant dessus (un
-   seul à la fois : `carried`), le lâche devant lui s'il aboie ou mord, ou s'il est KO, et le donne à Nestor en arrivant
-   près de lui (NESTOR.give) : le jouet reste à côté de Nestor, qui remue la queue. Comme les autres personnages, Nestor
-   ne parle que si Tecky vient le voir : il demande, rappelle, remercie (une saucisse et des points). Tout marche aussi
-   avant de lui avoir parlé. Sauvegardé (nest, toys ; un jouet porté l'est par terre, aux pieds de Tecky). */
-const NESTOR = { reward: 150, perToy: 20, pick: 54, give: 110, markY: 96, home: [[-46, 10], [46, 12], [-22, 28]],
+/* ------------------------------------------------------------------ Iris et ses jouets */
+/* Iris, le vieux Jack Russell, ami et mentor de Tecky (un personnage, pas un chien de `dogs`), vit au verger, sur son
+   panier. Pour entraîner Tecky, il a caché ses trois jouets (MAP.toys : canard, anneau, corde ; port.py) dans les prés de
+   la ferme. Tecky en prend un dans la gueule en passant dessus (un seul à la fois : `carried`), le lâche devant lui s'il
+   aboie ou mord, ou s'il est KO, et le donne à Iris en arrivant près de lui (IRIS.give) : le jouet reste à côté d'Iris,
+   qui remue la queue. Comme les autres personnages, Iris ne parle que si Tecky vient le voir : il demande, rappelle,
+   remercie (une saucisse et des points), puis donne un conseil de vieux chien à chaque visite (IRIS_TIPS, iris.tip).
+   Tout marche aussi avant de lui avoir parlé. Sauvegardé (jouets, toys ; un jouet porté l'est par terre, aux pieds de
+   Tecky). */
+const IRIS_TIPS = [
+  () => "Un conseil de vieux chien : quand tu ne sais plus où aller, fais confiance à ta truffe. " +
+    (touchMode ? 'Touche le bouton à truffe' : 'Appuie sur [sniff]') + ", et suis la piste !",
+  () => "Un chien te cherche des ennuis ? Un bon aboiement " + (touchMode ? '' : '[bark] ') + "et il recule. " +
+    "Sauf le doberman : celui-là, il faut le mordre " + (touchMode ? '!' : '[bite] !'),
+  () => "Les trous sous les grillages, ce sont des terriers : un vrai raccourci de teckel ! Approche-toi, et " +
+    (touchMode ? 'touche « Passer ».' : 'appuie sur [bite].'),
+  () => "Pour traverser la grande route, prends les passages piétons : les voitures s'y arrêtent toujours.",
+  () => "Tu es fatigué ? Les os te redonnent des forces, et une saucisse, encore plus. Ouvre l'œil, il y en a partout !",
+];
+const IRIS = { reward: 150, perToy: 20, pick: 54, give: 110, markY: 96, home: [[-46, 10], [46, 12], [-22, 28]],
   regrab: 1.2 };     // regrab : un jouet lâché ne se reprend pas tout de suite (Tecky est juste à côté)
-const TOY_NAMES = ['Le canard de Nestor !', 'L’anneau de Nestor !', 'La corde de Nestor !'];
+const TOY_NAMES = ['Le canard d’Iris !', 'L’anneau d’Iris !', 'La corde d’Iris !'];
 const MOUTH = { right: [38, -40], left: [-38, -40], up: [0, -78], down: [0, -22] };   // gueule de Tecky (jouet porté)
-let nest = { state: 'new' }, nestor = null, toys = [];
+let jouets = { state: 'new' }, iris = null, toys = [];
 const toysLeft = () => toys.filter(t => !t.home).length;
 const carried = () => toys.find(t => t.carried);
 function newToy([x, y], i) { return { i, x, y, home: false, carried: false, t: Math.random() * 2, cd: 0 }; }
 function dropToy(word) {
   const t = carried();
   if (!t) return;
-  t.carried = false; t.cd = NESTOR.regrab;
+  t.carried = false; t.cd = IRIS.regrab;
   t.x = P.x + MOUTH[P.dir][0] * 0.8; t.y = P.y + (P.dir === 'up' ? -28 : P.dir === 'down' ? 26 : 6);
   if (blockedFeet(t.x, t.y, 8)) { t.x = P.x; t.y = P.y; }     // jamais dans l'eau ni dans un obstacle
   if (word) addWordPop(word, P.x, P.y - 120, 'tecky');
 }
 function giveToy(t) {
-  const [hx, hy] = NESTOR.home[toys.filter(o => o.home).length];
-  t.carried = false; t.home = true; t.x = nestor.x + hx; t.y = nestor.y + hy;
-  score += NESTOR.perToy;
-  addPop('+' + NESTOR.perToy, nestor.x - 20, nestor.y - 120);
-  nestor.cheerT = 2.2;
+  const [hx, hy] = IRIS.home[toys.filter(o => o.home).length];
+  t.carried = false; t.home = true; t.x = iris.x + hx; t.y = iris.y + hy;
+  score += IRIS.perToy;
+  addPop('+' + IRIS.perToy, iris.x - 20, iris.y - 120);
+  iris.cheerT = 2.2;
   const left = toysLeft();
-  npcShout(nestor, left ? (nest.state === 'asked' ? 'Wouf ! Encore ' + left + ' !' : 'Wouf ? Mon jouet !')
-    : nest.state === 'asked' ? 'Tous mes jouets ! Viens me voir !' : 'Mes jouets ! Wouf !');
+  npcShout(iris, left ? (jouets.state === 'asked' ? 'Bravo ! Encore ' + left + ' !' : 'Tiens, mon jouet !')
+    : jouets.state === 'asked' ? 'Tous mes jouets ! Viens me voir !' : 'Mes jouets ! Bravo !');
 }
 function updateToys(dt) {
   for (const t of toys) { t.t += dt; t.cd = Math.max(0, t.cd - dt); }
   const c = carried();
   if (c) {
     if (P.mode === 'ko') dropToy();
-    else if (dist(P.x, P.y, nestor.x, nestor.y) < NESTOR.give) giveToy(c);
+    else if (dist(P.x, P.y, iris.x, iris.y) < IRIS.give) giveToy(c);
     return;
   }
   if (P.mode === 'ko' || P.alpha === 0) return;
   for (const t of toys) {
-    if (t.home || t.cd > 0 || dist(P.x, P.y, t.x, t.y) > NESTOR.pick) continue;
+    if (t.home || t.cd > 0 || dist(P.x, P.y, t.x, t.y) > IRIS.pick) continue;
     t.carried = true;
-    addWordPop(nest.state === 'new' ? 'Un jouet ?' : TOY_NAMES[t.i], P.x, P.y - 120, 'tecky');
+    addWordPop(jouets.state === 'new' ? 'Un jouet ?' : TOY_NAMES[t.i], P.x, P.y - 120, 'tecky');
     SFX.pick();
     break;
   }
@@ -2101,43 +2112,45 @@ function drawToy(t) {
   const bob = t.home ? 0 : Math.sin(t.t * 3) * 2;
   drawSpr('port/toy', t.i, t.x, t.y - 16 + bob, { sc: 0.85 });
 }
-function nestorMark() { return nest.state === 'done' ? -1 : nest.state === 'asked' && toysLeft() ? 1 : 0; }
-function nestorGreet() {
+function irisMark() { return jouets.state === 'done' ? -1 : jouets.state === 'asked' && toysLeft() ? 1 : 0; }
+function irisGreet() {
   if (carried()) return;                 // il lui rapporte un jouet : giveToy() parle
-  if (nest.state === 'new') npcShout(nestor, 'Wouf… bonjour, petit.');
-  else if (nest.state === 'asked') {
+  if (jouets.state === 'new') npcShout(iris, 'Salut, mon petit Tecky !');
+  else if (jouets.state === 'asked') {
     const n = toysLeft();
-    npcShout(nestor, !n ? 'Tous mes jouets ! Viens me voir !' : 'Encore ' + n + (n > 1 ? ' jouets !' : ' jouet !'));
-  } else { npcShout(nestor, 'Wouf ! Bonjour, petit !'); nestor.waveT = 1.5; }
+    npcShout(iris, !n ? 'Tous mes jouets ! Viens me voir !' : 'Encore ' + n + (n > 1 ? ' jouets !' : ' jouet !'));
+  } else { npcShout(iris, 'Bonne chasse, Tecky !'); iris.waveT = 1.5; }
 }
-const nestorThanks = () => [
-  { who: 'nestor', face: 2, text: "Mes trois jouets ! Merci, petit. Tu as de bonnes pattes, toi !" },
-  { who: 'nestor', face: 0, text: "Tiens, prends ma saucisse. Moi, je vais faire une petite sieste avec mon canard." },
+const irisThanks = () => [
+  { who: 'iris', face: 2, text: "Mes trois jouets ! Bravo, Tecky : quelle truffe ! Je n'aurais pas fait mieux à ton âge." },
+  { who: 'iris', face: 0, text: "Tiens, une bonne saucisse pour la route. Reviens me voir quand tu veux : j'ai toujours un conseil pour toi." },
 ];
-function finishNestor() {
-  nest.state = 'done'; score += NESTOR.reward;
-  addPop('+' + NESTOR.reward, P.x - 30, P.y - 140);
+function finishIris() {
+  jouets.state = 'done'; score += IRIS.reward;
+  addPop('+' + IRIS.reward, P.x - 30, P.y - 140);
   items.push({ n: 'sausage', x: P.x + 40, y: P.y - 30, t: 0, pop: 0.001 });
-  nestor.cheerT = 3;
+  iris.cheerT = 3;
   saveGame();
 }
-function talkNestor() {
-  if (nest.state === 'done') {
-    nestor.waveT = 2;
-    say([{ who: 'nestor', face: 2, text: "Wouf… Merci encore, petit. Bonne chance pour retrouver ta petite Alice !" }]);
+function talkIris() {
+  if (jouets.state === 'done') {            // un conseil de vieux chien à chaque visite, à tour de rôle
+    iris.waveT = 2;
+    say([{ who: 'iris', face: 0, text: IRIS_TIPS[iris.tip++ % IRIS_TIPS.length]() }]);
     return;
   }
-  if (!toysLeft()) { nest.state = 'asked'; say(nestorThanks(), finishNestor); return; }
-  if (nest.state === 'asked') {
+  if (!toysLeft()) { jouets.state = 'asked'; say(irisThanks(), finishIris); return; }
+  if (jouets.state === 'asked') {
     const n = toysLeft();
-    say([{ who: 'nestor', face: 0, text: (n > 1 ? `Il m'en manque encore ${n}.` : "Plus qu'un !") +
-      " Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !" }]);
+    say([{ who: 'iris', face: 0, text: (n > 1 ? `Encore ${n} à trouver, mon petit.` : "Plus qu'un !") +
+      " Ils sont dans les prés de la ferme. Et n'oublie pas : si tu aboies, tu les lâches !" }]);
     return;
   }
-  nest.state = 'asked';
+  jouets.state = 'asked';
   say([
-    { who: 'nestor', face: 3, text: "Wouf… Bonjour, petit. Moi, c'est Nestor, le chien du gardien. Mes vieilles pattes ne courent plus bien vite…" },
-    { who: 'nestor', face: 0, text: "J'ai perdu mes trois jouets : mon canard, mon anneau et ma corde. Tu veux bien me les rapporter, un par un, dans ta gueule ?" },
+    { who: 'iris', face: 2, text: "Tiens, mon petit Tecky ! Ça me fait plaisir de te voir. Alors, tu cherches ta petite Alice ?" },
+    { who: 'tecky', face: 0, text: "Ouaf ! Iris ! Elle joue à cache-cache, et je ne la trouve pas…" },
+    { who: 'iris', face: 0, text: "Un bon chien ne perd jamais une piste. Pour t'entraîner, j'ai caché mes trois jouets dans les prés de la ferme : mon canard, mon anneau et ma corde." },
+    { who: 'iris', face: 0, text: "Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !" },
     { who: 'tecky', face: 2, text: "Ouaf ! « Va chercher », c'est mon jeu préféré !" },
   ], saveGame);
 }
@@ -3084,7 +3097,7 @@ function saveGame() {
     post: post.state, letters: letters.map(l => l.got ? 1 : 0).join(''),
     rose: rose.state, cat: [r1(pompon.x), r1(pompon.y), pompon.mode], bitten,
     fete: fete.state, balls: balls.map(b => [r1(b.x), r1(b.y), b.inNet ? 1 : 0]),
-    nest: nest.state, toys: toys.map(t => t.carried ? [r1(P.x), r1(P.y), 0] : [r1(t.x), r1(t.y), t.home ? 1 : 0]),
+    jouets: jouets.state, toys: toys.map(t => t.carried ? [r1(P.x), r1(P.y), 0] : [r1(t.x), r1(t.y), t.home ? 1 : 0]),
     train: train.scored ? 1 : 0,
     piq: piq.state, babies: babies.map(b => [r1(b.x), r1(b.y), b.mode === 'follow' ? 'wait' : b.mode, b.slot]),
   });
@@ -3117,7 +3130,7 @@ function loadGame(s, rested) {
   rose.state = s.rose || 'new';
   fete.state = s.fete || 'new';
   (s.balls || []).forEach((q, i) => { const b = balls[i]; if (b && q) { b.x = q[0]; b.y = q[1]; b.inNet = !!q[2]; } });
-  nest.state = s.nest || 'new';
+  jouets.state = s.jouets || 'new';
   train.scored = !!s.train;
   piq.state = s.piq || 'new';
   (s.babies || []).forEach((q, i) => { const b = babies[i]; if (b && q) { b.x = q[0]; b.y = q[1]; b.mode = q[2]; b.slot = q[3] || 0; } });
@@ -3283,7 +3296,7 @@ const BADGE_INFO = {
   explorateur: ['Explorateur', 'Découvrir toute la carte.'],
   sieste: ['Roi de la sieste', 'Laisser Tecky s’endormir.'],
   ballons: ['Champion du ballon', 'Pousser tous les ballons de Léon dans le filet.'],
-  nestor: ['Va chercher !', 'Rapporter ses trois jouets à Nestor.'],
+  iris: ['Va chercher !', 'Rapporter ses trois jouets à Iris.'],
   train: ['Tchou-tchou !', 'Faire siffler Titine, le petit train du port.'],
   herissons: ['Nounou des hérissons', 'Ramener ses trois petits à Maman Piquette.'],
 };
@@ -3305,7 +3318,7 @@ function checkBadges() {
   if (post.state === 'done') unlockBadge('facteur');
   if (rose.state === 'done') unlockBadge('chat');
   if (fete.state === 'done') unlockBadge('ballons');
-  if (nest.state === 'done') unlockBadge('nestor');
+  if (jouets.state === 'done') unlockBadge('iris');
   if (train.scored) unlockBadge('train');
   if (piq.state === 'done') unlockBadge('herissons');
   if (critters.every(c => c.scored)) unlockBadge('betes');
@@ -3317,7 +3330,7 @@ function checkBadges() {
    petites bêtes, canards, carte explorée (95 % suffisent, comme pour le badge), et les copains en balade. Une nouvelle
    quête : l'ajouter à QUESTS_DONE. */
 const QUESTS_DONE = [() => farm.state === 'done', () => post.state === 'done', () => rose.state === 'done',
-  () => fete.state === 'done', () => nest.state === 'done', () => piq.state === 'done'];
+  () => fete.state === 'done', () => jouets.state === 'done', () => piq.state === 'done'];
 function completion() {
   const part = (n, of) => of ? Math.min(1, n / of) : 1, count = (a, f) => a.filter(f).length;
   const adults = ducks.filter(d => !d.lead);          // comme le badge : sans les canetons
@@ -4428,7 +4441,7 @@ function hudCounters() {
   if (post.state === 'asked') c.push(['item/letter', 50, 36, 0.8, letters.length - lettersLeft(), letters.length]);
   if (rose.state === 'asked') c.push(['cat_white/idle', 46, 58, 0.9, pompon.mode === 'lost' ? 0 : 1, 1]);
   if (fete.state === 'asked') c.push(['port/balloon', 42, 35, 0.8, balls.length - ballsLeft(), balls.length]);
-  if (nest.state === 'asked') c.push(['port/toy', 42, 35, 0.8, toys.length - toysLeft(), toys.length]);
+  if (jouets.state === 'asked') c.push(['port/toy', 42, 35, 0.8, toys.length - toysLeft(), toys.length]);
   if (piq.state === 'asked') c.push(['hedgehog/idle', 44, 58, 1.1, babies.length - babiesLeft(), babies.length]);
   return c;
 }

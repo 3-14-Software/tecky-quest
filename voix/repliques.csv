@@ -29,7 +29,8 @@ tecky-0dd8f6c5;Tecky;dialogue;;joyeux;Ouaf ! Je m'en occupe !;Gaston : demande
 tecky-4a58d3aa;Tecky;dialogue;;joyeux;Ouaf ! Je vais les chercher !;Marcel : demande
 tecky-5ce738ae;Tecky;dialogue;;joyeux;Ouaf ! Je te le ramène !;Mamie Rose : demande
 tecky-b1b309e5;Tecky;dialogue;;joyeux;Ouaf ! Je vais marquer des buts !;Léon : demande
-tecky-f769abf8;Tecky;dialogue;;joyeux;Ouaf ! « Va chercher », c'est mon jeu préféré !;Nestor : demande
+tecky-ff4938ca;Tecky;dialogue;;;Ouaf ! Iris ! Elle joue à cache-cache, et je ne la trouve pas…;Iris : demande
+tecky-f769abf8;Tecky;dialogue;;joyeux;Ouaf ! « Va chercher », c'est mon jeu préféré !;Iris : demande
 tecky-348e99e9;Tecky;dialogue;;joyeux;Ouaf ! Moi aussi, je cherche quelqu'un qui joue à cache-cache !;Maman Piquette : demande
 tecky-9232cc10;Tecky;dialogue;;joyeux;Ouaf ! Ouaf ouaf !;Retrouvailles avec Alice
 tecky-e08772a9;Tecky;dialogue;;;Grr… Ce doberman n'a pas peur de mes aboiements. Il va falloir le mordre !;Premier aboiement sur le doberman
@@ -37,15 +38,15 @@ tecky-48c853ee;Tecky;dialogue;;joyeux;Te voilà, Pompon ! Viens, on rentre chez 
 tecky-72e5a7c8;Tecky;dialogue;;joyeux;Un teckel, ça creuse des terriers : hop, sous le grillage ! Les autres chiens, eux, doivent faire le tour.;Premier terrier
 tecky-5dfd1ea4;Tecky;dialogue;;;Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !;Devant la cachette d’Alice, avant les trois indices
 tecky-779c33b0;Tecky;bulle;;;Une lettre ?;Tecky ramasse une lettre
-tecky-122c4680;Tecky;bulle;;;Un jouet ?;Tecky prend un jouet de Nestor
+tecky-122c4680;Tecky;bulle;;;Un jouet ?;Tecky prend un jouet d’Iris
 tecky-552e60bc;Tecky;bulle;;;Une lettre ! 1 sur 5;Tecky ramasse une lettre
 tecky-a2d3b9ad;Tecky;bulle;;;Une lettre ! 2 sur 5;Tecky ramasse une lettre
 tecky-bd9c5ece;Tecky;bulle;;;Une lettre ! 3 sur 5;Tecky ramasse une lettre
 tecky-aab64f47;Tecky;bulle;;;Une lettre ! 4 sur 5;Tecky ramasse une lettre
 tecky-d76d3ac0;Tecky;bulle;;;Une lettre ! 5 sur 5;Tecky ramasse une lettre
-tecky-5a52e794;Tecky;bulle;;;Le canard de Nestor !;Tecky prend un jouet de Nestor
-tecky-573c777b;Tecky;bulle;;;L’anneau de Nestor !;Tecky prend un jouet de Nestor
-tecky-ad8b68b8;Tecky;bulle;;;La corde de Nestor !;Tecky prend un jouet de Nestor
+tecky-1eabd6a0;Tecky;bulle;;;Le canard d’Iris !;Tecky prend un jouet d’Iris
+tecky-616f5b09;Tecky;bulle;;;L’anneau d’Iris !;Tecky prend un jouet d’Iris
+tecky-c2ae0d44;Tecky;bulle;;;La corde d’Iris !;Tecky prend un jouet d’Iris
 tecky-cefff293;Tecky;bulle;;;Oups !;Tecky aboie avec un jouet dans la gueule
 tecky-8afd030a;Tecky;bulle;;;Ouf !;Une voiture bouscule Tecky
 tecky-ea351913;Tecky;bulle;;;Snif snif…;Tecky flaire la piste
@@ -152,24 +153,35 @@ leon-1bb964a5;Léon;bulle;;;Encore 1 ballon !;Léon : Tecky arrive
 leon-cd78e5a9;Léon;bulle;;;Bravo, champion ! Viens me voir !;"Léon : Tecky arrive ; Un ballon entre dans le filet"
 leon-80ab8ef2;Léon;bulle;;;Salut, champion !;Léon : Tecky arrive
 leon-760a9aca;Léon;bulle;;;Mes ballons !;Un ballon entre dans le filet
-nestor-55c3f120;Nestor;dialogue;;inquiet;Wouf… Bonjour, petit. Moi, c'est Nestor, le chien du gardien. Mes vieilles pattes ne courent plus bien vite…;Nestor : demande
-nestor-9be869b9;Nestor;dialogue;;;J'ai perdu mes trois jouets : mon canard, mon anneau et ma corde. Tu veux bien me les rapporter, un par un, dans ta gueule ?;Nestor : demande
-nestor-6f33d173;Nestor;dialogue;;;Il m'en manque encore 3. Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !;Nestor : rappel
-nestor-7ae66c66;Nestor;dialogue;;;Il m'en manque encore 2. Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !;Nestor : rappel
-nestor-074ff1e4;Nestor;dialogue;;;Plus qu'un ! Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !;Nestor : rappel
-nestor-24ee070d;Nestor;dialogue;;joyeux;Mes trois jouets ! Merci, petit. Tu as de bonnes pattes, toi !;Nestor : merci
-nestor-90333c42;Nestor;dialogue;;;Tiens, prends ma saucisse. Moi, je vais faire une petite sieste avec mon canard.;Nestor : merci
-nestor-ddc1d8f5;Nestor;dialogue;;joyeux;Wouf… Merci encore, petit. Bonne chance pour retrouver ta petite Alice !;Nestor : après la quête
-nestor-4e097bd3;Nestor;bulle;;;Wouf… bonjour, petit.;Nestor : Tecky arrive
-nestor-6938fde7;Nestor;bulle;;;Encore 3 jouets !;Nestor : Tecky arrive
-nestor-192c1946;Nestor;bulle;;;Encore 2 jouets !;Nestor : Tecky arrive
-nestor-6ee71f12;Nestor;bulle;;;Encore 1 jouet !;Nestor : Tecky arrive
-nestor-07a8f95c;Nestor;bulle;;;Tous mes jouets ! Viens me voir !;"Nestor : Tecky arrive ; Tecky rapporte un jouet à Nestor"
-nestor-42523d43;Nestor;bulle;;;Wouf ! Bonjour, petit !;Nestor : Tecky arrive
-nestor-b4998957;Nestor;bulle;;;Wouf ? Mon jouet !;Tecky rapporte un jouet à Nestor
-nestor-2b00a627;Nestor;bulle;;;Mes jouets ! Wouf !;Tecky rapporte un jouet à Nestor
-nestor-d5731454;Nestor;bulle;;;Wouf ! Encore 2 !;Tecky rapporte un jouet à Nestor
-nestor-95bb3085;Nestor;bulle;;;Wouf ! Encore 1 !;Tecky rapporte un jouet à Nestor
+iris-3c9a6f0f;Iris;dialogue;;joyeux;Tiens, mon petit Tecky ! Ça me fait plaisir de te voir. Alors, tu cherches ta petite Alice ?;Iris : demande
+iris-66bdd545;Iris;dialogue;;;Un bon chien ne perd jamais une piste. Pour t'entraîner, j'ai caché mes trois jouets dans les prés de la ferme : mon canard, mon anneau et ma corde.;Iris : demande
+iris-bcc4cc11;Iris;dialogue;;;Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !;Iris : demande
+iris-9d48043d;Iris;dialogue;;;Encore 3 à trouver, mon petit. Ils sont dans les prés de la ferme. Et n'oublie pas : si tu aboies, tu les lâches !;Iris : rappel
+iris-fde8ea5e;Iris;dialogue;;;Encore 2 à trouver, mon petit. Ils sont dans les prés de la ferme. Et n'oublie pas : si tu aboies, tu les lâches !;Iris : rappel
+iris-87155e00;Iris;dialogue;;;Plus qu'un ! Ils sont dans les prés de la ferme. Et n'oublie pas : si tu aboies, tu les lâches !;Iris : rappel
+iris-6cf09d1b;Iris;dialogue;;joyeux;Mes trois jouets ! Bravo, Tecky : quelle truffe ! Je n'aurais pas fait mieux à ton âge.;Iris : merci
+iris-d9636ed2;Iris;dialogue;;;Tiens, une bonne saucisse pour la route. Reviens me voir quand tu veux : j'ai toujours un conseil pour toi.;Iris : merci
+iris-432d3fa8;Iris;dialogue;clavier;;Un conseil de vieux chien : quand tu ne sais plus où aller, fais confiance à ta truffe. Appuie sur la touche R, et suis la piste !;Iris : conseil après la quête
+iris-209fbcc8;Iris;dialogue;manette;;Un conseil de vieux chien : quand tu ne sais plus où aller, fais confiance à ta truffe. Appuie sur le bouton Y, et suis la piste !;Iris : conseil après la quête
+iris-55a0fad3;Iris;dialogue;clavier;;Un chien te cherche des ennuis ? Un bon aboiement la touche X et il recule. Sauf le doberman : celui-là, il faut le mordre la touche C !;Iris : conseil après la quête
+iris-0693ff63;Iris;dialogue;manette;;Un chien te cherche des ennuis ? Un bon aboiement le bouton X et il recule. Sauf le doberman : celui-là, il faut le mordre le bouton A !;Iris : conseil après la quête
+iris-a1d3a69c;Iris;dialogue;clavier;;Les trous sous les grillages, ce sont des terriers : un vrai raccourci de teckel ! Approche-toi, et appuie sur la touche C.;Iris : conseil après la quête
+iris-df16b925;Iris;dialogue;manette;;Les trous sous les grillages, ce sont des terriers : un vrai raccourci de teckel ! Approche-toi, et appuie sur le bouton A.;Iris : conseil après la quête
+iris-3eeb24fa;Iris;dialogue;;;Pour traverser la grande route, prends les passages piétons : les voitures s'y arrêtent toujours.;"Iris : conseil après la quête ; Iris : conseil après la quête (au toucher)"
+iris-8a22b131;Iris;dialogue;;;Tu es fatigué ? Les os te redonnent des forces, et une saucisse, encore plus. Ouvre l'œil, il y en a partout !;"Iris : conseil après la quête ; Iris : conseil après la quête (au toucher)"
+iris-a93ff3e5;Iris;dialogue;;;Un conseil de vieux chien : quand tu ne sais plus où aller, fais confiance à ta truffe. Touche le bouton à truffe, et suis la piste !;Iris : conseil après la quête (au toucher)
+iris-1b838d64;Iris;dialogue;;;Un chien te cherche des ennuis ? Un bon aboiement et il recule. Sauf le doberman : celui-là, il faut le mordre !;Iris : conseil après la quête (au toucher)
+iris-b85fd8aa;Iris;dialogue;;;Les trous sous les grillages, ce sont des terriers : un vrai raccourci de teckel ! Approche-toi, et touche « Passer ».;Iris : conseil après la quête (au toucher)
+iris-80be5adf;Iris;bulle;;;Salut, mon petit Tecky !;Iris : Tecky arrive
+iris-6938fde7;Iris;bulle;;;Encore 3 jouets !;Iris : Tecky arrive
+iris-192c1946;Iris;bulle;;;Encore 2 jouets !;Iris : Tecky arrive
+iris-6ee71f12;Iris;bulle;;;Encore 1 jouet !;Iris : Tecky arrive
+iris-07a8f95c;Iris;bulle;;;Tous mes jouets ! Viens me voir !;"Iris : Tecky arrive ; Tecky rapporte un jouet à Iris"
+iris-7fbabfff;Iris;bulle;;;Bonne chasse, Tecky !;Iris : Tecky arrive
+iris-012f6c74;Iris;bulle;;;Tiens, mon jouet !;Tecky rapporte un jouet à Iris
+iris-29227698;Iris;bulle;;;Mes jouets ! Bravo !;Tecky rapporte un jouet à Iris
+iris-a68dff79;Iris;bulle;;;Bravo ! Encore 2 !;Tecky rapporte un jouet à Iris
+iris-65a74908;Iris;bulle;;;Bravo ! Encore 1 !;Tecky rapporte un jouet à Iris
 piquette-5bc4cae4;Maman Piquette;dialogue;;inquiet;Oh, bonjour, petit chien ! Je suis Maman Piquette. Mes trois petits jouaient à cache-cache dans la forêt…;Maman Piquette : demande
 piquette-3fdedeb7;Maman Piquette;dialogue;;;Ils se sont cachés sous les fougères, et ils n'osent plus sortir. Tu veux bien me les ramener ? Ils te suivront !;Maman Piquette : demande
 piquette-99f48922;Maman Piquette;dialogue;;inquiet;Il m'en manque encore 3. Ils se cachent sous les fougères : approche-toi doucement, ils te suivront. Mais n'aboie pas, ça leur fait peur !;Maman Piquette : rappel
