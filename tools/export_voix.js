@@ -104,7 +104,7 @@ function main() {
   for (let n = 5; n >= 0; n--) greet('postman', 'Tecky arrive', `post.state = "asked"; letters.forEach((l, i) => l.got = i >= ${n});`);
   greet('postman', 'Tecky arrive', 'post.state = "done";');
   greet('neighbor', 'Tecky arrive', 'rose.state = "new";');
-  for (const m of ['lost', 'follow', 'home']) greet('neighbor', 'Tecky arrive', `rose.state = "asked"; pompon.mode = "${m}";`);
+  for (const m of ['lost', 'home']) greet('neighbor', 'Tecky arrive', `rose.state = "asked"; pompon.mode = "${m}";`);
   greet('neighbor', 'Tecky arrive', 'rose.state = "done";');
   greet('leon', 'Tecky arrive', 'fete.state = "new";');
   for (let n = 5; n >= 0; n--) greet('leon', 'Tecky arrive', `fete.state = "asked"; balls.forEach((b, i) => b.inNet = i >= ${n});`);
@@ -124,7 +124,8 @@ function main() {
     ask('Un ballon entre dans le filet', `fete.state = "${st}"; balls.forEach(b => { b.inNet = false; b.x = MAP.goal[0]; b.y = MAP.goal[1] - 20; checkGoal(b); });`);
     ask('Tecky prend un jouet de Nestor', `nest.state = "${st}"; toys.forEach(t => { t.home = t.carried = false; t.cd = 0; });` +
         ' toys.forEach(t => { P.x = t.x; P.y = t.y; updateToys(0); const c = carried(); if (c) c.carried = false; t.cd = 9; });');
-    ask('Un petit hérisson rejoint sa maman', `piq.state = "${st}"; babies.forEach(b => b.mode = "hidden"); babies.forEach(b => babyHome(b));`);
+    ask('Un petit hérisson rejoint sa maman', `piq.state = "${st}"; babies.forEach(b => b.mode = "hidden"); babies.forEach(b => { babyHome(b); piquetteCall(); });`);
+    ask('Des petits hérissons rejoignent leur maman ensemble', `piq.state = "${st}"; babies.forEach(b => b.mode = "hidden"); babyHome(babies[0]); babyHome(babies[1]); piquetteCall();`);
     ask('Tecky rapporte un jouet à Nestor', `nest.state = "${st}"; toys.forEach(t => { t.home = t.carried = false; }); toys.forEach(t => giveToy(t));`);
   }
   ask('Tecky aboie avec un jouet dans la gueule', 'toys[0].home = false; toys[0].carried = true; dropToy("Oups !");');

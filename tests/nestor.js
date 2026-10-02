@@ -38,7 +38,7 @@ function main() {
   // il le donne à Nestor en arrivant près de lui
   run('P.x = nestor.x + 60; P.y = nestor.y + 70; P.mode = "free"; pops = []; var sc0 = score;'); step(2);
   ok(run('T0.home') && !run('carried()') && run('score') === run('sc0 + NESTOR.perToy') && run('nestor.cheerT') > 0, 'Nestor reçoit son canard (il remue la queue)');
-  ok(run('pops.some(p => /Encore 2/.test(p.text))'), '« Wouf ! Encore 2 ! »');
+  ok(run('pops.some(p => /Encore 2/.test(p.text))') && run('pops.filter(p => p.who === "nestor").length') === 1, '« Wouf ! Encore 2 ! », et rien d’autre');
   // KO : il lâche le jouet
   run('P.x = T1.x; P.y = T1.y + 10;'); step(2);
   ok(run('T1.carried'), 'deuxième jouet');

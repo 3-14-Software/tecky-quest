@@ -223,7 +223,10 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   parle, se réjouit (`cheerT`), salue (`waveT`), s'inquiète (`worried`) ; fps dans `MAP.npcFps`) : comme dans un RPG, ils ne
   parlent que sur C (« Parler », `biteAction()` → `'talk'`, E aussi). Bulle `hud/talk` au-dessus de la tête : « ! »
   (une demande ou une récompense à donner), « ? » (demande en cours), remplacée par « Parler » tout près. Quand Tecky
-  arrive près d'eux : petite exclamation (`npcShout()`, bulle de mots + `SFX.hey`), sans bloquer le jeu.
+  arrive près d'eux : petite exclamation (`npcShout()`, bulle de mots + `SFX.hey`), sans bloquer le jeu. Une seule
+  bulle à la fois par personnage (la nouvelle remplace l'ancienne) ; le salut se tait quand Tecky ramène quelque chose
+  (jouet dans la gueule, Pompon ou petits hérissons qui le suivent) : c'est l'arrivée qui parle. Des petits hérissons
+  arrivés ensemble n'ont droit qu'à un cri de leur maman (`piquetteCall()`, `BABY.call` s après le dernier).
 - Voix des répliques (`voix/`, `tools/export_voix.js`) : l'outil fait tourner le jeu sans affichage, appelle chaque
   dialogue dans tous ses cas et relève les répliques écrites en dur ; de même pour les bulles (`addWordPop(texte, x,
   y, qui)` : le 4e argument dit qui parle, personnage, 'tecky', 'info' ou animal ; `npcShout()` le passe tout seul) ; il écrit `voix/repliques.csv` / `.json` (une

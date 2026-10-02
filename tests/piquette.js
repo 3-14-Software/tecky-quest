@@ -48,9 +48,11 @@ function main() {
   // tous chez leur maman : elle appelle, puis remercie (os, points), badge
   run('dogs = []; cars = []; P.inv = 999; pops = [];');
   run('babies.forEach(b => { b.x = piquette.x + 120; b.y = piquette.y + 60; b.mode = "follow"; b.seq = ++babySeq; });');
-  step(2);
-  ok(run('babiesLeft()') === 0 && run('pops.some(p => /Viens me voir/.test(p.text))'), 'tous rentrés : « Tous mes petits ! Viens me voir ! »');
-  step(60 * 2);
+  run('P.x = piquette.x + 40; P.y = piquette.y + 120; P.mode = "free";');    // (Tecky arrive avec eux)
+  const said = new Set();
+  for (let i = 0; i < 60 * 2; i++) { step(1); run('pops.filter(p => p.word)').forEach(p => said.add(p.text)); }
+  ok(run('babiesLeft()') === 0 && said.has('Tous mes petits ! Viens me voir !'), 'tous rentrés : « Tous mes petits ! Viens me voir ! »');
+  ok(said.size === 1, 'arrivés ensemble : une seule bulle (ni « Encore… » ni salut en plus)');
   ok(run('babies.every(b => dist(b.x, b.y, piquette.x, piquette.y) < 80)'), 'blottis contre leur maman');
   run('P.x = piquette.x; P.y = piquette.y + 110; P.mode = "free"; var sc0 = score;'); step(2);
   run('P.cdBite = 0; pressed.bite = true'); step(1);

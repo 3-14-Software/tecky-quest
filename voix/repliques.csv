@@ -30,10 +30,10 @@ tecky-4a58d3aa;Tecky;dialogue;;joyeux;Ouaf ! Je vais les chercher !;Marcel : dem
 tecky-5ce738ae;Tecky;dialogue;;joyeux;Ouaf ! Je te le ramène !;Mamie Rose : demande
 tecky-b1b309e5;Tecky;dialogue;;joyeux;Ouaf ! Je vais marquer des buts !;Léon : demande
 tecky-f769abf8;Tecky;dialogue;;joyeux;Ouaf ! « Va chercher », c'est mon jeu préféré !;Nestor : demande
+tecky-348e99e9;Tecky;dialogue;;joyeux;Ouaf ! Moi aussi, je cherche quelqu'un qui joue à cache-cache !;Maman Piquette : demande
 tecky-9232cc10;Tecky;dialogue;;joyeux;Ouaf ! Ouaf ouaf !;Retrouvailles avec Alice
 tecky-e08772a9;Tecky;dialogue;;;Grr… Ce doberman n'a pas peur de mes aboiements. Il va falloir le mordre !;Premier aboiement sur le doberman
 tecky-48c853ee;Tecky;dialogue;;joyeux;Te voilà, Pompon ! Viens, on rentre chez Mamie Rose.;Tecky retrouve Pompon
-tecky-348e99e9;Tecky;dialogue;;joyeux;Ouaf ! Moi aussi, je cherche quelqu'un qui joue à cache-cache !;dans talkPiquette()
 tecky-72e5a7c8;Tecky;dialogue;;joyeux;Un teckel, ça creuse des terriers : hop, sous le grillage ! Les autres chiens, eux, doivent faire le tour.;Premier terrier
 tecky-5dfd1ea4;Tecky;dialogue;;;Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !;Devant la cachette d’Alice, avant les trois indices
 tecky-779c33b0;Tecky;bulle;;;Une lettre ?;Tecky ramasse une lettre
@@ -130,7 +130,6 @@ neighbor-b1968480;Mamie Rose;dialogue;;;Merci, Tecky ! Tiens, une bonne saucisse
 neighbor-0096ec64;Mamie Rose;dialogue;;joyeux;Pompon ne quitte plus le jardin, grâce à toi. Bonne chance pour retrouver ta petite Alice !;Mamie Rose : après la quête
 neighbor-45aecd27;Mamie Rose;bulle;;;Pompon ? Pompon, où es-tu ?;Mamie Rose : Tecky arrive
 neighbor-b6f75375;Mamie Rose;bulle;;;Tu as vu Pompon ?;Mamie Rose : Tecky arrive
-neighbor-84f0a95d;Mamie Rose;bulle;;;Oh ! Tu l’as trouvé !;Mamie Rose : Tecky arrive
 neighbor-94123d59;Mamie Rose;bulle;;;Mon Pompon est là !;Mamie Rose : Tecky arrive
 neighbor-2cdd7c97;Mamie Rose;bulle;;;Bonjour, Tecky !;Mamie Rose : Tecky arrive
 neighbor-74ee01b5;Mamie Rose;bulle;;;Pompon ! Viens me voir, Tecky !;Pompon
@@ -171,14 +170,14 @@ nestor-b4998957;Nestor;bulle;;;Wouf ? Mon jouet !;Tecky rapporte un jouet à Nes
 nestor-2b00a627;Nestor;bulle;;;Mes jouets ! Wouf !;Tecky rapporte un jouet à Nestor
 nestor-d5731454;Nestor;bulle;;;Wouf ! Encore 2 !;Tecky rapporte un jouet à Nestor
 nestor-95bb3085;Nestor;bulle;;;Wouf ! Encore 1 !;Tecky rapporte un jouet à Nestor
-piquette-c4b4e22f;Maman Piquette;dialogue;;joyeux;Mes trois petits ! Merci, gentil teckel. Ils ont bien joué, mais maintenant, c'est l'heure de la sieste !;"Maman Piquette : demande ; Maman Piquette : merci"
-piquette-86e2639a;Maman Piquette;dialogue;;;Tiens, un bon os que j'ai trouvé sous les feuilles. Et bonne chance pour retrouver ta petite fille !;"Maman Piquette : demande ; Maman Piquette : merci"
+piquette-5bc4cae4;Maman Piquette;dialogue;;inquiet;Oh, bonjour, petit chien ! Je suis Maman Piquette. Mes trois petits jouaient à cache-cache dans la forêt…;Maman Piquette : demande
+piquette-3fdedeb7;Maman Piquette;dialogue;;;Ils se sont cachés sous les fougères, et ils n'osent plus sortir. Tu veux bien me les ramener ? Ils te suivront !;Maman Piquette : demande
 piquette-99f48922;Maman Piquette;dialogue;;inquiet;Il m'en manque encore 3. Ils se cachent sous les fougères : approche-toi doucement, ils te suivront. Mais n'aboie pas, ça leur fait peur !;Maman Piquette : rappel
 piquette-0168d02b;Maman Piquette;dialogue;;inquiet;Il m'en manque encore 2. Ils se cachent sous les fougères : approche-toi doucement, ils te suivront. Mais n'aboie pas, ça leur fait peur !;Maman Piquette : rappel
 piquette-10bcb51d;Maman Piquette;dialogue;;inquiet;Plus qu'un ! Ils se cachent sous les fougères : approche-toi doucement, ils te suivront. Mais n'aboie pas, ça leur fait peur !;Maman Piquette : rappel
+piquette-c4b4e22f;Maman Piquette;dialogue;;joyeux;Mes trois petits ! Merci, gentil teckel. Ils ont bien joué, mais maintenant, c'est l'heure de la sieste !;Maman Piquette : merci
+piquette-86e2639a;Maman Piquette;dialogue;;;Tiens, un bon os que j'ai trouvé sous les feuilles. Et bonne chance pour retrouver ta petite fille !;Maman Piquette : merci
 piquette-36d20a85;Maman Piquette;dialogue;;joyeux;Mes petits dorment à poings fermés. Merci encore, Tecky !;Maman Piquette : après la quête
-piquette-5bc4cae4;Maman Piquette;dialogue;;inquiet;Oh, bonjour, petit chien ! Je suis Maman Piquette. Mes trois petits jouaient à cache-cache dans la forêt…;dans talkPiquette()
-piquette-3fdedeb7;Maman Piquette;dialogue;;;Ils se sont cachés sous les fougères, et ils n'osent plus sortir. Tu veux bien me les ramener ? Ils te suivront !;dans talkPiquette()
 piquette-bbbde099;Maman Piquette;bulle;;;Mes petits ! Où êtes-vous ?;Maman Piquette : Tecky arrive
 piquette-5d902226;Maman Piquette;bulle;;;Encore 3 petits !;Maman Piquette : Tecky arrive
 piquette-775b834b;Maman Piquette;bulle;;;Encore 2 petits !;Maman Piquette : Tecky arrive
@@ -188,6 +187,7 @@ piquette-2cdd7c97;Maman Piquette;bulle;;;Bonjour, Tecky !;Maman Piquette : Tecky
 piquette-e298be3b;Maman Piquette;bulle;;;Mon petit ! Encore 2 !;Un petit hérisson rejoint sa maman
 piquette-9d4cd4f6;Maman Piquette;bulle;;;Mon petit ! Encore 1 !;Un petit hérisson rejoint sa maman
 piquette-f9484c96;Maman Piquette;bulle;;;Mes petits !;Un petit hérisson rejoint sa maman
+piquette-328639f2;Maman Piquette;bulle;;;Mes petits ! Encore 1 !;Des petits hérissons rejoignent leur maman ensemble
 doberman-5107b16b;Le doberman;bulle;;;Même pas peur !;Tecky aboie
 dog-ce1803d8;Les chiens du coin;bulle;;;Copain !;Les chiens du coin
 dog-a215d40a;Les chiens du coin;bulle;;;Grrr…;Les chiens du coin

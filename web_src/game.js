@@ -1753,9 +1753,16 @@ function nearNpc() {
   for (const n of npcList()) { const d = dist(P.x, P.y, n.x, n.y); if (d < bd) { best = n; bd = d; } }
   return best;
 }
-function npcShout(n, text) { addWordPop(text, n.x, n.y - markY(n) + 10, n.kind); if (n.woof) SFX.yip(n.pitch); else SFX.hey(n.pitch); }
+// une seule bulle à la fois par personnage : la nouvelle remplace celle qui est encore affichée
+function npcShout(n, text) {
+  pops = pops.filter(o => !(o.word && o.who === n.kind));
+  addWordPop(text, n.x, n.y - markY(n) + 10, n.kind);
+  if (n.woof) SFX.yip(n.pitch); else SFX.hey(n.pitch);
+}
 function talkTo(n) { P.dir = dirFrom(n.x - P.x, n.y - P.y, P.dir); P.setAnim('idle'); NPC_DO[n.kind].talk(); }
-function updateNpcs() {               // petit salut quand Tecky arrive près d'un personnage
+/* Petit salut quand Tecky arrive près d'un personnage. S'il lui ramène quelque chose (un jouet dans la gueule, Pompon
+   ou des petits hérissons qui le suivent), le salut se tait : c'est l'arrivée qui fait parler le personnage. */
+function updateNpcs() {
   const near = nearNpc();
   for (const n of npcList()) { if (n === near && !n.near) NPC_DO[n.kind].greet(); n.near = n === near; }
 }
@@ -1877,7 +1884,7 @@ function drawPompon() {
 function neighborMark() { return rose.state === 'done' ? -1 : rose.state === 'asked' && pompon.mode !== 'home' ? 1 : 0; }
 function neighborGreet() {
   if (rose.state === 'new') npcShout(neighbor, 'Pompon ? Pompon, où es-tu ?');
-  else if (rose.state === 'asked') npcShout(neighbor, pompon.mode === 'home' ? 'Mon Pompon est là !' : pompon.mode === 'follow' ? 'Oh ! Tu l’as trouvé !' : 'Tu as vu Pompon ?');
+  else if (rose.state === 'asked') { if (pompon.mode !== 'follow') npcShout(neighbor, pompon.mode === 'home' ? 'Mon Pompon est là !' : 'Tu as vu Pompon ?'); }
   else { npcShout(neighbor, 'Bonjour, Tecky !'); neighbor.waveT = 1.5; }
 }
 const nbThanks = () => [
@@ -2096,6 +2103,7 @@ function drawToy(t) {
 }
 function nestorMark() { return nest.state === 'done' ? -1 : nest.state === 'asked' && toysLeft() ? 1 : 0; }
 function nestorGreet() {
+  if (carried()) return;                 // il lui rapporte un jouet : giveToy() parle
   if (nest.state === 'new') npcShout(nestor, 'Wouf… bonjour, petit.');
   else if (nest.state === 'asked') {
     const n = toysLeft();
@@ -2141,7 +2149,7 @@ function talkNestor() {
    ont été trouvés, après Pompon s'il suit aussi : crumbAt), attend s'il va trop vite (BABY.lost) et reste près de sa
    maman en arrivant (babyHome, BABY.home). Un aboiement le fait se rouler en boule un instant. Caché, il pousse un
    petit « Couic ? » quand Tecky passe près. Elle remercie : un os et des points. Sauvegardé (piq, babies). */
-const BABY = { find: 110, gap: 60, lost: 650, home: 170, walk: 110, run: 300, ball: 1.4, squeak: [2.5, 5], markY: 100,
+const BABY = { find: 110, gap: 60, lost: 650, home: 170, walk: 110, run: 300, ball: 1.4, squeak: [2.5, 5], markY: 100, call: 0.7,
   slots: [[-46, 16], [46, 18], [-14, 34]] };
 let piq = { state: 'new' }, piquette = null, babies = [], babySeq = 0;
 const babiesLeft = () => babies.filter(b => b.mode !== 'home').length;
@@ -2156,12 +2164,17 @@ function babyMove(b, tx, ty, dt) {     // comme Pompon : d'autant plus vite que 
   b.x += dx / l * st; b.y += dy / l * st; b.dir = dx < 0 ? 'left' : 'right';
   babyAnim(b, 'walk');
 }
+// un petit arrive chez sa maman ; ceux qui arrivent ensemble n'ont droit qu'à un cri (BABY.call s après le dernier)
 function babyHome(b) {
   b.mode = 'home'; b.slot = babies.filter(o => o.mode === 'home' && o !== b).length;
-  piquette.cheerT = 2.5;
-  const left = babiesLeft();
-  npcShout(piquette, left ? 'Mon petit ! Encore ' + left + ' !' : piq.state === 'asked' ? 'Tous mes petits ! Viens me voir !' : 'Mes petits !');
+  piquette.cheerT = 2.5; piquette.got = (piquette.got || 0) + 1; piquette.callT = BABY.call;
   saveGame();
+}
+function piquetteCall() {
+  const left = babiesLeft(), k = piquette.got;
+  piquette.got = 0; piquette.callT = 0;
+  npcShout(piquette, left ? (k > 1 ? 'Mes petits ! Encore ' : 'Mon petit ! Encore ') + left + ' !'
+    : piq.state === 'asked' ? 'Tous mes petits ! Viens me voir !' : 'Mes petits !');
 }
 function updateBaby(b, dt) {
   const dP = dist(b.x, b.y, P.x, P.y);
@@ -2199,6 +2212,7 @@ function drawBaby(b) {
 }
 function piquetteMark() { return piq.state === 'done' ? -1 : piq.state === 'asked' && babiesLeft() ? 1 : 0; }
 function piquetteGreet() {
+  if (babies.some(b => b.mode === 'follow')) return;      // ses petits arrivent : piquetteCall() parle
   if (piq.state === 'new') npcShout(piquette, 'Mes petits ! Où êtes-vous ?');
   else if (piq.state === 'asked') {
     const n = babiesLeft();
@@ -4113,6 +4127,7 @@ function update(dt) {
       updateToys(dt);
       updateTrain(dt);
       for (const b of babies) updateBaby(b, dt);
+      if (piquette.callT > 0 && (piquette.callT -= dt) <= 0) piquetteCall();
       for (const c of critters) updateCritter(c, dt);
       for (const d of ducks) updateDuck(d, dt);
       updateTrail(dt);
