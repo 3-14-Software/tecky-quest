@@ -6,12 +6,6 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8765", "--directory", "web/tecky_quest_web"],
       "port": 8765
-    },
-    {
-      "name": "tecky-bords",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8766", "--directory", "/tmp/claude-1000/-home-cgerardin-Sources-314-SOFTWARE-tecky-quest/0b9a696d-f1c6-4f08-ab78-d6f6faa7a3eb/scratchpad/tq-bords/web/tecky_quest_web"],
-      "port": 8766
     }
   ]
 }

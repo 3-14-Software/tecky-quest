@@ -29,7 +29,7 @@ function main() {
   run('var C = critters.find(c => c.kind === "cat"); C.x = C.hx; C.y = C.hy; C.mode = "roam"; P.x = C.x - 260; P.y = C.y; P.dir = "right"; P.mode = "free"; P.cdBark = 0; pressed.bark = true');
   step(1);
   ok(run('C.mode') === 'flee', 'aboiement : le chat file');
-  ok(run('C.ref && /house|container/.test(C.ref.deco.n)'), 'vers un toit (' + run('C.ref.deco.n') + ')');
+  ok(run('C.ref && /house|container|bakery/.test(C.ref.deco.n)'), 'vers un toit (' + run('C.ref.deco.n') + ')');
   { let k = 0; while (run('C.mode') !== 'perched' && k++ < 400) step(1); }
   ok(run('C.mode') === 'perched' && run('C.h') > 50 && run('critterVisible(C)'), 'il saute sur le toit et y reste, bien visible');
   run('P.x = C.x; P.y = C.y + 100;'); step(5);
