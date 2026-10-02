@@ -29,6 +29,7 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - `tecky.py`, `alice.py`, `enemies.py` (roquet, bouledogue, molosse/doberman, berger), `hens.py` (poules animées),
   `farmer.py` (le fermier Gaston, vu de face, 48x64, pieds en (24, 60) ; `FACE` pour son portrait),
   `ducks.py` (colvert, cane, caneton, de profil, 32x32, ligne d'eau en (16, 24)),
+  `cows.py` (vaches pie noire et pie rouge, veau, de profil, 64x48, pieds en (32, 44)),
   `npcs.py` (le facteur Marcel et la voisine Mamie Rose, comme `farmer.py` ; `letter_frames()` : la lettre),
   `critters.py` (écureuil, chats roux et noir, de profil, 32x32), `vehicles.py` (voitures, camionnette, bus),
   `butterflies.py` (papillons, vus de dessus), `items.py`, `decor.py`, `tiles.py`, `hud.py` :
@@ -153,6 +154,12 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   posent sur les pots de fleurs ou les massifs (`FLOWER_BEDS`, dessinés aussi au sol), s'envolent si Tecky approche
   ou aboie. Chacun doit avoir une fleur à portée (testé). Dessinés au-dessus de tout, sans collision. Test :
   `butterflies.js`.
+- Vaches (`cows`, `COW`, `MAP.cows`, cows.py) : trois dans le grand pré de la campagne (le veau reste près de sa
+  mère, `cowMother()`). Elles broutent, se promènent autour de leur place, lèvent la tête vers Tecky, meuglent de temps
+  en temps quand il est dans les parages (`cowMoo()`, `SFX.moo`) ; un aboiement les fait trotter plus loin
+  (`scareCow()`, le veau suit). Obstacles sans toucher à `blockedFeet()` : une boîte de `solids` par vache (`c.box`),
+  déplacée avec elle et vidée le temps de son propre pas (`cowStep()`, qui refuse aussi un pas sur Tecky). Rien n'est
+  sauvegardé. Test : `cows.js`.
 - Poules (`hens`, `HEN`) : picorent et se promènent autour de leur place ; un aboiement dans le cône (`BARK`) ou Tecky
   trop près les fait fuir en battant des ailes (« cot-cot »). Pas de collision. Test : `hens.js`.
 - Chien de berger (`berger`, `CHARGE`) : s'accroupit (« ! », sprite écrasé), charge en ligne droite si `clearPath()`,

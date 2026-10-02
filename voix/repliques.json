@@ -63,6 +63,10 @@
     "hedgehog": {
       "nom": "Les bébés hérissons",
       "voix": "toute petite voix aiguë (« Couic ! »)"
+    },
+    "cow": {
+      "nom": "Les vaches",
+      "voix": "meuglement grave et paisible (le veau : plus aigu)"
     }
   },
   "repliques": [
@@ -2419,6 +2423,28 @@
       "texte": "Couic ?",
       "affiche": "Couic ?",
       "contexte": "dans updateBaby()"
+    },
+    {
+      "voix": "cow",
+      "fichier": "cow-a0161a9d",
+      "personnage": "Les vaches",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Meuh !",
+      "affiche": "Meuh !",
+      "contexte": "Une vache meugle (Tecky est dans le pré)"
+    },
+    {
+      "voix": "cow",
+      "fichier": "cow-83592dd7",
+      "personnage": "Les vaches",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Meuuuh !",
+      "affiche": "Meuuuh !",
+      "contexte": "Tecky aboie vers une vache"
     }
   ]
 }

@@ -4,7 +4,7 @@ Mini RPG en vue de dessus : **Tecky**, le teckel au harnais rouge, part à la re
 cache-cache. Il suit les affaires qu'elle a semées (sa barrette, sa chaussure, son doudou) : chacune indique où chercher
 ensuite, et Alice ne sort de sa cachette qu'une fois les trois retrouvées. En chemin, Tecky aboie pour repousser les
 chiens (dont les chiens de berger, qui chargent), gratte la terre pour déterrer des trésors, ramasse des os (qui rendent
-de la vie) et des saucisses (qui ajoutent un os de vie maximum). Sur une grande carte, il traverse campagne, route (gare aux voitures :
+de la vie) et des saucisses (qui ajoutent un os de vie maximum). Sur une grande carte, il traverse campagne (et son pré aux vaches), route (gare aux voitures :
 mieux vaut passer par les passages piétons), village, zone industrielle et son port, ferme et son verger, rivière (un seul pont), forêt et parc.
 La journée avance avec la recherche : un cran par indice, du plein jour au coucher de soleil orangé ; au troisième, les
 lampadaires s'allument, et la nuit tombe quand Tecky et Alice rentrent à la niche. De temps en temps,

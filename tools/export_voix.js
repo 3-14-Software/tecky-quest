@@ -32,6 +32,7 @@ const VOICES = {
   duck: ['Les canards', 'coin-coin'],
   train: ['Titine', 'la petite locomotive du port : voix joyeuse et chantante'],
   hedgehog: ['Les bébés hérissons', 'toute petite voix aiguë (« Couic ! »)'],
+  cow: ['Les vaches', 'meuglement grave et paisible (le veau : plus aigu)'],
 };
 // répliques dont le texte est calculé (pas une chaîne écrite en dur) : chacune doit être produite ci-dessous ; si ce
 // nombre change, une réplique calculée a été ajoutée ou retirée dans game.js : adapter ce fichier
@@ -45,7 +46,8 @@ const WHERE = { doBark: 'Premier aboiement sur le doberman', updatePompon: 'Teck
 const WHERE_POP = { doBark: 'Tecky aboie', updatePompon: 'Pompon', updateDog: 'Les chiens du coin',
   updateCritter: 'Écureuils et chats', scareDuck: 'Les canards s’envolent', updateTrain: 'Titine s’arrête devant Tecky',
   barkAtTrain: 'Tecky aboie vers Titine', updateVehicle: 'Une voiture bouscule Tecky', startSniff: 'Tecky flaire la piste',
-  layTrail: 'Tecky flaire (pas de piste par ici)', updateItems: 'Tecky ramasse un objet', checkGoal: 'Un ballon entre dans le filet' };
+  layTrail: 'Tecky flaire (pas de piste par ici)', updateItems: 'Tecky ramasse un objet', checkGoal: 'Un ballon entre dans le filet',
+  cowMoo: 'Une vache meugle (Tecky est dans le pré)', scareCow: 'Tecky aboie vers une vache' };
 const TONE = { 2: 'joyeux', 3: 'inquiet' };               // expression du portrait (face) : le ton à donner
 const AUDIO = /\.(mp3|ogg|wav)$/;
 

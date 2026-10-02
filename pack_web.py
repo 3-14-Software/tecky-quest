@@ -16,6 +16,7 @@ from PIL import Image
 
 import alice
 import butterflies
+import cows
 import decor
 import enemies
 import critters
@@ -343,6 +344,8 @@ DUCKS = [("duck_f", 9.9, 2.4, 1), ("duckling", 9.4, 2.55, 1), ("duckling", 9.0, 
          ("duck", 88.6, 25.4, 0), ("duck_f", 87.6, 25.9, 0),
          ("duck", 46.5, 43.4, 0), ("duck_f", 47.6, 43.8, 0), ("duck", 64.0, 43.6, 0), ("duck", 2.6, 26.0, 0),
          ("duck", 20.4, 34.8, 0), ("duck_f", 21.6, 35.4, 0)]
+# les vaches du grand pré de la campagne (cows.py) : la pie noire, la pie rouge et son veau
+COWS = [("cow_bw", 19.5, 25.4), ("cow_brown", 21.2, 29.6), ("calf", 19.0, 30.0)]
 # petites bêtes que Tecky peut poursuivre : écureuils (forêt, parc) qui grimpent aux arbres, chats (village, zone
 # industrielle) qui sautent sur les toits et les conteneurs
 CRITTERS = [("squirrel", 73.4, 53.9), ("squirrel", 82.2, 52.9), ("squirrel", 64.6, 60.4), ("squirrel", 87.2, 60.4),
@@ -492,6 +495,8 @@ def build_map():
         "badges": hud.BADGES,
         "keys": hud.KEYS, "pads": [k for k, _ in hud.PAD_BUTTONS],   # noms des images de hud/key et hud/pad
         "ducks": [[n, px(x), px(y), f] for n, x, y, f in DUCKS],
+        "cows": [[n, px(x), px(y)] for n, x, y in COWS],
+        "cowFps": {k: {a: fps for a, (_, fps, _) in cows.anims(k).items()} for k in cows.KINDS},
         "duckFps": {k: {a: fps for a, (_, fps, _) in ducks.anims(k).items()} for k in ducks.KINDS},
         "duckLoop": {k: {a: loop for a, (_, _, loop) in ducks.anims(k).items()} for k in ducks.KINDS},
         "critterFps": {k: {a: fps for a, (_, fps, _) in critters.anims(k).items()} for k in critters.KINDS},
@@ -557,6 +562,9 @@ def collect():
     for kind in ducks.KINDS:                            # canards : de profil vers la droite, ligne d'eau en (16, 24)
         for a in ducks.anims(kind):
             out.append((f"{kind}/{a}", [render_svg(sv, 32, 32, S, PAD) for sv in ducks.frames(kind, a)], (16 * S + M, 24 * S + M), True))
+    for kind in cows.KINDS:                             # vaches : de profil vers la droite, pieds en (32, 44)
+        for a in cows.anims(kind):
+            out.append((f"{kind}/{a}", [render_svg(sv, 64, 48, S, PAD) for sv in cows.frames(kind, a)], (32 * S + M, 44 * S + M), True))
     for c in butterflies.COLORS:
         out.append((f"butterfly/{c}", [render_svg(sv, 24, 24, S, PAD) for sv in butterflies.frames(c)], (12 * S + M, 12 * S + M), True))
     for n, (_, (w, h), (ox, oy)) in vehicles.VEHICLES.items():

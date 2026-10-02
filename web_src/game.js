@@ -193,6 +193,8 @@ const SFX = {
   whistle() { tone(880, 0.22, 'triangle', 0.07, -30); tone(988, 0.22, 'triangle', 0.05, -30); noise(0.3, 0.03, 2600);
     tone(880, 0.32, 'triangle', 0.07, -60, 0.3); tone(988, 0.32, 'triangle', 0.05, -60, 0.3); noise(0.4, 0.03, 2600, 0.3); },
   bell() { tone(1320, 0.12, 'sine', 0.06); tone(1320, 0.14, 'sine', 0.06, 0, 0.18); },
+  moo(p) { const k = p || 1; tone(130 * k, 0.75, 'sawtooth', 0.04, 45 * k); tone(260 * k, 0.6, 'triangle', 0.035, -70 * k, 0.2);
+    tone(1700, 0.08, 'sine', 0.02, 0, 0.05); },     // « mmmeuh », et un tintement de clochette
 };
 
 /* ------------------------------------------------------------------ musique chiptune */
@@ -965,6 +967,7 @@ function reset() {
   });
   if (facile()) dogs = dogs.filter(d => d.id % 3 !== 2);
   hens = MAP.hens.map(newHen);
+  cows = MAP.cows.map(newCow);
   farmer = newFarmer(); farm = { state: 'new' };
   postman = newNpc('postman', MAP.postman, 1.05); post = { state: 'new' };
   letters = MAP.letters.map(([x, y]) => ({ x, y, t: Math.random() * 2, got: false }));
@@ -1140,6 +1143,10 @@ function doBark() {
   for (const h of hens) {
     const dx = h.x - P.x, dy = h.y - P.y, l = Math.hypot(dx, dy);
     if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) scareHen(h, P.x, P.y, HEN.fleeT);
+  }
+  for (const c of cows) {
+    const dx = c.x - P.x, dy = c.y - P.y, l = Math.hypot(dx, dy);
+    if (l > 1 && l < BARK.range + 40 && (dx * vx + dy * vy) / l > BARK.cos) scareCow(c);
   }
   for (const b of butterflies) {
     const dx = b.x - P.x, dy = b.y - P.y, l = Math.hypot(dx, dy);
@@ -1344,6 +1351,90 @@ function updateHen(h, dt) {
       h.dir = h.tx < h.x ? 'left' : 'right';
       h.mode = 'walk'; h.timer = 2.5; h.setAnim('walk');
   }
+}
+
+/* ------------------------------------------------------------------ les vaches de la campagne */
+/* Trois vaches (MAP.cows : [espèce, x, y] ; cows.py : la pie noire, la pie rouge et son veau) paissent dans le grand pré
+   de la campagne : elles broutent, font quelques pas autour de leur place (COW.roam ; le veau reste près de sa mère),
+   lèvent la tête vers Tecky quand il approche (COW.look) et meuglent de temps en temps quand il est dans les parages
+   (« Meuh ! »). Un aboiement les fait meugler et s'éloigner au petit trot (le veau suit sa mère). Ce sont des obstacles :
+   une boîte de `solids` (box) déplacée avec elles, vidée le temps de leur propre pas (cowStep) ; elles ne marchent
+   jamais sur Tecky. Rien n'est sauvegardé. */
+const COW = { roam: 150, spd: 38, trot: 130, trotT: 1.5, look: 200, moo: [9, 20], hear: 520, half: 44, calfHalf: 30, depth: 16 };
+let cows = [];
+function newCow([kind, x, y], i) {
+  const c = { kind, i, x, y, hx: x, hy: y, anim: 'graze', mode: 'graze', t: Math.random() * 3, timer: 2 + Math.random() * 4,
+    dir: Math.random() < 0.5 ? 'left' : 'right', mooT: rnd(COW.moo), vx: 0, vy: 0, box: [0, 0, 0, 0] };
+  cowBox(c); solids.push(c.box);
+  return c;
+}
+const cowMother = c => c.kind === 'calf' ? cows.find(o => o.kind === 'cow_brown') : null;
+function cowBox(c) {
+  const w = c.kind === 'calf' ? COW.calfHalf : COW.half;
+  c.box[0] = c.x - w; c.box[1] = c.y - COW.depth; c.box[2] = c.x + w; c.box[3] = c.y;
+}
+function cowAnim(c, a) { if (c.anim !== a) { c.anim = a; c.t = 0; } }
+// un pas : jamais dans un obstacle (sa propre boîte est retirée le temps du pas), ni sur Tecky
+function cowStep(c, dx, dy) {
+  const ox = c.x, oy = c.y;
+  c.box.fill(0);
+  moveActor(c, dx, dy, c.kind === 'calf' ? COW.calfHalf : COW.half);
+  const b = c.box; cowBox(c);
+  if (P.x + 12 > b[0] && P.x - 12 < b[2] && P.y > b[1] && P.y - 12 < b[3]) { c.x = ox; c.y = oy; cowBox(c); }
+  return c.x !== ox || c.y !== oy;
+}
+function cowMoo(c) {
+  addWordPop('Meuh !', c.x, c.y - (c.kind === 'calf' ? 80 : 110), 'cow');
+  SFX.moo(c.kind === 'calf' ? 1.6 : 1);
+  if (c.mode !== 'trot') { c.mode = 'moo'; c.timer = 0.9; cowAnim(c, 'moo'); c.dir = P.x < c.x ? 'left' : 'right'; }
+}
+function scareCow(c) {               // un aboiement : elle meugle et s'éloigne au petit trot (le veau suit sa mère)
+  if (c.mode === 'trot') return;
+  const dx = c.x - P.x, dy = c.y - P.y, l = Math.max(1, Math.hypot(dx, dy));
+  c.vx = dx / l; c.vy = dy / l * 0.6; c.mode = 'trot'; c.timer = COW.trotT; c.dir = c.vx < 0 ? 'left' : 'right'; cowAnim(c, 'walk');
+  addWordPop('Meuuuh !', c.x, c.y - (c.kind === 'calf' ? 80 : 110), 'cow');
+  SFX.moo(c.kind === 'calf' ? 1.6 : 0.9);
+  for (const o of cows) if (cowMother(o) === c) scareCow(o);
+}
+function updateCow(c, dt) {
+  c.t += dt; c.timer -= dt;
+  const dP = dist(c.x, c.y, P.x, P.y);
+  if ((c.mooT -= dt) <= 0) { c.mooT = rnd(COW.moo); if (dP < COW.hear && (c.mode === 'graze' || c.mode === 'idle')) cowMoo(c); }
+  switch (c.mode) {
+    case 'moo':
+      if (c.timer <= 0) { c.mode = 'idle'; c.timer = 1 + Math.random() * 2; cowAnim(c, 'idle'); }
+      return;
+    case 'trot': {
+      const k = Math.max(0.3, c.timer / COW.trotT);
+      const moved = cowStep(c, c.vx * COW.trot * k * dt, c.vy * COW.trot * k * dt);
+      if (c.timer <= 0 || !moved) { c.mode = 'idle'; c.timer = 1.5 + Math.random() * 2; cowAnim(c, 'idle'); c.hx = c.x; c.hy = c.y; }
+      return;
+    }
+    case 'walk': {
+      const dx = c.tx - c.x, dy = c.ty - c.y, l = Math.hypot(dx, dy);
+      const moved = l > 4 && cowStep(c, dx / l * COW.spd * dt, dy / l * COW.spd * dt);
+      if (l <= 4 || c.timer <= 0 || !moved) { c.mode = 'graze'; c.timer = 3 + Math.random() * 5; cowAnim(c, 'graze'); }
+      return;
+    }
+    default: {                         // broute, ou se repose ; lève la tête vers Tecky quand il approche
+      if (dP < COW.look && P.mode !== 'ko') {
+        cowAnim(c, 'idle'); c.dir = P.x < c.x ? 'left' : 'right'; c.timer = Math.max(c.timer, 1.2); return;
+      }
+      if (c.timer > 0) return;
+      if (Math.random() < 0.45) {
+        c.mode = c.mode === 'graze' ? 'idle' : 'graze'; cowAnim(c, c.mode); c.timer = 2 + Math.random() * 4; return;
+      }
+      // quelques pas autour de sa place (le veau, à côté de sa mère)
+      const m = cowMother(c), a = Math.random() * Math.PI * 2, r = Math.random() * (m ? 50 : COW.roam);
+      const hx = m ? m.x + (m.dir === 'left' ? 80 : -80) : c.hx, hy = m ? m.y + 12 : c.hy;
+      c.tx = hx + Math.cos(a) * r; c.ty = hy + Math.sin(a) * r * 0.5;
+      c.dir = c.tx < c.x ? 'left' : 'right'; c.mode = 'walk'; c.timer = 5; cowAnim(c, 'walk');
+    }
+  }
+}
+function drawCow(c) {
+  const fps = MAP.cowFps[c.kind][c.anim] * (c.mode === 'trot' ? 2.2 : 1);
+  drawSpr(c.kind + '/' + c.anim, Math.floor(c.t * fps), c.x, c.y, { flip: c.dir === 'left' });
 }
 
 function doBite() {
@@ -4098,6 +4189,7 @@ function update(dt) {
       alice.t += dt; P.t += dt;
       for (const d of dogs) if (d.mode !== 'ko') d.t += dt;
       for (const h of hens) h.t += dt;
+      for (const c of cows) c.t += dt;
       updateFx(dt);
       updateCamera(dt);
       break;
@@ -4124,6 +4216,7 @@ function update(dt) {
       if ((saveT += dt) >= SAVE_EVERY && safeToSave()) { saveT = 0; saveGame(); }
       for (const d of dogs) updateDog(d, dt);
       for (const h of hens) updateHen(h, dt);
+      for (const c of cows) updateCow(c, dt);
       for (const v of cars) updateVehicle(v, dt);
       for (const b of butterflies) updateButterfly(b, dt);
       separateDogs();
@@ -4218,6 +4311,7 @@ function drawWorld() {
   }
   for (const d of dogs) if (vis(d.x, d.y, 120)) list.push({ y: d.y, draw: () => d.draw(Math.max(0, 1 - d.fade)) });
   for (const h of hens) if (vis(h.x, h.y, 60)) list.push({ y: h.y, draw: () => h.draw() });
+  for (const c of cows) if (vis(c.x, c.y, 140)) list.push({ y: c.y, draw: () => drawCow(c) });
   for (const v of cars) if (vis(v.x, v.y, 280)) list.push({ y: v.y, draw: () =>
     drawSpr('vehicle/' + v.name, Math.floor(v.t * 4), v.x, v.y, { flip: v.dir < 0 }) });
   if (!alice.hidden && vis(alice.x, alice.y, 120)) list.push({ y: alice.y, draw: () => alice.draw() });
