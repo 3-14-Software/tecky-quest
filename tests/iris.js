@@ -8,7 +8,7 @@ function main() {
   ok(run('calmAt(iris.x, iris.y)') && run('zoneAt(iris.x, iris.y).id') === 'verger' && run('!dogs.includes(iris)'),
      'Iris vit au verger, en zone calme (c’est un personnage, pas un chien des rues)');
   ok(run('MAP.decor.some(d => d[0] === "dog_bed" && dist(d[1], d[2], iris.x, iris.y) < 20)'), 'sur son panier');
-  ok(run('MAP.decor.filter(d => d[0] === "apple_tree" && zoneAt(d[1], d[2]).id === "verger").length') >= 8, 'au milieu des pommiers');
+  ok(run('MAP.decor.filter(d => d[0].startsWith("apple_tree") && zoneAt(d[1], d[2]).id === "verger").length') >= 8, 'au milieu des pommiers');
   ok(run('toys.every(t => zoneAt(t.x, t.y).id === "verger")'), 'ses jouets sont cachés dans les prés de la ferme');
   // il ne parle que si Tecky vient le voir ; sa bulle est plus basse (il est assis)
   run('P.x = iris.x; P.y = iris.y + 110; P.mode = "free"; pops = [];'); step(2);

@@ -750,7 +750,8 @@ function drawHole(x, y) {
 
 /* ------------------------------------------------------------------ collisions */
 const FOOT = {
-  tree: [-18, -16, 18, 0], apple_tree: [-18, -16, 18, 0], apple_crate: [-24, -18, 24, 0], bush: [-28, -18, 28, 0], hay: [-26, -22, 26, 0], rock: [-22, -18, 22, 0],
+  tree: [-18, -16, 18, 0], apple_tree: [-18, -16, 18, 0], apple_tree_young: [-14, -12, 14, 0], apple_crate: [-24, -18, 24, 0],
+  bicycle: [-34, -10, 34, 0], bush: [-28, -18, 28, 0], hay: [-26, -22, 26, 0], rock: [-22, -18, 22, 0],
   fence_wood_h: [0, -14, 64, 0], fence_wood_v: [-8, -64, 8, 0], signpost: [-7, -8, 7, 0],
   cone: [-12, -10, 12, 0], road_sign: [-7, -8, 7, 0], lamppost: [-10, -10, 10, 0],
   house_red: [-76, -84, 76, -2], house_blue: [-76, -84, 76, -2], house_timber: [-70, -84, 70, -2], house_tall: [-76, -84, 76, -2],
@@ -773,7 +774,7 @@ const FOOT = {
   // lisière : la butte du tunnel, jusqu'à la bouche (Tecky s'arrête devant au lieu d'y fourrer la tête)
   tunnel: [-200, -420, 40, 0],
 };
-const FLAT = new Set(['bridge', 'sandbox', 'burrow', 'rail', 'dog_bed']);   // posés à plat : dessinés sous les personnages
+const FLAT = new Set(['bridge', 'sandbox', 'burrow', 'rail', 'dog_bed', 'fallen_apples']);   // posés à plat : dessinés sous les personnages
 // collisions en plusieurs morceaux : garde-corps du pont (son tablier n'est pas de l'eau, voir BRIDGES dans
 // pack_web.py), pieds du portique du port
 const RAILS = { bridge: [[-80, -320, -62, 0], [62, -320, 80, 0]], crane: [[-204, -16, -156, 0], [156, -16, 204, 0]],
@@ -2851,7 +2852,7 @@ function drawDust() {
    Elles tournoient en descendant avec une petite ombre au sol, se posent, puis s'effacent. */
 const LEAF = { rate: 0.08, max: 50, fall: 34, sway: 14, rest: 2.2, fade: 0.8 };
 function updateLeaves(dt) {
-  if (!leafTrees) leafTrees = decor.concat(EDGE_DECOR).filter(d => d.n === 'tree' || d.n === 'apple_tree' || d.n === 'fir');
+  if (!leafTrees) leafTrees = decor.concat(EDGE_DECOR).filter(d => d.n === 'tree' || d.n === 'apple_tree' || d.n === 'apple_tree_young' || d.n === 'fir');
   for (const tr of leafTrees) {
     if (leaves.length >= LEAF.max) break;
     if (tr.x < camX - 60 || tr.x > camX + VW + 60 || tr.y < camY - 20 || tr.y > camY + VH + 160) continue;

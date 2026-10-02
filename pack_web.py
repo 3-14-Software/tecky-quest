@@ -133,23 +133,25 @@ DECOR = [
     # route
     ("road_sign", 2.5, 17.35), ("road_sign", 29.2, 22.1), ("cone", 24.6, 20.7), ("cone", 25.5, 20.7),
     # village
-    ("house_red", 33.5, 3.4), ("house_blue", 46.5, 3.4), ("house_tall", 51.5, 3.4),
+    ("house_red", 33.5, 3.15), ("house_blue", 46.5, 3.4), ("house_tall", 51.7, 2.95),
+    ("bush", 36.8, 3.7), ("bush", 43.4, 3.9), ("bicycle", 37.6, 16.55),
     ("tree", 29.8, 12.6), ("tree", 54.6, 9.4), ("tree", 55, 2.4),
-    ("flower_pot", 46.5, 6.4), ("flower_pot", 33.3, 6.2),
+    ("flower_pot", 46.9, 6.3), ("flower_pot", 32.9, 6.0), ("flower_pot", 33.7, 6.35),
     # le marché, au bas de la place (fruits, légumes, fleurs), et la terrasse du café, à l'est de la fontaine
-    ("stall_fruit", 33.0, 9.8), ("stall_veg", 35.8, 9.8), ("stall_flower", 38.6, 9.8),
-    ("cafe_table", 50.0, 9.8), ("cafe_table", 52.8, 9.8),
+    ("stall_fruit", 32.9, 9.6), ("stall_veg", 35.9, 10.05), ("stall_flower", 38.75, 9.5),
+    ("apple_crate", 34.4, 10.35), ("crate", 37.35, 10.45),
+    ("cafe_table", 49.9, 9.45), ("cafe_table", 52.6, 10.05), ("cafe_table", 51.5, 7.85),
     ("lamppost", 32.5, 17.35), ("lamppost", 46.5, 17.35), ("lamppost", 52.5, 17.35),
-    ("mailbox", 35.2, 17.35), ("hedge", 28, 9.8), ("hedge", 29, 9.8), ("hedge", 28, 4), ("hedge", 29, 4),
+    ("mailbox", 35.2, 17.35), ("hedge", 28, 9.6), ("hedge", 29, 9.9), ("hedge", 28.2, 4.2), ("bush", 29.4, 3.9),
     # jardin de la niche (à l'est du pré)
     ("tree", 17.5, 1.6), ("tree", 21.5, 3.6), ("tree", 18.2, 13.6), ("tree", 22.6, 11.8), ("tree", 1.4, 14.2),
     ("tree", 12.5, 13.8), ("bush", 16.5, 5.8), ("bush", 21.6, 9.6), ("bush", 9.4, 14.6), ("bush", 15.4, 12.0),
     ("rock", 19.4, 5.4), ("bench", 18.8, 10.2), ("flower_pot", 17.0, 10.0), ("flower_pot", 20.6, 10.0),
     # village : une maison de plus sur la place, la fontaine, la rue (deux maisons, la ruelle entre elles)
-    ("house_timber", 40.0, 3.4), ("fountain", 42.5, 7.8), ("flower_pot", 39.6, 6.2),
-    ("bakery", 38.6, 15.6), ("house_red", 49.6, 15.6), ("house_timber", 31.0, 15.6), ("tree", 55.0, 14.8),
-    ("hedge", 41.6, 14.6), ("hedge", 46.0, 14.6), ("flower_pot", 41.2, 16.2), ("flower_pot", 47.8, 16.2),
-    ("bench", 35.2, 12.4), ("bench", 52.6, 12.4),
+    ("house_timber", 40.1, 3.7), ("fountain", 42.5, 7.8), ("flower_pot", 39.2, 6.6),
+    ("bakery", 38.6, 15.7), ("house_red", 49.6, 15.3), ("house_timber", 31.0, 15.4), ("tree", 55.0, 14.8),
+    ("hedge", 41.5, 14.8), ("hedge", 46.2, 14.4), ("flower_pot", 41.4, 16.3), ("flower_pot", 48.2, 16.0),
+    ("flower_pot", 48.85, 16.25), ("bench", 35.7, 12.7), ("bench", 52.1, 12.0),
     # zone industrielle
     ("container_blue", 42.0, 26.6), ("barrel_red", 44.8, 27.6), ("crate", 40.6, 29.0),
     ("warehouse", 34, 28), ("warehouse", 51.5, 28.2), ("container", 33.5, 24.9), ("container", 54.3, 29.9),
@@ -196,9 +198,13 @@ DECOR = [
     ("bush", 71.0, 38.6), ("bush", 84.0, 36.4), ("bush", 95.0, 31.6), ("hay", 75.6, 37.2), ("hay", 76.8, 37.5),
     ("rock", 90.6, 36.0),
     # au sud de la route : verger, champ, mare, chemin du pont
-    # le verger : des pommiers en rangées, et au milieu, la petite clairière où Iris a son panier
-    *[("apple_tree", x, y) for y in (24.0, 29.2) for x in (58.0, 60.4, 62.8, 65.2)],
-    ("apple_tree", 58.0, 26.6), ("apple_tree", 65.2, 26.6), ("dog_bed", 61.6, 26.95), ("apple_crate", 66.7, 28.6),
+    # le verger : des pommiers plantés en rangées, mais pas au cordeau (des vieux, des jeunes, un qui manque), et au
+    # milieu, la petite clairière où Iris a son panier ; une échelle de cueillette, des pommes tombées dans l'herbe
+    ("apple_tree", 57.8, 23.8), ("apple_tree", 60.4, 24.35), ("apple_tree_young", 62.7, 23.95), ("apple_tree", 65.4, 24.15),
+    ("apple_tree", 58.35, 26.85), ("apple_tree_young", 65.7, 26.45),
+    ("apple_tree", 57.95, 29.35), ("apple_tree_young", 60.15, 29.05), ("apple_tree", 63.2, 29.4),
+    ("dog_bed", 61.6, 26.95), ("apple_crate", 66.4, 28.95), ("ladder", 60.95, 24.3),
+    ("fallen_apples", 59.5, 28.0), ("fallen_apples", 64.3, 25.4), ("fallen_apples", 61.9, 22.9), ("fallen_apples", 66.6, 23.6),
     ("tree", 92.5, 23.6), ("tree", 94.5, 28.6), ("bush", 77.6, 23.4), ("bush", 83.4, 29.3),
     ("reeds", 85.6, 24.6), ("reeds", 90.6, 27.4), ("hay", 77.8, 27.4), ("scarecrow", 72, 27.4),
     ("signpost", 78, 40.6),
@@ -325,7 +331,7 @@ ENEMIES = [
 # voie 1 en bas vers l'est ; x de départ en tuiles). Les véhicules s'arrêtent aux passages quand Tecky y est.
 CROSSINGS = (10, 50, 71, 79)
 # massifs de fleurs au sol (tuiles) : dessinés en détail sur le sol, et perchoirs des papillons
-FLOWER_BEDS = ((7, 4), (23, 8), (3, 23), (10, 5), (6, 9), (24, 26), (59, 25), (63, 25), (93, 21), (84, 57),
+FLOWER_BEDS = ((7, 4), (23, 8), (3, 23), (10, 5), (6, 9), (24, 26), (59, 25), (63, 26), (93, 21), (84, 57),
                (14, 52), (46, 52), (14, 59), (47, 61), (51, 49), (2, 56), (12, 62), (32, 47), (52, 61), (27, 62),
                (6, 49), (8, 62),
                (18, 4), (21, 7), (16, 10), (10, 38), (26, 32), (4, 35), (70, 36), (92, 33), (36, 13), (53, 13), (40, 50))
@@ -338,7 +344,7 @@ BUTTERFLIES = [("yellow", 30.5, 47.8), ("blue", 34.8, 51.6), ("pink", 13, 56), (
                ("yellow", 9, 5.6), ("orange", 6, 8.6),
                ("pink", 36, 6.4), ("blue", 49, 5.4),
                ("blue", 4.5, 22.8), ("yellow", 22.6, 25.8),
-               ("orange", 63.6, 25.4), ("yellow", 59.6, 25.4),
+               ("orange", 63.6, 26.4), ("yellow", 59.6, 25.4),
                ("blue", 85.5, 56.6),
                ("orange", 19.5, 5.5), ("pink", 16.5, 10.6), ("yellow", 10.5, 38.4), ("blue", 26.0, 32.6),
                ("orange", 70.5, 36.4), ("pink", 53.5, 13.4)]
@@ -356,7 +362,7 @@ DUCKS = [("duck_f", 9.9, 2.4, 1), ("duckling", 9.4, 2.55, 1), ("duckling", 9.0, 
 COWS = [("cow_bw", 19.5, 25.4), ("cow_brown", 21.2, 29.6), ("calf", 19.0, 30.0)]
 # les villageois, sans quête (villageois.py) : le boulanger à la porte de sa boutique, la marchande de fruits et la
 # fleuriste à côté de leurs étals, le petit garçon et son ballon près de la fontaine
-VILLAGERS = [("baker", 39.3, 16.45), ("vendor", 31.4, 9.9), ("florist", 40.2, 9.9), ("kid", 44.6, 9.6)]
+VILLAGERS = [("baker", 39.3, 16.5), ("vendor", 31.3, 9.7), ("florist", 40.3, 9.6), ("kid", 44.9, 9.3)]
 # petites bêtes que Tecky peut poursuivre : écureuils (forêt, parc) qui grimpent aux arbres, chats (village, zone
 # industrielle) qui sautent sur les toits et les conteneurs
 CRITTERS = [("squirrel", 73.4, 53.9), ("squirrel", 82.2, 52.9), ("squirrel", 64.6, 60.4), ("squirrel", 87.2, 60.4),

@@ -26,25 +26,79 @@ def tree():
     return d
 
 
-def apple_tree():
+def apple_tree(k=1.0, apples=8):
     """Pommier du verger : plus petit que l'arbre, feuillage rond et plus clair, des pommes rouges ; deux sont tombées
-    dans l'herbe."""
+    dans l'herbe. k : taille (un jeune pommier est plus petit), apples : nombre de pommes sur l'arbre."""
+    X = lambda x: 32 + (x - 32) * k
+    Y = lambda y: 58 - (58 - y) * k
     d = Drawing(64, 64)
-    _shadow(d, 32, 58, 17, 3.6)
-    d.add(poly([(29, 42), (35, 42), (36.5, 58), (27.5, 58)]), "#8A5A3A")
-    d.add(rect(31.2, 46, 1.8, 10, 0.9), "#6E4428", sil=False)
+    _shadow(d, 32, 58, 17 * k, 3.6 * k)
+    d.add(poly([(X(29), Y(42)), (X(35), Y(42)), (X(36.5), 58), (X(27.5), 58)]), "#8A5A3A")
+    d.add(rect(X(31.2), Y(46), 1.8 * k, 10 * k, 0.9), "#6E4428", sil=False)
     for cx, cy, r in ((32, 28, 14.5), (19.5, 33, 9.5), (44.5, 33, 9.5), (24.5, 19.5, 9), (39.5, 19.5, 9)):
-        d.add(circle(cx, cy, r), "#5DAA4E")
+        d.add(circle(X(cx), Y(cy), r * k), "#5DAA4E")
     for cx, cy, r in ((34, 33, 10), (21, 36, 6), (43, 36, 6)):
-        d.add(circle(cx, cy, r), "#4A9142", sil=False, opacity=0.55)
+        d.add(circle(X(cx), Y(cy), r * k), "#4A9142", sil=False, opacity=0.55)
     for cx, cy, r in ((26, 18, 4.5), (39, 16.5, 3.4), (18, 30, 3)):
-        d.add(circle(cx, cy, r), "#86C96A", sil=False)
-    for x, y in ((22, 27), (30.5, 21.5), (41.5, 25.5), (36, 34), (18.5, 36.5), (46, 37), (27, 36.5), (37.5, 18.5)):
-        d.add(circle(x, y, 2.3), "#E0413A", sil=False, edge=True)
-        d.add(circle(x - 0.7, y - 0.8, 0.6), "#FFFFFF", sil=False, opacity=0.7)
-    for x, y in ((21.5, 57.2), (42.5, 58.4)):                      # tombées dans l'herbe
-        d.add(circle(x, y, 2.0), "#E0413A", edge=True)
-        d.add(circle(x - 0.6, y - 0.7, 0.5), "#FFFFFF", sil=False, opacity=0.7)
+        d.add(circle(X(cx), Y(cy), r * k), "#86C96A", sil=False)
+    spots = ((22, 27), (30.5, 21.5), (41.5, 25.5), (36, 34), (18.5, 36.5), (46, 37), (27, 36.5), (37.5, 18.5))
+    for x, y in spots[:apples]:
+        d.add(circle(X(x), Y(y), 2.3 * k), "#E0413A", sil=False, edge=True)
+        d.add(circle(X(x - 0.7), Y(y - 0.8), 0.6 * k), "#FFFFFF", sil=False, opacity=0.7)
+    for x, y in ((21.5, 57.2), (42.5, 58.4))[:1 if k < 1 else 2]:     # tombées dans l'herbe
+        d.add(circle(X(x), y, 2.0), "#E0413A", edge=True)
+        d.add(circle(X(x) - 0.6, y - 0.7, 0.5), "#FFFFFF", sil=False, opacity=0.7)
+    return d
+
+
+def apple_tree_young():
+    """Un jeune pommier, plus petit, encore peu de pommes."""
+    return apple_tree(0.78, 4)
+
+
+def fallen_apples():
+    """Quelques pommes tombées dans l'herbe (posées à plat)."""
+    d = Drawing(32, 32)
+    for x, y, r in ((10, 20, 2.4), (16.5, 22.5, 2.2), (22, 18.5, 2.3)):
+        d.add(ellipse(x, y + 1.6, r * 1.1, 0.8), "#000000", sil=False, opacity=0.15)
+        d.add(circle(x, y, r), "#E0413A", edge=True)
+        d.add(circle(x - 0.6, y - 0.7, 0.55), "#FFFFFF", sil=False, opacity=0.7)
+        d.raw(line(f"M{x},{y - r} L{x + 0.6},{y - r - 1.2}", "#6B4A30", 0.6))
+    d.add(ellipse(19.6, 21.0, 1.8, 0.9, "rotate(-30 19.6 21)"), "#5DAA4E", sil=False, edge=True)    # une feuille
+    return d
+
+
+def ladder():
+    """Échelle de cueillette en bois, appuyée (elle penche vers la droite)."""
+    d = Drawing(32, 64)
+    _shadow(d, 14, 58, 9, 2)
+    for x0, x1 in ((7, 17), (14, 24)):
+        d.add(poly([(x0, 58), (x0 + 2.4, 58), (x1 + 2.4, 6), (x1, 6)]), "#B98556")
+    for i in range(7):
+        y = 52 - i * 7.2
+        t = (58 - y) / 52
+        a = 7 + 10 * t + 2.4
+        b = 14 + 10 * t
+        d.add(rect(a - 0.4, y - 1.1, b - a + 0.8, 2.2, 0.6), "#C98A4B", sil=False, edge=True)
+    return d
+
+
+def bicycle():
+    """Un vélo de ville, garé de profil : cadre bleu, panier à l'avant (avec une baguette)."""
+    d = Drawing(48, 32)
+    _shadow(d, 24, 29, 19, 2)
+    for cx in (11, 37):
+        d.raw(f'<circle cx="{cx}" cy="21" r="7" fill="none" stroke="{OUTLINE}" stroke-width="2.2"/>')
+        d.raw(f'<circle cx="{cx}" cy="21" r="7" fill="none" stroke="#4A4F57" stroke-width="1.2"/>')
+        d.add(circle(cx, 21, 1.2), "#8C9098", sil=False, edge=True)
+    frame = "M11,21 L20,21 L30,12 L19,12 Z M20,21 L17,9 M30,12 L37,21 M30,12 L31,8"
+    d.raw(line(frame, OUTLINE, 2.6))
+    d.raw(line(frame, "#3E7BC4", 1.5))
+    d.add(rect(14, 7.4, 6, 2, 1), "#3A3A44")                                   # selle
+    d.add(rect(28.6, 6.6, 6, 1.6, 0.8), "#3A3A44")                             # guidon
+    d.add(rect(32, 7, 9, 6, 1.2), "#B98556")                                   # panier
+    d.raw(line("M33,9 L40,9 M33,11 L40,11", "#8A5A3A", 0.6))
+    d.add(ellipse(37, 5, 1.4, 5, "rotate(30 37 5)"), "#E3A954", sil=False, edge=True)   # une baguette
     return d
 
 
@@ -1496,6 +1550,10 @@ def frames(name):
 DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x)
     "tree": (tree, (64, 64), (32, 58)),
     "apple_tree": (apple_tree, (64, 64), (32, 58)),
+    "apple_tree_young": (apple_tree_young, (64, 64), (32, 58)),
+    "fallen_apples": (fallen_apples, (32, 32), (16, 22)),
+    "ladder": (ladder, (32, 64), (12, 58)),
+    "bicycle": (bicycle, (48, 32), (24, 29)),
     "apple_crate": (apple_crate, (32, 32), (16, 28)),
     "bush": (bush, (32, 32), (16, 28)),
     "hay": (hay, (32, 32), (16, 28)),
