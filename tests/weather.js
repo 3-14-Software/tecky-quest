@@ -25,8 +25,12 @@ function main() {
   ok(plop, 'Tecky marche dans la flaque : plouf');
   // fin de l'averse : arc-en-ciel, Tecky s'ébroue
   run('opts.weather = "soleil"; P.mode = "free";');
-  let shook = false;
-  for (let i = 0; i < 60 * 8; i++) { step(1); if (run('P.anim') === 'shake') shook = true; }
+  let shook = false, shakeT = 0, drops = 0;
+  for (let i = 0; i < 60 * 8; i++) {
+    step(1);
+    if (run('P.mode') === 'shake') { shook = true; shakeT++; drops = Math.max(drops, run('fxs.filter(f => f.key === "fx/drop").length')); }
+  }
+  ok(Math.abs(shakeT / 60 - 0.75) < 0.1 && drops > 12, 'Tecky s’ébroue en deux secousses (' + (shakeT / 60).toFixed(2) + ' s, ' + drops + ' gouttes en l’air)');
   ok(run('weather.k') === 0 && run('weather.bow') > 0, 'le soleil revient : arc-en-ciel');
   ok(shook && run('P.mode') === 'free', 'Tecky s’ébroue, puis repart');
   step(60 * 40);

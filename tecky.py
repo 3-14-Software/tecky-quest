@@ -645,12 +645,13 @@ def a_sleep(view):
 
 
 def a_shake(view):
-    """Il s'ébroue : le corps se tord d'un côté puis de l'autre, oreilles au vent, poils hérissés."""
-    ks = [0.6, -1.0, 1.0, -1.0, 0.7, -0.3]
-    fl = [1.4, 2.0, 2.0, 1.8, 1.4, 0.8]
+    """Il s'ébroue : le corps se tord d'un côté puis de l'autre (deux bonnes secousses), oreilles au vent, poils
+    hérissés, puis se calme."""
+    ks = [0.6, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -0.8, 0.5, -0.2]
+    fl = [1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.9, 1.8, 1.5, 1.1, 0.8]
     out = []
     for i, k in enumerate(ks):
-        q = dict(fluff=fl[i], fluff_ph=i * 1.9, twist=k, squint=i < 5, mouth=0.5 if i % 2 else 0.25)
+        q = dict(fluff=fl[i], fluff_ph=i * 1.9, twist=k, squint=i < len(ks) - 1, mouth=0.5 if i % 2 else 0.25)
         if view == "right":
             q.update(head_rot=-10 * k, ear=(40 if k > 0 else 100) * abs(k), tail=-40 - 28 * k, bob=-0.4 * abs(k))
             tr = f"translate({0.7 * k:.2f} 0)"

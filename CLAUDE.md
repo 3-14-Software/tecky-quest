@@ -96,7 +96,7 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   (`puddles` : places tirées une fois par `hash3`, remplies selon `weather.wet`), plouf (`puddleSplash()`), crépitement
   (`Ambience.startRain()`, les oiseaux se taisent). Fin d'averse : arc-en-ciel (`drawRainbow()`, repère GUI ;
   jamais une fois les lampadaires allumés, il s'efface quand ils s'allument) et Tecky
-  s'ébroue (`shakePending`, mode `shake`, gouttes `fx/drop`). Neige : flocons (`flakes`, dessinés directement depuis
+  s'ébroue (`shakePending`, mode `shake` : deux secousses, 0,75 s ; gouttes `fx/drop` à chacune, `shakeDrops()`). Neige : flocons (`flakes`, dessinés directement depuis
   l'atlas), sol blanchi (`weather.cover`). Rien n'est sauvegardé. Test : `weather.js`.
 - Vibrations (`rumble(kind)`, `RUMBLE`) : manette (`vibrationActuator.playEffect('dual-rumble')`) si `pad.on`, sinon
   téléphone (`navigator.vibrate`) en mode tactile ; morsure reçue, KO, choc de voiture, morsure qui porte, os doré.

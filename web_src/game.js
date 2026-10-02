@@ -184,7 +184,7 @@ const SFX = {
   snore() { noise(0.5, 0.025, 260); },
   badge() { [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.14, 'triangle', 0.07, 0, i * 0.09)); },
   plop() { tone(380 + Math.random() * 120, 0.08, 'sine', 0.05, -200); noise(0.06, 0.04, 1600); },
-  shake() { for (let i = 0; i < 5; i++) noise(0.05, 0.05, 1200 + i * 200, i * 0.06); },
+  shake() { for (let i = 0; i < 11; i++) noise(0.05, 0.05, 1200 + (i % 5) * 200, i * 0.065); },
   hey(p) { const k = p || 1; tone(560 * k, 0.08, 'triangle', 0.08, 160 * k); tone(760 * k, 0.13, 'triangle', 0.08, -120 * k, 0.09); },
   cluck() { tone(950, 0.05, 'square', 0.05, 250); tone(1150, 0.05, 'square', 0.05, 200, 0.08); tone(1400, 0.12, 'square', 0.05, -600, 0.17); },
   win() { [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, 0.18, 'triangle', 0.09, 0, i * 0.14)); },
@@ -2438,14 +2438,17 @@ function drawRainbow() {              // après l'averse : un grand arc-en-ciel,
   });
   ctx.restore();
 }
-function startShake() {               // Tecky s'ébroue : des gouttes partent tout autour
+function startShake() {               // Tecky s'ébroue (deux secousses) : des gouttes partent tout autour, deux fois
   if (P.dir === 'up') P.dir = 'down';
-  P.mode = 'shake'; P.setAnim('shake');
+  P.mode = 'shake'; P.setAnim('shake'); P.drops2 = false;
+  shakeDrops(0);
+  if (!muted) SFX.shake();
+}
+function shakeDrops(turn) {
   for (let k = 0; k < 12; k++) {
-    const a = k / 12 * Math.PI * 2;
+    const a = (k + turn) / 12 * Math.PI * 2;
     addFx('fx/drop', P.x + Math.cos(a) * 14, P.y - 36, { fps: 0, frame: 0, life: 0.45, vx: Math.cos(a) * 170, vy: Math.sin(a) * 110 - 40 });
   }
-  if (!muted) SFX.shake();
 }
 function puddleSplash(dt) {           // Tecky marche dans une flaque : plouf
   if (weather.wet < 0.3 || !puddles || (P.plopT = (P.plopT || 0) - dt) > 0) return;
@@ -3018,7 +3021,11 @@ function updatePlayer(dt) {
     return;
   }
   if (P.mode === 'bark') { if (P.done()) P.mode = 'free'; return; }
-  if (P.mode === 'shake') { if (P.done()) P.mode = 'free'; return; }
+  if (P.mode === 'shake') {
+    if (!P.drops2 && P.t * FPS.shake >= P.frames() / 2) { P.drops2 = true; shakeDrops(0.5); }   // 2e secousse
+    if (P.done()) P.mode = 'free';
+    return;
+  }
   if (shakePending && P.mode === 'free') { shakePending = false; startShake(); return; }
   if (P.mode === 'tunnel') { updateTunnel(dt); return; }
   if (P.mode === 'sniff') {
