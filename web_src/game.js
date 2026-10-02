@@ -482,16 +482,21 @@ function canFullscreen() {
   return !!el && !INSTALLED && !!(el.requestFullscreen || el.webkitRequestFullscreen) &&
     (document.fullscreenEnabled !== false || document.webkitFullscreenEnabled);
 }
+/* Il faut un geste de l'utilisateur (toucher, clic, touche) : appeler goFullscreen() directement dans l'événement.
+   Un bouton de manette en vaut un pour Chromium, pas pour Firefox : le refus est noté (fsRefusedAt) et la ligne
+   « Plein écran » des options dit alors comment faire. En sortir est toujours permis. */
+let fsRefusedAt = -1e9;
+const FS_REFUSED_NOTE = 5000;          // ms
 function goFullscreen() {
-  // doit être appelé directement dans un geste de l'utilisateur (toucher, clic, touche)
   if (!canFullscreen() || fsElement()) return;
-  const el = document.documentElement;
+  const el = document.documentElement, refused = () => { fsRefusedAt = performance.now(); };
   try {
     const p = el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : el.webkitRequestFullscreen();
     Promise.resolve(p).then(() => {
+      fsRefusedAt = -1e9;
       if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {});
-    }).catch(() => {});
-  } catch (e) { /* refusé : on reste en fenêtre */ }
+    }).catch(refused);
+  } catch (e) { refused(); }   // on reste en fenêtre
 }
 function toggleFullscreen() {
   if (fsElement()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
@@ -523,13 +528,13 @@ function actionOfKey(e) {
 addEventListener('keydown', e => {
   audioOn();
   touchMode = false; pad.on = false;
-  const m = MOVE_CODES[e.code];
-  if (m) { held[m] = true; if (!e.repeat) pressed[m] = true; e.preventDefault(); }
-  const a = actionOfKey(e);
+  const m = MOVE_CODES[e.code], a = actionOfKey(e);
   if (a === 'fullscreen') { if (!e.repeat) toggleFullscreen(); e.preventDefault(); return; }
-  if (state === 'options' && (a === 'ok' || a === 'bite' || a === 'act') && !e.repeat && optRows()[optSel].id === 'fs') {
-    toggleFullscreen(); e.preventDefault(); return;
+  if (state === 'options' && (a === 'ok' || a === 'bite' || a === 'act' || m === 'left' || m === 'right') && optRows()[optSel].id === 'fs') {
+    if (!e.repeat) toggleFullscreen();   // dans l'événement : le navigateur l'accepte
+    e.preventDefault(); return;
   }
+  if (m) { held[m] = true; if (!e.repeat) pressed[m] = true; e.preventDefault(); }
   if (a) {
     if (!e.repeat) pressed[a] = true;
     held[a] = true;
@@ -2847,7 +2852,8 @@ function optRows() {
     { id: 'weather', label: 'Météo', values: [['auto', 'Auto'], ['soleil', 'Soleil'], ['pluie', 'Pluie'], ['neige', 'Neige']],
       note: opts.weather === 'auto' ? 'Une averse de temps en temps, de la neige en décembre' : '' },
   ];
-  if (canFullscreen()) rows.push({ id: 'fs', label: 'Plein écran', value: fsElement() ? 'Oui' : 'Non' });
+  if (canFullscreen()) rows.push({ id: 'fs', label: 'Plein écran', value: fsElement() ? 'Oui' : 'Non',
+    note: performance.now() - fsRefusedAt < FS_REFUSED_NOTE ? 'Ce navigateur le refuse à la manette : touche F, ou un clic ici' : '' });
   rows.push({ id: 'back', label: 'Retour' });
   return rows;
 }
@@ -2876,9 +2882,13 @@ function optionsInput() {
   if (pressed.up) { optSel = (optSel + n - 1) % n; SFX.blip(); }
   if (pressed.down) { optSel = (optSel + 1) % n; SFX.blip(); }
   const r = rows[optSel];
-  if (pressed.left) changeOpt(r, -1);
-  if (pressed.right) changeOpt(r, 1);
-  if (pressed.ok || pressed.bite || pressed.act) {
+  if (r.id === 'fs') {                 // (au clavier, déjà fait dans l'événement : ici, la manette)
+    if (pressed.left || pressed.right || pressed.ok || pressed.bite || pressed.act) toggleFullscreen();
+  } else {
+    if (pressed.left) changeOpt(r, -1);
+    if (pressed.right) changeOpt(r, 1);
+  }
+  if ((pressed.ok || pressed.bite || pressed.act) && r.id !== 'fs') {
     if (r.id === 'back') { closeOptions(); return; }
     changeOpt(r, r.level && opts[r.id] >= 10 ? -10 : 1);     // Entrée / A : on monte, puis on repart de 0
   }

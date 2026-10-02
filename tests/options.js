@@ -83,5 +83,22 @@ function main() {
   ok(run('state') === 'play', 'P : reprise');
   run('pressed.pause = true'); step(1); run('menu.sel = 2; pressed.ok = true'); step(1);
   ok(run('state') === 'title' && ids().startsWith('continue'), 'Menu principal : la partie est gardée (« Continuer »)');
+
+  // plein écran à la manette : Chromium l'accepte, Firefox le refuse (la ligne dit quoi faire) ; en sortir, toujours
+  run('var fsReq = 0, fsExit = 0; document.documentElement = { requestFullscreen: () => { fsReq++; return Promise.reject(new Error("refusé")); } };');
+  run('document.fullscreenEnabled = true; document.exitFullscreen = () => { fsExit++; document.fullscreenElement = null; };');
+  run('openOptions("title"); optSel = optRows().findIndex(r => r.id === "fs"); pad.on = true;');
+  ok(run('optSel') >= 0 && run('optRows()[optSel].value') === 'Non' && !run('optRows()[optSel].note'), 'ligne « Plein écran » : Non');
+  run('pressed.ok = true'); step(1);
+  ok(run('fsReq') === 1, 'A de la manette : le jeu demande le plein écran');
+  setTimeout(() => {
+    ok(/manette/.test(run('optRows()[optSel].note')), 'refusé par le navigateur : « ' + run('optRows()[optSel].note') + ' »');
+    run('document.fullscreenElement = {};');
+    ok(run('optRows()[optSel].value') === 'Oui', 'en plein écran : Oui');
+    run('pressed.right = true'); step(1);
+    ok(run('fsExit') === 1 && run('optRows()[optSel].value') === 'Non', 'la manette en sort (→)');
+    run('pressed.left = true'); step(1);
+    ok(run('fsReq') === 2 && run('state') === 'options', '← : le redemande, sans quitter l’écran');
+  }, 10);
 }
 eval(base + 'setTimeout(' + main.toString() + ', 50);');

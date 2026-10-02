@@ -82,7 +82,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   (`sfxGain()`, ambiance comprise), Difficulté (facile : `gameDiff`, `facile()`, 5 os, morsures moitié moins fortes,
   chiens `d.id % 3 === 2` retirés ; fixée à la nouvelle partie et sauvegardée ; records à part `aventure-facile`),
   Texte des dialogues (grand : 46 px, 4 lignes), Image (fluide = `MAX_PIXELS`, nette = sans plafond), Plein écran
-  (dans les événements clavier / toucher : il faut un geste de l'utilisateur), Vibrations, Météo. Test : `options.js`.
+  (dans les événements clavier / toucher : il faut un geste de l'utilisateur ; un bouton de manette en vaut un pour
+  Chromium, pas pour Firefox : `fsRefusedAt`, la ligne dit alors « touche F, ou un clic » ; en sortir est toujours permis), Vibrations, Météo. Test : `options.js`.
 - Badges (`MAP.badges` = `hud.BADGES`, image i de `hud/badge`, la dernière = verrouillé ; `BADGE_INFO`, `BADGES_KEY`,
   gardés d'une partie à l'autre) : `checkBadges()` toutes les demi-secondes, `winBadges()` à la victoire (aventure,
   sans morsure = `bitten` faux, sauvegardé ; moins de 10 min). `unlockBadge()` : annonce « Nouveau badge ! »
