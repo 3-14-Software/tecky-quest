@@ -468,6 +468,20 @@ def fx_zzz():
     return [d.svg()]
 
 
+def fx_steam():
+    """Bouffée de vapeur de Titine, le petit train (32x32, 6 images) : trois boules blanches qui gonflent et
+    s'éclaircissent (le jeu la fait monter)."""
+    out = []
+    for f in range(6):
+        t = (f + 1) / 6
+        d = Drawing(32, 32)
+        for k, (x, y, r) in enumerate(((16, 20, 5.5), (11, 15, 4.2), (21, 14, 4.6))):
+            d.add(circle(x + (x - 16) * t * 0.5, y - t * 4, r * (0.55 + 0.6 * t)), "#FFFFFF", sil=False,
+                  opacity=round(0.95 - 0.75 * t, 2))
+        out.append(d.svg())
+    return out
+
+
 EFFECTS = {   # nom : (fonction, taille, fps)
     "bark": (fx_bark, 48, 12),
     "bite": (fx_bite, 32, 14),
@@ -485,4 +499,5 @@ EFFECTS = {   # nom : (fonction, taille, fps)
     "drop": (fx_drop, 16, 0),             # gouttelette (Tecky s'ébroue)
     "snowflake": (fx_snowflake, 16, 0),   # flocon : image = variante (3)
     "zzz": (fx_zzz, 16, 0),               # « z » du sommeil
+    "steam": (fx_steam, 32, 10),          # vapeur du petit train
 }

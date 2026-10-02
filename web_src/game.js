@@ -190,6 +190,9 @@ const SFX = {
   win() { [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, 0.18, 'triangle', 0.09, 0, i * 0.14)); },
   boing() { tone(260 + Math.random() * 60, 0.13, 'sine', 0.07, 280); tone(520, 0.08, 'sine', 0.03, -200, 0.06); },
   goal() { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.11, 'square', 0.04, 0, i * 0.07)); noise(0.3, 0.03, 3200, 0.12); },
+  whistle() { tone(880, 0.22, 'triangle', 0.07, -30); tone(988, 0.22, 'triangle', 0.05, -30); noise(0.3, 0.03, 2600);
+    tone(880, 0.32, 'triangle', 0.07, -60, 0.3); tone(988, 0.32, 'triangle', 0.05, -60, 0.3); noise(0.4, 0.03, 2600, 0.3); },
+  bell() { tone(1320, 0.12, 'sine', 0.06); tone(1320, 0.14, 'sine', 0.06, 0, 0.18); },
 };
 
 /* ------------------------------------------------------------------ musique chiptune */
@@ -774,6 +777,7 @@ function blockedFeet(x, y, hw) {
   const x0 = x - hw, x1 = x + hw, y0 = y - 12, y1 = y;
   if (x0 < 12 || y0 < 28 || x1 > MAP.w * TS - 12 || y1 > MAP.h * TS - 4) return true;
   for (const s of solids) if (x1 > s[0] && x0 < s[2] && y1 > s[1] && y0 < s[3]) return true;
+  if (train && trainHit(x0, y0, x1, y1)) return true;      // Titine, le petit train du port (obstacle qui bouge)
   for (const [px, py] of [[x0, y1], [x1, y1], [x0, y0], [x1, y0], [x, y0], [x, y1], [x0, y - 6], [x1, y - 6]])
     if (waterAt(px, py)) return true;
   return false;
@@ -968,6 +972,7 @@ function reset() {
   leon = newNpc('leon', MAP.leon, 0.95); fete = { state: 'new' }; balls = MAP.balls.map(newBall);
   nestor = Object.assign(newNpc('nestor', MAP.nestor, 0.62), { markY: NESTOR.markY, woof: true }); nest = { state: 'new' };
   toys = MAP.toys.map(newToy);
+  train = newTrain();
   critters = MAP.critters.map(newCritter);
   ducks = MAP.ducks.map(newDuck); linkDucks();
   bitten = false; newBadges = []; toasts = []; napped = false;
@@ -1100,6 +1105,7 @@ function hurtDog(d, dmg, kx, ky, stun) {
 function doBark() {
   dropToy('Oups !');                   // on n'aboie pas la gueule pleine
   const [vx, vy] = DIRV[P.dir];
+  barkAtTrain(vx, vy);
   const mouth = { right: [40, -44], left: [-40, -44], up: [0, -86], down: [0, -26] }[P.dir];
   const ang = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 }[P.dir];
   addFx('fx/bark', P.x + mouth[0], P.y + mouth[1], { angle: ang, fps: 12 });
@@ -2117,6 +2123,88 @@ function talkNestor() {
   ], saveGame);
 }
 
+/* ------------------------------------------------------------------ Titine, le petit train du port */
+/* Une locomotive à vapeur (vehicle/loco) et trois wagons font l'aller-retour sur la voie du quai (MAP.track : x des
+   heurtoirs ouest et est, y des rails), avec une pause à chaque bout. La locomotive est à l'est : elle tire vers l'est,
+   pousse vers l'ouest. Le train s'arrête devant Tecky, un chien, Pompon ou un chat, et sonne (« Tut-tut ! ») pour
+   Tecky ; il écarte doucement un ballon de Léon posé sur les rails. C'est un obstacle (trainHit, dans blockedFeet),
+   mais il n'avance que la voie libre : il ne pousse jamais personne. Un aboiement vers lui le fait siffler
+   (« Tchou-tchou ! », vapeur) : des points la première fois (train.scored, sauvegardé), badge « train ». */
+const TRAIN = { spd: 80, acc: 60, brake: 160, look: 70, pause: 3, score: 50, puff: 0.7, whistleCd: 1.6,
+  cars: ['wagon_orange', 'wagon_green', 'wagon_blue'], loco: 128, wagon: 96, top: 30, bottom: 12, ground: 10 };
+let train = null;
+// x : centre de la locomotive ; les wagons sont à l'ouest, attelés bout à bout
+function newTrain() {
+  const [x0, x1] = MAP.track, len = TRAIN.loco + TRAIN.cars.length * TRAIN.wagon;
+  return { x: (x0 + x1) / 2 + len / 2 - TRAIN.loco / 2, dir: 1, v: 0, mode: 'run', t: 0, dist: 0, rang: false,
+    puffT: 0, whistleT: 0, scored: false };
+}
+const trainWest = () => train.x - TRAIN.loco / 2 - TRAIN.cars.length * TRAIN.wagon;
+const trainEast = () => train.x + TRAIN.loco / 2;
+const trainY = () => MAP.track[2];
+function trainHit(x0, y0, x1, y1) {
+  const ty = trainY();
+  return x1 > trainWest() && x0 < trainEast() && y1 > ty - TRAIN.top && y0 < ty + TRAIN.bottom;
+}
+// limites de la locomotive : les heurtoirs (avec leur épaisseur)
+const trainMin = () => MAP.track[0] + 24 + TRAIN.cars.length * TRAIN.wagon + TRAIN.loco / 2;
+const trainMax = () => MAP.track[1] - 24 - TRAIN.loco / 2;
+// qui est sur la voie devant le train (de lead à lead + dir * look) ?
+function trainBlocker() {
+  const ty = trainY(), lead = train.dir > 0 ? trainEast() : trainWest();
+  const a = Math.min(lead, lead + train.dir * TRAIN.look), b = Math.max(lead, lead + train.dir * TRAIN.look);
+  const onTrack = (x, y, hw) => x + hw > a && x - hw < b && y > ty - TRAIN.top && y - 12 < ty + TRAIN.bottom;
+  for (const bl of balls) if (!bl.inNet && onTrack(bl.x, bl.y, 14)) { kickBall(bl, bl.x, ty + 60, 260); return bl; }
+  if (P.alpha !== 0 && onTrack(P.x, P.y, 16)) return P;
+  for (const d of dogs) if (onTrack(d.x, d.y, 16)) return d;
+  if (onTrack(pompon.x, pompon.y, 12)) return pompon;
+  for (const c of critters) if (c.h === 0 && onTrack(c.x, c.y, 12)) return c;
+  return null;
+}
+function trainPuff(n) {
+  for (let i = 0; i < n; i++)
+    addFx('fx/steam', train.x + 32 + (Math.random() - 0.5) * 8, trainY() + TRAIN.ground - 74 - i * 7,   // sur la cheminée
+      { fps: 10, vx: -train.dir * 12 + (Math.random() - 0.5) * 20, vy: -22 - Math.random() * 12 });
+}
+function updateTrain(dt) {
+  const T = train;
+  T.t += dt; T.whistleT = Math.max(0, T.whistleT - dt);
+  if (T.mode === 'wait') {                          // pause au bout de la voie, puis on repart dans l'autre sens
+    if ((T.waitT -= dt) <= 0) { T.mode = 'run'; T.dir = -T.dir; }
+    return;
+  }
+  const who = trainBlocker();
+  if (who === P && !T.rang) { T.rang = true; addWordPop('Tut-tut !', P.x, P.y - 120); if (!muted) SFX.bell(); }
+  if (!who) T.rang = false;
+  const target = who ? 0 : TRAIN.spd;
+  T.v = T.v < target ? Math.min(target, T.v + TRAIN.acc * dt) : Math.max(target, T.v - TRAIN.brake * dt);
+  if (T.v <= 0) return;
+  const lim = T.dir > 0 ? trainMax() : trainMin();
+  const dx = T.dir * Math.min(T.v * dt, Math.abs(lim - T.x));
+  T.x += dx; T.dist += Math.abs(dx);
+  if ((T.puffT -= dt) <= 0) { T.puffT = TRAIN.puff; trainPuff(1); }
+  if (T.x === lim) { T.mode = 'wait'; T.waitT = TRAIN.pause; T.v = 0; }
+}
+function barkAtTrain(vx, vy) {
+  if (train.whistleT > 0) return;
+  const ty = trainY() - 40;
+  const near = [trainWest(), train.x, trainEast()].some(x => {
+    const dx = x - P.x, dy = ty - P.y, l = Math.hypot(dx, dy);
+    return l < BARK.range + 60 && (dx * vx + dy * vy) / Math.max(1, l) > BARK.cos * 0.8;
+  });
+  if (!near) return;
+  train.whistleT = TRAIN.whistleCd;
+  addWordPop('Tchou-tchou !', train.x, trainY() - 140);
+  trainPuff(4);
+  if (!muted) SFX.whistle();
+  if (!train.scored) { train.scored = true; score += TRAIN.score; addPop('+' + TRAIN.score, train.x - 20, trainY() - 110); }
+}
+function drawTrain() {
+  const f = Math.floor(train.dist / 10), y = trainY() + TRAIN.ground;
+  drawSpr('vehicle/loco', f, train.x, y);
+  TRAIN.cars.forEach((n, k) => drawSpr('vehicle/' + n, f, train.x - TRAIN.loco / 2 - TRAIN.wagon / 2 - k * TRAIN.wagon, y));
+}
+
 /* ------------------------------------------------------------------ terriers */
 /* Sous certains grillages, un terrier (MAP.tunnels : deux extrémités). Près d'une extrémité, C fait « Passer » :
    Tecky gratte, disparaît sous la clôture et ressort de l'autre côté. Les chiens, eux, doivent faire le tour. */
@@ -2861,6 +2949,7 @@ function saveGame() {
     rose: rose.state, cat: [r1(pompon.x), r1(pompon.y), pompon.mode], bitten,
     fete: fete.state, balls: balls.map(b => [r1(b.x), r1(b.y), b.inNet ? 1 : 0]),
     nest: nest.state, toys: toys.map(t => t.carried ? [r1(P.x), r1(P.y), 0] : [r1(t.x), r1(t.y), t.home ? 1 : 0]),
+    train: train.scored ? 1 : 0,
   });
 }
 // pas de sauvegarde automatique en plein combat : on reprendrait au milieu des crocs
@@ -2892,6 +2981,7 @@ function loadGame(s, rested) {
   fete.state = s.fete || 'new';
   (s.balls || []).forEach((q, i) => { const b = balls[i]; if (b && q) { b.x = q[0]; b.y = q[1]; b.inNet = !!q[2]; } });
   nest.state = s.nest || 'new';
+  train.scored = !!s.train;
   (s.toys || []).forEach((q, i) => { const t = toys[i]; if (t && q) { t.x = q[0]; t.y = q[1]; t.home = !!q[2]; } });
   bitten = !!s.bitten || rested;
   if (s.cat) { pompon.x = s.cat[0]; pompon.y = s.cat[1]; pompon.mode = s.cat[2] === 'follow' ? 'wait' : s.cat[2]; }
@@ -3052,6 +3142,7 @@ const BADGE_INFO = {
   sieste: ['Roi de la sieste', 'Laisser Tecky s’endormir.'],
   ballons: ['Champion du ballon', 'Pousser tous les ballons de Léon dans le filet.'],
   nestor: ['Va chercher !', 'Rapporter ses trois jouets à Nestor.'],
+  train: ['Tchou-tchou !', 'Faire siffler Titine, le petit train du port.'],
 };
 const TOAST = { life: 3.6 };
 let badges = {}, toasts = [], newBadges = [], badgeT = 0, bitten = false;
@@ -3072,6 +3163,7 @@ function checkBadges() {
   if (rose.state === 'done') unlockBadge('chat');
   if (fete.state === 'done') unlockBadge('ballons');
   if (nest.state === 'done') unlockBadge('nestor');
+  if (train.scored) unlockBadge('train');
   if (critters.every(c => c.scored)) unlockBadge('betes');
   if (ducks.filter(d => !d.lead).every(d => d.scored)) unlockBadge('canards');
   if (seenCells.reduce((a, v) => a + v, 0) >= seenCells.length * 0.95) unlockBadge('explorateur');
@@ -3887,6 +3979,7 @@ function update(dt) {
       updatePompon(dt);
       for (const b of balls) updateBall(b, dt);
       updateToys(dt);
+      updateTrain(dt);
       for (const c of critters) updateCritter(c, dt);
       for (const d of ducks) updateDuck(d, dt);
       updateTrail(dt);
@@ -3969,6 +4062,8 @@ function drawWorld() {
   for (const l of letters) if (!l.got && vis(l.x, l.y, 60)) list.push({ y: l.y + 20, draw: () => drawSpr('item/letter', Math.floor(l.t * 6), l.x, l.y) });
   if (vis(pompon.x, pompon.y, 60)) list.push({ y: pompon.y, draw: drawPompon });
   for (const b of balls) if (vis(b.x, b.y, 80)) list.push({ y: b.y, draw: () => drawBall(b) });
+  if (trainEast() > cx - 100 && trainWest() < cx + VW + 100 && vis(train.x, trainY(), 200))
+    list.push({ y: trainY() + TRAIN.ground, draw: drawTrain });
   for (const t of toys) {   // un jouet porté : devant Tecky (derrière lui s'il nous tourne le dos)
     const y = t.carried ? P.y + (P.dir === 'up' ? -0.5 : 0.5) : t.y;
     if (vis(t.carried ? P.x : t.x, y, 80)) list.push({ y, draw: () => drawToy(t) });

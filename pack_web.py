@@ -136,7 +136,7 @@ DECOR = [
     ("guard_hut", 58.9, 18.7), ("cone", 54.6, 18.0), ("cone", 57.4, 18.0),
     ("lamppost", 47.5, 18.0), ("lamppost", 59.5, 24.9),
     ("bollard", 44.5, 25.0), ("bollard", 50.5, 25.0), ("bollard", 56.5, 25.0), ("barge", 50, 27.6),
-    ("buffer_stop", 41.25, 23.7), ("buffer_stop", 60.75, 23.7),
+    ("buffer_stop", 41.25, 23.7), ("buffer_stop", 60.75, 23.7),           # bouts de la voie (TRACK)
     # campagne sud-ouest
     ("tree", 0.9, 16.8), ("tree", 9.8, 17.3), ("tree", 15.8, 17.8), ("tree", 3, 23.8), ("tree", 12.2, 23.6),
     ("tree", 18.8, 22.4), ("bush", 5.2, 16.6), ("bush", 17.3, 19.8), ("bush", 9.2, 23.4),
@@ -214,6 +214,7 @@ BALLS = [(44.6, 23.0), (52.4, 20.8), (57.2, 20.2), (38.2, 21.0), (34.6, 23.4)]
 NESTOR = (57.0, 19.1)               # Nestor, le vieux chien du gardien, près du portail et de la cabane
 # ses trois jouets (port.TOYS : canard, anneau, corde) : sur la berge du port, au dépôt, sur le chemin du pont
 TOYS = [(47.2, 24.7), (28.0, 18.8), (64.0, 18.0)]
+TRACK = (41.25, 60.75, 23.6)        # voie de Titine, le petit train : x des heurtoirs ouest et est, y des rails
 # les lettres du facteur, emportées par le vent : campagne, village, zone industrielle, près de la niche
 LETTERS = [(18.4, 10.8), (22.0, 6.6), (35.6, 9.2), (31.0, 23.6), (15.2, 21.4)]   # avant le village, … , campagne
 # terriers sous les grillages : Tecky passe d'une extrémité à l'autre (raccourcis)
@@ -422,6 +423,7 @@ def build_map():
         "pompon": [px(POMPON[0]), px(POMPON[1])], "letters": [[px(x), px(y)] for x, y in LETTERS],
         "leon": [px(LEON[0]), px(LEON[1])], "goal": [px(GOAL[0]), px(GOAL[1])], "balls": [[px(x), px(y)] for x, y in BALLS],
         "nestor": [px(NESTOR[0]), px(NESTOR[1])], "toys": [[px(x), px(y)] for x, y in TOYS],
+        "track": [px(TRACK[0]), px(TRACK[1]), px(TRACK[2])],
         "npcFps": dict({"farmer": {a: v[1] for a, v in farmer.ANIMS.items()}},
                        **{k: {a: v[1] for a, v in npcs.ANIMS[k].items()} for k in npcs.KINDS}),
         "critters": [[n, px(x), px(y)] for n, x, y in CRITTERS],

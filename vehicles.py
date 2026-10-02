@@ -1,6 +1,7 @@
 """
 Véhicules de la grande route, de profil tournés vers la droite (la vue gauche est le miroir) :
 petite voiture (4 couleurs), camionnette de boulangerie, bus. 4 images : les enjoliveurs tournent.
+Et Titine, le petit train du port : locomotive à vapeur et trois wagons porte-conteneurs (sur les rails du quai).
 Origine au sol, sous les roues (VEHICLES).
 """
 import math
@@ -103,11 +104,66 @@ def bus(spin=0):
     return d
 
 
+def loco(spin=0):
+    """Titine, petite locomotive à vapeur rouge 64x48, tournée vers la droite : cabine à l'arrière, chaudière, cheminée
+    à bord doré, cloche, chasse-pierres, trois roues rouges à rayons."""
+    red, dark, gold = "#D7332B", "#A82520", "#F2C14E"
+    d = Drawing(64, 48)
+    _shadow(d, 4, 60, 44.4)
+    d.add(rect(5, 6, 18, 4, 1.5), "#2B2B33")                                          # toit de la cabine
+    d.add(rect(7, 9, 15, 26, 1.5), red)                                               # cabine
+    d.add(rect(10, 13, 9, 8, 1.5), GLASS, sil=False, edge=True)
+    d.raw(line("M12,19 L16.5,14.5", "#FFFFFF", 0.9))
+    d.add(rect(21, 18, 33, 15, 7.5), red)                                             # chaudière
+    d.add(rect(21, 18, 33, 4, 2), "#FFFFFF", sil=False, opacity=0.25)
+    for x in (31, 42):                                                                # cerclages dorés
+        d.add(rect(x, 18, 2, 15, 0), gold, sil=False)
+    d.add(rect(45, 7, 6.5, 12, 1), "#2B2B33")                                         # cheminée
+    d.add(rect(43.6, 5, 9.3, 3.2, 1.2), gold, edge=True)
+    d.add(path("M33,18 Q33,12.5 36.5,12.5 Q40,12.5 40,18 Z"), gold)                   # dôme (cloche)
+    d.add(circle(54.5, 25.5, 2.4), "#FFF1B8", sil=False, edge=True)                   # phare
+    d.add(rect(5, 32, 52, 4, 1), "#2B2B33")                                           # châssis
+    d.add(poly([(56, 32), (62, 40), (56, 40)]), "#5C6168")                            # chasse-pierres
+    for x, r in ((16, 6.4), (31, 6.4), (45, 5.4)):
+        y = 44 - r
+        d.add(circle(x, y, r), red)
+        d.add(circle(x, y, r * 0.35), gold, sil=False, edge=True)
+        for k in range(4):
+            a = math.radians(spin * 1.5 + k * 45)
+            d.raw(line(f"M{x - r * 0.8 * math.cos(a):.2f},{y - r * 0.8 * math.sin(a):.2f} "
+                       f"L{x + r * 0.8 * math.cos(a):.2f},{y + r * 0.8 * math.sin(a):.2f}", dark, 0.9))
+    d.raw(line("M16,38 L45,38.6", "#5C6168", 1.6))                                    # bielle
+    return d
+
+
+WAGON_COLORS = {"blue": ("#2E6FD1", "#23579F"), "green": ("#3F9A5B", "#2F7A46"), "orange": ("#D9772B", "#B9601E")}
+
+
+def wagon(color, spin=0):
+    """Wagon plat 48x40 portant un petit conteneur de couleur, attelages de chaque côté."""
+    col, rib = WAGON_COLORS[color]
+    d = Drawing(48, 40)
+    _shadow(d, 4, 44, 36.6)
+    d.add(rect(6, 9, 36, 20, 0.5), col)                                               # conteneur
+    for x in range(9, 41, 3):
+        d.raw(line(f"M{x},10 L{x},28", rib, 0.7))
+    d.add(rect(6, 7, 36, 4, 0.5), col)
+    d.add(rect(6, 7, 36, 4, 0.5), "#FFFFFF", sil=False, opacity=0.25)
+    d.add(rect(3, 28, 42, 3.6, 1), "#4A4F57")                                         # plateau
+    d.add(rect(0.6, 28.6, 3, 2.2, 0.8), "#2B2B33")                                    # attelages
+    d.add(rect(44.4, 28.6, 3, 2.2, 0.8), "#2B2B33")
+    for x in (12, 36):
+        _wheel(d, x, 32.4, 4.2, spin)
+    return d
+
+
 SPINS = (0, 30, 60, 90)          # 3 rayons : un tour d'enjoliveur tous les 120°
 VEHICLES = {   # nom : (fonction(spin), (largeur, hauteur) 1x, origine 1x)
     **{f"car_{c}": ((lambda c: lambda s: car(c, s))(c), (64, 40), (32, 38.6)) for c in CAR_COLORS},
     "van": (van, (80, 48), (40, 44.4)),
     "bus": (bus, (128, 56), (64, 52.6)),
+    "loco": (loco, (64, 48), (32, 44.4)),
+    **{f"wagon_{c}": ((lambda c: lambda s: wagon(c, s))(c), (48, 40), (24, 36.6)) for c in WAGON_COLORS},
 }
 
 

@@ -200,6 +200,12 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   passant dessus (un seul à la fois, `carried()`, dessiné à `MOUTH[dir]`), le lâche s'il aboie, mord ou est KO
   (`dropToy()`, `NESTOR.regrab`), le donne en arrivant près de Nestor (`giveToy()`). Saucisse + points, badge
   « nestor ». Sauvegardés (`nest`, `toys` ; un jouet porté l'est aux pieds de Tecky). Test : `nestor.js`.
+- Titine, le petit train du port (`train`, `TRAIN`, `MAP.track`, sprites `vehicle/loco` et `vehicle/wagon_*`,
+  `fx/steam`) : aller-retour sur la voie du quai, pause à chaque heurtoir, la locomotive à l'est (elle tire, puis
+  pousse). Elle s'arrête devant Tecky (« Tut-tut ! »), un chien, Pompon, un chat (`trainBlocker()`), écarte un ballon
+  posé sur les rails ; c'est un obstacle mobile (`trainHit()` dans `blockedFeet()`) qui n'avance que la voie libre.
+  Un aboiement vers elle la fait siffler (`barkAtTrain()`) : points la première fois (`train.scored`, sauvegardé),
+  badge « train ». Test : `train.js`.
 - Personnages (`NPC`, `npcList()`, `NPC_DO` : par personnage `mark` / `greet` / `talk` ; `newNpc()`, `updateNpcAnim()` :
   parle, se réjouit (`cheerT`), salue (`waveT`), s'inquiète (`worried`) ; fps dans `MAP.npcFps`) : comme dans un RPG, ils ne
   parlent que sur C (« Parler », `biteAction()` → `'talk'`, E aussi). Bulle `hud/talk` au-dessus de la tête : « ! »

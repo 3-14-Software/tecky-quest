@@ -430,7 +430,7 @@ def arrow_icons(scale):
 
 # ------------------------------------------------------------------ badges (succès)
 BADGES = ["aventure", "copains", "os_dores", "intact", "rapide", "poules",
-          "facteur", "chat", "betes", "canards", "explorateur", "sieste", "ballons", "nestor"]
+          "facteur", "chat", "betes", "canards", "explorateur", "sieste", "ballons", "nestor", "train"]
 BADGE_C = (24, 20.5)      # centre de la médaille dans le cadre 48x48
 _HEART = ("M16,23.5 C9,18.6 7,15.2 7,12.6 C7,9.9 9.1,8 11.6,8 C13.6,8 15.1,9.2 16,10.9 "
           "C16.9,9.2 18.4,8 20.4,8 C22.9,8 25,9.9 25,12.6 C25,15.2 23,18.6 16,23.5 Z")   # même cœur que fx/heart
@@ -668,6 +668,20 @@ def _ic_nestor(d):
     port.rubber_duck(d, 0.5, -1)
 
 
+def _ic_train(d):
+    """Titine, la petite locomotive du port, et une bouffée de vapeur."""
+    d.add(rect(4, 8, 9, 15, 1.2), "#D7332B")                      # cabine
+    d.add(rect(3, 6, 11, 3, 1), "#2B2B33")
+    d.add(rect(6, 11, 5, 5, 1), "#9FD3F0", sil=False, edge=True)
+    d.add(rect(12, 13, 17, 10, 5), "#D7332B")                     # chaudière
+    d.add(rect(22, 6, 4.4, 8, 0.8), "#2B2B33")                    # cheminée
+    d.add(rect(21, 4.6, 6.4, 2.4, 1), "#F2C14E", edge=True)
+    d.add(rect(3, 22, 27, 3, 1), "#2B2B33")
+    for x, r in ((9, 4.2), (19, 4.2), (26.5, 3.4)):
+        d.add(circle(x, 28 - r, r), "#D7332B")
+        d.add(circle(x, 28 - r, r * 0.38), "#F2C14E", sil=False, edge=True)
+
+
 BADGE_ICONS = {   # nom : (dessin, échelle, point de l'icône posé au centre du disque)
     "aventure": (_ic_aventure, 0.95, 16, 16), "copains": (_ic_copains, 0.92, 16, 16),
     "os_dores": (_ic_os_dores, 0.95, 16, 16), "intact": (_ic_intact, 0.92, 16, 16),
@@ -675,7 +689,7 @@ BADGE_ICONS = {   # nom : (dessin, échelle, point de l'icône posé au centre d
     "facteur": (_ic_facteur, 0.86, 16, 16.4), "chat": (_ic_chat, 0.9, 16, 16),
     "betes": (_ic_betes, 0.82, 15.2, 16.4), "canards": (_ic_canards, 0.84, 17, 16.4),
     "explorateur": (_ic_explorateur, 0.9, 16, 16), "sieste": (_ic_sieste, 0.86, 16.4, 15.8),
-    "ballons": (_ic_ballons, 0.95, 16, 16), "nestor": (_ic_nestor, 0.9, 15.8, 17),
+    "ballons": (_ic_ballons, 0.95, 16, 16), "nestor": (_ic_nestor, 0.9, 15.8, 17), "train": (_ic_train, 0.88, 16.4, 16),
 }
 
 
