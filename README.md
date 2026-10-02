@@ -31,7 +31,7 @@ tous les canards…), visibles depuis le menu principal.
 Quand on ne touche plus à rien, Tecky s'assoit, bâille, se gratte l'oreille… puis s'endort.
 
 À la fin, Tecky et Alice rentrent ensemble à la niche, la nuit, parmi les lucioles, sur une berceuse : Tecky s'endort
-à ses pieds.
+à ses pieds. L'écran de victoire dit à quel point l'aventure a été complétée (os dorés, quêtes, animaux, carte).
 
 Tout est généré par du code : sprites en SVG (aplats + contour), tileset, décors, HUD, musique chiptune, niveau.
 

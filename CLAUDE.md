@@ -149,7 +149,9 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   Alice remontent le chemin de la niche la nuit, parmi les lucioles (`drawFireflies()`, avec la lumière), Tecky s'endort
   à ses pieds (`snooze()`, partagé avec le repos), iris qui se referme, « Fin » ; berceuse (`Music.start('end')`, en
   boucle jusqu'au menu). Un bouton la passe après `ENDING.skip` s (`endingDone()`) → écran de victoire, qui sort du noir
-  (`fadeFrom()` : fondu de l'écran entier, `drawFade()`). Test : `ending.js`.
+  (`fadeFrom()` : fondu de l'écran entier, `drawFade()`), avec le pourcentage de complétion (`completion()` : os dorés,
+  quêtes `QUESTS_DONE`, petites bêtes, canards, carte, copains en balade ; une nouvelle quête s'ajoute à `QUESTS_DONE`).
+  Test : `ending.js`.
 - Sauvegarde (`STORE` : localStorage, repli en mémoire si refusé ; clés `tecky-quest-save` v1 et `tecky-quest-records`) :
   `saveGame()` toutes les `SAVE_EVERY` (4) s de jeu si `safeToSave()` (aucun chien engagé à moins de 600 px), à chaque
   indice et trésor (fin de réplique), en quittant la page (`pagehide`, onglet caché) ; jamais KO ni après la victoire.

@@ -2807,6 +2807,19 @@ function checkBadges() {
   if (seenCells.reduce((a, v) => a + v, 0) >= seenCells.length * 0.95) unlockBadge('explorateur');
   if (napped) unlockBadge('sieste');
 }
+/* Complétion de la partie (écran de victoire), en % : moyenne de catégories qui comptent toutes autant — os dorés, quêtes,
+   petites bêtes, canards, carte explorée (95 % suffisent, comme pour le badge), et les copains en balade. Une nouvelle
+   quête : l'ajouter à QUESTS_DONE. */
+const QUESTS_DONE = [() => farm.state === 'done', () => post.state === 'done', () => rose.state === 'done'];
+function completion() {
+  const part = (n, of) => of ? Math.min(1, n / of) : 1, count = (a, f) => a.filter(f).length;
+  const adults = ducks.filter(d => !d.lead);          // comme le badge : sans les canetons
+  const parts = [part(treasures, MAP.dig.length), part(count(QUESTS_DONE, q => q()), QUESTS_DONE.length),
+    part(count(critters, c => c.scored), critters.length), part(count(adults, d => d.scored), adults.length),
+    part(seenCells.reduce((a, v) => a + v, 0), seenCells.length * 0.95)];
+  if (balade()) parts.push(part(count(dogs, d => d.friend), dogs.length));
+  return Math.floor(100 * parts.reduce((a, v) => a + v, 0) / parts.length);
+}
 function winBadges() {
   if (!balade()) { unlockBadge('aventure'); if (!bitten) unlockBadge('intact'); }
   if (timePlayed < 600) unlockBadge('rapide');
@@ -3425,6 +3438,7 @@ function endingHome() {
   P.x = E.tecky[0]; P.y = E.from + 30; P.dir = 'up'; P.mode = 'free'; P.setAnim('walk');
   camX = clamp(E.alice[0] - VW / 2, 0, MAP.w * TS - VW); camY = clamp(E.alice[1] - 40 - VH / 2, 0, MAP.h * TS - VH);
   fxs = []; pops = []; rings = []; dusts = []; leaves = []; butterflies = []; drops = []; flakes = [];
+  dogs = dogs.filter(d => d.x < camX - 150 || d.x > camX + VW + 150 || d.y < camY - 100 || d.y > camY + VH + 200);   // pas de chiens
   weather.k = 0; weather.on = false; sun = sunGoal();      // la nuit des retrouvailles, sans transition (au noir)
   ending.flies = Array.from({ length: E.flies }, () => ({ x: camX + 40 + Math.random() * (VW - 80),
     y: camY + 40 + Math.random() * (VH - 80), p: Math.random() * 7 }));
@@ -4023,7 +4037,7 @@ function drawEnd(win) {
     if (overT > 1 && menu) drawMenu(overT);
     return;
   }
-  const pw = 900, ph = 600, px = (GW - pw) / 2, py = (GH - ph) / 2;
+  const pw = 900, ph = 650, px = (GW - pw) / 2, py = (GH - ph) / 2;
   drawNine('hud/panel', px, py, pw, ph, 32);
   outlined('Tecky a retrouvé Alice !', GW / 2, py + 100, 64, '#F2C14E');
   drawSpr('hud/portrait_tecky', 2, GW / 2 - 130, py + 140);
@@ -4031,7 +4045,8 @@ function drawEnd(win) {
   // badges gagnés pendant cette partie, en petit sous les portraits
   newBadges.forEach((id, i) => drawSpr('hud/badge', MAP.badges.indexOf(id), GW / 2 - newBadges.length * 30 + i * 60 + 4, py + 242, { sc: 0.55 }));
   const rows = [['Score', String(score)], ['Temps', fmtTime(timePlayed)],
-    ['Os dorés', treasures + ' / ' + MAP.dig.length], [balade() ? 'Copains de jeu' : 'Chiens mis en fuite', String(fled)]];
+    ['Os dorés', treasures + ' / ' + MAP.dig.length], [balade() ? 'Copains de jeu' : 'Chiens mis en fuite', String(fled)],
+    [balade() ? 'Balade complétée' : 'Aventure complétée', completion() + '\u00a0%']];
   rows.forEach(([k, v], i) => {
     text(k, px + 180, py + 320 + i * 46, 34, '#6B5A4E', 'left', 500);
     text(v, px + pw - 180, py + 320 + i * 46, 34, '#3A1E12', 'right', 600);

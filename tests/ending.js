@@ -14,6 +14,7 @@ function main() {
   ok(run('state') === 'ending', 'pas de pause automatique pendant la fin');
   step(70);
   ok(run('ending.home') && run('sun') === 4 && run('butterflies.length') === 0, 'au noir : tout le monde à la niche, la nuit');
+  ok(run('dogs.every(d => d.x > camX + VW || d.y > camY + VH)'), 'aucun chien dans la scène');
   ok(run('alice.y') > run('ENDING.alice[1]') && run('alice.anim') === 'walk' && run('P.anim') === 'walk', 'ils remontent le chemin');
   ok(run('Math.abs(camX - clamp(ENDING.alice[0] - VW / 2, 0, MAP.w * TS - VW)) < 1'), 'la caméra regarde la niche');
   step(60 * 7);
@@ -23,6 +24,15 @@ function main() {
   step(Math.ceil(60 * (run('endingEnd()') - run('ending.t'))) + 2);
   ok(run('state') === 'win' && run('fade.a') > 0.5, 'puis l’écran de victoire, qui sort du noir');
   ok(run('P.anim') === 'sleep' && run('Music.cur') === 'end', 'Tecky dort toujours, la berceuse continue');
+  // complétion : un pourcentage sur l'écran de victoire
+  const pc = run('completion()');
+  run('var said = []; ctx.fillText = s => said.push(String(s)); overT = 2; render(); delete ctx.fillText;');
+  ok(pc >= 0 && pc < 100 && run(`said.includes("Aventure complétée") && said.includes("${pc}\u00a0%")`), 'écran de victoire : aventure complétée à ' + pc + ' %');
+  run('treasures = MAP.dig.length; farm.state = post.state = rose.state = "done";' +
+      'critters.forEach(c => c.scored = true); ducks.forEach(d => d.scored = true); seenCells.fill(1);');
+  ok(run('completion()') === 100, 'tout trouvé, toutes les quêtes, toute la carte : 100 %');
+  run('farm.state = "new";');
+  ok(run('completion()') < 100 && run('completion()') > 90, 'une quête de moins : ' + run('completion()') + ' %');
   run('Music.step = Music.song.total - 1;'); step(30);
   ok(run('Music.on') && run('Music.step') < 20, 'la berceuse boucle');
   step(40); run('pressed.ok = true'); step(1);
