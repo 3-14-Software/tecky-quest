@@ -191,12 +191,22 @@ const SFX = {
 };
 
 /* ------------------------------------------------------------------ musique chiptune */
-/* « Promenade de Tecky » : événements générés par music.py (même partition que le WAV GameMaker) */
+/* « Promenade de Tecky » : événements générés par music.py (même partition que le WAV GameMaker).
+   Timbre selon la zone (TIMBRE) : la mélodie et les arpèges passent par une couche (layers : gain propre) par timbre.
+   setZone() demande un changement ; il se fait en fondu enchaîné pendant la dernière mesure d'une phrase
+   (MUSIC_ZONE), pour que la phrase suivante commence avec les nouveaux instruments. Basse et batterie ne changent pas. */
+const MUSIC_ZONE = {
+  settle: 2,        // s : Tecky doit rester ce temps dans une zone pour que la musique change (pas de passage éclair)
+  phrase: 4,        // mesures par phrase
+  fade: 1,          // mesures de fondu, juste avant le début d'une phrase
+  cut: 0.6,         // s : fondu rapide quand la scène change d'un coup (nouvelle partie, Continuer)
+};
 const Music = {
   on: false, gain: null, timer: null, step: 0, next: 0, waves: {}, noiseBuf: null, byStep: null,
+  zone: 'niche', want: null, layers: [], fadeStep: -1,
   VOL: { lead: 0.16, arp: 0.045, bass: 0.2, kick: 0.5, snare: 0.2, hat: 0.07 },
   init() {
-    const mk = S => { const b = Array.from({ length: S.total }, () => []); for (const e of S.ev) b[e[0]].push(e); return { byStep: b, total: S.total, bpm: S.bpm }; };
+    const mk = S => { const b = Array.from({ length: S.total }, () => []); for (const e of S.ev) b[e[0]].push(e); return { byStep: b, total: S.total, bpm: S.bpm, bar: S.bar }; };
     this.songs = { main: mk(SONG), win: mk(WINSONG), lose: mk(LOSESONG) };
     this.byStep = true;
     const len = AC.sampleRate;
@@ -229,6 +239,8 @@ const Music = {
     this.gain = AC.createGain();
     this.gain.gain.value = this.level();
     this.gain.connect(AC.destination);
+    this.layers = this.cur === 'main' ? [this.layer(this.zone, 1)] : [];
+    this.want = null;
     this.step = 0;
     this.next = AC.currentTime + 0.08;
     this.timer = setInterval(() => this.tick(), 25);
@@ -242,10 +254,42 @@ const Music = {
     setTimeout(() => g.disconnect(), 800);
   },
   refresh() { if (this.on) this.gain.gain.setTargetAtTime(this.level(), AC.currentTime, 0.05); },
+  /* Changement de timbre : demandé (want), il attend la dernière mesure d'une phrase ; now = tout de suite, en fondu
+     rapide. Redemander la zone en cours annule une demande en attente. */
+  setZone(id, now) {
+    if (!this.on || this.cur !== 'main') { this.zone = id; this.want = null; return; }
+    if (now) { if (id !== this.zone || this.layers.length > 1) this.fadeTo(id, AC.currentTime, MUSIC_ZONE.cut); this.want = null; return; }
+    this.want = id === this.zone ? null : id;
+  },
+  layer(id, v) {
+    const g = AC.createGain();
+    g.gain.value = v;
+    g.connect(this.gain);
+    return { id, g, t0: 0, t1: 0, v0: v, v1: v };
+  },
+  ramp(l, to, t, d) {                  // fondu linéaire de la couche l vers to, de t à t + d, depuis sa valeur à t
+    const k = l.t1 > l.t0 ? Math.min(1, Math.max(0, (t - l.t0) / (l.t1 - l.t0))) : 1, v = l.v0 + (l.v1 - l.v0) * k;
+    const p = l.g.gain;
+    p.cancelScheduledValues(t); p.setValueAtTime(v, t); p.linearRampToValueAtTime(to, t + d);
+    Object.assign(l, { t0: t, t1: t + d, v0: v, v1: to });
+  },
+  fadeTo(id, t, d) {
+    let n = this.layers.find(l => l.id === id);
+    if (!n) { n = this.layer(id, 0); this.layers.push(n); }
+    for (const l of this.layers) this.ramp(l, l === n ? 1 : 0, t, d);
+    this.zone = id; this.want = null; this.fadeStep = this.step;
+  },
   tick() {
     const spb = 60 / this.song.bpm / 4;
     if (this.next < AC.currentTime - 0.2) this.next = AC.currentTime + 0.05;   // retour d'onglet
     while (this.next < AC.currentTime + 0.15) {
+      const bar = this.song.bar;
+      if (this.want && (this.step + MUSIC_ZONE.fade * bar) % (MUSIC_ZONE.phrase * bar) === 0)
+        this.fadeTo(this.want, this.next, MUSIC_ZONE.fade * bar * spb);
+      for (const l of this.layers.filter(l => l.v1 === 0 && l.t1 < this.next)) {   // couches éteintes : plus de notes
+        this.layers.splice(this.layers.indexOf(l), 1);
+        setTimeout(() => l.g.disconnect(), 1000);
+      }
       for (const e of this.song.byStep[this.step]) this.play(e, this.next, spb);
       this.next += spb;
       this.step++;
@@ -256,34 +300,38 @@ const Music = {
     }
   },
   play(e, t, spb) {
-    const [, ch, note, len, vol] = e;
-    const out = this.gain;
-    if (ch === 'drums') {
-      const g = AC.createGain();
-      g.connect(out);
-      if (note === 'kick') {
-        const o = AC.createOscillator();
-        o.frequency.setValueAtTime(190, t);
-        o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
-        g.gain.setValueAtTime(this.VOL.kick * vol, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
-        o.connect(g); o.start(t); o.stop(t + 0.16);
-      } else {
-        const src = AC.createBufferSource(), f = AC.createBiquadFilter();
-        src.buffer = this.noiseBuf;
-        const snare = note === 'snare';
-        f.type = snare ? 'bandpass' : 'highpass';
-        f.frequency.value = snare ? 1800 : 7000;
-        const d = snare ? 0.12 : 0.035;
-        g.gain.setValueAtTime(this.VOL[note] * vol, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + d);
-        src.connect(f); f.connect(g);
-        src.start(t, Math.random() * 0.5, d + 0.02);
-      }
-      return;
+    const ch = e[1];
+    if (ch === 'drums') this.drum(e, t, this.gain);
+    else if (ch === 'bass' || this.cur !== 'main') this.voice(e, t, spb, TIMBRE.niche, this.gain);
+    else for (const l of this.layers) this.voice(e, t, spb, TIMBRE[l.id] || TIMBRE.niche, l.g);   // une note par timbre
+  },
+  drum(e, t, out) {
+    const [, , note, , vol] = e;
+    const g = AC.createGain();
+    g.connect(out);
+    if (note === 'kick') {
+      const o = AC.createOscillator();
+      o.frequency.setValueAtTime(190, t);
+      o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
+      g.gain.setValueAtTime(this.VOL.kick * vol, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+      o.connect(g); o.start(t); o.stop(t + 0.16);
+    } else {
+      const src = AC.createBufferSource(), f = AC.createBiquadFilter();
+      src.buffer = this.noiseBuf;
+      const snare = note === 'snare';
+      f.type = snare ? 'bandpass' : 'highpass';
+      f.frequency.value = snare ? 1800 : 7000;
+      const d = snare ? 0.12 : 0.035;
+      g.gain.setValueAtTime(this.VOL[note] * vol, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + d);
+      src.connect(f); f.connect(g);
+      src.start(t, Math.random() * 0.5, d + 0.02);
     }
+  },
+  voice(e, t, spb, tb, out) {          // tb : instruments de la zone (TIMBRE) ; la basse ne change pas
+    const [, ch, note, len, vol] = e;
     const o = AC.createOscillator(), g = AC.createGain();
-    const tb = (this.cur === 'main' && TIMBRE[this.zone]) || TIMBRE.niche;       // instruments de la zone (thème seulement)
     if (ch === 'bass') o.type = 'triangle';
     else { const w = ch === 'lead' ? tb.lead : tb.arp; if (typeof w === 'number') o.setPeriodicWave(this.wave(w)); else o.type = w; }
     o.frequency.value = 440 * Math.pow(2, (note - 69) / 12);
@@ -872,7 +920,7 @@ function reset() {
   bitten = false; newBadges = []; toasts = []; napped = false;
   resetWeather(); puddles = null; graceT = 0;
   walkGrid = null; distField = null; trail = []; tunnelSeen = false; crumbs = []; followN = 0;
-  seenCells = new Uint8Array(cellsW() * cellsH()); zone = null; zoneT = 0; banner = null; Music.zone = 'niche';
+  seenCells = new Uint8Array(cellsW() * cellsH()); zone = null; zoneT = 0; banner = null; tuneT = 0;
   cars = MAP.traffic.vehicles.map(newVehicle);
   butterflies = MAP.butterflies.map(newButterfly);
   items = MAP.items.map(([n, x, y]) => ({ n, x, y, t: Math.random() * 3 }));
@@ -2394,13 +2442,17 @@ const ZONES = [
 const zoneAt = (x, y) => ZONES.find(z => z.has(x / TS, y / TS));
 const LANDMARKS = [{ label: 'Rivière', at: [35, RIVER_MID] }];   // autres étiquettes de la carte de la pause
 const BANNER = { settle: 0.8, life: 3 };
-let zone = null, zoneT = 0, banner = null;
+let zone = null, zoneT = 0, banner = null, tuneT = 0;
 function updateZone(dt) {
   const z = zoneAt(P.x, P.y);
-  if (!zone) zone = z;
+  if (!zone) { zone = z; Music.setZone(z.id, true); }   // nouvelle partie, Continuer : la musique suit tout de suite
   if (z !== zone) {                    // nouvelle zone : on attend un peu (pas de bandeau en longeant une frontière)
-    if ((zoneT += dt) > BANNER.settle) { zone = z; zoneT = 0; banner = { text: z.name, t: 0 }; Music.zone = z.id; }
+    if ((zoneT += dt) > BANNER.settle) { zone = z; zoneT = 0; banner = { text: z.name, t: 0 }; }
   } else zoneT = 0;
+  // musique : seulement si Tecky reste MUSIC_ZONE.settle s dans la zone (un passage éclair ne la change pas)
+  if (z.id !== (Music.want || Music.zone)) {
+    if ((tuneT += dt) > MUSIC_ZONE.settle) { Music.setZone(z.id); tuneT = 0; }
+  } else tuneT = 0;
   if (banner && (banner.t += dt) > BANNER.life) banner = null;
 }
 function drawBanner() {

@@ -40,13 +40,12 @@ function main() {
   run('saveGame(); var SV = loadSave();');
   ok(run('SV.critters.split("").filter(x => x === "1").length') === 2, 'la sauvegarde retient les bêtes déjà surprises');
 
-  // ---- zones : bandeau, timbre de la musique, ambiance
+  // ---- zones : bandeau, ambiance
   run('P.x = 60 * 64; P.y = 40 * 64;'); step(70);   // d'abord ailleurs (Tecky était au village, près du chat)
   run('P.x = 30 * 64; P.y = 5 * 64; banner = null;'); step(70);
   ok(run('zone.id') === 'village' && run('banner && banner.text') === 'Le village', 'en arrivant au village : bandeau « Le village »');
-  ok(run('Music.zone') === 'village', 'la musique change de timbre selon la zone');
   run('P.x = 60 * 64; P.y = 40 * 64;'); step(70);
-  ok(run('zone.id') === 'foret' && run('Music.zone') === 'foret' && run('TIMBRE.foret.lead') === 'triangle', 'dans la forêt : flûte (onde triangle)');
+  ok(run('zone.id') === 'foret' && run('TIMBRE.foret.lead') === 'triangle', 'dans la forêt : flûte (onde triangle ; transitions : music.js)');
   ok(run('zoneAt(64.5 * 64, 27.2 * 64).id') === 'ferme' && run('zoneAt(64.5 * 64, 28 * 64).id') === 'foret', 'sur le pont : la ferme jusqu’au milieu de la rivière, puis la forêt');
   ok(run('JSON.stringify(ZONES.map(z => z.id))') === '["foret","parc","ferme","industrie","village","campagne","niche"]', 'sept zones (la rivière n’en est pas une)');
   ok(run('[2, 15, 30, 50, 75].every(x => zoneAt(x * 64, 25.2 * 64) === zoneAt(x * 64, 27.4 * 64) && zoneAt(x * 64, 27.8 * 64) === zoneAt(x * 64, 30 * 64))'),

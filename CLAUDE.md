@@ -190,7 +190,11 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   sauvegardé dans `ducks`). Test : `ducks.js`.
 - Zones (`ZONES`, `zoneAt()`, `updateZone()`) : bandeau à l'arrivée (`banner`), étiquettes de la carte, ambiance sonore
   (`Ambience`, `AMB_EVENTS`, `ambSound()` : oiseaux, coq, sonnette, cliquetis ; clapotis selon l'eau autour) et timbre
-  de la musique (`TIMBRE`, `Music.zone`). La rivière n'est pas une zone : celles du nord et du sud vont jusqu'à son
+  de la musique (`TIMBRE`, `Music.zone`). Changement de timbre (`MUSIC_ZONE`) : Tecky doit rester `settle` (2 s)
+  dans la zone (`tuneT` ; un passage éclair ne change rien), puis `Music.setZone()` le demande (`Music.want`) et le
+  séquenceur fait un fondu enchaîné pendant la dernière mesure d'une phrase (4 mesures) : une couche de gain par timbre
+  (`Music.layers`, `fadeTo()`, `ramp()`), mélodie et arpèges joués dans chaque couche, basse et batterie à part.
+  Nouvelle partie, Continuer : fondu rapide (`cut`). Test : `music.js`. La rivière n'est pas une zone : celles du nord et du sud vont jusqu'à son
   milieu (`RIVER_MID`), pour que rien ne change en la longeant ou en passant le pont ; elle garde son étiquette sur la
   carte de la pause (`LANDMARKS`). Test : `world.js`.
 - Carte de la pause (`drawPauseMap()`, `mapImg` pré-rendue au quart, `seenCells` : cases de 4 tuiles vues à l'écran,

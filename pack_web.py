@@ -550,9 +550,9 @@ def main():
     data = ("const ATLAS_SRC = \"" + b64(os.path.join(WEB, "atlas.png")) + "\";\n"
             "const TILES_SRC = \"" + b64(os.path.join(WEB, "tiles.png")) + "\";\n"
             "const ATLAS = " + json.dumps(meta, separators=(",", ":")) + ";\n"
-            "const SONG = " + json.dumps(dict(zip(("total", "ev"), music.events()), bpm=music.BPM), separators=(",", ":")) + ";\n"
-            "const WINSONG = " + json.dumps(dict(zip(("total", "ev"), music.fanfare_events()), bpm=music.FANFARE_BPM), separators=(",", ":")) + ";\n"
-            "const LOSESONG = " + json.dumps(dict(zip(("total", "ev"), music.defeat_events()), bpm=music.DEFEAT_BPM), separators=(",", ":")) + ";\n"
+            "const SONG = " + json.dumps(dict(zip(("total", "ev"), music.events()), bpm=music.BPM, bar=music.STEPS_PER_BAR), separators=(",", ":")) + ";\n"
+            "const WINSONG = " + json.dumps(dict(zip(("total", "ev"), music.fanfare_events()), bpm=music.FANFARE_BPM, bar=music.STEPS_PER_BAR), separators=(",", ":")) + ";\n"
+            "const LOSESONG = " + json.dumps(dict(zip(("total", "ev"), music.defeat_events()), bpm=music.DEFEAT_BPM, bar=music.STEPS_PER_BAR), separators=(",", ":")) + ";\n"
             "const MAP = " + json.dumps(m, separators=(",", ":"), ensure_ascii=False) + ";\n")
     html = tpl.replace("/*__DATA__*/", data).replace("/*__GAME__*/", game)
     open(os.path.join(WEB, "index.html"), "w", encoding="utf-8").write(html)

@@ -13,7 +13,7 @@ facteur a perdu ses lettres dans le vent, Mamie Rose cherche son chat Pompon, de
 filent se percher quand Tecky les poursuit, des canards s'envolent de l'étang et de la rivière, des terriers permettent de passer sous les grillages, et Tecky peut
 flairer la piste d'Alice (de petits pieds nus apparaissent au sol). Les trésors enterrés sont des os dorés à
 collectionner, et la pause montre la carte des coins déjà explorés. Chaque zone a son ambiance sonore et ses
-instruments.
+instruments, qui arrivent en fondu enchaîné au début d'une phrase musicale.
 
 Le village et la cour de la ferme sont des zones calmes : aucun chien n'y embête Tecky pendant qu'il parle aux habitants.
 
@@ -61,7 +61,7 @@ objets (rien dans l'eau, tout atteignable à pied depuis la niche), indices d'Al
 papillons, fontaine animée, circulation (bousculade, passages piétons), pont, eau animée, séquenceur musical, fanfare
 et musique de défaite, sauvegarde (continuer, reprise après KO, stockage refusé), records par mode, mode balade,
 manette simulée, poussière, feuilles, ombres de nuages et coucher de soleil, quête des poules, terriers, flair,
-os dorés, écureuils et chats, zones (bandeau, ambiance, timbre), carte de la pause, copains qui suivent Tecky. `tests/edges.py` détecte les sprites dont des pixels touchent le bord du cadre.
+os dorés, écureuils et chats, zones (bandeau, ambiance, timbre), transitions musicales, carte de la pause, copains qui suivent Tecky. `tests/edges.py` détecte les sprites dont des pixels touchent le bord du cadre.
 
 ## Organisation
 
