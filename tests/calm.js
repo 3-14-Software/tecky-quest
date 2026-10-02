@@ -23,7 +23,8 @@ function main() {
   ok(!run('threatened()'), 'personne ne menace Tecky au village : C sert à parler, lire…');
   // en parlant au facteur, avec tous les chiens de la carte : personne ne vient
   run('newGame("aventure", true)'); advanceDialog();
-  run('cars = []; P.x = postman.x; P.y = postman.y + 110; P.mode = "free"; P.inv = 0; graceT = 0; var hp1 = P.hp;');
+  run('cars = []; P.x = postman.x; P.y = postman.y + 90; P.mode = "free"; P.inv = 0; graceT = 0; var hp1 = P.hp;');
+  ok(run('calmAt(P.x, P.y)') && run('dist(P.x, P.y, postman.x, postman.y)') < run('NPC.talk'), 'sur le trottoir, assez près pour lui parler : en zone calme');
   let eng = false;
   for (let i = 0; i < 60 * 15; i++) { step(1); if (run('dogs.some(d => ENGAGED.has(d.mode))')) eng = true; if (run('state') === 'dialog') advanceDialog(); }
   ok(!eng && run('P.hp') === run('hp1'), '15 s près du facteur : aucun chien ne s’en prend à Tecky');

@@ -114,7 +114,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   **Mordre passe avant tout** si un chien menace Tecky (`threatened()` : chien « engagé » — `ENGAGED` : chasse,
   attaque, aboiement, sonné, accroupi, charge, essoufflé — à moins de `THREAT_R` = 240 px) ; C interrompt alors aussi un grattage en cours. Tests : `threat.js`, `read.js`.
   Le **doberman est immunisé aux aboiements** (`barkImmune`) : il faut le mordre (Tecky l'explique, bulle « Même pas peur ! »).
-- Zones calmes (`MAP.calm` = `CALM` dans pack_web : le village au nord de la route, la cour de la ferme ; `calmAt()`),
+- Zones calmes (`MAP.calm` = `CALM` dans pack_web : le village au nord de la route, trottoir compris — on parle à
+  Marcel depuis le trottoir —, la cour de la ferme ; `calmAt()`),
   comme les villes d'un RPG, en aventure : aucun chien n'y habite, un chien qui poursuit Tecky renonce quand il y
   entre (« Grrr… ») et rentre chez lui, `hurtPlayer()` n'y fait rien, `threatened()` y est faux. En balade, les
   copains peuvent y suivre Tecky. Répit de `GRACE` (1,5 s, `graceT`) après chaque dialogue : aucune morsure ne porte.

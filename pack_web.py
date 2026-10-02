@@ -227,7 +227,7 @@ ITEMS = [
 ]
 # zones calmes (x0, y0, x1, y1 en tuiles) : comme les villes d'un RPG, aucun chien hostile n'y vit ni n'y poursuit
 # Tecky. Le village, au nord de la grande route, et la cour de la ferme (Gaston, l'enclos).
-CALM = [(19.6, 0, 40.4, 11.5), (49, 2.6, 65.4, 11.4)]
+CALM = [(19.6, 0, 40.4, 12), (49, 2.6, 65.4, 11.4)]   # le village jusqu'au bord de la route (trottoir compris)
 ENEMIES = [
     # le 1er roquet est assez loin de la niche pour ne pas attaquer dès la fin de l'intro
     ("roquet", 12, 8.8), ("roquet", 14, 3.5), ("roquet", 10.5, 19.2), ("roquet", 31.5, 18.0),   # (ce dernier, aux entrepôts)
