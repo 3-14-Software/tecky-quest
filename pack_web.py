@@ -68,16 +68,16 @@ def corner_grid():
     paint("dirt", 6, 17, 7, 26)
     paint("dirt", 7, 20, 14, 21)
     paint("water", 1, 18, 4, 22)
-    # zone industrielle
-    paint("sidewalk", 22, 16, 40, 16)
-    paint("concrete", 22, 17, 40, 24)
+    # zone industrielle : le dépôt (x 22..40) et le port (x 41..61, jusqu'au grillage du chemin du pont)
+    paint("sidewalk", 22, 16, 61, 16)
+    paint("concrete", 22, 17, 61, 24)
     paint("road", 30, 16, 31, 17)
+    paint("road", 55, 16, 56, 17)           # portail du port, en face du passage piéton de la ferme
     # ferme (nord-est) : cour en terre, chemin vers la route, champs labourés
     paint("dirt", 50, 5, 62, 10)
     paint("dirt", 55, 10, 56, 11)          # (s'arrête au bord de la route : rien sous le passage piéton)
     paint("field", 43, 2, 48, 9)
     paint("field", 65, 2, 77, 9)
-    paint("field", 52, 18, 60, 23)
     paint("water", 70, 18, 74, 21)          # mare
     paint("dirt", 63, 16, 65, 25)           # chemin de la route au pont
     # rivière d'est en ouest ; le pont (BRIDGES) la franchit en x 63..65
@@ -127,6 +127,14 @@ DECOR = [
     ("barrel_blue", 29.2, 19.6), ("barrel_red", 29.9, 19.8), ("barrel_blue", 33.4, 19),
     ("crate", 22.9, 22.6), ("crate", 23.6, 23.4), ("pallet", 31.2, 22.9), ("pallet", 39.3, 19.6),
     ("cone", 29.8, 17.9),
+    # le port : chariot élévateur, camion de livraison, parc à conteneurs sous le portique, cabane du gardien,
+    # voie ferrée le long du quai (Titine), bittes d'amarrage, péniche
+    ("forklift", 43.6, 19.6), ("truck", 50.2, 19.4), ("crate", 41.8, 18.4), ("pallet", 48.4, 22.9),
+    ("container_stack", 54.3, 22.4), ("container_green", 57.3, 22.4), ("crane", 55.8, 22.9),
+    ("guard_hut", 60.4, 18.9), ("cone", 54.6, 18.0), ("cone", 57.4, 18.0),
+    ("lamppost", 47.5, 18.0), ("lamppost", 59.5, 24.9),
+    ("bollard", 44.5, 25.0), ("bollard", 50.5, 25.0), ("bollard", 56.5, 25.0), ("barge", 50, 27.6),
+    ("buffer_stop", 41.25, 23.7), ("buffer_stop", 60.75, 23.7),
     # campagne sud-ouest
     ("tree", 0.9, 16.8), ("tree", 9.8, 17.3), ("tree", 15.8, 17.8), ("tree", 3, 23.8), ("tree", 12.2, 23.6),
     ("tree", 18.8, 22.4), ("bush", 5.2, 16.6), ("bush", 17.3, 19.8), ("bush", 9.2, 23.4),
@@ -135,7 +143,7 @@ DECOR = [
     # bord de la rivière, au bout du chemin : barque, roseaux, panneau « pas de pont ici »
     ("boat", 6.6, 27.7), ("reeds", 4.6, 25.8), ("reeds", 9.2, 25.9), ("reeds", 2.2, 25.7), ("signpost", 8.8, 24.8),
     ("tree", 1.2, 25.2), ("bush", 11.5, 25), ("tree", 16, 25.3), ("reeds", 20.5, 25.8), ("bush", 26, 25.2),
-    ("reeds", 31.4, 25.9), ("tree", 36.5, 25.3), ("reeds", 45, 25.8), ("bush", 50, 25.2), ("reeds", 57, 25.9),
+    ("reeds", 31.4, 25.9), ("tree", 36.5, 25.3),
     ("reeds", 69, 25.8), ("tree", 75, 25.3), ("reeds", 78.5, 25.9),
 
     # ================= FERME (nord-est)
@@ -145,10 +153,9 @@ DECOR = [
     ("tree", 41.5, 2), ("tree", 49.5, 1.3), ("tree", 63, 1.3), ("tree", 78.6, 1.6), ("tree", 41.5, 10.8),
     ("tree", 78.8, 10.6), ("bush", 63.6, 10.6), ("bush", 49, 10.5), ("rock", 66, 10.8),
     ("signpost", 53.9, 11.2),
-    # au sud de la route : verger, champ, mare, chemin du pont
-    ("tree", 43, 18.6), ("tree", 46.4, 18.4), ("tree", 49.8, 18.6), ("tree", 43.2, 21.8), ("tree", 46.6, 22),
-    ("tree", 50, 21.8), ("tree", 76.5, 17.6), ("tree", 78.5, 22.6), ("bush", 61.6, 17.4), ("bush", 67.4, 23.3),
-    ("reeds", 69.6, 18.6), ("reeds", 74.6, 21.4), ("hay", 61.8, 21.4), ("scarecrow", 56, 21.4),
+    # au sud de la route, après le port : mare, chemin du pont
+    ("tree", 76.5, 17.6), ("tree", 78.5, 22.6), ("bush", 67.4, 23.3),
+    ("reeds", 69.6, 18.6), ("reeds", 74.6, 21.4),
     ("signpost", 62, 24.6),
     ("bridge", 64, 30),
 
@@ -174,14 +181,16 @@ DECOR = [
 ]
 for x in range(9, 16):
     DECOR.append(("fence_wood_h", x, 11.25))
-for x in list(range(22, 30)) + list(range(32, 40)):
+for x in list(range(22, 30)) + list(range(32, 55)) + list(range(57, 61)):   # deux portails : 30..32, 55..57
     DECOR.append(("fence_metal_h", x, 17.3))
+for x in range(41, 61):                               # voie ferrée du quai
+    DECOR.append(("rail", x, 23.6))
 for x in range(8, 16):
     DECOR.append(("fence_wood_h", x, 16.35))
 for x in list(range(64, 70)) + list(range(72, 77)):   # clôture du grand champ, avec une barrière ouverte
     DECOR.append(("fence_wood_h", x, 10.3))
-for y in range(17, 24):                               # entre la zone industrielle et le verger
-    DECOR.append(("fence_metal_v", 40.6, y + 1))
+for y in range(17, 24):                               # entre le port et le chemin du pont
+    DECOR.append(("fence_metal_v", 61.6, y + 1))
 # enclos des poules (quête du fermier) : clôture en bois autour du poulailler, barrière ouverte au sud
 PEN = (59, 5.2, 64, 9.0)            # lignes de clôture, en tuiles : x0, y0, x1, y1
 PEN_GATE = (60, 62)                 # ouverture dans la clôture du bas
@@ -199,7 +208,7 @@ POMPON = (24.6, 23.6)               # son chat, caché entre les caisses, près 
 # les lettres du facteur, emportées par le vent : campagne, village, zone industrielle, près de la niche
 LETTERS = [(18.4, 10.8), (22.0, 6.6), (35.6, 9.2), (31.0, 23.6), (15.2, 21.4)]   # avant le village, … , campagne
 # terriers sous les grillages : Tecky passe d'une extrémité à l'autre (raccourcis)
-TUNNELS = [((40.0, 21.0), (41.25, 21.0)),        # zone industrielle <-> verger de la ferme
+TUNNELS = [((61.0, 21.0), (62.25, 21.0)),        # port <-> chemin du pont
            ((36.5, 16.75), (36.5, 18.0)),        # trottoir <-> zone industrielle
            ((14.5, 10.75), (14.5, 11.95)),       # pré de la niche <-> grande route
            ((67.5, 9.75), (67.5, 10.95))]        # grand champ de la ferme <-> bord de route
@@ -215,7 +224,7 @@ ITEMS = [
     ("ball", 6.3, 5.4), ("ball", 15, 6.3), ("ball", 19.5, 20), ("ball", 25, 13.8), ("ball", 38.2, 7.0),
     # ferme
     ("bone", 53.6, 7.4), ("bone", 66.4, 21.6), ("sausage", 78.4, 4.6), ("medal", 78.2, 19.6),
-    ("squeaky", 72.4, 22.6), ("ball", 44.8, 20.2), ("ball", 59, 11.3),
+    ("squeaky", 72.4, 22.6), ("ball", 49.4, 23.0), ("ball", 59, 11.3),
     # forêt
     ("bone", 63.6, 36.6), ("bone", 51, 44.4), ("sausage", 74.4, 38.6), ("medal", 43.2, 47),
     ("squeaky", 69.6, 41.2), ("ball", 56.6, 39.8),
@@ -234,7 +243,7 @@ ENEMIES = [
     ("bouledogue", 19.6, 16.9), ("bouledogue", 15.5, 22.2),
     ("molosse", 33.5, 20.2),
     # ferme : les chiens de berger gardent les prés (la cour, elle, est une zone calme)
-    ("berger", 45.6, 6.4), ("berger", 66, 19.5), ("berger", 72, 6.5), ("bouledogue", 47.5, 20.4), ("roquet", 60.5, 23),
+    ("berger", 45.6, 6.4), ("berger", 66, 19.5), ("berger", 72, 6.5), ("bouledogue", 51.6, 22.8), ("roquet", 69, 23.8),
     # forêt
     ("roquet", 57, 34), ("roquet", 69, 39.6), ("bouledogue", 46.5, 40.4), ("molosse", 74.5, 40.6),
     # parc
@@ -245,7 +254,7 @@ ENEMIES = [
 # voie 1 en bas vers l'est ; x de départ en tuiles). Les véhicules s'arrêtent aux passages quand Tecky y est.
 CROSSINGS = (10, 34, 55, 63)
 # massifs de fleurs au sol (tuiles) : dessinés en détail sur le sol, et perchoirs des papillons
-FLOWER_BEDS = ((7, 4), (15, 8), (3, 17), (10, 5), (6, 9), (16, 20), (44, 20), (46, 22), (77, 15), (68, 41),
+FLOWER_BEDS = ((7, 4), (15, 8), (3, 17), (10, 5), (6, 9), (16, 20), (68, 23), (75, 23), (77, 15), (68, 41),
                (14, 36), (30, 36), (14, 43), (31, 45), (35, 33), (2, 40), (12, 46), (24, 31), (36, 45), (19, 46),
                (6, 33), (8, 46))
 TRAFFIC = [("car_red", 0, 10), ("bus", 0, 40), ("car_yellow", 0, 66),
@@ -257,7 +266,7 @@ BUTTERFLIES = [("yellow", 20, 33), ("blue", 24.5, 36.5), ("pink", 13, 40), ("ora
                ("yellow", 9, 5.6), ("orange", 6, 8.6),
                ("pink", 28, 6.4), ("blue", 33, 5.4),
                ("blue", 4.5, 16.8), ("yellow", 14.5, 19.8),
-               ("orange", 46, 21), ("yellow", 44, 19.6),
+               ("orange", 68.5, 22.6), ("yellow", 75.6, 22.6),
                ("blue", 69.5, 40.6)]
 # poules (animées : elles picorent, se promènent, et s'enfuient quand Tecky aboie). Les cinq premières se sont
 # échappées de l'enclos : c'est la quête du fermier (quest = 1) ; les deux du sud de la route vivent leur vie.
@@ -270,9 +279,9 @@ DUCKS = [("duck_f", 9.9, 2.4, 1), ("duckling", 9.4, 2.55, 1), ("duckling", 9.0, 
 # petites bêtes que Tecky peut poursuivre : écureuils (forêt, parc) qui grimpent aux arbres, chats (village, zone
 # industrielle) qui sautent sur les toits et les conteneurs
 CRITTERS = [("squirrel", 57.4, 37.9), ("squirrel", 66.2, 36.9), ("squirrel", 48.6, 44.4), ("squirrel", 71.2, 44.4),
-            ("squirrel", 10.6, 32.6), ("cat", 29.6, 9.0), ("cat_black", 31.6, 19.4)]
+            ("squirrel", 10.6, 32.6), ("cat", 29.6, 9.0), ("cat_black", 31.6, 19.4), ("cat", 55.6, 20.6)]
 DIG = [(12.5, 6.5), (11.5, 21.5), (21.5, 18.5),
-       (47.5, 20.5), (74.5, 10.5), (44.5, 33.5), (76.5, 44.5), (11.5, 44.5)]   # le dernier : à côté du bac à sable
+       (52.5, 24.5), (74.5, 10.5), (44.5, 33.5), (76.5, 44.5), (11.5, 44.5)]   # le dernier : à côté du bac à sable
 START = (4.5, 4.2)
 ALICE = (5, 37.3 + 14 / 64)   # juste devant la porte de la cabane du parc (cachée jusqu'aux trois indices)
 TITLE = (33.5, 7.3)        # caméra de l'écran titre : la place du village

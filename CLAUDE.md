@@ -57,7 +57,10 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - Carte : le quart nord-ouest (40 x 24) est la carte d'origine (mêmes coordonnées, les tests s'y appuient). Ferme au
   nord-est, rivière d'un bord à l'autre (y 26..29) avec **un seul pont** (`BRIDGES`, x 63..65 : coins rendus non-eau ;
   garde-corps = `RAILS` dans game.js), forêt au sud-est (sous-bois, sapins générés par `forest_firs()` hors des sentiers),
-  parc au sud-ouest (cabane d'Alice). Terrains ajoutés : `field` (champ), `forest` (sous-bois).
+  parc au sud-ouest (cabane d'Alice). Zone industrielle au sud de la route : le dépôt (x 22..40) et le port (x 41..61,
+  jusqu'au grillage du chemin du pont ; portail en face du passage piéton de la ferme) : chariot élévateur, camion,
+  conteneurs sous le portique (pieds dans `RAILS`), cabane du gardien, voie ferrée du quai (`rail`, à plat), bittes,
+  péniche. Terrains ajoutés : `field` (champ), `forest` (sous-bois).
 - `web_src/game.js` : tout le moteur. Monde en pixels x2 (tuile = 64), caméra 960x540, interface 1920x1080 (`GW`/`GH`).
   Sol pré-rendu en blocs de 16 tuiles (`groundChunks`, 1024 px) : une seule image de la carte dépasserait la taille
   de canevas permise sur certains téléphones. Décors `FLAT` (pont, bac à sable) dessinés sous les personnages.

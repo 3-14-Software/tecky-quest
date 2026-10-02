@@ -238,16 +238,178 @@ def warehouse():
     return d
 
 
-def container():
+CONTAINER_COLORS = {"orange": ("#D9772B", "#B9601E", "#E89556", "#8F4A17"),
+                    "blue": ("#2E6FD1", "#23579F", "#5B8FDF", "#1B4378"),
+                    "green": ("#3F9A5B", "#2F7A46", "#69B77F", "#245E36")}
+
+
+def _container_box(d, y, color):
+    """Un conteneur de 92 de large : le dessus (13 de haut) à partir de y, la face avant (26) en dessous."""
+    col, rib, top, door = CONTAINER_COLORS[color]
+    d.add(rect(2, y + 12, 92, 26, 0), col)
+    for x in range(6, 92, 4):
+        d.raw(line(f"M{x},{y + 13} L{x},{y + 37}", rib, 0.8))
+    d.add(rect(2, y, 92, 13, 0), top)
+    d.raw(line(f"M70,{y + 13} L70,{y + 37} M82,{y + 13} L82,{y + 37}", door, 1.2))
+    for x in (74, 86):
+        d.raw(line(f"M{x},{y + 17} L{x},{y + 33}", door, 0.9))
+
+
+def container(color="orange"):
     d = Drawing(96, 48)
     d.under.append('<rect x="3" y="41" width="92" height="6" rx="3" fill="#000" opacity="0.2"/>')
-    d.add(rect(2, 18, 92, 26, 0), "#D9772B")
-    for x in range(6, 92, 4):
-        d.raw(line(f"M{x},19 L{x},43", "#B9601E", 0.8))
-    d.add(rect(2, 6, 92, 13, 0), "#E89556")
-    d.raw(line("M70,19 L70,43 M82,19 L82,43", "#8F4A17", 1.2))
-    for x in (74, 86):
-        d.raw(line(f"M{x},23 L{x},39", "#8F4A17", 0.9))
+    _container_box(d, 6, color)
+    return d
+
+
+def container_stack():
+    """Deux conteneurs empilés (orange dessous, bleu dessus), au port."""
+    d = Drawing(96, 74)
+    d.under.append('<rect x="3" y="67" width="92" height="6" rx="3" fill="#000" opacity="0.2"/>')
+    _container_box(d, 32, "orange")
+    _container_box(d, 6, "blue")
+    return d
+
+
+def truck():
+    """Camion de livraison de profil, tourné vers la droite : caisse peinte de ballons, cabine rouge, deux roues."""
+    d = Drawing(112, 64)
+    d.under.append('<rect x="6" y="55" width="100" height="7" rx="3.5" fill="#000" opacity="0.2"/>')
+    d.add(rect(4, 8, 70, 40, 2), "#F3EEE4")
+    d.add(rect(4, 8, 70, 5, 2), "#FFFFFF", sil=False)
+    for cx, cy, col in ((18, 27, "#E24B4B"), (32, 23, "#F2C14E"), (46, 28, "#4A90D9"), (60, 24, "#5DBB63")):
+        d.raw(line(f"M{cx},{cy + 7} Q{cx - 3},{cy + 12} {cx + 1},{cy + 17}", "#8C9098", 0.8))
+        d.add(ellipse(cx, cy, 6, 7), col, sil=False, edge=True)
+        d.add(ellipse(cx - 2, cy - 3, 1.6, 2.2), "#FFFFFF", sil=False, opacity=0.6)
+    d.add(rect(4, 45, 102, 5, 1), "#4A4F57")
+    d.add(path("M74,16 L94,16 Q100,16 103,24 L106,32 L106,47 L74,47 Z"), "#D7332B")
+    d.add(path("M79,20 L93,20 Q97,20 99,26 L100.5,31 L79,31 Z"), "#9FD3F0", sil=False, edge=True)
+    d.raw(line("M83,22 L89,29 M87,21 L93,28", "#FFFFFF", 1.0))
+    d.add(rect(74, 36, 32, 2, 0), "#A82520", sil=False)
+    d.add(circle(104, 41, 1.6), "#F7D154", sil=False, edge=True)
+    for cx in (22, 90):
+        d.add(circle(cx, 50, 8), "#3A3A42")
+        d.add(circle(cx, 50, 4), "#C9CDD4", sil=False, edge=True)
+        d.add(circle(cx, 50, 1.4), "#8C9098", sil=False)
+    return d
+
+
+def forklift():
+    """Chariot élévateur jaune de profil, fourche à gauche : mât, toit de protection, siège, contrepoids."""
+    d = Drawing(56, 56)
+    d.under.append('<rect x="3" y="49" width="50" height="6" rx="3" fill="#000" opacity="0.2"/>')
+    d.add(rect(1, 44, 17, 3, 0.8), "#3A3A42")                    # fourche
+    d.add(rect(11, 8, 4, 39, 1), "#5C6168")                      # mât
+    d.add(rect(15.5, 8, 3, 39, 1), "#4A4F57")
+    d.add(rect(9, 30, 4, 17, 0.8), "#3A3A42")                    # tablier de la fourche
+    d.add(rect(21, 6, 2.6, 24, 1), "#3A3A42")                    # toit de protection
+    d.add(rect(41, 6, 2.6, 24, 1), "#3A3A42")
+    d.add(rect(19, 4, 27, 3.5, 1), "#4A4F57")
+    d.add(rect(19, 26, 34, 18, 3), "#F2C14E")                    # caisse
+    d.add(rect(43, 22, 11, 23, 3), "#D9A92F")                    # contrepoids
+    d.add(rect(19, 26, 34, 3, 2), "#FFFFFF", sil=False, opacity=0.3)
+    d.add(rect(29, 16, 10, 11, 2.5), "#3A3A42")                  # siège
+    d.raw(line("M25,24 L28,15", "#3A3A42", 1.6))                 # volant
+    d.add(ellipse(28.5, 14.5, 3, 1.2), "#3A3A42", sil=False)
+    for k in range(4):                                           # bandes de sécurité
+        d.add(poly([(21 + k * 6, 40), (24 + k * 6, 40), (27 + k * 6, 44), (24 + k * 6, 44)]), "#2B2B33",
+              sil=False)
+    for cx in (25, 45):
+        d.add(circle(cx, 46, 6.5), "#3A3A42")
+        d.add(circle(cx, 46, 3), "#C9CDD4", sil=False, edge=True)
+    return d
+
+
+def crane():
+    """Portique jaune du port : deux pieds en A, une poutre, un chariot et son crochet (au-dessus des conteneurs).
+    Pieds en x 14 et 194 (collisions : RAILS dans game.js)."""
+    d = Drawing(208, 128)
+    for x in (14, 194):
+        d.under.append(f'<ellipse cx="{x}" cy="124" rx="13" ry="3" fill="#000" opacity="0.2"/>')
+    for x in (14, 194):
+        d.add(path(f"M{x - 3},20 L{x + 3},20 L{x - 5},124 L{x - 11},124 Z"), "#F2C14E")
+        d.add(path(f"M{x - 3},20 L{x + 3},20 L{x + 11},124 L{x + 5},124 Z"), "#F2C14E")
+        d.add(rect(x - 9, 82, 18, 4, 1), "#D9A92F")
+        d.add(rect(x - 13, 119, 26, 6, 1.5), "#5C6168")
+    d.add(rect(2, 12, 204, 12, 2), "#F2C14E")                    # poutre
+    d.add(rect(2, 20, 204, 4, 0), "#D9A92F", sil=False)
+    for x0 in (2, 186):                                          # bouts rayés
+        for k in range(4):
+            d.add(poly([(x0 + k * 5, 12), (x0 + k * 5 + 2.6, 12), (x0 + k * 5 + 7.6, 24), (x0 + k * 5 + 5, 24)]),
+                  "#2B2B33", sil=False)
+    d.add(rect(148, 24, 20, 16, 2), "#E8DCC4")                   # cabine du grutier
+    d.add(rect(151, 28, 14, 7, 1), "#9FD3F0", sil=False, edge=True)
+    d.add(rect(92, 6, 26, 9, 2), "#5C6168")                      # chariot
+    d.raw(line("M99,15 L101,64 M111,15 L109,64", "#3A3E45", 1.0))   # câbles
+    d.add(rect(97, 62, 16, 7, 1.5), "#D7332B")                   # moufle
+    d.add(path("M105,69 L105,74 Q105,79 100.5,78 L100,76 Q102,76.5 102.6,74 L102.6,69 Z"), "#5C6168")
+    return d
+
+
+def guard_hut():
+    """Cabane du gardien du port : toit plat qui déborde, fenêtre, porte."""
+    d = Drawing(64, 64)
+    d.under.append('<rect x="5" y="55" width="54" height="7" rx="3.5" fill="#000" opacity="0.2"/>')
+    d.add(rect(9, 22, 46, 36, 1), "#E8DCC4")
+    d.add(rect(4, 11, 56, 13, 2), "#5E7FA3")
+    d.add(rect(4, 21, 56, 3, 0), "#4A6585", sil=False)
+    d.add(rect(36, 31, 13, 27, 1), "#8A5A3A")
+    d.add(circle(46, 45, 1), "#F2C14E", sil=False)
+    d.add(rect(14, 30, 17, 13, 1), "#9FD3F0")
+    d.raw(line("M22.5,30 L22.5,43 M14,36.5 L31,36.5", "#FFFFFF", 1.0))
+    return d
+
+
+def bollard():
+    """Bitte d'amarrage en fonte, au bord du quai."""
+    d = Drawing(32, 32)
+    _shadow(d, 16, 28, 9, 2)
+    d.add(rect(10, 14, 12, 14, 3), "#4A4F57")
+    d.add(ellipse(16, 13, 9, 4), "#5C6168")
+    d.add(ellipse(16, 12.5, 6.5, 2.6), "#6E737B", sil=False)
+    d.add(rect(10, 21, 12, 2, 0), "#3A3E45", sil=False)
+    return d
+
+
+def barge():
+    """Péniche amarrée (sur l'eau, sans collision) : coque bleue, cale pleine de sable, cabine à l'arrière."""
+    d = Drawing(176, 48)
+    d.under.append('<ellipse cx="88" cy="42" rx="84" ry="5" fill="#1F5A85" opacity="0.35"/>')
+    d.under.append('<path d="M2,45 Q6,43 10,45 M160,46 Q164,44 168,46 M40,47 Q45,45 50,47" fill="none" '
+                   'stroke="#9AD6F3" stroke-width="1" stroke-linecap="round"/>')
+    d.add(path("M4,26 L172,26 L165,41 Q88,45 11,41 Z"), "#2B4C7E")
+    d.add(rect(4, 26, 168, 4, 0), "#D7332B", sil=False)
+    d.add(rect(14, 18, 104, 9, 1), "#3A3E45")
+    d.add(path("M18,20 Q40,8 64,18 Q86,9 114,20 Z"), "#E3C995")
+    d.add(rect(128, 9, 34, 18, 1), "#F3EEE4")
+    d.add(rect(126, 5, 38, 5, 1), "#2B4C7E")
+    for x in (133, 147):
+        d.add(rect(x, 13, 8, 6, 1), "#9FD3F0", sil=False, edge=True)
+    d.add(rect(167, 2, 1.8, 24, 0.5), "#5C6168")
+    d.add(path("M168.8,3 L176,5.5 L168.8,8 Z"), "#D7332B")
+    return d
+
+
+def rail():
+    """Voie ferrée posée à plat, une tuile qui se répète vers la droite : traverses en bois, deux rails."""
+    d = Drawing(32, 32)
+    for x in (1, 9, 17, 25):
+        d.add(rect(x, 6, 5.5, 20, 1), "#8A5A3A", sil=False, edge=True)
+    for y in (9.5, 20.5):
+        d.add(rect(0, y, 32, 2.4, 0), "#A9AEB5", sil=False)
+        d.raw(line(f"M0,{y + 2.4} L32,{y + 2.4}", "#5C6168", 0.7))
+    return d
+
+
+def buffer_stop():
+    """Heurtoir au bout de la voie : butoir rayé rouge et blanc sur deux montants."""
+    d = Drawing(32, 40)
+    _shadow(d, 16, 36, 12, 2)
+    d.add(rect(8, 18, 3, 18, 1), "#5C6168")
+    d.add(rect(21, 18, 3, 18, 1), "#5C6168")
+    d.add(rect(3, 13, 26, 9, 2), "#FFFFFF")
+    for k in range(3):
+        d.add(poly([(5 + k * 9, 13), (9 + k * 9, 13), (13 + k * 9, 22), (9 + k * 9, 22)]), "#D7332B", sil=False)
     return d
 
 
@@ -1057,6 +1219,17 @@ DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x)
     "flower_pot": (flower_pot, (32, 32), (16, 28)),
     "warehouse": (warehouse, (128, 96), (64, 92)),
     "container": (container, (96, 48), (48, 44)),
+    "container_blue": (lambda: container("blue"), (96, 48), (48, 44)),
+    "container_green": (lambda: container("green"), (96, 48), (48, 44)),
+    "container_stack": (container_stack, (96, 74), (48, 70)),
+    "truck": (truck, (112, 64), (56, 58)),
+    "forklift": (forklift, (56, 56), (28, 52)),
+    "crane": (crane, (208, 128), (104, 124)),
+    "guard_hut": (guard_hut, (64, 64), (32, 58)),
+    "bollard": (bollard, (32, 32), (16, 28)),
+    "barge": (barge, (176, 48), (88, 42)),
+    "rail": (rail, (32, 32), (0, 16)),
+    "buffer_stop": (buffer_stop, (32, 40), (16, 36)),
     "pallet": (pallet, (32, 32), (16, 27)),
     "barrel_blue": (barrel, (32, 32), (16, 29)),
     "barrel_red": (barrel_red, (32, 32), (16, 29)),

@@ -733,6 +733,10 @@ const FOOT = {
   warehouse: [-116, -104, 116, -4], container: [-92, -54, 92, 0], pallet: [-26, -16, 26, 0],
   barrel_blue: [-18, -16, 18, 0], barrel_red: [-18, -16, 18, 0], crate: [-24, -22, 24, 0],
   fence_metal_h: [0, -12, 64, 0], fence_metal_v: [-6, -64, 6, 0],
+  // le port (rails, péniche, portique : pas de collision ; les pieds du portique sont dans RAILS)
+  container_blue: [-92, -54, 92, 0], container_green: [-92, -54, 92, 0], container_stack: [-92, -54, 92, 0],
+  truck: [-104, -26, 104, 0], forklift: [-48, -18, 48, 0], guard_hut: [-50, -40, 50, -2], bollard: [-10, -10, 10, 0],
+  buffer_stop: [-16, -12, 16, 0],
   // ferme et rivière (roseaux, barque et pont : pas de collision)
   barn: [-96, -84, 96, -2], chicken_coop: [-36, -14, 36, 0],
   tractor: [-52, -20, 52, 0], scarecrow: [-7, -8, 7, 0],
@@ -740,9 +744,10 @@ const FOOT = {
   fir: [-18, -16, 18, 0], stump: [-20, -16, 20, 0], log: [-54, -22, 56, 0], slide: [-56, -14, 58, 0],
   swing: [-58, -12, 58, 0], fountain: [-52, -40, 52, 0], playhouse: [-44, -50, 44, -2],
 };
-const FLAT = new Set(['bridge', 'sandbox', 'burrow']);   // posés à plat : dessinés sous les personnages
-// pont : garde-corps de chaque côté (son tablier n'est pas de l'eau, voir BRIDGES dans pack_web.py)
-const RAILS = { bridge: [[-80, -320, -62, 0], [62, -320, 80, 0]] };
+const FLAT = new Set(['bridge', 'sandbox', 'burrow', 'rail']);   // posés à plat : dessinés sous les personnages
+// collisions en plusieurs morceaux : garde-corps du pont (son tablier n'est pas de l'eau, voir BRIDGES dans
+// pack_web.py), pieds du portique du port
+const RAILS = { bridge: [[-80, -320, -62, 0], [62, -320, 80, 0]], crane: [[-204, -16, -156, 0], [156, -16, 204, 0]] };
 let solids = [];
 function waterAt(x, y) {
   const fx = x / TS, fy = y / TS;
@@ -1341,7 +1346,9 @@ const CRITTER = { scare: 170, run: 330, walk: 38, roam: 100, climb: 0.55, jump: 
 // refuges : décor -> [décalage x, hauteur (px au-dessus du pied du décor)] du perchoir
 const REFUGES = {
   squirrel: { tree: [[0, -58]], fir: [[0, -46]] },
-  cat: { house_red: [[-44, -116], [44, -116]], house_blue: [[-44, -116], [44, -116]], container: [[-40, -66], [40, -66]] },
+  cat: { house_red: [[-44, -116], [44, -116]], house_blue: [[-44, -116], [44, -116]], container: [[-40, -66], [40, -66]],
+         container_blue: [[-40, -66], [40, -66]], container_green: [[-40, -66], [40, -66]],
+         container_stack: [[-40, -118], [40, -118]] },
 };
 let critters = [];
 const species = k => k === 'squirrel' ? 'squirrel' : 'cat';
@@ -2480,8 +2487,9 @@ const RIVER_MID = 27.6;
 const ZONES = [
   { id: 'foret', name: 'La grande forêt', label: 'Grande forêt', at: [60, 40.5], has: (x, y) => y >= RIVER_MID && x >= 40 },
   { id: 'parc', name: 'Le parc des enfants', label: 'Parc des enfants', at: [20, 39.5], has: (x, y) => y >= RIVER_MID },
-  { id: 'ferme', name: 'La ferme des Tilleuls', label: 'Ferme des Tilleuls', at: [58.5, 2.6], has: (x, y) => x >= 40.6 },
-  { id: 'industrie', name: 'La zone industrielle', label: 'Zone industrielle', at: [31, 20.2], has: (x, y) => y >= 16.5 && x >= 21.5 },
+  // au sud de la route, le port (zone industrielle) va jusqu'au grillage du chemin du pont
+  { id: 'ferme', name: 'La ferme des Tilleuls', label: 'Ferme des Tilleuls', at: [58.5, 2.6], has: (x, y) => x >= 61.6 || (x >= 40.6 && y < 16.5) },
+  { id: 'industrie', name: 'La zone industrielle', label: 'Zone industrielle', at: [41.5, 20.6], has: (x, y) => y >= 16.5 && x >= 21.5 },
   { id: 'village', name: 'Le village', label: 'Village', at: [31, 1.4], has: (x, y) => x >= 19.5 && y < 16.5 },
   { id: 'campagne', name: 'La campagne', label: 'Campagne', at: [10, 21], has: (x, y) => y >= 11.5 },
   { id: 'niche', name: 'La niche de Tecky', label: 'Niche de Tecky', at: [5.5, 1.4], has: () => true },
