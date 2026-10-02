@@ -225,7 +225,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   milieu (`RIVER_MID`), pour que rien ne change en la longeant ou en passant le pont ; elle garde son étiquette sur la
   carte de la pause (`LANDMARKS`). Test : `world.js`.
 - Carte de la pause (`drawPauseMap()`, `mapImg` pré-rendue au quart, `seenCells` : cases de 4 tuiles vues à l'écran,
-  sauvegardées) : brouillard, noms des zones vues, Tecky, indices, os dorés, Alice, enclos pendant la quête.
+  sauvegardées) : brouillard, noms des zones vues, Tecky, indices, os dorés, Alice, enclos pendant la quête, « ! » /
+  « ? » des personnages déjà vus (`NPC_DO[…].mark()`, taille `MAPV.mark`).
 - Copains qui suivent (balade, `FOLLOW`, `crumbs`, mode `follow`) : après avoir joué, le chien suit Tecky en file
   indienne sur ses traces pendant 30 s, puis rentre. Test : `world.js`.
 - Manette (`pollPad()` appelé par `frame()` avant `update()`, `PAD_MAP`, `pad.on` → indices `hud/pad` au lieu de

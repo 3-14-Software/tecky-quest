@@ -94,5 +94,13 @@ function main() {
   talk();
   ok(run('dialog.lines[1].text').includes('déjà trouvé 1'), 'Marcel : « Tu en as déjà trouvé 1 ? »');
   advanceDialog();
+  // carte de la pause : le « ! » ou le « ? » des personnages déjà vus
+  const marks = () => run('var used = [], ds0 = drawSpr; drawSpr = function (k, f) { if (k === "hud/talk") used.push(f); return ds0.apply(this, arguments); };' +
+                          'drawPauseMap(); drawSpr = ds0; JSON.stringify(used.sort())');
+  run('state = "pause"; openPauseMenu(); seenCells.fill(0);');
+  ok(marks() === '[]', 'carte : personne tant qu’on ne les a pas vus');
+  run('seenCells.fill(1);');
+  const want = run('JSON.stringify(npcList().map(n => NPC_DO[n.kind].mark()).filter(m => m >= 0).sort())');
+  ok(marks() === want && run('postmanMark()') === 1 && want.includes('1'), 'carte : leurs « ! » et « ? » (' + want + ')');
 }
 eval(base + 'setTimeout(' + main.toString() + ', 50);');

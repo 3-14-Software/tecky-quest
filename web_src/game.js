@@ -2515,7 +2515,7 @@ function drawBanner() {
 /* La pause montre la carte : sol et décors en réduction (pré-rendus une fois), brouillard sur ce qui n'a pas encore été vu
    (cases de MAPV.cell tuiles, marquées quand elles passent à l'écran, sauvegardées), noms des zones déjà vues, Tecky,
    indices trouvés, os dorés déterrés, Alice une fois sortie de sa cachette, et l'enclos pendant la quête des poules. */
-const MAPV = { cell: 4, w: 1180, top: 150 };
+const MAPV = { cell: 4, w: 1180, top: 150, mark: 0.7 };   // mark : taille des « ! » / « ? » des personnages
 let seenCells = null, mapImg = null;
 const cellsW = () => Math.ceil(MAP.w / MAPV.cell), cellsH = () => Math.ceil(MAP.h / MAPV.cell);
 function markSeen() {
@@ -2563,6 +2563,13 @@ function drawPauseMap() {
   });
   if (!alice.hidden) drawSpr('hud/arrow_icon', 3, mx(alice.x), my(alice.y) - 10, { sc: 1.2 });
   if (farm.state === 'asked') drawSpr('hen/idle/right', 0, mx((MAP.pen[0] + MAP.pen[2]) / 2), my(MAP.pen[3]) + 6, { sc: 0.7 });
+  // personnages déjà vus qui ont quelque chose à dire : leur « ! » (demande, remerciements) ou « ? » (quête en cours)
+  const bob = Math.sin(performance.now() / 260) * 3;
+  for (const n of npcList()) {
+    const m = NPC_DO[n.kind].mark(), f = m >= 0 && ATLAS['hud/talk'] && ATLAS['hud/talk'].f[m];
+    if (!f || !seenAt(n.x / TS, n.y / TS)) continue;
+    drawSpr('hud/talk', m, mx(n.x) - f[2] * MAPV.mark / 2, my(n.y) - f[3] * MAPV.mark - 4 + bob, { sc: MAPV.mark });
+  }
   const pulse = 1 + Math.sin(performance.now() / 180) * 0.08;
   ctx.save(); ctx.translate(mx(P.x), my(P.y) - 18); ctx.scale(0.62 * pulse, 0.62 * pulse);
   drawSpr('hud/portrait_tecky', 0, -48, -48);
