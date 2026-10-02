@@ -1778,7 +1778,7 @@ function drawDuck(d) {
    elle y reste (keepHen). Le fermier ne parle que si Tecky vient le voir (C, « Parler », voir « personnages ») : il
    lui demande son aide, puis le remercie une fois toutes les poules rentrées (saucisse et points). Tout cela marche
    aussi en balade. */
-const FARM = { reward: 200, perHen: 20, funnel: 190, roadY: 17.3 * 64 };
+const FARM = { reward: 200, perHen: 20, funnel: 190, roadY: MAP.farmRoadY };   // roadY : la grande route, en dessous
 let farm = { state: 'new' };          // new (pas encore parlé) | asked | done
 let farmer = null;
 // intérieur de l'enclos (pieds des poules) : [x0, y0, x1, y1]
@@ -2072,7 +2072,7 @@ function talkNeighbor() {
    autres personnages, Léon ne parle que si Tecky vient le voir : il demande, rappelle, remercie (un os et des points).
    Tout marche aussi avant de lui avoir parlé, et en balade. Sauvegardé (fete, balls). */
 const BALL = { r: 26, touch: 44, kick: 330, bark: 470, fric: 1.6, bounce: 0.55, hop: 150, g: 1200, cd: 0.2, funnel: 240,
-  box: [30.3, 23.6, 64.4, 41.6] };            // box : la zone industrielle, en tuiles (jamais hors du grillage du dépôt)
+  box: MAP.ballBox };            // box : la zone industrielle, en tuiles (jamais hors du grillage du dépôt ; carte.json)
 const GOAL_IN = [50, -46, -8];                 // intérieur du filet (pied du ballon) : |dx| < 50, -46 < dy < -8
 const LEON = { reward: 150, perBall: 20 };
 let fete = { state: 'new' }, leon = null, balls = [];
@@ -3137,26 +3137,20 @@ function puddleSplash(dt) {           // Tecky marche dans une flaque : plouf
 }
 
 /* ------------------------------------------------------------------ zones */
-/* La carte est découpée en zones (première règle qui correspond, coordonnées en tuiles). Elles donnent le bandeau qui
-   s'affiche en arrivant (nom de la zone), les étiquettes de la carte de la pause, l'ambiance sonore et le timbre des
-   instruments de la musique (TIMBRE). La rivière n'est pas une zone : celles du nord et du sud vont jusqu'à son milieu
-   (RIVER_MID), sinon la musique changerait en la longeant ou en passant le pont. */
-const RIVER_MID = 43.6;
+/* La carte est découpée en zones (MAP.zones, carte.json : la première dont un rectangle contient le point ; coordonnées
+   en tuiles). Elles donnent le bandeau qui s'affiche en arrivant (nom de la zone), les étiquettes de la carte de la
+   pause, l'ambiance sonore et le timbre des instruments de la musique (TIMBRE ; music : la variation d'une autre zone,
+   comme le verger qui a celle de la ferme). La rivière n'est pas une zone : celles du nord et du sud vont jusqu'à son
+   milieu, sinon la musique changerait en la longeant ou en passant le pont. Un bord de rectangle posé sur le bord de la
+   carte n'a pas de limite (la caméra et la lisière vont au-delà) ; la dernière zone couvre toute la carte. */
 // name : bandeau à l'arrivée ; label : étiquette de la carte, posée en at (tuiles)
-const ZONES = [
-  { id: 'foret', name: 'La grande forêt', label: 'Grande forêt', at: [87, 50.5], has: (x, y) => y >= RIVER_MID && x >= 56 },
-  { id: 'parc', name: 'Le parc des enfants', label: 'Parc des enfants', at: [28, 55.5], has: (x, y) => y >= RIVER_MID },
-  // la ferme : à l'est du village et du dépôt (grillage en x 56.6) ; au bord de la rivière, après le port (x 64.6).
-  // Au sud de la route, le verger et les prés (même musique que la ferme : music)
-  { id: 'verger', name: 'Le verger', label: 'Verger', music: 'ferme', at: [71, 31.4], has: (x, y) => x >= 56.6 && y >= 21.5 && (y < 30.5 || x >= 64.6) },
-  { id: 'ferme', name: 'La ferme des Tilleuls', label: 'Ferme des Tilleuls', at: [74.5, 2.6], has: (x, y) => x >= 56.6 && (y < 30.5 || x >= 64.6) },
-  { id: 'industrie', name: 'La zone industrielle', label: 'Zone industrielle', at: [47, 27.4], has: (x, y) => y >= 22.5 && x >= 29.5 },
-  { id: 'village', name: 'Le village', label: 'Village', at: [42, 1.4], has: (x, y) => x >= 27.5 && y < 22.5 },
-  { id: 'campagne', name: 'La campagne', label: 'Campagne', at: [12, 31], has: (x, y) => y >= 17.5 },
-  { id: 'niche', name: 'La niche de Tecky', label: 'Niche de Tecky', at: [5.5, 1.4], has: () => true },
-];
-const zoneAt = (x, y) => ZONES.find(z => z.has(x / TS, y / TS));
-const LANDMARKS = [{ label: 'Rivière', at: [40, RIVER_MID] }];   // autres étiquettes de la carte de la pause
+const ZONES = MAP.zones.map(z => {
+  const lim = z.rects.map(([x0, y0, x1, y1]) => [x0 <= 0 ? -Infinity : x0, y0 <= 0 ? -Infinity : y0,
+    x1 >= MAP.w ? Infinity : x1, y1 >= MAP.h ? Infinity : y1]);
+  return { ...z, has: (x, y) => lim.some(([x0, y0, x1, y1]) => x >= x0 && x < x1 && y >= y0 && y < y1) };
+});
+const zoneAt = (x, y) => ZONES.find(z => z.has(x / TS, y / TS)) || ZONES[ZONES.length - 1];
+const LANDMARKS = MAP.landmarks;      // autres étiquettes de la carte de la pause (la rivière)
 const BANNER = { settle: 0.8, life: 3 };
 let zone = null, zoneT = 0, banner = null, tuneT = 0;
 function updateZone(dt) {
@@ -4131,8 +4125,9 @@ function finale() {
    tombe (sunGoal() passe à 4) et les lucioles s'allument avec elle ;
    Alice saute de joie, Tecky s'assoit, bâille et s'endort à ses pieds. Un iris se referme sur eux, « Fin », puis l'écran
    de victoire. La berceuse (variation lente du thème) joue jusqu'au retour au menu. Après `skip` s, un bouton passe
-   directement à la victoire. Positions en pixels du monde ; `from` : y de départ, au bas de l'écran. */
-const ENDING = { fade: 1, from: 600, alice: [236, 292], tecky: [300, 304], spd: 105, happy: 1.6, sit: 1.4, yawn: 1.4,
+   directement à la victoire. Positions en pixels du monde (MAP.ending : Alice devant la niche, Tecky à ses pieds) ;
+   `from` : ils partent de ce nombre de pixels sous le bas de l'écran. */
+const ENDING = { fade: 1, from: 60, alice: MAP.ending.alice, tecky: MAP.ending.tecky, spd: 105, happy: 1.6, sit: 1.4, yawn: 1.4,
   iris: 9, irisDur: 1.6, irisR: 170, hold: 1.2, close: 0.5, fin: 2.4, skip: 1, flies: 12 };
 let ending = null;
 function startEnding() {
@@ -4144,10 +4139,11 @@ function startEnding() {
 function endingHome() {
   const E = ENDING;
   ending.home = true;
-  alice.x = E.alice[0]; alice.y = E.from; alice.dir = 'up'; alice.setAnim('walk');
-  P.x = E.tecky[0]; P.y = E.from + 30; P.dir = 'up'; P.mode = 'free'; P.setAnim('walk');
-  // (cadrage fixe, dans la carte : la lisière n'y entre pas)
+  // (cadrage fixe, dans la carte : la lisière n'y entre pas) ; ils arrivent d'un peu plus bas que l'écran (from)
   camX = clamp(E.alice[0] - VW / 2, 0, MAP.w * TS - VW); camY = clamp(E.alice[1] - 40 - VH / 2, 0, MAP.h * TS - VH);
+  const y0 = camY + VH + E.from;
+  alice.x = E.alice[0]; alice.y = y0; alice.dir = 'up'; alice.setAnim('walk');
+  P.x = E.tecky[0]; P.y = y0 + 30; P.dir = 'up'; P.mode = 'free'; P.setAnim('walk');
   fxs = []; pops = []; rings = []; dusts = []; leaves = []; butterflies = []; drops = []; flakes = [];
   dogs = dogs.filter(d => d.x < camX - 150 || d.x > camX + VW + 150 || d.y < camY - 100 || d.y > camY + VH + 200);   // pas de chiens
   weather.k = 0; weather.on = false; sun = 3; hug = 1;     // (au noir : sans transition, si le joueur a fait vite)

@@ -9,6 +9,7 @@ Prépare la version web de Tecky Quest :
     python3 pack_web.py
 """
 import json
+import math
 import os
 import random
 
@@ -16,6 +17,7 @@ from PIL import Image
 
 import alice
 import butterflies
+import carte
 import cows
 import decor
 import enemies
@@ -43,375 +45,62 @@ S = 2
 TS = 32 * S
 
 # ====================================================================== NIVEAU
+# La carte est dans carte.json (carte.py ; on la modifie avec l'éditeur de carte : python3 editeur.py), en tuiles.
 # 96 x 64 tuiles. Au nord de la grande route : la niche de Tecky, le village, la ferme. Au sud : la campagne, la zone
-# industrielle (le dépôt, et son port au bord de la rivière), les prés de la ferme. Une rivière coupe toute la carte
-# (un seul pont, côté ferme) ; au-delà, le parc au sud-ouest, où Alice se cache, et la forêt au sud-est.
-MW, MH = 96, 64
+# industrielle (le dépôt, et son port au bord de la rivière), le verger et les prés de la ferme. Une rivière coupe toute
+# la carte (un seul pont, côté ferme) ; au-delà, le parc au sud-ouest, où Alice se cache, et la forêt au sud-est.
+# Ici : les listes de la carte (en tuiles), et ce qui s'en déduit (poteaux des panneaux, terriers, clôtures de l'enclos,
+# filet de Léon, rails et heurtoirs de la voie, coins du pont, lisière).
+CARTE = carte.charger()
+MW, MH = CARTE["w"], CARTE["h"]
+_T = lambda cle: [tuple(e) for e in CARTE[cle]]
+_P = lambda cle: tuple(CARTE[cle])
 
 
 def corner_grid():
-    g = [["grass"] * (MW + 1) for _ in range(MH + 1)]
-
-    def paint(t, x0, y0, x1, y1):
-        for y in range(max(0, y0), min(MH, y1) + 1):
-            for x in range(max(0, x0), min(MW, x1) + 1):
-                g[y][x] = t
-
-    # campagne nord-ouest
-    paint("dirt", 3, 4, 4, 17)          # chemin depuis la niche, jusqu'à la route
-    paint("dirt", 4, 7, 14, 8)          # vers l'est
-    paint("water", 8, 1, 11, 4)         # étang
-    # ruisseau qui sépare la campagne du village (on passe par la route)
-    paint("water", 25, 0, 26, 9)
-    paint("water", 24, 2, 27, 5)
-    # route principale
-    paint("road", 0, 18, MW, 21)
-    # village
-    paint("sidewalk", 28, 17, 56, 17)
-    paint("paving", 31, 3, 54, 10)
-    paint("paving", 43, 10, 45, 17)        # ruelle de la place jusqu'au trottoir, entre les maisons de la rue
-    # campagne sud-ouest : le chemin descend jusqu'à la rivière (barque, pas de pont)
-    paint("dirt", 6, 23, 7, 42)
-    paint("dirt", 7, 26, 14, 27)
-    paint("dirt", 7, 35, 18, 36)            # au bord de l'eau : un sentier vers la mare aux canards
-    paint("water", 19, 33, 23, 37)
-    paint("dirt", 14, 7, 21, 8)             # jardin de la niche : le chemin continue vers l'est
-    paint("water", 1, 24, 4, 28)
-    # zone industrielle : le dépôt (x 30..56) et, en dessous, le port au bord de la rivière (x 30..64)
-    paint("sidewalk", 30, 22, 56, 22)
-    paint("concrete", 30, 23, 56, 30)
-    paint("concrete", 30, 30, 64, 40)
-    paint("road", 46, 22, 47, 23)
-    # ferme (nord-est) : cour en terre, chemin vers la route, champs labourés
-    paint("dirt", 66, 5, 78, 10)
-    paint("dirt", 71, 10, 72, 17)          # (s'arrête au bord de la route : rien sous le passage piéton)
-    paint("field", 59, 2, 64, 9)
-    paint("field", 81, 2, 93, 9)
-    paint("field", 68, 24, 76, 29)          # au sud de la route : le champ, à côté du verger
-    paint("water", 86, 24, 90, 27)          # mare
-    paint("dirt", 79, 22, 81, 41)           # chemin de la route au pont
-    # rivière d'est en ouest ; le pont (BRIDGES) la franchit en x 63..65
-    paint("water", 0, 42, MW, 45)
-    # forêt (sud-est) : sous-bois, sentier sinueux du pont vers le parc, clairière et recoins à l'est
-    paint("forest", 56, 47, MW, MH)
-    paint("dirt", 79, 46, 81, 51)
-    paint("dirt", 66, 49, 81, 51)
-    paint("dirt", 66, 49, 68, 57)
-    paint("dirt", 58, 55, 68, 57)
-    paint("dirt", 81, 55, 88, 56)
-    paint("dirt", 60, 49, 66, 50)           # recoin ouest (trésor)
-    paint("dirt", 88, 55, 93, 56)           # vers la chaussure d'Alice et le recoin est
-    paint("dirt", 92, 56, 93, 60)
-    paint("grass", 73, 58, 79, 62)          # clairière de Maman Piquette (la maman hérisson)
-    paint("dirt", 67, 57, 68, 59)           # et son sentier, depuis le chemin ouest
-    paint("dirt", 67, 58, 73, 59)
-    # parc (sud-ouest) : allée, place de la fontaine, aire de jeux (séparée de l'allée par l'herbe)
-    paint("paving", 13, 55, 54, 56)
-    paint("paving", 24, 50, 36, 60)
-    paint("dirt", 3, 51, 11, 61)
-    return g
+    """Grille des coins [y][x] (MH+1 x MW+1) : le terrain de chaque coin ; une tuile se dessine d'après ses quatre coins."""
+    return carte.terrain_grid(CARTE)
 
 
-# pont : coins (x0, y0, x1, y1) qui ne sont plus de l'eau, sous le tablier du décor « bridge »
-BRIDGES = [(79, 41, 81, 46)]
-# tunnels aux deux bouts de la grande route (lisiere.py) : x du bord, y du pied de la butte (la route : y 17,5..21,5),
-# en miroir ? Les voitures y disparaissent ; Tecky s'arrête devant.
-ROAD_TUNNELS = [(0, 22.0, False), (MW, 22.0, True)]
+ITEMS, ENEMIES, DIG, SIGNS = _T("items"), _T("enemies"), _T("dig"), _T("signs")
+HENS, DUCKS, COWS, CRITTERS, BUTTERFLIES, VILLAGERS = (_T(k) for k in ("hens", "ducks", "cows", "critters", "butterflies", "villagers"))
+LETTERS, BALLS, TOYS, BABIES = _T("letters"), _T("balls"), _T("toys"), _T("babies")
+TUNNELS = [((ax, ay), (bx, by)) for ax, ay, bx, by in CARTE["tunnels"]]
+START, ALICE, TITLE = _P("start"), _P("alice"), _P("title")
+FARMER, POSTMAN, NEIGHBOR, POMPON = _P("farmer"), _P("postman"), _P("neighbor"), _P("pompon")
+LEON, GOAL, IRIS, PIQUETTE = _P("leon"), _P("goal"), _P("iris"), _P("piquette")
+PEN, PEN_GATE, TRACK = _P("pen"), _P("penGate"), _P("track")
+CALM = _T("calm")
+ROAD_TUNNELS = _T("roadTunnels")      # tunnels aux deux bouts de la grande route (lisiere.py) : x, y du pied, miroir
+ROAD = CARTE["traffic"]["y"]          # première rangée de la grande route (4 rangées ; marquage sur la 2e)
+CROSSINGS = tuple(CARTE["traffic"]["crossings"])          # passages piétons : première des deux tuiles
+TRAFFIC = [tuple(v) for v in CARTE["traffic"]["vehicles"]]   # véhicules : voie 0 (en haut, vers l'ouest) ou 1, x de départ
+DETAILS = _T("details")
+FLOWER_BEDS = [(tx, ty) for n, tx, ty in DETAILS if n == "fleurs"]      # massifs de fleurs : perchoirs des papillons
 
 
-DECOR = [
-    # campagne nord-ouest
-    ("doghouse", 3.5, 3.2),
-    ("tree", 1, 1.4), ("tree", 6.5, 1.2), ("tree", 13.5, 1.6), ("tree", 1.2, 7), ("tree", 14.8, 5.2),
-    ("tree", 7.2, 16.8), ("tree", 12.8, 4.3),
-    ("bush", 5.8, 3.4), ("bush", 12.2, 1.1), ("bush", 0.8, 16.6), ("bush", 23.5, 9.6),
-    ("rock", 7.6, 5.3), ("rock", 23.4, 3),
-    ("hay", 10.5, 9.8), ("hay", 11.7, 10.2), ("hay", 13, 9.6),
-    ("signpost", 5.6, 17.1),
-    # berges du ruisseau
-    ("tree", 28.5, 1.5), ("bush", 28.2, 7.4),
-    # route
-    ("road_sign", 2.5, 17.35), ("road_sign", 29.2, 22.1), ("cone", 24.6, 20.7), ("cone", 25.5, 20.7),
-    # village
-    ("house_red", 33.5, 3.15), ("house_blue", 46.5, 3.4), ("house_tall", 51.7, 2.95),
-    ("bush", 36.8, 3.7), ("bush", 43.4, 3.9), ("bicycle", 37.6, 16.55),
-    ("tree", 29.8, 12.6), ("tree", 54.6, 9.4), ("tree", 55, 2.4),
-    ("flower_pot", 46.9, 6.3), ("flower_pot", 32.9, 6.0), ("flower_pot", 33.7, 6.35),
-    # le marché, au bas de la place (fruits, légumes, fleurs), et la terrasse du café, à l'est de la fontaine
-    ("stall_fruit", 32.9, 9.6), ("stall_veg", 35.9, 10.05), ("stall_flower", 38.75, 9.5),
-    ("apple_crate", 34.4, 10.35), ("crate", 37.35, 10.45),
-    ("cafe_table", 49.9, 9.45), ("cafe_table", 52.6, 10.05), ("cafe_table", 51.5, 7.85),
-    ("lamppost", 32.5, 17.35), ("lamppost", 46.5, 17.35), ("lamppost", 52.5, 17.35),
-    ("mailbox", 35.2, 17.35), ("hedge", 28, 9.6), ("hedge", 29, 9.9), ("hedge", 28.2, 4.2), ("bush", 29.4, 3.9),
-    # jardin de la niche (à l'est du pré)
-    ("tree", 17.5, 1.6), ("tree", 21.5, 3.6), ("tree", 18.2, 13.6), ("tree", 22.6, 11.8), ("tree", 1.4, 14.2),
-    ("tree", 12.5, 13.8), ("bush", 16.5, 5.8), ("bush", 21.6, 9.6), ("bush", 9.4, 14.6), ("bush", 15.4, 12.0),
-    ("rock", 19.4, 5.4), ("bench", 18.8, 10.2), ("flower_pot", 17.0, 10.0), ("flower_pot", 20.6, 10.0),
-    # village : une maison de plus sur la place, la fontaine, la rue (deux maisons, la ruelle entre elles)
-    ("house_timber", 40.1, 3.7), ("fountain", 42.5, 7.8), ("flower_pot", 39.2, 6.6),
-    ("bakery", 38.6, 15.7), ("house_red", 49.6, 15.3), ("house_timber", 31.0, 15.4), ("tree", 55.0, 14.8),
-    ("hedge", 41.5, 14.8), ("hedge", 46.2, 14.4), ("flower_pot", 41.4, 16.3), ("flower_pot", 48.2, 16.0),
-    ("flower_pot", 48.85, 16.25), ("bench", 35.7, 12.7), ("bench", 52.1, 12.0),
-    # zone industrielle
-    ("container_blue", 42.0, 26.6), ("barrel_red", 44.8, 27.6), ("crate", 40.6, 29.0),
-    ("warehouse", 34, 28), ("warehouse", 51.5, 28.2), ("container", 33.5, 24.9), ("container", 54.3, 29.9),
-    ("barrel_blue", 37.2, 25.6), ("barrel_red", 37.9, 25.8), ("barrel_blue", 49.4, 25),
-    ("crate", 30.9, 28.6), ("crate", 31.6, 29.4), ("pallet", 47.2, 28.9), ("pallet", 55.3, 25.6),
-    ("cone", 37.8, 23.9),
-    # le port, au bord de la rivière sous le dépôt : chariot élévateur, camion de livraison, parc à conteneurs sous le
-    # portique, cabane du gardien, voie ferrée le long du quai (Titine), bittes d'amarrage, péniche
-    ("forklift", 35.8, 33.4), ("crate", 31.8, 31.6), ("pallet", 31.9, 35.2), ("goal_net", 40.0, 35.2),
-    ("truck", 46.5, 32.6),
-    ("container_stack", 51.3, 35.6), ("container_green", 54.3, 35.6), ("crane", 52.8, 36.1),
-    ("guard_hut", 61.9, 32.4), ("barrel_blue", 63.2, 34.6), ("barrel_red", 57.6, 31.3),
-    ("lamppost", 43.0, 31.4), ("lamppost", 60.5, 38.0),
-    ("bollard", 34.5, 40.9), ("bollard", 40.5, 40.9), ("bollard", 46.5, 40.9), ("bollard", 52.5, 40.9),
-    ("bollard", 58.5, 40.9), ("barge", 44, 43.8),
-    ("buffer_stop", 31.25, 38.7), ("buffer_stop", 63.75, 38.7),           # bouts de la voie (TRACK)
-    # campagne sud-ouest
-    ("tree", 0.9, 22.8), ("tree", 9.8, 23.3), ("tree", 23.8, 23.8), ("tree", 3, 29.8), ("tree", 12.2, 29.6),
-    ("tree", 26.8, 28.4), ("bush", 5.2, 22.6), ("bush", 25.3, 25.8), ("bush", 9.2, 29.4),
-    ("hay", 12.2, 24.7), ("hay", 13.4, 25), ("rock", 27.6, 23.6),
-    ("signpost", 7.3, 22.6),
-    # campagne, au bord de l'eau : la mare aux canards, un petit bois, du foin
-    ("reeds", 18.6, 33.4), ("reeds", 23.4, 36.8), ("reeds", 22.6, 32.8),
-    ("tree", 11.5, 32.4), ("tree", 14.6, 31.8), ("tree", 2.4, 33.2), ("tree", 25.8, 31.4), ("tree", 27.4, 38.6),
-    ("tree", 3.4, 38.6), ("tree", 13.0, 39.4), ("tree", 25.4, 34.8), ("bush", 9.6, 31.4), ("bush", 16.6, 38.6),
-    ("bush", 22.4, 39.6), ("bush", 1.4, 36.4), ("hay", 11.6, 37.4), ("hay", 12.9, 37.7), ("rock", 17.2, 31.4),
-    # bord de la rivière, au bout du chemin : barque, roseaux, panneau « pas de pont ici »
-    ("boat", 6.6, 43.7), ("reeds", 4.6, 41.8), ("reeds", 9.2, 41.9), ("reeds", 2.2, 41.7), ("signpost", 8.8, 40.8),
-    ("tree", 1.2, 41.2), ("bush", 11.5, 41), ("tree", 24, 41.3), ("reeds", 28.5, 41.8), ("bush", 34, 41.2),
-    ("reeds", 69, 41.8), ("bush", 66, 41.2),
-    ("reeds", 85, 41.8), ("tree", 91, 41.3), ("reeds", 94.5, 41.9),
-
-    # ================= FERME (nord-est)
-    ("barn", 72, 4.9), ("chicken_coop", 76.8, 6.4), ("lamppost", 69.3, 5.1),
-    ("tractor", 68, 8.7), ("hay", 66.8, 5.6), ("hay", 68, 6), ("hay", 77.5, 4.2),
-    ("scarecrow", 86.5, 6), ("scarecrow", 61.5, 5.6),
-    ("tree", 57.5, 2), ("tree", 65.5, 1.3), ("tree", 79, 1.3), ("tree", 94.6, 1.6), ("tree", 57.5, 16.8),
-    ("tree", 94.8, 16.6), ("bush", 79.6, 16.6), ("bush", 65, 16.5), ("rock", 82, 16.8),
-    ("signpost", 69.9, 17.2),
-    # au nord de la route, entre la cour et la route
-    ("tree", 60.4, 14.6), ("tree", 64.8, 13.0), ("tree", 90.2, 13.6), ("hay", 86.4, 14.2), ("hay", 87.6, 14.5),
-    # les prés de la ferme, au bord de la rivière : foin, arbres, quelques poules
-    ("tree", 68.5, 32.6), ("tree", 74.4, 34.0), ("tree", 85.6, 32.8), ("tree", 93.6, 34.4), ("tree", 88.8, 38.8),
-    ("bush", 71.0, 38.6), ("bush", 84.0, 36.4), ("bush", 95.0, 31.6), ("hay", 75.6, 37.2), ("hay", 76.8, 37.5),
-    ("rock", 90.6, 36.0),
-    # au sud de la route : verger, champ, mare, chemin du pont
-    # le verger : des pommiers plantés en rangées, mais pas au cordeau (des vieux, des jeunes, un qui manque), et au
-    # milieu, la petite clairière où Iris a son panier ; une échelle de cueillette, des pommes tombées dans l'herbe
-    ("apple_tree", 57.8, 23.8), ("apple_tree", 60.4, 24.35), ("apple_tree_young", 62.7, 23.95), ("apple_tree", 65.4, 24.15),
-    ("apple_tree", 58.35, 26.85), ("apple_tree_young", 65.7, 26.45),
-    ("apple_tree", 57.95, 29.35), ("apple_tree_young", 60.15, 29.05), ("apple_tree", 63.2, 29.4),
-    ("dog_bed", 61.6, 26.95), ("apple_crate", 66.4, 28.95), ("ladder", 60.95, 24.3),
-    ("fallen_apples", 59.5, 28.0), ("fallen_apples", 64.3, 25.4), ("fallen_apples", 61.9, 22.9), ("fallen_apples", 66.6, 23.6),
-    ("tree", 92.5, 23.6), ("tree", 94.5, 28.6), ("bush", 77.6, 23.4), ("bush", 83.4, 29.3),
-    ("reeds", 85.6, 24.6), ("reeds", 90.6, 27.4), ("hay", 77.8, 27.4), ("scarecrow", 72, 27.4),
-    ("signpost", 78, 40.6),
-    ("bridge", 80, 46),
-
-    # ================= FORÊT (sud-est)
-    ("tree", 68.4, 62.8), ("tree", 77.2, 63.4), ("tree", 62.4, 53.2), ("tree", 74.4, 53.2),
-    ("stump", 69.8, 52.6), ("stump", 83.6, 58.2), ("stump", 60.6, 58.6), ("log", 75.6, 56.8), ("log", 89.4, 51.6),
-    ("mushrooms", 70.4, 54.4), ("mushrooms", 85.8, 52.8), ("mushrooms", 63.2, 58), ("mushrooms", 92.2, 58.6),
-    ("mushrooms", 78.8, 49), ("fern", 65.4, 53.6), ("fern", 76.4, 51.6), ("fern", 82.2, 54.2), ("fern", 59.4, 54),
-    ("fern", 87.6, 62.6), ("signpost", 69.2, 48.6),
-    ("leaf_nest", 77.9, 59.4), ("mushrooms", 74.2, 61.6), ("stump", 78.6, 62.2),       # clairière de Maman Piquette
-
-    # ================= PARC (sud-ouest), Alice dans la cabane
-    ("playhouse", 5, 53.3), ("slide", 9, 53.6), ("swing", 5.6, 58.4), ("sandbox", 9.6, 60.4),
-    ("fountain", 30, 55.9), ("bench", 26, 51.9), ("bench", 34, 51.9), ("bench", 26, 59.9), ("bench", 34, 59.9),
-    ("flower_pot", 24.6, 50.6), ("flower_pot", 35.6, 50.6), ("flower_pot", 24.6, 60.6), ("flower_pot", 35.6, 60.6),
-    ("lamppost", 13, 54.7), ("lamppost", 47, 54.7), ("lamppost", 53, 57.6),
-    ("tree", 2, 47.6), ("tree", 8, 47.2), ("tree", 14, 47.6), ("tree", 46.6, 47.6), ("tree", 52.6, 47.2),
-    ("tree", 49.4, 51.4), ("tree", 13.2, 63.4), ("tree", 49.6, 62.6), ("tree", 1.6, 62.8), ("tree", 54.4, 62.8),
-    ("bush", 12.4, 50.2), ("bush", 47.6, 59.4), ("bush", 52.2, 51.6), ("bush", 2.2, 50.2),
-    ("bush", 54.6, 53.6), ("bush", 54.6, 58.6), ("signpost", 52.6, 54.4),
-    ("tree", 49.2, 54.2), ("tree", 51.8, 59.6), ("tree", 46.2, 62.6), ("tree", 9, 49.6), ("bush", 46.4, 49.8),
-    ("bush", 50.2, 61.6), ("bush", 12.6, 62.2), ("flower_pot", 14.4, 54.2), ("flower_pot", 14.4, 58.2),
-    ("bench", 51, 49.9), ("tree", 32.2, 63.4), ("bush", 28.4, 47.4), ("bush", 35, 47.6),
-    ("tree", 41.0, 48.4), ("tree", 44.6, 61.6), ("bush", 40.2, 52.6), ("bench", 42.6, 58.4),
-]
-for x in range(9, 24):                                # pré de la niche, le long de la route
-    DECOR.append(("fence_wood_h", x, 17.25))
-for x in list(range(30, 46)) + list(range(48, 56)):   # dépôt, le long du trottoir (portail : 46..48)
-    DECOR.append(("fence_metal_h", x, 23.3))
-for x in range(57, 64):                               # entre le verger de la ferme et le port
-    DECOR.append(("fence_metal_h", x, 30.3))
-for x in range(31, 64):                               # voie ferrée du quai
-    DECOR.append(("rail", x, 38.6))
-for x in range(8, 24):                                # champs de la campagne, le long de la route
-    DECOR.append(("fence_wood_h", x, 22.35))
-for x in list(range(80, 86)) + list(range(88, 93)):   # clôture du grand champ, avec une barrière ouverte
-    DECOR.append(("fence_wood_h", x, 10.3))
-for y in range(23, 30):                               # entre le dépôt et le verger de la ferme
-    DECOR.append(("fence_metal_v", 56.6, y + 1))
-for y in range(30, 40):                               # entre le port et les prés de la ferme
-    DECOR.append(("fence_metal_v", 64.6, y + 1))
-# enclos des poules (quête du fermier) : clôture en bois autour du poulailler, barrière ouverte au sud
-PEN = (75, 5.2, 80, 9.0)            # lignes de clôture, en tuiles : x0, y0, x1, y1
-PEN_GATE = (76, 78)                 # ouverture dans la clôture du bas
-for x in range(PEN[0], PEN[2]):
-    DECOR.append(("fence_wood_h", x, PEN[1]))
-    if not PEN_GATE[0] <= x < PEN_GATE[1]:
-        DECOR.append(("fence_wood_h", x, PEN[3]))
-for y in (6.2, 7.2, 8.2, PEN[3]):
-    DECOR.append(("fence_wood_v", PEN[0], y))
-    DECOR.append(("fence_wood_v", PEN[2], y))
-FARMER = (73.9, 8.4)                # le fermier Gaston, contre la clôture ouest de l’enclos
-POSTMAN = (34.4, 16.45)             # Marcel le facteur, près de la boîte aux lettres du village
-NEIGHBOR = (48.4, 4.95)             # Mamie Rose, devant sa maison bleue
-POMPON = (32.6, 29.6)               # son chat, caché entre les caisses, près des entrepôts
-LEON = (37.6, 34.0)                 # Léon, le cariste du port, à côté de son chariot élévateur
-GOAL = (40.0, 35.2)                 # son grand filet (pied du cadre avant, ouverture vers le bas)
-# ses cinq gros ballons, qui ont roulé partout dans la zone industrielle (une couleur chacun, port.BALL_COLORS)
-BALLS = [(38.6, 37.6), (44.4, 34.6), (57.2, 33.6), (54.2, 27.0), (50.6, 29.4)]
-IRIS = (61.6, 26.9)                 # Iris, le vieux Jack Russell, sur son panier au milieu du verger
-# ses trois jouets (port.TOYS : canard, anneau, corde), cachés dans les prés de la ferme : près de la mare, dans le
-# champ, dans la pâture au bord de la rivière
-TOYS = [(86.0, 29.8), (74.4, 25.2), (69.4, 37.0)]
-TRACK = (31.25, 63.75, 38.6)        # voie de Titine, le petit train : x des heurtoirs ouest et est, y des rails
-PIQUETTE = (76.4, 60.3)             # Maman Piquette, la maman hérisson, dans sa clairière (forêt)
-CLEARING = (72.6, 57.6, 79.6, 62.6)  # la clairière : pas de sapins
-# ses trois petits, cachés sous des fougères (juste à côté, un peu derrière : on voit dépasser leur museau)
-BABIES = [(65.7, 53.48), (82.5, 54.08), (87.9, 62.48)]
-# les lettres du facteur, emportées par le vent : campagne, village, zone industrielle, près de la niche
-LETTERS = [(26.4, 16.8), (30.0, 6.6), (50.8, 11.6), (47.0, 29.6), (23.2, 27.4)]   # avant le village, … , campagne
-# terriers sous les grillages : Tecky passe d'une extrémité à l'autre (raccourcis)
-TUNNELS = [((56.0, 27.0), (57.25, 27.0)),        # dépôt <-> verger de la ferme
-           ((52.5, 22.75), (52.5, 24.0)),        # trottoir <-> zone industrielle
-           ((14.5, 16.75), (14.5, 17.95)),       # pré de la niche <-> grande route
-           ((83.5, 9.75), (83.5, 10.95))]        # grand champ de la ferme <-> pré, vers la route
-for a, b in TUNNELS:
-    for x, y in (a, b):
-        DECOR.append(("burrow", x, y))
-
-ITEMS = [
-    ("bone", 6, 7.5), ("bone", 12, 23.6), ("bone", 36.5, 7.2), ("bone", 31.5, 25.8), ("bone", 27.5, 17.3),
-    ("sausage", 14.5, 28.5), ("sausage", 53.5, 25.2),
-    ("medal", 1.4, 9.4), ("medal", 54.6, 24.3),
-    ("squeaky", 9.5, 6.2), ("squeaky", 2.5, 22.9), ("squeaky", 52.8, 6.0),
-    ("ball", 6.3, 5.4), ("ball", 23, 6.3), ("ball", 27.5, 26), ("ball", 33, 19.8), ("ball", 54.2, 7.0),
-    # ferme
-    ("bone", 69.6, 7.4), ("bone", 82.4, 27.6), ("sausage", 94.4, 4.6), ("medal", 94.2, 25.6),
-    ("squeaky", 88.4, 28.6), ("ball", 66.8, 23.0), ("ball", 75, 17.3),
-    # forêt
-    ("bone", 79.6, 52.6), ("bone", 67, 60.4), ("sausage", 90.4, 54.6), ("medal", 59.2, 63),
-    ("squeaky", 85.6, 57.2), ("ball", 72.6, 55.8),
-    # parc
-    ("bone", 46.4, 57.6), ("sausage", 28.4, 62.4), ("squeaky", 32.6, 49.2), ("ball", 12.6, 58.6),
-    ("medal", 51.6, 60.6),
-    # nouveaux coins : jardin de la niche, campagne au bord de l'eau, prés de la ferme, village, parc
-    ("bone", 20.5, 6.6), ("squeaky", 17.2, 15.2), ("bone", 9.4, 34.0), ("ball", 25.4, 37.0), ("sausage", 4.8, 31.2),
-    ("bone", 72.4, 35.8), ("ball", 92.4, 39.2), ("squeaky", 45.6, 12.6), ("ball", 40.0, 61.4),
-    # indices d'Alice : barrette à la ferme, chaussure dans la clairière de la forêt, doudou au parc
-    ("hairclip", 86.6, 3.6), ("shoe", 89.6, 57.2), ("plush", 37.6, 53.4),
-]
-# zones calmes (x0, y0, x1, y1 en tuiles) : comme les villes d'un RPG, aucun chien hostile n'y vit ni n'y poursuit
-# Tecky. Le village, au nord de la grande route, et la cour de la ferme (Gaston, l'enclos).
-CALM = [(27.6, 0, 56.4, 18), (65, 2.6, 81.4, 17.4),   # le village jusqu'au bord de la route (trottoir compris), la ferme
-        (33.4, 30.6, 42.6, 36.6), (56.8, 22.4, 67.4, 30.2),   # au port, le coin de Léon ; le verger d'Iris
-        CLEARING]                                     # la clairière de Maman Piquette
-ENEMIES = [
-    # le 1er roquet est assez loin de la niche pour ne pas attaquer dès la fin de l'intro
-    ("roquet", 12, 8.8), ("roquet", 14, 3.5), ("roquet", 10.5, 25.2), ("roquet", 47.5, 24.0),   # (ce dernier, aux entrepôts)
-    ("bouledogue", 27.6, 22.9), ("bouledogue", 23.5, 28.2),
-    ("molosse", 49.5, 26.2),
-    # ferme : les chiens de berger gardent les prés (la cour, elle, est une zone calme)
-    ("berger", 61.6, 6.4), ("berger", 82, 25.5), ("berger", 88, 6.5), ("bouledogue", 70.6, 39.0), ("roquet", 76.5, 29),
-    # forêt
-    ("roquet", 73, 50), ("roquet", 85, 55.6), ("bouledogue", 62.5, 56.4), ("molosse", 90.5, 56.6),
-    # parc
-    ("roquet", 34.5, 53.2), ("bouledogue", 23, 57.6), ("berger", 49, 56),
-    # nouveaux coins (à la fin : les autres gardent leur numéro) : le port, la campagne au bord de l'eau, les prés
-    ("bouledogue", 46.6, 36.6), ("roquet", 24.0, 32.6), ("berger", 88.0, 34.4),
-]
-# trésors enterrés : au centre de la tuile des traces de pattes (scintillement et trou creusé s'y alignent)
-# grande route : passages piétons (première des deux tuiles) et circulation (voie 0 en haut vers l'ouest,
-# voie 1 en bas vers l'est ; x de départ en tuiles). Les véhicules s'arrêtent aux passages quand Tecky y est.
-CROSSINGS = (10, 50, 71, 79)
-# massifs de fleurs au sol (tuiles) : dessinés en détail sur le sol, et perchoirs des papillons
-FLOWER_BEDS = ((7, 4), (23, 8), (3, 23), (10, 5), (6, 9), (24, 26), (59, 25), (63, 26), (93, 21), (84, 57),
-               (14, 52), (46, 52), (14, 59), (47, 61), (51, 49), (2, 56), (12, 62), (32, 47), (52, 61), (27, 62),
-               (6, 49), (8, 62),
-               (18, 4), (21, 7), (16, 10), (10, 38), (26, 32), (4, 35), (70, 36), (92, 33), (36, 13), (53, 13), (40, 50))
-TRAFFIC = [("car_red", 0, 10), ("bus", 0, 56), ("car_yellow", 0, 82),
-           ("car_blue", 1, 28), ("van", 1, 66), ("car_green", 1, 88)]
-# papillons (couleur, coin où ils volettent) : surtout au parc, mais aussi près de la niche, sur la place du village,
-# dans la campagne sud-ouest, au verger de la ferme et dans la clairière de la forêt
-BUTTERFLIES = [("yellow", 30.5, 47.8), ("blue", 34.8, 51.6), ("pink", 13, 56), ("orange", 46, 59),
-               ("blue", 50, 50), ("yellow", 6.5, 60.5), ("pink", 7.5, 49.6),
-               ("yellow", 9, 5.6), ("orange", 6, 8.6),
-               ("pink", 36, 6.4), ("blue", 49, 5.4),
-               ("blue", 4.5, 22.8), ("yellow", 22.6, 25.8),
-               ("orange", 63.6, 26.4), ("yellow", 59.6, 25.4),
-               ("blue", 85.5, 56.6),
-               ("orange", 19.5, 5.5), ("pink", 16.5, 10.6), ("yellow", 10.5, 38.4), ("blue", 26.0, 32.6),
-               ("orange", 70.5, 36.4), ("pink", 53.5, 13.4)]
-# poules (animées : elles picorent, se promènent, et s'enfuient quand Tecky aboie). Les cinq premières se sont
-# échappées de l'enclos : c'est la quête du fermier (quest = 1) ; les deux du sud de la route vivent leur vie.
-HENS = [("hen", 69.6, 9.6, 1), ("hen_white", 71.2, 7.0, 1), ("hen", 82.6, 6.8, 1), ("hen_white", 74.8, 17.0, 1),
-        ("hen", 65.6, 7.6, 1), ("hen_white", 82.6, 24.4, 0), ("hen", 81.4, 26.2, 0),
-        ("hen", 73.6, 33.6, 0), ("hen_white", 75.2, 34.4, 0)]
-# canards (espèce, x, y en tuiles, famille) : une même famille = la cane et ses canetons, qui la suivent en file
-DUCKS = [("duck_f", 9.9, 2.4, 1), ("duckling", 9.4, 2.55, 1), ("duckling", 9.0, 2.7, 1), ("duckling", 8.6, 2.85, 1),
-         ("duck", 88.6, 25.4, 0), ("duck_f", 87.6, 25.9, 0),
-         ("duck", 46.5, 43.4, 0), ("duck_f", 47.6, 43.8, 0), ("duck", 64.0, 43.6, 0), ("duck", 2.6, 26.0, 0),
-         ("duck", 20.4, 34.8, 0), ("duck_f", 21.6, 35.4, 0)]
-# les vaches du grand pré de la campagne (cows.py) : la pie noire, la pie rouge et son veau
-COWS = [("cow_bw", 19.5, 25.4), ("cow_brown", 21.2, 29.6), ("calf", 19.0, 30.0)]
-# les villageois, sans quête (villageois.py) : le boulanger à la porte de sa boutique, la marchande de fruits et la
-# fleuriste à côté de leurs étals, le petit garçon et son ballon près de la fontaine
-VILLAGERS = [("baker", 39.3, 16.5), ("vendor", 31.3, 9.7), ("florist", 40.3, 9.6), ("kid", 44.9, 9.3)]
-# petites bêtes que Tecky peut poursuivre : écureuils (forêt, parc) qui grimpent aux arbres, chats (village, zone
-# industrielle) qui sautent sur les toits et les conteneurs
-CRITTERS = [("squirrel", 73.4, 53.9), ("squirrel", 82.2, 52.9), ("squirrel", 64.6, 60.4), ("squirrel", 87.2, 60.4),
-            ("squirrel", 10.6, 48.6), ("cat", 41.0, 11.6), ("cat_black", 47.6, 25.4), ("cat", 52.6, 34.0),
-            ("squirrel", 13.4, 33.6)]
-DIG = [(12.5, 6.5), (11.5, 27.5), (29.5, 24.5),
-       (82.0, 34.4), (90.5, 16.5), (60.5, 49.5), (92.5, 60.5), (11.5, 60.5),   # celui-ci : à côté du bac à sable
-       (19.5, 12.5), (16.5, 39.5), (86.5, 39.5), (45.5, 40.5)]   # jardin de la niche, campagne, prés, quai du port
-START = (4.5, 4.2)
-ALICE = (5, 53.3 + 14 / 64)   # juste devant la porte de la cabane du parc (cachée jusqu'aux trois indices)
-TITLE = (49.5, 7.3)        # caméra de l'écran titre : la place du village
-SIGNS = [
-    (5.6, 17.1, "Niche de Tecky : en haut. Village : suivre la route vers l'est."),
-    (7.3, 22.6, "Les champs du Père Gaston. Attention, chiens pas commodes !"),
-    (8.8, 40.8, "Pas de pont ici ! Le seul pont est loin à l'est, après la ferme."),
-    (69.9, 17.2, "Ferme des Tilleuls. Attention aux chiens de berger : quand ils s'accroupissent, ils vont charger !"),
-    (78, 40.6, "Pont de la rivière. Au sud : la grande forêt."),
-    (69.2, 48.6, "Sentier de la forêt. Le parc des enfants est à l'ouest."),
-    (52.6, 54.4, "Parc des enfants : toboggan, balançoire, bac à sable et cabane !"),
-]
-
-
-def forest_firs():
-    """Sapins serrés dans la forêt (sud-est) : en quinconce un peu désordonné, hors des sentiers et à l'écart des
-    objets, chiens, trésors, panneaux et autres décors (check_placement.js vérifie que tout reste atteignable)."""
-    g = corner_grid()
-    rnd = random.Random(11)
-    keep = ([(x, y) for _, x, y in ITEMS] + [(x, y) for _, x, y in ENEMIES] + list(DIG)
-            + [(x, y) for x, y, _ in SIGNS] + [(x, y) for n, x, y in DECOR if x > 55 and y > 46])
-
-    def near_path(px, py):
-        return any(g[cy][cx] == "dirt" for cy in range(int(py - 1.8), int(py + 1.4) + 1)
-                   for cx in range(int(px - 1.3), int(px + 1.3) + 2) if 0 <= cy <= MH and 0 <= cx <= MW)
-    out = []
-    y, row = 47.6, 0
-    while y < MH:
-        x = 56.8 + (row % 2) * 1.0
-        while x < MW - 0.4:
-            px, py = x + rnd.uniform(-0.4, 0.4), min(MH - 0.1, y + rnd.uniform(-0.25, 0.25))
-            in_clearing = CLEARING[0] - 0.8 < px < CLEARING[2] + 0.8 and CLEARING[1] - 0.6 < py < CLEARING[3] + 1.2
-            if not near_path(px, py) and not in_clearing and all((px - kx) ** 2 + (py - ky) ** 2 > 1.8 ** 2 for kx, ky in keep):
-                out.append(("fir", round(px, 2), round(py, 2)))
-            x += 2.0
-        y += 1.55
-        row += 1
+def derived_decor():
+    """Décors qui se déduisent de la carte : poteau de chaque panneau, filet de Léon, heurtoirs et rails de la voie de
+    Titine, clôture de l'enclos (barrière ouverte en bas), les deux bouts de chaque terrier."""
+    out = [("signpost", x, y) for x, y, _ in SIGNS] + [("goal_net", *GOAL)]
+    x0, x1, y = TRACK
+    out += [("buffer_stop", x0, y + 0.1), ("buffer_stop", x1, y + 0.1)]
+    out += [("rail", x, y) for x in range(math.floor(x0), math.ceil(x1))]
+    px0, py0, px1, py1 = PEN
+    for x in range(px0, px1):
+        out.append(("fence_wood_h", x, py0))
+        if not PEN_GATE[0] <= x < PEN_GATE[1]:
+            out.append(("fence_wood_h", x, py1))
+    ys = [py0 + k for k in range(1, math.ceil(py1 - py0)) if py0 + k < py1] + [py1]
+    for y in ys:
+        out += [("fence_wood_v", px0, y), ("fence_wood_v", px1, y)]
+    out += [("burrow", x, y) for a, b in TUNNELS for x, y in (a, b)]
     return out
 
 
-DECOR += forest_firs()
+DECOR = _T("decor") + derived_decor()
+# pont : coins (x0, y0, x1, y1) qui ne sont plus de l'eau, sous le tablier de chaque décor « bridge » (5 tuiles de haut)
+BRIDGES = [(round(x) - 1, round(y) - 5, round(x) + 1, round(y)) for n, x, y in DECOR if n == "bridge"]
 
 
 def edge_keep():
@@ -458,9 +147,9 @@ def build_map():
     for ty in range(MH):
         for tx in range(MW):
             ground.append(pick([g[ty][tx], g[ty][tx + 1], g[ty + 1][tx], g[ty + 1][tx + 1]], rnd))
-    # marquages de la route
+    # marquages de la route (sur sa deuxième rangée)
     for tx in range(MW):
-        ground[19 * MW + tx] = 5 if tx % 2 == 0 else tiles.tile_index("road", 15)
+        ground[(ROAD + 1) * MW + tx] = 5 if tx % 2 == 0 else tiles.tile_index("road", 15)
     # sol de la lisière : lisiere.RING tuiles autour de la carte, qui prolongent celles du bord (coins ramenés sur le
     # bord : la route, ses marquages, la rivière et le ruisseau continuent tout droit)
     R, rr, ring = lisiere.RING, random.Random(13), []
@@ -469,9 +158,9 @@ def build_map():
         for tx in range(-R, MW + R):
             if not (0 <= tx < MW and 0 <= ty < MH):
                 idx = pick([at(tx, ty), at(tx + 1, ty), at(tx, ty + 1), at(tx + 1, ty + 1)], rr)
-                ring.append([tx, ty, (5 if tx % 2 == 0 else tiles.tile_index("road", 15)) if ty == 19 else idx])
+                ring.append([tx, ty, (5 if tx % 2 == 0 else tiles.tile_index("road", 15)) if ty == ROAD + 1 else idx])
     for tx in CROSSINGS:                              # passages piétons (dont chemin de la ferme et du pont)
-        for ty in (18, 19, 20):
+        for ty in (ROAD, ROAD + 1, ROAD + 2):
             ground[ty * MW + tx] = ground[ty * MW + tx + 1] = 7
     # détails
     over = [0] * (MW * MH)
@@ -479,35 +168,9 @@ def build_map():
 
     def put(name, tx, ty):
         over[ty * MW + tx] = ovrow + OV[name]
-    for tx, ty in ((6, 19), (30, 20), (54, 18)):
-        put("plaque d'égout", tx, ty)
-    put("grille d'évacuation", 34, 17)
-    put("fissures", 49, 17)
-    put("flaque", 3, 9)
-    put("feuilles mortes", 1, 2)
-    put("feuilles mortes", 13, 2)
-    put("touffe d'herbe", 9, 10)
-    put("touffe d'herbe", 26, 24)
-    put("cailloux", 28, 10)
-    put("tache d'huile", 50, 24)
-    put("tache d'huile", 35, 29)
-    put("bande de danger", 46, 24)
-    put("bande de danger", 47, 24)
-    put("ligne de parking", 52, 25)
-    put("ligne de parking", 53, 25)
-    put("feuilles mortes", 31, 8)
-    # nouvelles zones
-    for tx, ty in ((60, 49), (63, 54), (69, 47), (74, 52), (77, 57), (82, 49), (86, 59), (90, 55), (93, 50),
-                   (61, 62), (71, 61), (79, 62), (65, 58), (84, 53)):
-        put("feuilles mortes", tx, ty)
-    for tx, ty in ((73, 56), (88, 61), (59, 57)):
-        put("touffe d'herbe", tx, ty)
-    for tx, ty in FLOWER_BEDS:
-        put("fleurs", tx, ty)
-    for tx, ty in ((67, 9), (74, 6), (80, 28)):
-        put("cailloux", tx, ty)
-    put("flaque", 69, 9)
-    put("flaque", 76, 50)
+    for n, tx, ty in DETAILS:                         # (dans l'ordre : le dernier posé sur une tuile l'emporte)
+        put(n, tx, ty)
+    # traces de pattes des trésors (par-dessus)
     for x, y in DIG:
         over[int(y) * MW + int(x)] = ovrow + OV["traces de pattes"]
     for x0, y0, x1, y1 in BRIDGES:
@@ -554,7 +217,8 @@ def build_map():
         # où les papillons se posent : (x, y au sol, hauteur) — sur les pots de fleurs, ou sur les massifs
         "flowers": [[px(x), px(y) + 2, 44] for n, x, y in DECOR if n == "flower_pot"]
                    + [[px(tx + 0.5), px(ty + 0.5), 4] for tx, ty in FLOWER_BEDS],
-        "traffic": {"lanes": [px(18.95), px(20.95)], "road": [px(17.5), px(21.5)],
+        # la grande route : voies 0 et 1, bords de la chaussée (pour les chiens, Tecky, les poules)
+        "traffic": {"lanes": [px(ROAD + 0.95), px(ROAD + 2.95)], "road": [px(ROAD - 0.5), px(ROAD + 3.5)],
                     "crossings": [[px(tx), px(tx + 2)] for tx in CROSSINGS],
                     "vehicles": [[n, lane, px(x)] for n, lane, x in TRAFFIC]},
         "dig": [[px(x), px(y)] for x, y in DIG],
@@ -563,6 +227,12 @@ def build_map():
         "title": [px(TITLE[0]), px(TITLE[1])],
         "decorFps": {n: fps for n, (_, fps) in decor.ANIMATED.items()},
         "signs": [[px(x), px(y), t] for x, y, t in SIGNS],
+        "farmRoadY": px(ROAD - 0.7),                  # les poules ne descendent jamais plus bas (la grande route)
+        "ballBox": CARTE["ballBox"],                  # en tuiles : là où roulent les ballons de Léon
+        # zones (en tuiles) : la première dont un rectangle contient le point ; un bord de rectangle posé sur le bord
+        # de la carte n'a pas de limite (game.js : zoneAt) ; music : variation du thème, sinon celle de son id
+        "zones": CARTE["zones"], "landmarks": CARTE["landmarks"],
+        "ending": {k: [px(v[0]), px(v[1])] for k, v in CARTE["ending"].items()},   # scène de fin : Alice, Tecky
     }
 
 
@@ -753,7 +423,7 @@ def check_placement():
                        capture_output=True, text=True)
     print(r.stdout.strip() or r.stderr.strip())
     if r.returncode:
-        raise SystemExit("Corrige les placements signalés dans pack_web.py (listes ITEMS, DIG, ENEMIES…)")
+        raise SystemExit("Corrige les placements signalés dans carte.json (éditeur de carte : python3 editeur.py)")
 
 
 def build_standalone(data, game):
