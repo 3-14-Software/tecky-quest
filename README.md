@@ -63,7 +63,7 @@ objets (rien dans l'eau, tout atteignable à pied depuis la niche), indices d'Al
 papillons, fontaine animée, circulation (bousculade, passages piétons), pont, eau animée, séquenceur musical, fanfare
 et musique de défaite, sauvegarde (continuer, reprise après KO, stockage refusé), records par mode, mode balade,
 manette simulée, poussière, feuilles, ombres de nuages, du jour à la nuit, quête des poules, terriers, flair,
-os dorés, écureuils et chats, zones (bandeau, ambiance, timbre), transitions musicales, carte de la pause, copains qui suivent Tecky. `tests/edges.py` détecte les sprites dont des pixels touchent le bord du cadre.
+os dorés, écureuils et chats, zones (bandeau, ambiance, timbre), transitions musicales, icônes de touches et de boutons dans les textes, carte de la pause, copains qui suivent Tecky. `tests/edges.py` détecte les sprites dont des pixels touchent le bord du cadre.
 
 ## Organisation
 

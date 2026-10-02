@@ -219,6 +219,13 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   `pressed.up/down/left/right` pour les menus (la pause est en ligne) et les options,
   le stick gauche fait marcher (zone morte `PAD_DEAD`, vitesse selon l'inclinaison). Le clavier donne aussi
   `pressed.up/down/left/right`. Test : `pad.js` (dans les tests, appeler `pollPad()` avant `update()`).
+- Icônes dans les textes d'aide (`GLYPH`, `richParts()`, `drawRich()`) : un texte écrit `[ok] pour valider`,
+  `[bite]`, `[walk]`… et `text()` (donc `para()` et les dialogues) dessine à la place la touche (`hud/key`, noms
+  `MAP.keys` = `hud.KEYS`) ou le bouton de manette (`hud/pad`, `MAP.pads`) selon `pad.on` ; `wrap()` les mesure,
+  `typed()` ne coupe jamais une [action] pendant la frappe d'une réplique. Ne plus écrire « C » ou « A » en toutes
+  lettres : une seule phrase pour le clavier et la manette (le texte tactile reste à part, sans icône). Une nouvelle
+  touche : l'ajouter **à la fin** de `hud.KEYS` / `PAD_BUTTONS` (les images existantes gardent leur numéro), puis
+  dans `GLYPH`. `hud/key` et `hud/pad` sont rognées dans l'atlas (largeur exacte de chaque icône). Test : `glyphs.js`.
 
 ## Pièges connus
 

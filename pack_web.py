@@ -406,6 +406,7 @@ def build_map():
         "critters": [[n, px(x), px(y)] for n, x, y in CRITTERS],
         "rest": {a: [fps, loop] for a, (_, fps, _, loop) in tecky.REST_ANIMS.items()},
         "badges": hud.BADGES,
+        "keys": hud.KEYS, "pads": [k for k, _ in hud.PAD_BUTTONS],   # noms des images de hud/key et hud/pad
         "ducks": [[n, px(x), px(y), f] for n, x, y, f in DUCKS],
         "duckFps": {k: {a: fps for a, (_, fps, _) in ducks.anims(k).items()} for k in ducks.KINDS},
         "duckLoop": {k: {a: loop for a, (_, _, loop) in ducks.anims(k).items()} for k in ducks.KINDS},
@@ -488,7 +489,8 @@ def collect():
         o = {"spr_hud_arrow": (40, 40), "spr_hud_arrow_icon": (22, 22)}.get(n, (0, 0))
         if n == "spr_title_logo":
             o = (ims[0].width // 2, ims[0].height // 2)
-        out.append((key, ims, o, n in ("spr_hud_digits",)))
+        # rognées : chiffres ; touches et boutons (largeur exacte de chacun, pour les icônes dans les textes)
+        out.append((key, ims, o, n in ("spr_hud_digits", "spr_hud_key", "spr_hud_pad")))
     return out
 
 

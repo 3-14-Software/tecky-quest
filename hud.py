@@ -170,25 +170,55 @@ def digit_frames(scale, w=22, h=28, size=19):
 
 
 # ------------------------------------------------------------------ touches et actions
-KEYS = ["X", "C", "E", "Z", "up", "down", "left", "right", "Esc", "Entrée", "R"]
+# « arrows » et « zqsd » : les quatre touches de déplacement en T renversé, dans une seule image (textes d'aide)
+KEYS = ["X", "C", "E", "Z", "up", "down", "left", "right", "Échap", "Entrée", "R", "P", "M", "F", "arrows", "zqsd"]
+CLUSTERS = {"arrows": ("up", "left", "down", "right"), "zqsd": ("Z", "Q", "S", "D")}
+ARROWS = {"up": [(12, 5), (18, 13), (6, 13)], "down": [(12, 14), (18, 6), (6, 6)],
+          "left": [(6, 10), (15, 4.5), (15, 15.5)], "right": [(18, 10), (9, 4.5), (9, 15.5)]}
+
+
+def key_cluster(k, scale):
+    """Quatre petites touches en T renversé (haut au milieu, puis gauche, bas, droite), cadre 40x24."""
+    m, g = 1.5, 1.3                         # marge des autres touches : le contour ne touche pas le bord
+    kw, kh = (40 - 2 * m - 2 * g) / 3, (24 - 2 * m - g) / 2
+    spots = [(m + kw + g, m)] + [(m + i * (kw + g), m + kh + g) for i in range(3)]
+    d = Drawing(40, 24)
+    for x, y in spots:
+        d.add(rect(x, y, kw, kh, 2.6), "#DADCE2")
+        d.add(rect(x, y, kw, kh - 2, 2.6), "#FFFFFF", sil=False)
+    for (x, y), c in zip(spots, CLUSTERS[k]):
+        if c in ARROWS:   # la flèche d'une grande touche, réduite à la petite
+            pts = [(x + (px - 12) * 0.42 + kw / 2, y + (py - 9.5) * 0.42 + (kh - 2) / 2) for px, py in ARROWS[c]]
+            d.add(poly(pts), "#3A3F4A", sil=False)
+    im = render_svg(d.svg(), 40, 24, scale)
+    dr = ImageDraw.Draw(im)
+    f = font(7.5 * scale)
+    for (x, y), c in zip(spots, CLUSTERS[k]):
+        if c not in ARROWS:
+            bb = dr.textbbox((0, 0), c, font=f)
+            dr.text(((x + kw / 2) * scale - (bb[2] - bb[0]) / 2 - bb[0], (y + (kh - 2) / 2) * scale - (bb[3] - bb[1]) / 2 - bb[1]),
+                    c, font=f, fill=rgb("#3A3F4A"))
+    return im
 
 
 def key_frames(scale):
     out = []
     for k in KEYS:
-        wide = len(k) > 2 and k not in ("up", "down", "left", "right")
+        if k in CLUSTERS:
+            out.append(key_cluster(k, scale))
+            continue
+        wide = len(k) > 2 and k not in ARROWS
         w = 40 if wide else 24
         d = Drawing(w, 24)
         d.add(rect(1.5, 1.5, w - 3, 21, 5), "#DADCE2")
         d.add(rect(1.5, 1.5, w - 3, 17, 5), "#FFFFFF", sil=False)
-        arrows = {"up": [(12, 5), (18, 13), (6, 13)], "down": [(12, 14), (18, 6), (6, 6)],
-                  "left": [(6, 10), (15, 4.5), (15, 15.5)], "right": [(18, 10), (9, 4.5), (9, 15.5)]}
+        arrows = ARROWS
         if k in arrows:
             d.add(poly(arrows[k]), "#3A3F4A", sil=False)
         im = render_svg(d.svg(), w, 24, scale)
         if k not in arrows:
             dr = ImageDraw.Draw(im)
-            f = font((13 if not wide else 10) * scale)
+            f = font((13 if not wide else 10.5) * scale)
             bb = dr.textbbox((0, 0), k, font=f)
             dr.text(((im.width - (bb[2] - bb[0])) / 2 - bb[0], (18 * scale - (bb[3] - bb[1])) / 2 - bb[1]),
                     k, font=f, fill=rgb("#3A3F4A"))
@@ -199,13 +229,35 @@ def key_frames(scale):
     return out
 
 
-# boutons de manette (disposition Xbox : A en bas, B à droite, X à gauche, Y en haut), même cadre 40x24 que les touches
-PAD_BUTTONS = [("A", "#5DBB63"), ("B", "#E24B4B"), ("X", "#4A90D9"), ("Y", "#F2C14E"), ("Start", "#5E636C")]
+# boutons de manette (disposition Xbox : A en bas, B à droite, X à gauche, Y en haut), même cadre 40x24 que les touches ;
+# « croix » (croix directionnelle) et « stick » (stick gauche) sont dessinés sans lettre
+PAD_BUTTONS = [("A", "#5DBB63"), ("B", "#E24B4B"), ("X", "#4A90D9"), ("Y", "#F2C14E"), ("Start", "#5E636C"),
+               ("Select", "#5E636C"), ("croix", "#4A4F59"), ("stick", "#4A4F59")]
 
 
 def pad_frames(scale):
     out = []
     for k, col in PAD_BUTTONS:
+        if k == "croix":
+            d = Drawing(24, 24)
+            d.add(path("M9,1.5 H15 V9 H22.5 V15 H15 V22.5 H9 V15 H1.5 V9 H9 Z"), col)
+            for pts in ([(12, 3.5), (14.6, 7), (9.4, 7)], [(12, 20.5), (14.6, 17), (9.4, 17)],
+                        [(3.5, 12), (7, 9.4), (7, 14.6)], [(20.5, 12), (17, 9.4), (17, 14.6)]):
+                d.add(poly(pts), "#C9CDD4", sil=False)
+            d.add(circle(12, 12, 2.2), "#3B3F48", sil=False)
+            im = render_svg(d.svg(), 24, 24, scale)
+        elif k == "stick":
+            d = Drawing(24, 24)
+            d.add(circle(12, 12, 10.5), "#2F333B")
+            d.add(circle(12, 11, 7.6), col, sil=False)
+            d.add(circle(12, 11, 5.2), "#5C616C", sil=False)
+            d.add(ellipse(10.5, 8.6, 3, 1.8), "#FFFFFF", sil=False, opacity=0.25)
+            im = render_svg(d.svg(), 24, 24, scale)
+        if k in ("croix", "stick"):
+            cell = Image.new("RGBA", (40 * scale, 24 * scale), (0, 0, 0, 0))
+            cell.alpha_composite(im, ((cell.width - im.width) // 2, 0))
+            out.append(cell)
+            continue
         wide = len(k) > 1
         w = 40 if wide else 24
         d = Drawing(w, 24)
@@ -217,7 +269,7 @@ def pad_frames(scale):
             d.add(ellipse(12, 9.5, 8, 6), "#FFFFFF", sil=False, opacity=0.22)
         im = render_svg(d.svg(), w, 24, scale)
         dr = ImageDraw.Draw(im)
-        f = font((13 if not wide else 10) * scale)
+        f = font((13 if not wide else 10.5) * scale)
         bb = dr.textbbox((0, 0), k, font=f)
         ink = BROWN if k == "Y" else "#FFFFFF"
         dr.text(((im.width - (bb[2] - bb[0])) / 2 - bb[0], (24 * scale - (bb[3] - bb[1])) / 2 - bb[1]),

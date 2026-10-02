@@ -1005,17 +1005,14 @@ function introLines() {
         : "La flèche au bord de l'écran me guide. Gare aux chiens du coin, ils ne sont pas commodes." },
     { who: 'info', text: touchMode
         ? "Glisse le doigt à gauche pour marcher. Boutons à droite pour aboyer, mordre et flairer la piste d'Alice. Près d'un panneau, le bouton de morsure devient « lire »."
-        : pad.on
-        ? "Stick ou croix pour marcher, X pour aboyer, A pour mordre ou lire un panneau, Y pour flairer la piste d'Alice. Start pour la pause."
-        : "Flèches ou ZQSD pour marcher, X pour aboyer, C pour mordre ou lire un panneau, R pour flairer la piste d'Alice. P pour la pause, M pour le son." },
+        : "[walk] pour marcher, [bark] pour aboyer, [bite] pour mordre ou lire un panneau, [sniff] pour flairer la piste d'Alice. [pause] pour la pause, [mute] pour le son." },
     { who: 'info', text: touchMode
         ? "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Près des traces de pattes, le bouton de morsure devient « gratter » : un trésor est peut-être enterré !"
-        : "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Près des traces de pattes, " + (pad.on ? 'A' : 'C') +
-          " sert à gratter le sol : un trésor est peut-être enterré !" },
+        : "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Près des traces de pattes, [bite] sert à gratter le sol : un trésor est peut-être enterré !" },
   ].concat(balade() ? [
     { who: 'info', text: touchMode
         ? "En balade, près d'un chien, le bouton de morsure devient « jouer » : vous deviendrez copains ! Aboyer appelle les chiens."
-        : "En balade, près d'un chien, " + (pad.on ? 'A' : 'C') + " sert à jouer avec lui : vous deviendrez copains ! X appelle les chiens." },
+        : "En balade, près d'un chien, [bite] sert à jouer avec lui : vous deviendrez copains ! [bark] appelle les chiens." },
   ] : []);
 }
 
@@ -2834,7 +2831,7 @@ function drawBadges() {
     text(got ? BADGE_INFO[id][0] : '?', x + cw / 2, y + 144, 30, got ? '#3A1E12' : '#FFF7E6', 'center', 700);
     para(BADGE_INFO[id][1], x + cw / 2, y + 180, 22, got ? '#6B5A4E' : '#E9DCC8', 'center', 500, cw - 50, 28);
   });
-  text(touchMode ? 'Touche l’écran pour revenir' : pad.on ? 'B pour revenir' : 'Échap pour revenir', GW / 2, GH - 30, 26, '#E9DCC8', 'center', 500);
+  text(touchMode ? 'Touche l’écran pour revenir' : '[back] pour revenir', GW / 2, GH - 30, 26, '#E9DCC8', 'center', 500);
 }
 
 /* ------------------------------------------------------------------ écran d'options */
@@ -2859,7 +2856,7 @@ function optRows() {
       note: opts.weather === 'auto' ? 'Une averse de temps en temps, de la neige en décembre' : '' },
   ];
   if (canFullscreen()) rows.push({ id: 'fs', label: 'Plein écran', value: fsElement() ? 'Oui' : 'Non',
-    note: performance.now() - fsRefusedAt < FS_REFUSED_NOTE ? 'Ce navigateur le refuse à la manette : touche F, ou un clic ici' : '' });
+    note: performance.now() - fsRefusedAt < FS_REFUSED_NOTE ? 'Ce navigateur le refuse à la manette : [fs] au clavier, ou un clic ici' : '' });
   rows.push({ id: 'back', label: 'Retour' });
   return rows;
 }
@@ -2943,8 +2940,8 @@ function drawOptions() {
       if (r.values) { arrowHead(vx - 8, cy, 1, 11, ink); arrowHead(vx - 58 - w, cy, -1, 11, ink); }
     }
   });
-  text(touchMode ? 'Touche une ligne pour la régler (à gauche : moins, à droite : plus)' : pad.on ? 'Croix : choisir et régler · B : retour' :
-    '↑ ↓ : choisir · ← → : régler · Échap : retour', GW / 2, GH - 34, 26, '#E9DCC8', 'center', 500);
+  text(touchMode ? 'Touche une ligne pour la régler (à gauche : moins, à droite : plus)' : pad.on ? '[arrows] : choisir et régler · [back] : retour' :
+    '[updown] : choisir · [leftright] : régler · [back] : retour', GW / 2, GH - 34, 26, '#E9DCC8', 'center', 500);
 }
 
 /* ------------------------------------------------------------------ mise à jour */
@@ -3610,7 +3607,7 @@ function actionBubble(label, bx, by) {
   ctx.textAlign = 'center'; ctx.lineWidth = 5; ctx.strokeStyle = '#3A1E12'; ctx.lineJoin = 'round';
   // même écart touche-mot que pour « Gratter », l'ensemble restant centré
   const shift = (ctx.measureText('Gratter').width - ctx.measureText(label).width) / 2;
-  if (!touchMode) drawSpr(pad.on ? 'hud/pad' : 'hud/key', pad.on ? 0 : 1, bx - 40 - 34 + shift, by - 4, { sc: 0.9 });
+  if (!touchMode) drawSpr(...glyphFrame('bite'), bx - 40 - 34 + shift, by - 4, { sc: 0.9 });
   const tx = touchMode ? bx : bx + 26;
   ctx.strokeText(label, tx, by + 26); ctx.fillStyle = '#FFF7E6'; ctx.fillText(label, tx, by + 26);
 }
@@ -3625,7 +3622,74 @@ function text(str, x, y, size, color, align, weight) {
   ctx.textAlign = align || 'left';
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = color;
-  ctx.fillText(str, x, y);
+  if (String(str).includes('[')) drawRich(str, x, y, size); else ctx.fillText(str, x, y);
+}
+
+/* Icônes de touches et de boutons dans les textes : « [ok] pour valider ». Le mot entre crochets est une action de
+   GLYPH, montrée avec l'appareil du moment : la touche au clavier, le bouton à la manette (sans bouton : la touche).
+   « a/b » : deux icônes au choix, séparées par une barre ; « a+b » : côte à côte. Noms : MAP.keys, MAP.pads. */
+const GLYPH = {
+  bite: ['C', 'A'], bark: ['X', 'X'], sniff: ['R', 'Y'], ok: ['Entrée', 'A'], back: ['Échap', 'B'],
+  pause: ['P', 'Start'], mute: ['M', 'Select'], fs: ['F', null], walk: ['arrows/zqsd', 'stick/croix'],
+  updown: ['up+down', 'croix'], leftright: ['left+right', 'croix'], arrows: ['arrows', 'croix'],
+};
+const ICON = { h: 1.25, gap: 0.12, bar: 0.12 };   // en taille de texte : hauteur, écart entre deux icônes, autour de « / »
+// [[[sprite, image], …] par choix, …]
+function glyphIcons(name) {
+  const g = GLYPH[name];
+  if (!g) return null;
+  const usePad = pad.on && g[1], spr = usePad ? 'hud/pad' : 'hud/key', names = usePad ? MAP.pads : MAP.keys;
+  return (usePad ? g[1] : g[0]).split('/').map(alt => alt.split('+').map(k => [spr, names.indexOf(k)]));
+}
+const glyphFrame = name => glyphIcons(name)[0][0];
+// morceaux d'un texte : chaînes, et icônes à la place des [action] connues
+function richParts(str) {
+  const out = [], re = /\[([a-z]+)\]/g;
+  let last = 0, m;
+  while ((m = re.exec(str))) {
+    const ic = glyphIcons(m[1]);
+    if (!ic) continue;
+    if (m.index > last) out.push(str.slice(last, m.index));
+    out.push(ic); last = re.lastIndex;
+  }
+  if (last < str.length) out.push(str.slice(last));
+  return out;
+}
+const iconScale = size => size * ICON.h / ATLAS['hud/key'].f[1][3];
+// largeur d'un morceau ; draw : le dessine aussi, à partir de x (ctx.textAlign à gauche)
+function richPart(p, x, y, size, draw) {
+  if (typeof p === 'string') { if (draw) ctx.fillText(p, x, y); return ctx.measureText(p).width; }
+  const sc = iconScale(size), mid = y - size * 0.34;
+  let cx = x;
+  p.forEach((alt, j) => {
+    if (j) { cx += size * ICON.bar; if (draw) ctx.fillText('/', cx, y); cx += ctx.measureText('/').width + size * ICON.bar; }
+    alt.forEach(([s, i], k) => {
+      const f = ATLAS[s].f[i];
+      if (k) cx += size * ICON.gap;
+      if (draw) ctx.drawImage(atlas, f[0], f[1], f[2], f[3], cx, mid - f[3] * sc / 2, f[2] * sc, f[3] * sc);
+      cx += f[2] * sc;
+    });
+  });
+  return cx - x;
+}
+function richWidth(str, size) { return richParts(str).reduce((w, p) => w + richPart(p, 0, 0, size, false), 0); }
+// ctx.font et ctx.fillStyle déjà réglés ; ctx.textAlign respecté
+function drawRich(str, x, y, size) {
+  const parts = richParts(str), al = ctx.textAlign;
+  const w = parts.reduce((v, p) => v + richPart(p, 0, 0, size, false), 0);
+  let cx = al === 'center' ? x - w / 2 : al === 'right' ? x - w : x;
+  ctx.textAlign = 'left';
+  for (const p of parts) cx += richPart(p, cx, y, size, true);
+  ctx.textAlign = al;
+}
+// taille de la police courante (pour mesurer les icônes en passant à la ligne)
+function fontSize() { const m = /(\d+(?:\.\d+)?)px/.exec(ctx.font || ''); return m ? +m[1] : 26; }
+// texte d'une réplique tapé jusqu'au caractère n, sans couper une [action] en deux
+function typed(str, n) {
+  const cut = str.slice(0, n), o = cut.lastIndexOf('[');
+  if (o < 0 || cut.indexOf(']', o) >= 0) return cut;
+  const e = str.indexOf(']', o);
+  return e < 0 ? cut : str.slice(0, e + 1);
 }
 function outlined(str, x, y, size, fill, align) {
   ctx.font = `700 ${size}px Fredoka, "Trebuchet MS", sans-serif`;
@@ -3638,11 +3702,11 @@ function outlined(str, x, y, size, fill, align) {
   ctx.fillText(str, x, y);
 }
 function wrap(str, maxW) {
-  const words = str.split(' '), lines = [];
+  const words = str.split(' '), lines = [], size = str.includes('[') && fontSize();
   let cur = '';
   for (const w of words) {
     const t = cur ? cur + ' ' + w : w;
-    if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t;
+    if ((size ? richWidth(t, size) : ctx.measureText(t).width) > maxW && cur) { lines.push(cur); cur = w; } else cur = t;
   }
   if (cur) lines.push(cur);
   return lines;
@@ -3742,17 +3806,16 @@ function drawHUD() {
     text('II', PAUSE_BTN.x + PAUSE_BTN.w / 2, PAUSE_BTN.y + 48, 40, '#FFF7E6', 'center', 700);
     if (canFullscreen() && !fsElement()) drawFsButton();
   } else {
-    // touches : R flaire, X aboie, C mord (ou gratte, lit…) ; manette : Y, X, A
-    [['sniff', 10, 10, 3], ['bark', 0, 0, 2], ['bite', ACTION_FRAME[biteAction()], 1, 0]].forEach(([k, fr, key, pk], i) => {
+    // touches : R flaire, X aboie, C mord (ou gratte, lit…) ; manette : Y, X, A (GLYPH)
+    [['sniff', 10], ['bark', 0], ['bite', ACTION_FRAME[biteAction()]]].forEach(([k, fr], i) => {
       const x = GW - 340 + i * 110, y = GH - 190;
       drawSpr('hud/action', fr, x, y);
       const cd = cdOf(k);
       if (cd > 0) drawSpr('hud/cooldown', Math.floor((1 - cd) * 8), x, y);
-      if (pad.on) drawSpr('hud/pad', pk, x, y + 86);
-      else drawSpr('hud/key', key, x, y + 86);
+      drawSpr(...glyphFrame(k), x, y + 86);
     });
   }
-  if (muted) text(pad.on ? 'son coupé (Select)' : 'son coupé (M)', 40, GH - 30, 28, '#FFF7E6', 'left', 500);
+  if (muted) text('son coupé · [mute] pour le remettre', 40, GH - 30, 28, '#FFF7E6', 'left', 500);
   drawBanner();
 }
 
@@ -3787,7 +3850,7 @@ function drawDialog() {
     text(who.name, bx + 150 + nw / 2, by + 12, 26, '#FFFFFF', 'center', 600);
   }
   ctx.font = `500 ${fs}px Fredoka, "Trebuchet MS", sans-serif`;
-  const lines = wrap(L.text.slice(0, Math.floor(dialog.c)), bx + bw - 70 - tx);
+  const lines = wrap(typed(L.text, Math.floor(dialog.c)), bx + bw - 70 - tx);
   lines.slice(0, maxL).forEach((ln, i) => text(ln, tx, by + 84 + (fs - 38) * 0.6 + i * lh, fs, '#3A1E12', 'left', 500));
   if (dialog.c >= L.text.length) drawSpr('hud/next', Math.floor(performance.now() / 120), bx + bw - 70, by + bh - 62);
 }
@@ -3807,7 +3870,7 @@ function drawTitle() {
   const r = recordLine(menu.items[menu.sel].mode);
   const last = menuBox(menu.items.length - 1);
   if (r) outlined(r, GW / 2, last.y + last.h + 46, 30, '#F2C14E');
-  if (!touchMode) text(pad.on ? 'Croix pour choisir, A pour valider' : '↑ ↓ pour choisir, Entrée pour valider',
+  if (!touchMode) text('[updown] pour choisir, [ok] pour valider',
     GW / 2, GH - 28, 26, '#E9DCC8', 'center', 500);
 }
 /* entrées du menu : l'entrée choisie est claire, encadrée de deux os qui la montrent */
@@ -3860,7 +3923,7 @@ function drawEnd(win) {
   const r = recordLine(gameMode);
   if (r) text(r, GW / 2, py + ph - 96, 26, '#6B5A4E', 'center', 500);
   if (overT > 1 && Math.floor(overT * 1.6) % 2 === 0)
-    text(touchMode ? 'Touche l’écran pour revenir au menu' : pad.on ? 'A pour revenir au menu' : 'Entrée pour revenir au menu',
+    text(touchMode ? 'Touche l’écran pour revenir au menu' : '[ok] pour revenir au menu',
       GW / 2, py + ph - 40, 34, '#D7332B', 'center', 600);
 }
 
@@ -3888,8 +3951,8 @@ function render() {
       outlined('Pause', GW / 2, 104, 68, '#FFF7E6');
       drawPauseMap();
       if (menu) drawMenu(titleT);
-      text((touchMode ? 'Touche un bouton, ou ailleurs pour reprendre' : pad.on ? 'Croix et A pour choisir, Start pour reprendre' :
-        '← → et Entrée pour choisir, P pour reprendre, F pour le plein écran') + ' · mode ' + gameMode +
+      text((touchMode ? 'Touche un bouton, ou ailleurs pour reprendre' :
+        '[leftright] et [ok] pour choisir, [pause] pour reprendre' + (pad.on ? '' : ', [fs] pour le plein écran')) + ' · mode ' + gameMode +
         (facile() ? ' facile' : '') + ' · partie enregistrée', GW / 2, GH - 34, 26, '#E9DCC8', 'center', 500);
       if (touchMode && canFullscreen() && !fsElement()) drawFsButton();
     }
