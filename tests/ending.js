@@ -1,7 +1,14 @@
 // la fin : après les retrouvailles, Tecky et Alice rentrent à la niche (lucioles, berceuse, iris, « Fin »), puis la victoire
 const base = require('fs').readFileSync(__dirname + '/sim.js', 'utf8').split("setTimeout(() => {")[0];
 function main() {
-  run('audioOn(); pressed.ok = true'); step(1); advanceDialog();
+  // fondu entre les écrans : l'écran titre s'assombrit, puis la partie se découvre (le jeu, lui, a changé tout de suite)
+  run('audioOn(); pressed.ok = true'); step(1);
+  ok(run('state') === 'dialog' && run('!!fade.snap') && run('fade.a') < 0.2, 'nouvelle aventure : l’écran titre s’assombrit');
+  step(Math.ceil(60 * run('FADE.swap') / 2) + 1);
+  ok(!run('fade.snap') && run('fade.a') > 0.8, 'au noir, puis…');
+  step(Math.ceil(60 * run('FADE.swap') / 2) + 1);
+  ok(run('fade.a') === 0, '… la partie se découvre');
+  advanceDialog();
   const finale = () => {
     run('cars = []; clues = [true, true, true]; revealAlice(); P.x = alice.x - 100; P.y = alice.y + 10; P.mode = "free"; P.inv = 9;');
     step(2); advanceDialog();
@@ -36,7 +43,7 @@ function main() {
   run('Music.step = Music.song.total - 1;'); step(30);
   ok(run('Music.on') && run('Music.step') < 20, 'la berceuse boucle');
   step(40); run('pressed.ok = true'); step(1);
-  ok(run('state') === 'title' && run('Music.cur') === 'main', 'retour au menu : le thème');
+  ok(run('state') === 'title' && run('Music.cur') === 'main' && run('!!fade.snap'), 'retour au menu (en fondu) : le thème');
   // un bouton passe la scène (pas tout de suite : l'appui qui ferme le dialogue ne doit pas la sauter)
   run('newGame("aventure", true);'); advanceDialog(); finale();
   run('pressed.ok = true'); step(1);

@@ -963,7 +963,7 @@ function arrowTarget() {
   return items.find(it => it.n === CLUES[k]) || alice;
 }
 
-let state = 'loading';          // loading | title | play | dialog | pause | over | win
+let state = 'loading';          // loading | title | play | dialog | pause | options | badges | over | ending | win
 let P, alice, dogs, hens, cars, butterflies, items, fxs, pops, rings, digs, decor, camX = 0, camY = 0, shake = 0;
 let dusts = [], leaves = [], leafTrees = null, clouds = [], sun = 0, saveT = 0;
 // fled : chiens mis en fuite (aventure) ou devenus copains (balade)
@@ -2653,6 +2653,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) { sav
 
 /* rested : reprise après un KO (Tecky a fait une sieste : vie pleine) */
 function loadGame(s, rested) {
+  transition();
   gameDiff = s.diff === 'facile' ? 'facile' : 'normal';
   reset();
   gameMode = s.mode === 'balade' ? 'balade' : 'aventure';
@@ -2683,6 +2684,7 @@ function loadGame(s, rested) {
        { who: 'tecky', face: 0, text: CLUE_NEXT[nextClue()] }], () => showArrow());
 }
 function newGame(mode, again) {
+  transition();
   const cx = camX, cy = camY;
   gameDiff = opts.diff;
   reset();
@@ -2777,6 +2779,7 @@ function chooseMenu(id) {
   else toTitle();
 }
 function toTitle() {
+  transition();
   reset();
   gameMode = 'aventure';
   camX = clamp(MAP.title[0] - VW / 2, 0, MAP.w * TS - VW);   // caméra de l'écran titre : la place du village
@@ -3550,10 +3553,27 @@ function drawEnding() {
   if (tf > 0) { ctx.globalAlpha = Math.min(1, tf / 0.6); outlined('Fin', GW / 2, GH / 2 + 45, 130, '#FFF7E6'); ctx.globalAlpha = 1; }
 }
 
-/* Fondu de l'écran entier : fadeFrom(d) part du noir et s'éclaircit en d secondes (au-dessus de tout). */
-let fade = { a: 0, d: 1 };
-function fadeFrom(d) { fade = { a: 1, d }; }
+/* Fondus de l'écran entier, au-dessus de tout. fadeFrom(d) : part du noir et s'éclaircit en d secondes. transition() :
+   change d'écran en passant par le noir (titre <-> jeu, Continuer, Recommencer) ; le jeu change d'écran tout de suite,
+   une image de l'écran qu'on quitte (snap) s'assombrit pendant la première moitié, puis le nouveau se découvre. */
+const FADE = { swap: 0.7 };
+let fade = { a: 0, d: 1, snap: null, t: 0 };
+function fadeFrom(d) { fade = { a: 1, d, snap: null, t: 0 }; }
+function transition() {
+  let snap = null;
+  try {
+    snap = document.createElement('canvas'); snap.width = cv.width; snap.height = cv.height;
+    snap.getContext('2d').drawImage(cv, 0, 0);
+  } catch (e) { snap = null; }
+  fade = snap ? { a: 0, d: FADE.swap, snap, t: 0 } : { a: 1, d: FADE.swap / 2, snap: null, t: 0 };
+}
+function updateFade(dt) {
+  if (!fade.snap) { fade.a = Math.max(0, fade.a - dt / fade.d); return; }
+  fade.t += dt; fade.a = Math.min(1, fade.t / (fade.d / 2));
+  if (fade.a >= 1) fadeFrom(fade.d / 2);                     // au noir : on découvre le nouvel écran
+}
 function drawFade() {
+  if (fade.snap) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(fade.snap, 0, 0); }
   if (fade.a <= 0) return;
   guiTransform();
   ctx.fillStyle = `rgba(0, 0, 0, ${fade.a})`; ctx.fillRect(0, 0, GW, GH);
@@ -3569,7 +3589,7 @@ function updateCamera(dt) {
 }
 
 function update(dt) {
-  fade.a = Math.max(0, fade.a - dt / fade.d);
+  updateFade(dt);
   if (pressed.mute) { muted = !muted; Music.refresh(); }
   updateToasts(dt);
   if (state === 'title' || state === 'play' || state === 'dialog') updateWeather(dt);
