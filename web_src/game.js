@@ -1050,7 +1050,8 @@ function introLines() {
 /* ------------------------------------------------------------------ combat */
 function addFx(key, x, y, opt) { fxs.push(Object.assign({ key, x, y, t: 0, fps: 14 }, opt || {})); }
 function addPop(text, x, y) { pops.push({ text, x, y, t: 0 }); }
-function addWordPop(text, x, y) { pops.push({ text, x, y, t: 0, word: true }); }
+// who : qui le dit (voix des bulles : un personnage, 'tecky', 'info' = narrateur, ou un animal, 'train')
+function addWordPop(text, x, y, who) { pops.push({ text, x, y, t: 0, word: true, who }); }
 let barkImmuneSeen = false, pendingSay = null;
 
 /* Aboiement : touche dans un cône devant celui qui aboie (cos de l'angle > cos), jusqu'à range (pattes à pattes).
@@ -1121,7 +1122,7 @@ function doBark() {
     if (balade()) { callDog(d); continue; }
     if (d.T.barkImmune) {
       // aucun effet : il se fâche et répond
-      if (!pops.some(p => p.word && p.dog === d)) { addWordPop('Même pas peur !', d.x, d.y - 130); pops[pops.length - 1].dog = d; }
+      if (!pops.some(p => p.word && p.dog === d)) { addWordPop('Même pas peur !', d.x, d.y - 130, 'doberman'); pops[pops.length - 1].dog = d; }
       d.mode = 'chase';
       d.barkCd = Math.min(d.barkCd, 0.4);
       if (!barkImmuneSeen) {
@@ -1155,7 +1156,7 @@ function doBark() {
   }
   {                                    // Pompon n'aime pas qu'on lui aboie dessus
     const dx = pompon.x - P.x, dy = pompon.y - P.y, l = Math.hypot(dx, dy);
-    if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) { pompon.hissT = 0.8; addWordPop('Pfff !', pompon.x, pompon.y - 70); }
+    if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) { pompon.hissT = 0.8; addWordPop('Pfff !', pompon.x, pompon.y - 70, 'cat'); }
   }
 }
 
@@ -1217,7 +1218,7 @@ function updateVehicle(v, dt) {
     P.mode = 'hurt'; P.setAnim('hurt'); P.timer = 0.25; P.bumpT = 1;
     shake = 0.15;
     for (let k = 0; k < 4; k++) addDust(P.x + (Math.random() - 0.5) * 30, P.y - 2, (Math.random() - 0.5) * 90, -10 - Math.random() * 20, 6 + Math.random() * 3);
-    addWordPop('Ouf !', P.x, P.y - 130);
+    addWordPop('Ouf !', P.x, P.y - 130, 'tecky');
     rumble('bump');
   }
   for (const d of dogs) if (d.mode !== 'ko' && inLane(v, d.y) && Math.abs(d.x - v.x) < half + 6 && v.v > 30) {
@@ -1426,7 +1427,7 @@ function updateCritter(c, dt) {
           c.scored = true; score += CRITTER.pts;
           addPop('+' + CRITTER.pts, c.x - 20, c.y - 60);
         }
-        addWordPop(c.kind === 'squirrel' ? 'Tchic tchic !' : 'Pfff !', c.x, c.y - 90);
+        addWordPop(c.kind === 'squirrel' ? 'Tchic tchic !' : 'Pfff !', c.x, c.y - 90, c.kind === 'squirrel' ? 'squirrel' : 'cat');
         return;
       }
       c.x += dx / l * Math.min(l, CRITTER.run * dt); c.y += dy / l * Math.min(l, CRITTER.run * dt);
@@ -1452,7 +1453,7 @@ function updateCritter(c, dt) {
         critAnim(c, alive && dP < CRITTER.hiss ? 'hiss' : 'idle');
       } else if (alive && dP < 260 && (c.chatT -= dt) <= 0) {
         c.chatT = 2.5 + Math.random() * 2;
-        addWordPop('Tchic !', c.x, c.y - c.h - 40);
+        addWordPop('Tchic !', c.x, c.y - c.h - 40, 'squirrel');
       }
       c.timer = dP > CRITTER.back ? c.timer + dt : 0;
       if (c.timer > CRITTER.wait) { c.mode = 'down'; c.timer = 0; critAnim(c, species(c.kind) === 'cat' ? 'jump' : 'climb'); }
@@ -1526,7 +1527,7 @@ function scareDuck(d) {
     if (onScreen(d.x, d.y)) SFX.flap();
   }
   if (!d.scored) { d.scored = true; score += DUCK.pts; addPop('+' + DUCK.pts, d.x - 20, d.y - 60); }
-  addWordPop('Coin coin !', d.x, d.y - 80);
+  addWordPop('Coin coin !', d.x, d.y - 80, 'duck');
   if (onScreen(d.x, d.y)) SFX.quack(d.kind === 'duck' ? 0.95 : 1.1);
 }
 function swimTo(d, tx, ty, sp, dt) {  // avance vers (tx, ty) sans quitter l'eau ; faux si la rive barre le chemin
@@ -1649,7 +1650,7 @@ function keepHen(h) {
     h.penned = true; h.hx = h.x; h.hy = h.y;
     score += FARM.perHen;
     addPop('+' + FARM.perHen, h.x - 20, h.y - 70);
-    addWordPop(hensLeft() ? 'Rentrée !' : 'Toutes rentrées !', h.x, h.y - 100);
+    addWordPop(hensLeft() ? 'Rentrée !' : 'Toutes rentrées !', h.x, h.y - 100, 'info');
     SFX.cluck();
     if (!hensLeft()) { farmer.waveT = 2.5; npcShout(farmer, farm.state === 'asked' ? 'Bravo ! Viens me voir !' : 'Oh ! Mes poules !'); }
   }
@@ -1743,7 +1744,7 @@ function nearNpc() {
   for (const n of npcList()) { const d = dist(P.x, P.y, n.x, n.y); if (d < bd) { best = n; bd = d; } }
   return best;
 }
-function npcShout(n, text) { addWordPop(text, n.x, n.y - markY(n) + 10); if (n.woof) SFX.yip(n.pitch); else SFX.hey(n.pitch); }
+function npcShout(n, text) { addWordPop(text, n.x, n.y - markY(n) + 10, n.kind); if (n.woof) SFX.yip(n.pitch); else SFX.hey(n.pitch); }
 function talkTo(n) { P.dir = dirFrom(n.x - P.x, n.y - P.y, P.dir); P.setAnim('idle'); NPC_DO[n.kind].talk(); }
 function updateNpcs() {               // petit salut quand Tecky arrive près d'un personnage
   const near = nearNpc();
@@ -1763,7 +1764,7 @@ function updateLetters(dt) {
     if (l.got || dist(P.x, P.y, l.x, l.y + 20) > POST.pick || P.mode === 'ko') continue;
     l.got = true;
     const n = letters.length - lettersLeft();
-    addWordPop(post.state === 'new' ? 'Une lettre ?' : 'Une lettre ! (' + n + '/' + letters.length + ')', l.x, l.y - 70);
+    addWordPop(post.state === 'new' ? 'Une lettre ?' : 'Une lettre ! (' + n + '/' + letters.length + ')', l.x, l.y - 70, 'tecky');
     SFX.pick();
     if (!lettersLeft()) { postman.waveT = 2.5; if (post.state === 'asked') npcShout(postman, 'Mes lettres ! Viens vite !'); }
   }
@@ -1841,8 +1842,8 @@ function updatePompon(dt) {
       if (dP < 300) c.dir = P.x < c.x ? 'left' : 'right';
       if (dP < CAT.find && rose.state === 'asked') {
         if (c.mode === 'lost') say([{ who: 'tecky', face: 2, text: "Te voilà, Pompon ! Viens, on rentre chez Mamie Rose." }]);
-        c.mode = 'follow'; addWordPop('Miaou !', c.x, c.y - 70);
-      } else if (dP < 260 && (c.meowT -= dt) <= 0) { c.meowT = rnd(CAT.meow); addWordPop(c.mode === 'lost' ? 'Miaou ?' : 'Miaou !', c.x, c.y - 70); }
+        c.mode = 'follow'; addWordPop('Miaou !', c.x, c.y - 70, 'cat');
+      } else if (dP < 260 && (c.meowT -= dt) <= 0) { c.meowT = rnd(CAT.meow); addWordPop(c.mode === 'lost' ? 'Miaou ?' : 'Miaou !', c.x, c.y - 70, 'cat'); }
       return;
     case 'follow': {
       const [tx, ty] = crumbAt(CAT.gap);
@@ -1851,7 +1852,7 @@ function updatePompon(dt) {
         c.mode = 'home'; neighbor.cheerT = 3;
         npcShout(neighbor, 'Pompon ! Viens me voir, Tecky !');
         saveGame();
-      } else if (dP > CAT.lost) { c.mode = 'wait'; addWordPop('Miaou !', c.x, c.y - 70); }
+      } else if (dP > CAT.lost) { c.mode = 'wait'; addWordPop('Miaou !', c.x, c.y - 70, 'cat'); }
       return;
     }
     case 'home':                       // près de Mamie Rose, à côté de ses chaussons
@@ -1954,7 +1955,7 @@ function checkGoal(b) {
   b.inNet = true; b.vx *= 0.4; b.vy *= 0.4;
   score += LEON.perBall;
   addPop('+' + LEON.perBall, b.x - 20, b.y - 80);
-  addWordPop(ballsLeft() ? 'But !' : 'Tous dans le filet !', b.x, b.y - 110);
+  addWordPop(ballsLeft() ? 'But !' : 'Tous dans le filet !', b.x, b.y - 110, 'info');
   if (!muted) SFX.goal();
   if (!ballsLeft()) { leon.cheerT = 3; npcShout(leon, fete.state === 'asked' ? 'Bravo, champion ! Viens me voir !' : 'Mes ballons !'); }
 }
@@ -2043,7 +2044,7 @@ function dropToy(word) {
   t.carried = false; t.cd = NESTOR.regrab;
   t.x = P.x + MOUTH[P.dir][0] * 0.8; t.y = P.y + (P.dir === 'up' ? -28 : P.dir === 'down' ? 26 : 6);
   if (blockedFeet(t.x, t.y, 8)) { t.x = P.x; t.y = P.y; }     // jamais dans l'eau ni dans un obstacle
-  if (word) addWordPop(word, P.x, P.y - 120);
+  if (word) addWordPop(word, P.x, P.y - 120, 'tecky');
 }
 function giveToy(t) {
   const [hx, hy] = NESTOR.home[toys.filter(o => o.home).length];
@@ -2067,7 +2068,7 @@ function updateToys(dt) {
   for (const t of toys) {
     if (t.home || t.cd > 0 || dist(P.x, P.y, t.x, t.y) > NESTOR.pick) continue;
     t.carried = true;
-    addWordPop(nest.state === 'new' ? 'Un jouet ?' : TOY_NAMES[t.i], P.x, P.y - 120);
+    addWordPop(nest.state === 'new' ? 'Un jouet ?' : TOY_NAMES[t.i], P.x, P.y - 120, 'tecky');
     SFX.pick();
     break;
   }
@@ -2175,7 +2176,7 @@ function updateTrain(dt) {
     return;
   }
   const who = trainBlocker();
-  if (who === P && !T.rang) { T.rang = true; addWordPop('Tut-tut !', P.x, P.y - 120); if (!muted) SFX.bell(); }
+  if (who === P && !T.rang) { T.rang = true; addWordPop('Tut-tut !', P.x, P.y - 120, 'train'); if (!muted) SFX.bell(); }
   if (!who) T.rang = false;
   const target = who ? 0 : TRAIN.spd;
   T.v = T.v < target ? Math.min(target, T.v + TRAIN.acc * dt) : Math.max(target, T.v - TRAIN.brake * dt);
@@ -2195,7 +2196,7 @@ function barkAtTrain(vx, vy) {
   });
   if (!near) return;
   train.whistleT = TRAIN.whistleCd;
-  addWordPop('Tchou-tchou !', train.x, trainY() - 140);
+  addWordPop('Tchou-tchou !', train.x, trainY() - 140, 'train');
   trainPuff(4);
   if (!muted) SFX.whistle();
   if (!train.scored) { train.scored = true; score += TRAIN.score; addPop('+' + TRAIN.score, train.x - 20, trainY() - 110); }
@@ -2322,7 +2323,7 @@ function scentPath(x, y, len) {
 }
 function startSniff() {
   P.mode = 'sniff'; P.timer = SNIFF.time; P.cdSniff = SNIFF.cd; P.cdSniffMax = SNIFF.cd; P.setAnim('idle');
-  addWordPop('Snif snif…', P.x, P.y - 130);
+  addWordPop('Snif snif…', P.x, P.y - 130, 'tecky');
   SFX.sniff();
 }
 function layTrail() {
@@ -2344,7 +2345,7 @@ function layTrail() {
       }
       acc += seg - u;
     }
-  } else addWordPop('Hmm…', P.x, P.y - 160);
+  } else addWordPop('Hmm…', P.x, P.y - 160, 'tecky');
   for (const g of digs) if (!g.dug && dist(P.x, P.y, g.x, g.y) < SNIFF.treasure) addFx('fx/pickup', g.x, g.y - 24, { fps: 9 });
 }
 function updateTrail(dt) {
@@ -3549,7 +3550,7 @@ function updateDog(d, dt) {
         if (!d.friend) {
           d.friend = true; fled++; score += T.score;
           addPop('+' + T.score, d.x - 20, d.y - 120);
-          addWordPop('Copain !', d.x, d.y - 150);
+          addWordPop('Copain !', d.x, d.y - 150, 'dog');
           SFX.treasure();
         }
       }
@@ -3623,7 +3624,7 @@ function updateDog(d, dt) {
   if (d.mode === 'chase') {
     if (balade() && (d.wait = (d.wait || 0) + dt) > PLAY.patience) { d.mode = 'return'; d.calm = PLAY.calm; d.wait = 0; }
     else if (!alive || l > T.aggro * 1.5 || homeD > 750) {
-      if (calmP && l < T.aggro * 1.5) addWordPop('Grrr…', d.x, d.y - 100);     // il n'ose pas le suivre plus loin
+      if (calmP && l < T.aggro * 1.5) addWordPop('Grrr…', d.x, d.y - 100, 'dog');     // il n'ose pas le suivre plus loin
       d.mode = 'return';
     }
     else if (balade() && l < T.range) {
@@ -3715,7 +3716,7 @@ function updateItems(dt) {
         if (P.hpMax < MAX_BONES * 2) {
           P.hpMax += 2;
           P.boneFx = 1;
-          addWordPop('Un os de plus !', P.x, P.y - 140);
+          addWordPop('Un os de plus !', P.x, P.y - 140, 'tecky');
           SFX.treasure();
         } else SFX.heal();
         P.hp = Math.min(P.hpMax, P.hp + 2);
@@ -3737,7 +3738,7 @@ function updateItems(dt) {
         score += e.pts;
         addPop('+' + e.pts, it.x - 24, it.y - 60);
         addFx('fx/pickup', it.x, it.y, { fps: 14 });
-        if (e.gold) { SFX.treasure(); addWordPop('Os doré !', P.x, P.y - 150); }
+        if (e.gold) { SFX.treasure(); addWordPop('Os doré !', P.x, P.y - 150, 'tecky'); }
         else if (it.pop === undefined) SFX.pick();
       }
       items.splice(i, 1);
@@ -4176,7 +4177,7 @@ function spokenText(text, device) {
   return text.replace(/\[([a-z]+)\]/g, (m, n, at) => {
     const w = GLYPH_SPOKEN[n] ? GLYPH_SPOKEN[n][k] : m;
     return at === 0 || /[.!?]\s+$/.test(text.slice(0, at)) ? w[0].toUpperCase() + w.slice(1) : w;
-  }).replace(/\((\d+) \/ (\d+)\)/g, '$1 sur $2');
+  }).replace(/\((\d+) ?\/ ?(\d+)\)/g, '$1 sur $2');
 }
 function voiceKey(who, spoken) {
   let h = 0x811c9dc5;                                    // FNV-1a 32 bits

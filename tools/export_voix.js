@@ -1,8 +1,10 @@
 // Export des répliques pour la synthèse vocale : node tools/export_voix.js (après python3 pack_web.py).
 // Fait tourner le jeu sans affichage (comme les tests) et appelle chaque dialogue dans tous ses cas (comptes, appareil,
 // mode, état des quêtes) en notant les répliques ; puis relève dans game.js les répliques écrites en dur, pour n'en
-// oublier aucune. Une ligne par fichier audio à générer : voix/repliques.csv et voix/repliques.json (nom du fichier
-// = voiceKey() du jeu, texte à dire = spokenText()). --check : dit seulement si ces fichiers sont à jour.
+// oublier aucune ; de même pour les petites bulles (exclamations des personnages, de Tecky, cris des animaux : le 4e
+// argument d'addWordPop dit qui parle). Une ligne par fichier audio à générer : voix/repliques.csv et
+// voix/repliques.json (nom du fichier = voiceKey() du jeu, texte à dire = spokenText()). --check : dit seulement si ces
+// fichiers sont à jour.
 const fs = require('fs'), path = require('path'), { execSync } = require('child_process');
 const ROOT = path.join(__dirname, '..'), OUT = path.join(ROOT, 'voix');
 const GAME = path.join(ROOT, 'tests', 'game_full.js'), SRC = path.join(ROOT, 'web_src', 'game.js');
@@ -22,20 +24,34 @@ const VOICES = {
   neighbor: ['Mamie Rose', 'la voisine : douce vieille dame'],
   leon: ['Léon', 'le cariste du port : sympathique, voix forte'],
   nestor: ['Nestor', 'le vieux chien du gardien : voix lente, grave et bonhomme'],
+  doberman: ['Le doberman', 'gros chien bourru, voix grave'],
+  dog: ['Les chiens du coin', 'chiens grognons (« Grrr… »), ou contents en balade (« Copain ! »)'],
+  cat: ['Les chats', 'Pompon et les chats du coin : miaulements, feulements'],
+  squirrel: ['Les écureuils', 'petite voix aiguë et rapide'],
+  duck: ['Les canards', 'coin-coin'],
+  train: ['Titine', 'la petite locomotive du port : voix joyeuse et chantante'],
 };
 // répliques dont le texte est calculé (pas une chaîne écrite en dur) : chacune doit être produite ci-dessous ; si ce
 // nombre change, une réplique calculée a été ajoutée ou retirée dans game.js : adapter ce fichier
 const DYNAMIC_SITES = 17;
+const DYNAMIC_POPS = 8;          // de même pour les bulles (texte calculé : comptes, noms des jouets, mot passé à dropToy)
+const NPC_VARS = { farmer: 'farmer', postman: 'postman', neighbor: 'neighbor', leon: 'leon', nestor: 'nestor' };
 // répliques relevées dans le code (écrites en dur, dites en cours de route) : contexte selon la fonction qui les dit
 const WHERE = { doBark: 'Premier aboiement sur le doberman', updatePompon: 'Tecky retrouve Pompon',
   updateTunnel: 'Premier terrier', updatePlayer: 'Devant la cachette d’Alice, avant les trois indices' };
+// bulles relevées dans le code : contexte selon la fonction qui les affiche
+const WHERE_POP = { doBark: 'Tecky aboie', updatePompon: 'Pompon', updateDog: 'Les chiens du coin',
+  updateCritter: 'Écureuils et chats', scareDuck: 'Les canards s’envolent', updateTrain: 'Titine s’arrête devant Tecky',
+  barkAtTrain: 'Tecky aboie vers Titine', updateVehicle: 'Une voiture bouscule Tecky', startSniff: 'Tecky flaire la piste',
+  layTrail: 'Tecky flaire (pas de piste par ici)', updateItems: 'Tecky ramasse un objet', checkGoal: 'Un ballon entre dans le filet' };
 const TONE = { 2: 'joyeux', 3: 'inquiet' };               // expression du portrait (face) : le ton à donner
 const AUDIO = /\.(mp3|ogg|wav)$/;
 
 function main() {
   run('audioOn(); pressed.ok = true'); step(1); advanceDialog();
   run('dogs = []; cars = []; var REC = [], CTX = "";' +
-      'say = function (lines) { for (const l of lines) REC.push({ who: l.who, face: l.face || 0, text: l.text, ctx: CTX }); };');
+      'say = function (lines) { for (const l of lines) REC.push({ who: l.who, face: l.face || 0, text: l.text, ctx: CTX }); };' +
+      'addWordPop = function (text, x, y, who) { if (who) REC.push({ who, face: 0, text, ctx: CTX, pop: true }); };');
   const ask = (ctx, code) => run(`CTX = ${JSON.stringify(ctx)}; ${code}`);
   // introduction (aventure, balade ; au clavier ou à la manette, ou au toucher), nouvelle partie, reprise
   for (const mode of ['aventure', 'balade']) for (const touch of [false, true])
@@ -77,6 +93,35 @@ function main() {
     ask('Nestor : rappel', `nest.state = "asked"; toys.forEach((t, i) => t.home = i >= ${n}); talkNestor();`);
   ask('Nestor : merci', 'toys.forEach(t => t.home = true); talkNestor();');
   ask('Nestor : après la quête', 'nest.state = "done"; talkNestor();');
+  // bulles calculées : saluts des personnages (selon l'état de leur quête), comptes, jouets de Nestor
+  const greet = (who, ctx, setup) => ask(`${VOICES[who][0]} : ${ctx}`, setup + ` NPC_DO[${JSON.stringify(NPC_VARS[who])}].greet();`);
+  greet('farmer', 'Tecky arrive', 'farm.state = "new";');
+  for (let n = 5; n >= 0; n--) greet('farmer', 'Tecky arrive', `farm.state = "asked"; questHens().forEach((h, i) => h.penned = i >= ${n});`);
+  greet('farmer', 'Tecky arrive', 'farm.state = "done";');
+  greet('postman', 'Tecky arrive', 'post.state = "new";');
+  for (let n = 5; n >= 0; n--) greet('postman', 'Tecky arrive', `post.state = "asked"; letters.forEach((l, i) => l.got = i >= ${n});`);
+  greet('postman', 'Tecky arrive', 'post.state = "done";');
+  greet('neighbor', 'Tecky arrive', 'rose.state = "new";');
+  for (const m of ['lost', 'follow', 'home']) greet('neighbor', 'Tecky arrive', `rose.state = "asked"; pompon.mode = "${m}";`);
+  greet('neighbor', 'Tecky arrive', 'rose.state = "done";');
+  greet('leon', 'Tecky arrive', 'fete.state = "new";');
+  for (let n = 5; n >= 0; n--) greet('leon', 'Tecky arrive', `fete.state = "asked"; balls.forEach((b, i) => b.inNet = i >= ${n});`);
+  greet('leon', 'Tecky arrive', 'fete.state = "done";');
+  greet('nestor', 'Tecky arrive', 'nest.state = "new";');
+  for (let n = 3; n >= 0; n--) greet('nestor', 'Tecky arrive', `nest.state = "asked"; toys.forEach((t, i) => t.home = i >= ${n});`);
+  greet('nestor', 'Tecky arrive', 'nest.state = "done";');
+  // les poules rentrent, Tecky ramasse les lettres, les ballons entrent dans le filet (avant ou après la demande)
+  for (const st of ['new', 'asked']) {
+    ask('Une poule rentre dans l’enclos', `farm.state = "${st}"; questHens().forEach(h => h.penned = false); var R = penRect();` +
+        ' questHens().forEach(h => { h.x = (R[0] + R[2]) / 2; h.y = (R[1] + R[3]) / 2; keepHen(h); });');
+    ask('Tecky ramasse une lettre', `post.state = "${st}"; letters.forEach(l => l.got = false); P.mode = "free";` +
+        ' letters.forEach(l => { P.x = l.x; P.y = l.y + 20; updateLetters(0); });');
+    ask('Un ballon entre dans le filet', `fete.state = "${st}"; balls.forEach(b => { b.inNet = false; b.x = MAP.goal[0]; b.y = MAP.goal[1] - 20; checkGoal(b); });`);
+    ask('Tecky prend un jouet de Nestor', `nest.state = "${st}"; toys.forEach(t => { t.home = t.carried = false; t.cd = 0; });` +
+        ' toys.forEach(t => { P.x = t.x; P.y = t.y; updateToys(0); const c = carried(); if (c) c.carried = false; t.cd = 9; });');
+    ask('Tecky rapporte un jouet à Nestor', `nest.state = "${st}"; toys.forEach(t => { t.home = t.carried = false; }); toys.forEach(t => giveToy(t));`);
+  }
+  ask('Tecky aboie avec un jouet dans la gueule', 'toys[0].home = false; toys[0].carried = true; dropToy("Oups !");');
   ask('Retrouvailles avec Alice', 'finale();');
   const rec = JSON.parse(run('JSON.stringify(REC)'));
 
@@ -93,8 +138,47 @@ function main() {
     rec.push({ who: m[1], face: +m[2] || 0, text, ctx: WHERE[name] || (name ? 'dans ' + name + '()' : '') });
   }
   const sites = (src.match(/who: '\w+'/g) || []).length - literal;
-  const warn = sites !== DYNAMIC_SITES
-    ? `ATTENTION : ${sites} répliques calculées dans game.js (${DYNAMIC_SITES} attendues) : en produire les cas dans tools/export_voix.js` : '';
+  // bulles écrites en dur : addWordPop('texte', x, y, 'qui') et npcShout(personnage, 'texte'), une alternative
+  // (cond ? 'a' : 'b') comprise ; les autres (texte calculé) sont produites plus haut
+  const lits = e => [...e.replace(/[!=]==\s*'(?:[^'\\]|\\.)*'/g, '').matchAll(/'((?:[^'\\]|\\.)*)'/g)]   // (sans les comparaisons)
+    .map(x => x[1].replace(/\\'/g, "'"));
+  const args = str => {        // arguments d'un appel, découpés aux virgules de premier niveau (hors des chaînes)
+    const out = []; let depth = 0, cur = '', q = null;
+    for (let i = 0; i < str.length; i++) {
+      const ch = str[i];
+      if (q) { cur += ch; if (ch === '\\') cur += str[++i]; else if (ch === q) q = null; continue; }
+      if (ch === "'" || ch === '"' || ch === '`') { q = ch; cur += ch; continue; }
+      if (ch === ',' && depth === 0) { out.push(cur.trim()); cur = ''; continue; }
+      if ('([{'.includes(ch)) depth++;
+      if (')]}'.includes(ch)) { if (depth === 0) break; depth--; }
+      cur += ch;
+    }
+    return out.concat(cur.trim());
+  };
+  let pops = 0;
+  for (const mm of src.matchAll(/(addWordPop|npcShout)\(/g)) {
+    if (/function $/.test(src.slice(mm.index - 9, mm.index))) continue;
+    const a = args(src.slice(mm.index + mm[0].length, mm.index + 400));
+    const [textArg, whoList] = mm[1] === 'npcShout' ? [a[1], [NPC_VARS[a[0]]]] : [a[0], a[3] ? lits(a[3]).length ? lits(a[3]) : [] : []];
+    if (!whoList.length || !whoList[0]) continue;                      // personne ne le dit (« ! » du chien de berger)
+    if (/[+`]|^\w+$|\[/.test(textArg.replace(/'(?:[^'\\]|\\.)*'/g, "''"))) {          // calculé
+      pops++;
+      if (process.argv.includes('--sites')) console.log('bulle calculée, ligne', src.slice(0, mm.index).split('\n').length);
+      continue;
+    }
+    const texts = lits(textArg);
+    texts.forEach((text, i) => {
+      const who = whoList[i] || whoList[0];
+      if (rec.some(r => r.who === who && r.text === text)) return;
+      const fn = [...src.slice(0, mm.index).matchAll(/function (\w+)/g)].pop();
+      rec.push({ who, face: 0, text, ctx: WHERE_POP[fn && fn[1]] || (fn ? 'dans ' + fn[1] + '()' : ''), pop: true });
+    });
+  }
+  const warn = [sites !== DYNAMIC_SITES
+    ? `ATTENTION : ${sites} répliques calculées dans game.js (${DYNAMIC_SITES} attendues) : en produire les cas dans tools/export_voix.js` : '',
+  pops !== DYNAMIC_POPS
+    ? `ATTENTION : ${pops} bulles calculées dans game.js (${DYNAMIC_POPS} attendues) : en produire les cas dans tools/export_voix.js` : '']
+    .filter(Boolean);
 
   // une ligne par texte à dire : les [action] en mots, au clavier et à la manette s'il y en a
   const rows = [];
@@ -105,15 +189,15 @@ function main() {
       const file = run(`voiceKey(${JSON.stringify(r.who)}, ${JSON.stringify(spoken)})`);
       const same = rows.find(x => x.fichier === file);
       if (same) { if (r.ctx && !same.contexte.includes(r.ctx)) same.contexte += ' ; ' + r.ctx; continue; }
-      rows.push({ fichier: file, personnage: (VOICES[r.who] || [r.who])[0], who: r.who, appareil: dev, ton: TONE[r.face] || '',
-        texte: spoken, affiche: r.text, contexte: r.ctx });
+      rows.push({ fichier: file, personnage: (VOICES[r.who] || [r.who])[0], who: r.who, type: r.pop ? 'bulle' : 'dialogue',
+        appareil: dev, ton: TONE[r.face] || '', texte: spoken, affiche: r.text, contexte: r.ctx });
     }
   }
   const order = Object.keys(VOICES);
-  rows.sort((a, b) => order.indexOf(a.who) - order.indexOf(b.who));
+  rows.sort((a, b) => order.indexOf(a.who) - order.indexOf(b.who) || (a.type === 'bulle') - (b.type === 'bulle'));
   const cell = v => /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
-  const csv = ['fichier;personnage;appareil;ton;texte à dire;contexte']
-    .concat(rows.map(r => [r.fichier, r.personnage, r.appareil, r.ton, r.texte, r.contexte].map(cell).join(';'))).join('\n') + '\n';
+  const csv = ['fichier;personnage;type;appareil;ton;texte à dire;contexte']
+    .concat(rows.map(r => [r.fichier, r.personnage, r.type, r.appareil, r.ton, r.texte, r.contexte].map(cell).join(';'))).join('\n') + '\n';
   const json = JSON.stringify({
     voix: Object.fromEntries(order.map(w => [w, { nom: VOICES[w][0], voix: VOICES[w][1] }])),
     repliques: rows.map(({ who, ...r }) => Object.assign({ voix: who }, r)),
@@ -121,13 +205,14 @@ function main() {
 
   const csvPath = path.join(OUT, 'repliques.csv'), jsonPath = path.join(OUT, 'repliques.json');
   const per = order.map(w => VOICES[w][0] + ' ' + rows.filter(r => r.who === w).length).join(', ');
+  const nPop = rows.filter(r => r.type === 'bulle').length;
   if (CHECK) {
     const same = fs.existsSync(csvPath) && fs.readFileSync(csvPath, 'utf8') === csv;
-    console.log(same ? `voix : ${rows.length} répliques, à jour` : 'voix : À METTRE À JOUR (node tools/export_voix.js)');
+    console.log(same ? `voix : ${rows.length} répliques et bulles, à jour` : 'voix : À METTRE À JOUR (node tools/export_voix.js)');
   } else {
     fs.mkdirSync(OUT, { recursive: true });
     fs.writeFileSync(csvPath, csv); fs.writeFileSync(jsonPath, json);
-    console.log(`voix : ${rows.length} répliques à enregistrer (${per}) -> voix/repliques.csv, voix/repliques.json`);
+    console.log(`voix : ${rows.length} à enregistrer, dont ${nPop} bulles (${per}) -> voix/repliques.csv, voix/repliques.json`);
   }
   // fichiers audio déjà déposés dans voix/ : présents, manquants, en trop (répliques modifiées ou retirées)
   const have = fs.existsSync(OUT) ? fs.readdirSync(OUT).filter(f => AUDIO.test(f)) : [];
@@ -135,6 +220,6 @@ function main() {
   const extra = have.filter(f => !names.has(f.replace(AUDIO, '')));
   if (have.length) console.log(`voix : ${rows.filter(r => got.has(r.fichier)).length} / ${rows.length} enregistrées` +
     (extra.length ? ` ; en trop (à supprimer) : ${extra.join(', ')}` : ''));
-  if (warn) console.log('PB ' + warn);
+  for (const w of warn) console.log('PB ' + w);
 }
 eval(base + 'setTimeout(' + main.toString() + ', 50);');
