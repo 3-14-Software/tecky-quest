@@ -11,7 +11,6 @@ Prépare la version web de Tecky Quest :
 import json
 import math
 import os
-import random
 
 from PIL import Image
 
@@ -119,7 +118,18 @@ def edge_decor(g, keep):
 
 
 EDGE = edge_decor(corner_grid(), edge_keep())
+# variantes des tuiles : herbe (brins, fleurs, cailloux) et terrains pleins (35 % des tuiles), choisies d'après la
+# position de la tuile (hash3) : modifier un coin de la carte ne change rien ailleurs, et l'éditeur fait le même choix
+GRASS_VARIANTS = [1, 1, 1, 1, 2, 2, 3, 4]
 FULL_VARIANTS = {"dirt": [9, 10], "road": [11, 12], "paving": [13], "concrete": [14, 15]}
+
+
+def hash3(a, b, c):
+    """Nombre pseudo-aléatoire dans [0, 1[ tiré de trois entiers : même calcul que hash3 de game.js et editeur/sol.js."""
+    M = 0xFFFFFFFF
+    h = ((a * 374761393) ^ (b * 668265263) ^ (c * 1274126177)) & M
+    h = ((h ^ (h >> 13)) * 1103515245) & M
+    return (h ^ (h >> 16)) / 4294967296
 OV = {n: i for i, (n, _) in enumerate(tiles.OVERLAYS)}
 
 
@@ -128,36 +138,36 @@ COMPOSITES = []       # tuiles composées (trois terrains : bout de chemin sur l
 
 def build_map():
     g = corner_grid()
-    rnd = random.Random(7)
     ground = []
     COMPOSITES.clear()
 
-    def pick(cs, rnd):                                # tuile pour ses quatre coins (NO, NE, SO, SE)
+    def pick(cs, tx, ty):                             # tuile (tx, ty) d'après ses quatre coins (NO, NE, SO, SE)
         up, lo, bits = tiles.resolve(cs)
         if tiles.needs_composite(cs):
             if tuple(cs) not in COMPOSITES:
                 COMPOSITES.append(tuple(cs))
             return tiles.COMPOSITE_BASE + COMPOSITES.index(tuple(cs))
         if up == "grass":
-            return rnd.choice([1, 1, 1, 1, 2, 2, 3, 4])
+            return GRASS_VARIANTS[int(hash3(tx, ty, 1) * len(GRASS_VARIANTS))]
         idx = tiles.tile_index(up, bits, "grass" if bits == 15 else lo)
-        if bits == 15 and up in FULL_VARIANTS and rnd.random() < 0.35:
-            idx = rnd.choice(FULL_VARIANTS[up])
+        v = FULL_VARIANTS.get(up)
+        if bits == 15 and v and hash3(tx, ty, 2) < 0.35:
+            idx = v[int(hash3(tx, ty, 3) * len(v))]
         return idx
     for ty in range(MH):
         for tx in range(MW):
-            ground.append(pick([g[ty][tx], g[ty][tx + 1], g[ty + 1][tx], g[ty + 1][tx + 1]], rnd))
+            ground.append(pick([g[ty][tx], g[ty][tx + 1], g[ty + 1][tx], g[ty + 1][tx + 1]], tx, ty))
     # marquages de la route (sur sa deuxième rangée)
     for tx in range(MW):
         ground[(ROAD + 1) * MW + tx] = 5 if tx % 2 == 0 else tiles.tile_index("road", 15)
     # sol de la lisière : lisiere.RING tuiles autour de la carte, qui prolongent celles du bord (coins ramenés sur le
     # bord : la route, ses marquages, la rivière et le ruisseau continuent tout droit)
-    R, rr, ring = lisiere.RING, random.Random(13), []
+    R, ring = lisiere.RING, []
     at = lambda x, y: g[min(max(y, 0), MH)][min(max(x, 0), MW)]
     for ty in range(-R, MH + R):
         for tx in range(-R, MW + R):
             if not (0 <= tx < MW and 0 <= ty < MH):
-                idx = pick([at(tx, ty), at(tx + 1, ty), at(tx, ty + 1), at(tx + 1, ty + 1)], rr)
+                idx = pick([at(tx, ty), at(tx + 1, ty), at(tx, ty + 1), at(tx + 1, ty + 1)], tx, ty)
                 ring.append([tx, ty, (5 if tx % 2 == 0 else tiles.tile_index("road", 15)) if ty == ROAD + 1 else idx])
     for tx in CROSSINGS:                              # passages piétons (dont chemin de la ferme et du pont)
         for ty in (ROAD, ROAD + 1, ROAD + 2):

@@ -3258,10 +3258,10 @@ const STORE = {
 };
 // v : version de la sauvegarde ; v2 = la carte agrandie (96 x 64) : une partie de l'ancienne carte ne se reprend pas
 const SAVE_V = 2;
-function loadSave() { const s = STORE.get(SAVE_KEY); return s && s.v === SAVE_V ? s : null; }
+function loadSave() { const s = !essai && STORE.get(SAVE_KEY); return s && s.v === SAVE_V ? s : null; }
 const r1 = v => Math.round(v * 10) / 10;
 function saveGame() {
-  if (!P || P.mode === 'ko' || P.hp <= 0 || alice.found) return;
+  if (essai || !P || P.mode === 'ko' || P.hp <= 0 || alice.found) return;
   STORE.set(SAVE_KEY, {
     v: SAVE_V, mode: gameMode, diff: gameDiff, at: Date.now(), x: r1(P.x), y: r1(P.y), dir: P.dir, hp: P.hp, hpMax: P.hpMax,
     score, time: r1(timePlayed), fled, treasures, clues: clues.slice(), sniffed: aliceSniffed, immune: barkImmuneSeen,
@@ -3423,6 +3423,18 @@ function chooseMenu(id) {
   else if (id === 'unpause') { state = 'play'; Music.refresh(); }
   else if (id === 'quit') { saveGame(); toTitle(); }
   else toTitle();
+}
+/* Essai depuis l'éditeur de carte : editeur.py sert web/essai.html, le jeu précédé de const ESSAI = [x, y, mode]
+   (en tuiles). La partie commence là, sans écran titre ni intro, et rien n'est sauvegardé. */
+const essai = typeof ESSAI !== 'undefined' ? ESSAI : null;
+function startEssai() {
+  gameDiff = opts.diff;
+  reset();
+  gameMode = essai[2] === 'balade' ? 'balade' : 'aventure';
+  Object.assign(P, { x: essai[0] * TS, y: essai[1] * TS });
+  camX = camClampX(P.x - VW / 2); camY = camClampY(P.y - VH / 2);
+  state = 'play';
+  Music.start();
 }
 function toTitle() {
   transition();
@@ -4894,7 +4906,7 @@ function start() {
     buildGround();
     buildClouds();
     loadBadges();
-    toTitle();
+    if (essai) startEssai(); else toTitle();
   });
   requestAnimationFrame(frame);
 }

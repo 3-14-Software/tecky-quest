@@ -284,6 +284,12 @@ def needs_composite(corners):
     return len(kinds) >= 3 or (len(kinds) == 2 and (kinds[1], kinds[0]) not in PAIRS)
 
 
+def composite_seed(corners):
+    """Graine de la texture d'une tuile composée : la même pour les mêmes coins, où que la tuile soit dans la carte
+    (l'éditeur de carte la redessine à la demande, comme dans le jeu)."""
+    return sum(PRIORITY.index(c) * 9 ** i for i, c in enumerate(corners)) % 97
+
+
 def composite(corners, scale, seed=0):
     """Tuile composée (voir needs_composite) : le terrain le plus bas en fond, puis chaque terrain par-dessus le
     précédent, dans l'ordre de PRIORITY, sur les coins où il est ou bien un terrain plus haut (il passe ainsi sous les
@@ -474,7 +480,7 @@ def _tileset(scale, composites=()):
         sheet.paste(overlay(scale, i), (i * ts, OVERLAY_ROW * ts))
     for i, cs in enumerate(composites):
         j = COMPOSITE_BASE + i
-        sheet.paste(composite(cs, scale, seed=i), ((j % COLS) * ts, (j // COLS) * ts))
+        sheet.paste(composite(cs, scale, seed=composite_seed(cs)), ((j % COLS) * ts, (j // COLS) * ts))
     return sheet
 
 
