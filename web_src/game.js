@@ -4027,6 +4027,7 @@ function drawTitle() {
   if (r) outlined(r, GW / 2, last.y + last.h + 46, 30, '#F2C14E');
   if (!touchMode) text('[updown] pour choisir, [ok] pour valider',
     GW / 2, GH - 28, 26, '#E9DCC8', 'center', 500);
+  text(VERSION, GW - 28, GH - 28, 20, 'rgba(233, 220, 200, 0.75)', 'right', 500);   // date de construction (pack_web)
 }
 /* entrées du menu : l'entrée choisie est claire, encadrée de deux os qui la montrent */
 function drawMenu(t) {

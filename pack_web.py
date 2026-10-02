@@ -494,6 +494,17 @@ def collect():
     return out
 
 
+MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre",
+          "décembre"]
+
+
+def version():
+    """Version affichée sur l'écran titre : la date de construction (pour savoir si un téléphone a la dernière)."""
+    import datetime
+    d = datetime.datetime.now()
+    return f"version du {d.day}{'er' if d.day == 1 else ''} {MONTHS[d.month - 1]} {d.year}, {d.hour} h {d.minute:02d}"
+
+
 def pack(entries, width=2048, pad=2):
     frames = []
     for key, ims, o, trim in entries:
@@ -564,7 +575,8 @@ def main():
                                            for k, st in music.STYLES.items()}, separators=(",", ":")) + ";\n"
             "const WINSONG = " + json.dumps(dict(zip(("total", "ev"), music.fanfare_events()), bpm=music.FANFARE_BPM, bar=music.STEPS_PER_BAR), separators=(",", ":")) + ";\n"
             "const LOSESONG = " + json.dumps(dict(zip(("total", "ev"), music.defeat_events()), bpm=music.DEFEAT_BPM, bar=music.STEPS_PER_BAR), separators=(",", ":")) + ";\n"
-            "const MAP = " + json.dumps(m, separators=(",", ":"), ensure_ascii=False) + ";\n")
+            "const MAP = " + json.dumps(m, separators=(",", ":"), ensure_ascii=False) + ";\n"
+            "const VERSION = " + json.dumps(version(), ensure_ascii=False) + ";\n")
     html = tpl.replace("/*__DATA__*/", data).replace("/*__GAME__*/", game)
     open(os.path.join(WEB, "index.html"), "w", encoding="utf-8").write(html)
     print("atlas", atlas.size, "| html", len(html) // 1024, "Ko")

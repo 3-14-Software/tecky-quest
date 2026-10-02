@@ -73,6 +73,7 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   par `glowSpot()`). `sun` suit `sunGoal()` = nombre d'indices (4 aux retrouvailles) : il est donc restauré avec la
   sauvegarde. 0 plein jour, 1 fin d'après-midi, 2 coucher orangé (lampadaires allumés passé `SUN.lamp`, `lampsOn()`),
   3 nuit bleutée et plus sombre (lampadaires plus forts), 4 la nuit avec la lumière des retrouvailles.
+- Version (`VERSION`, écrite par `version()` de pack_web : la date de construction) en bas à droite de l'écran titre.
 - Menus (`menu`, `openTitleMenu()`, `openOverMenu()`, `openPauseMenu()`, `menuInput()`, `menuHit()`, `chooseMenu()`) :
   écran titre (Continuer s'il y a une sauvegarde, Nouvelle aventure, Nouvelle balade, Options, Badges, records du
   mode choisi),

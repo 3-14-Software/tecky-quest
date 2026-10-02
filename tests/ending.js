@@ -44,6 +44,9 @@ function main() {
   ok(run('Music.on') && run('Music.step') < 20, 'la berceuse boucle');
   step(40); run('pressed.ok = true'); step(1);
   ok(run('state') === 'title' && run('Music.cur') === 'main' && run('!!fade.snap'), 'retour au menu (en fondu) : le thème');
+  run('var said = []; ctx.fillText = s => said.push(String(s)); render(); delete ctx.fillText;');
+  ok(/^version du \d+(er)? \S+ 20\d\d, \d+ h \d\d$/.test(run('VERSION')) && run('said.includes(VERSION)'),
+     'écran titre : la version (' + run('VERSION') + ')');
   // un bouton passe la scène (pas tout de suite : l'appui qui ferme le dialogue ne doit pas la sauter)
   run('newGame("aventure", true);'); advanceDialog(); finale();
   run('pressed.ok = true'); step(1);
