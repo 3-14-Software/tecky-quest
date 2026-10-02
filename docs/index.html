@@ -943,7 +943,7 @@ let clues = [false, false, false];
 function nextClue() { const i = clues.indexOf(false); return i < 0 ? 3 : i; }
 /* La flèche n'est pas permanente : elle s'affiche quelques secondes quand Tecky apprend où chercher (intro, indice),
    et revient brièvement s'il tourne en rond trop longtemps sans trouver la suite. */
-const ARROW = { show: 8, nudgeAfter: 45, nudge: 5 };
+const ARROW = { show: 12, nudgeAfter: 45, nudge: 8, sc: 1.3 };   // s ; sc : taille de la flèche et de son icône
 let arrowT = 0, stuckT = 0;
 function showArrow(t) { arrowT = Math.max(arrowT, t || ARROW.show); stuckT = 0; }
 function arrowTarget() {
@@ -3745,11 +3745,11 @@ function drawHUD() {
     const tg = arrowTarget();
     const ax = (tg.x - camX) * GW / VW, ay = (tg.y - 50 - camY) * GH / VH;
     if (ax < 0 || ax > GW || ay < 0 || ay > GH) {
-      const ang = Math.atan2(ay - GH / 2, ax - GW / 2), a = Math.min(1, arrowT);
-      const px = clamp(ax, 80, GW - 80), py = clamp(ay, 300, GH - 80);
-      drawSpr('hud/arrow', Math.floor(performance.now() / 150), px, py, { angle: ang, alpha: a });
+      const ang = Math.atan2(ay - GH / 2, ax - GW / 2), a = Math.min(1, arrowT), sc = ARROW.sc, m = 80 * sc;
+      const px = clamp(ax, m, GW - m), py = clamp(ay, 300, GH - m);
+      drawSpr('hud/arrow', Math.floor(performance.now() / 150), px, py, { angle: ang, alpha: a, sc });
       // centre de la pastille : 6 px derrière le centre de rotation ; icône 0..2 = indices, 3 = Alice
-      drawSpr('hud/arrow_icon', tg === alice ? 3 : nextClue(), px - Math.cos(ang) * 6, py - Math.sin(ang) * 6, { alpha: a });
+      drawSpr('hud/arrow_icon', tg === alice ? 3 : nextClue(), px - Math.cos(ang) * 6 * sc, py - Math.sin(ang) * 6 * sc, { alpha: a, sc });
     }
   }
 

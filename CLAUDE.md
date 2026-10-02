@@ -124,7 +124,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - Trésors (médaille 100, jouet pouic-pouic 50, balle 20) : jamais dans l'eau — `check_placement.js` le vérifie.
 - Indices (`CLUES` : barrette à la ferme, chaussure dans la forêt, doudou au parc) : chacun dit où chercher ensuite
   (`CLUE_NEXT`), la flèche du HUD vise le prochain indice puis Alice (`arrowTarget()`). Elle n'est **pas permanente** :
-  `showArrow()` l'affiche 8 s après l'intro et chaque indice, et en rappel après 45 s sans progrès (`ARROW`). Seule la
+  `showArrow()` l'affiche 12 s après l'intro et chaque indice, et 8 s en rappel après 45 s sans progrès (`ARROW` ; taille
+  `ARROW.sc`). Seule la
   pointe (`hud/arrow`) tourne ; l'icône de la cible (`hud/arrow_icon` : 3 indices + tête d'Alice) reste droite. Alice est **cachée**
   (`alice.hidden`, ni dessinée ni solide) jusqu'aux trois ; devant la cabane trop tôt, Tecky dit qu'il manque des indices.
 - Circulation (`cars`, `VEHICLE`, `TRAFFIC`, données `MAP.traffic` : voies, passages `CROSSINGS`) : à droite sur la
