@@ -76,7 +76,9 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   écran titre (Continuer s'il y a une sauvegarde, Nouvelle aventure, Nouvelle balade, Options, Badges, records du
   mode choisi),
   pause (sous la carte, en ligne : Reprendre, Options, Menu principal ; P reprend directement) et KO (Reprendre la
-  partie, Recommencer, Menu principal). La victoire ramène au menu (`toTitle()`).
+  partie, Recommencer, Menu principal). La victoire ramène au menu (`toTitle()`). Pause automatique (`autoPause()`,
+  `onLeave()`) quand la fenêtre perd le focus, que l'onglet est caché ou que la manette dont on jouait est débranchée
+  (`pad.n`) ; seulement en jeu (un dialogue attend déjà). Tests : `save.js`, `pad.js`.
 - Options (`opts`, `OPT_DEF`, `OPTIONS_KEY`, lues avant le premier `resize()` ; écran `state === 'options'`, `optRows()`,
   `changeOpt()`, `optionsTap()`, retour vers `optReturn`) : volumes Musique (`Music.level()`) et Bruitages
   (`sfxGain()`, ambiance comprise), Difficulté (facile : `gameDiff`, `facile()`, 5 os, morsures moitié moins fortes,

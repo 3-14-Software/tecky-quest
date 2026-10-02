@@ -94,5 +94,13 @@ function main() {
   run('pressed.ok = true'); step(1); advanceDialog();
   run('toTitle();');
   ok(ids() === 'continue,aventure,balade,options,badges', 'stockage refusé : la partie reste continuable pendant la session');
+  // la fenêtre perd le focus, l'onglet est caché : pause automatique (jamais pendant un dialogue)
+  run('menu.sel = 0; pressed.ok = true'); step(1); advanceDialog();
+  run('held.left = true; onLeave();');
+  ok(run('state') === 'pause' && run('menu.items[0].id') === 'unpause' && !run('held.left'), 'fenêtre quittée : pause, touches relâchées');
+  run('pressed.pause = true'); step(1);
+  ok(run('state') === 'play', 'on reprend comme d’habitude');
+  run('say([{ who: "tecky", text: "Ouaf !" }]); onLeave();');
+  ok(run('state') === 'dialog', 'pendant un dialogue : rien ne change, il attend déjà');
 }
 eval(base + 'setTimeout(' + main.toString() + ', 50);');

@@ -73,7 +73,10 @@ function main() {
   run('pad.on = false; used = []; drawSpr = function (k, f) { used.push(k + ":" + f); return ds0.apply(this, arguments); }; drawHUD(); drawSpr = ds0;');
   ok(run('used.includes("hud/key:0") && used.includes("hud/key:1")'), 'au clavier : touches X et C');
   // manette débranchée en cours de jeu
+  run('pad.on = true;');
+  ok(run('state') === 'play', 'en jeu, à la manette');
   run('navigator.getGamepads = () => [null, null];'); pstep(5);
   ok(run('pad.vx === 0 && pad.vy === 0'), 'manette débranchée : plus de mouvement fantôme');
+  ok(run('state') === 'pause', 'et la partie se met en pause');
 }
 eval(base + 'setTimeout(' + main.toString() + ', 50);');

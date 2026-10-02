@@ -21,7 +21,7 @@ Le village et la cour de la ferme sont des zones calmes : aucun chien n'y embêt
 
 Deux modes au choix sur l'écran titre : **aventure** (les chiens mordent) et **balade**, pour les plus petits (personne ne
 se fait mal : les chiens attendent qu'on joue avec eux et deviennent des copains). La partie est enregistrée automatiquement dans le navigateur
-(« Continuer » sur l'écran titre, « Reprendre la partie » après un KO) et les records (meilleur score, meilleur temps)
+(« Continuer » sur l'écran titre, « Reprendre la partie » après un KO), elle se met en pause toute seule quand on quitte la fenêtre ou que la manette se débranche, et les records (meilleur score, meilleur temps)
 sont gardés pour chaque mode. Les options (menu principal ou pause) règlent la musique, les bruitages, la difficulté
 (« facile » : plus d'os, morsures moins fortes, moins de chiens), la taille du texte, l'image, les vibrations (manette et téléphone), la météo et le plein écran.
 

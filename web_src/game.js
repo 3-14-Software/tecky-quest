@@ -547,7 +547,14 @@ addEventListener('keyup', e => {
   const a = actionOfKey(e);
   if (a) held[a] = false;
 });
-addEventListener('blur', () => { for (const k in held) held[k] = false; });
+/* Pause automatique : une partie ne continue jamais sans personne devant (fenêtre qui perd le focus, onglet caché,
+   manette débranchée). Seulement en cours de jeu : un dialogue attend déjà le joueur. */
+function autoPause() {
+  if (state !== 'play') return;
+  state = 'pause'; openPauseMenu(); Music.refresh();
+}
+function onLeave() { for (const k in held) held[k] = false; autoPause(); }
+addEventListener('blur', onLeave);
 
 /* manette (API Gamepad, disposition « standard ») : stick gauche ou croix pour marcher et choisir dans les menus,
    A = mordre (ou parler, lire, gratter…) et valider, X ou B = aboyer, Y = flairer, Start = pause, Select = son.
@@ -555,13 +562,14 @@ addEventListener('blur', () => { for (const k in held) held[k] = false; });
 const PAD_MAP = { 0: ['bite', 'ok'], 1: ['bark'], 2: ['bark'], 3: ['sniff'], 8: ['mute'], 9: ['pause'],
                   12: ['up'], 13: ['down'], 14: ['left'], 15: ['right'] };
 const PAD_DEAD = 0.25;
-const pad = { on: false, vx: 0, vy: 0, prev: {}, sx: 0, sy: 0 };
+const pad = { on: false, vx: 0, vy: 0, prev: {}, sx: 0, sy: 0, n: 0 };
 function pollPad() {
   const list = (navigator.getGamepads && navigator.getGamepads()) || [];
   const down = {};
-  let vx = 0, vy = 0, used = false;
+  let vx = 0, vy = 0, used = false, n = 0;
   for (const gp of list) {
     if (!gp || gp.connected === false) continue;
+    n++;
     const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0;
     if (Math.hypot(ax, ay) > PAD_DEAD) { vx = ax; vy = ay; }
     gp.buttons.forEach((b, i) => { if (b && (b.pressed || b.value > 0.5)) down[i] = true; });
@@ -575,7 +583,8 @@ function pollPad() {
   const sx = horiz && Math.abs(vx) > 0.6 ? Math.sign(vx) : 0, sy = !horiz && Math.abs(vy) > 0.6 ? Math.sign(vy) : 0;
   if (sy && sy !== pad.sy && !cy) pressed[sy < 0 ? 'up' : 'down'] = true;
   if (sx && sx !== pad.sx && !cx) pressed[sx < 0 ? 'left' : 'right'] = true;
-  pad.sx = sx; pad.sy = sy; pad.prev = down; pad.vx = vx; pad.vy = vy;
+  if (n < pad.n && pad.on) autoPause();             // la manette dont on jouait est débranchée
+  pad.n = n; pad.sx = sx; pad.sy = sy; pad.prev = down; pad.vx = vx; pad.vy = vy;
   if (used) audioOn();
   if (used || Math.hypot(vx, vy) > 0.5) { pad.on = true; touchMode = false; }
 }
@@ -2596,7 +2605,7 @@ function saveGame() {
 const safeToSave = () => P.mode !== 'ko' && (balade() || !dogs.some(d => ENGAGED.has(d.mode) && dist(P.x, P.y, d.x, d.y) < 600));
 function saveOnLeave() { if (P && (state === 'play' || state === 'dialog' || state === 'pause' || (state === 'options' && optReturn === 'pause'))) saveGame(); }
 addEventListener('pagehide', saveOnLeave);
-document.addEventListener('visibilitychange', () => { if (document.hidden) saveOnLeave(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { saveOnLeave(); onLeave(); } });
 
 /* rested : reprise après un KO (Tecky a fait une sieste : vie pleine) */
 function loadGame(s, rested) {
