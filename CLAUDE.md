@@ -146,7 +146,7 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   (`farm`, `hens`). Test : `farm.js`.
 - Le facteur Marcel (`post`, `POST`, `letters`, `MAP.postman`, `MAP.letters`) : cinq lettres emportées par le vent autour
   du village ; Tecky les ramasse en passant dessus (même avant d'avoir parlé à Marcel), compteur dans le HUD pendant
-  la quête, puis Marcel remercie (os + points). La voisine Mamie Rose (`rose`, `neighbor`, `MAP.neighbor`) a perdu son
+  la quête (comme Pompon), puis Marcel remercie (os + points). La voisine Mamie Rose (`rose`, `neighbor`, `MAP.neighbor`) a perdu son
   chat Pompon (`pompon`, `CAT`, `MAP.pompon`, sprites `cat_white/*`) : une fois la quête acceptée, Pompon suit Tecky
   sur ses traces (`crumbAt()`, terriers compris), s'assoit s'il est trop loin (`wait`), et reste chez elle une fois
   arrivé (`home`) ; elle remercie (saucisse + points). Un aboiement le fait feuler. Sauvegardés (`post`, `letters`,
@@ -165,6 +165,9 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   `arrowTarget()`, le long d'un vrai chemin à pied (`buildWalkGrid()` : grille de 16 px rasterisée une fois,
   `fieldTo()` : distances par parcours en largeur, `scentPath()`). Les trésors proches scintillent. Test : `tunnel.js`.
 - Os dorés : le trésor sous les traces de pattes (`item/goldbone`, `treasures` = os dorés trouvés, HUD et victoire).
+- Compteurs du HUD (`hudCounters()`) : empilés à droite sous le score, dans l'ordre os dorés (dès le premier trouvé),
+  poules rentrées, lettres retrouvées, Pompon retrouvé (0/1, 1/1) ; ceux des quêtes seulement pendant la quête
+  (`asked`). Au toucher, les boutons Pause (`PAUSE_BTN`) et Plein écran (`FS_BTN`) sont en haut, à gauche du score.
 - Petites bêtes (`critters`, `CRITTER`, `REFUGES`, `MAP.critters`) : écureuils et chats flânent ; Tecky trop près ou
   qui aboie les fait filer vers un refuge pas de son côté (arbre/sapin : l'écureuil grimpe et disparaît ; toit ou
   conteneur : le chat saute et feule), ils redescendent quand il est loin. Points la première fois (`scored`, sauvegardé).

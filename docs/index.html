@@ -468,7 +468,9 @@ function toggleFullscreen() {
   if (fsElement()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
   else goFullscreen();
 }
-const FS_BTN = { x: GW - 150, y: 310, w: 126, h: 70 };
+// boutons tactiles en haut, à gauche du score (la colonne de droite reste aux compteurs des quêtes)
+const PAUSE_BTN = { x: GW - 24 - 330 - 20 - 126, y: 41, w: 126, h: 70 };
+const FS_BTN = { x: PAUSE_BTN.x - 20 - 126, y: 41, w: 126, h: 70 };
 
 /* ------------------------------------------------------------------ entrées */
 const held = {};
@@ -569,7 +571,8 @@ cv.addEventListener('pointerdown', e => {
     return;
   }
   if (state !== 'play' || !touchMode) { pressed.ok = true; return; }
-  if (gx > GW - 160 && gy > 210 && gy < 310) { pressed.pause = true; return; }
+  const pb = PAUSE_BTN;
+  if (gx > pb.x - 10 && gx < pb.x + pb.w + 10 && gy > pb.y - 10 && gy < pb.y + pb.h + 10) { pressed.pause = true; return; }
   for (const k of ['bark', 'bite', 'sniff']) {
     const b = BTN[k];
     if (dist(gx, gy, b.x, b.y) < b.r * 1.15) { pressed[k] = true; return; }
@@ -3580,6 +3583,17 @@ function para(str, x, y, size, color, align, weight, maxW, lineH) {
   return y + lines.length * lineH;
 }
 
+/* Compteurs du HUD, empilés à droite sous le score : os dorés (dès le premier trouvé : c'est une quête aussi), puis les
+   quêtes en cours, dans l'ordre : poules rentrées, lettres retrouvées, Pompon retrouvé.
+   [sprite, décalage x, décalage y, échelle, nombre, total] */
+function hudCounters() {
+  const c = [];
+  if (treasures > 0) c.push(['item/goldbone', 42, 28, 0.8, treasures, MAP.dig.length]);
+  if (farm.state === 'asked') c.push(['hen/idle/right', 46, 58, 0.9, questHens().length - hensLeft(), questHens().length]);
+  if (post.state === 'asked') c.push(['item/letter', 50, 36, 0.8, letters.length - lettersLeft(), letters.length]);
+  if (rose.state === 'asked') c.push(['cat_white/idle', 46, 58, 0.9, pompon.mode === 'lost' ? 0 : 1, 1]);
+  return c;
+}
 function drawHUD() {
   guiTransform();
   // vie : le panneau s'allonge avec le nombre d'os
@@ -3600,19 +3614,12 @@ function drawHUD() {
   drawSpr('item/medal', 0, GW - 24 - 330 + 50, 76);
   const dz = ATLAS['hud/digits'].f[0];                 // chiffre « 0 » : [x, y, w, h, décalage x, décalage y]
   drawDigits(String(score).padStart(5, '0'), GW - 24 - 330 + 96, 24 + 104 / 2 - dz[5] - dz[3] / 2, 1, undefined, true);
-  // os dorés trouvés (trésors enterrés)
-  drawNine('hud/panel_dark', GW - 24 - 210, 138, 210, 70, 32);
-  drawSpr('item/goldbone', 0, GW - 24 - 210 + 42, 166, { sc: 0.8 });
-  drawDigits(treasures + '/' + MAP.dig.length, GW - 24 - 210 + 82, 146, 0.8);
-  // quêtes en cours : poules rentrées dans l'enclos, lettres du facteur retrouvées (empilées sous les indices)
-  const quests = [];
-  if (farm.state === 'asked') quests.push(['hen/idle/right', 46, 58, 0.9, questHens().length - hensLeft(), questHens().length]);
-  if (post.state === 'asked') quests.push(['item/letter', 50, 36, 0.8, letters.length - lettersLeft(), letters.length]);
-  quests.forEach(([k, ox, oy, sc, a, b], i) => {
-    const y = 264 + i * 82;
-    drawNine('hud/panel_dark', 24, y, 210, 70, 32);
-    drawSpr(k, 0, 24 + ox, y + oy, { sc });
-    drawDigits(a + '/' + b, 24 + 92, y + 8, 0.8);
+  // compteurs, à droite sous le score (hudCounters)
+  hudCounters().forEach(([k, ox, oy, sc, a, b], i) => {
+    const x = GW - 24 - 210, y = 138 + i * 82;
+    drawNine('hud/panel_dark', x, y, 210, 70, 32);
+    drawSpr(k, 0, x + ox, y + oy, { sc });
+    drawDigits(a + '/' + b, x + 86, y + 8, 0.8);
   });
 
   // indices d'Alice : trois cases sous la vie, l'objet apparaît quand il est retrouvé
@@ -3658,8 +3665,8 @@ function drawHUD() {
       ctx.beginPath(); ctx.arc(250, 830, 120, 0, Math.PI * 2); ctx.fill(); ctx.restore();
     }
     // pause
-    drawNine('hud/panel_dark', GW - 150, 224, 126, 70, 32);
-    text('II', GW - 87, 272, 40, '#FFF7E6', 'center', 700);
+    drawNine('hud/panel_dark', PAUSE_BTN.x, PAUSE_BTN.y, PAUSE_BTN.w, PAUSE_BTN.h, 32);
+    text('II', PAUSE_BTN.x + PAUSE_BTN.w / 2, PAUSE_BTN.y + 48, 40, '#FFF7E6', 'center', 700);
     if (canFullscreen() && !fsElement()) drawFsButton();
   } else {
     // touches : R flaire, X aboie, C mord (ou gratte, lit…) ; manette : Y, X, A

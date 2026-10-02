@@ -19,6 +19,7 @@ function main() {
   ok(run('post.state') === 'asked' && run('postmanMark()') === 1, 'quête acceptée, bulle « ? »');
   spy('drawHUD()');
   ok(run('used.includes("item/letter")'), 'compteur de lettres dans le HUD');
+  ok(run('JSON.stringify(hudCounters().map(c => c[0]))') === '["item/letter"]', 'à droite, seul (pas encore d’os doré, poules finies)');
   for (let i = 0; i < 5; i++) { run(`P.x = letters[${i}].x; P.y = letters[${i}].y + 20; pops = [];`); step(2); }
   ok(run('lettersLeft()') === 0 && run('pops.some(p => /Une lettre ! \\(5\\/5\\)/.test(p.text))'), 'en passant dessus, Tecky ramasse les cinq lettres');
   ok(run('pops.some(p => /Viens vite/.test(p.text))') && run('postmanMark()') === 0, 'Marcel l’appelle (« ! »)');
@@ -42,10 +43,13 @@ function main() {
   ok(run('state') === 'dialog' && run('dialog.lines[0].who') === 'neighbor' && /Pompon/.test(run('dialog.lines[0].text')), 'C : elle demande de l’aide');
   advanceDialog();
   ok(run('rose.state') === 'asked' && run('neighborMark()') === 1, 'quête acceptée');
+  const cat = () => JSON.stringify(run('JSON.stringify(hudCounters().filter(c => c[0] === "cat_white/idle").map(c => c[4] + "/" + c[5]))'));
+  ok(cat() === JSON.stringify('["0/1"]'), 'compteur du chat : 0/1');
   run('P.x = pompon.x + 100; P.y = pompon.y;'); step(2);
   ok(run('state') === 'dialog' && /Te voilà, Pompon/.test(run('dialog.lines[0].text')), 'Tecky retrouve Pompon');
   advanceDialog();
   ok(run('pompon.mode') === 'follow', 'Pompon le suit');
+  ok(cat() === JSON.stringify('["1/1"]'), 'retrouvé : 1/1');
   // Tecky rentre au village, à pied (en ligne droite) : Pompon suit derrière lui
   run('var tx = neighbor.x + 60, ty = neighbor.y + 130, sx = P.x, sy = P.y;');
   let far = 0;
@@ -63,6 +67,7 @@ function main() {
   ok(run('state') === 'dialog' && /Pompon ! Te voilà enfin/.test(run('dialog.lines[0].text')), 'C : elle remercie Tecky');
   advanceDialog(); step(5);
   ok(run('rose.state') === 'done' && run('score') >= s1 + run('POST.reward') && run('items.some(i => i.n === "sausage")'), 'une saucisse et des points');
+  ok(cat() === JSON.stringify('[]'), 'quête finie : plus de compteur');
   step(60 * 3);
   ok(run('dist(pompon.x, pompon.y, neighbor.x, neighbor.y)') < 120, 'Pompon reste avec elle');
   spy('render()');

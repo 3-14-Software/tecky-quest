@@ -70,6 +70,7 @@ function main() {
   run('drawTrail()');
 
   // os dorés : le trésor sous les traces de pattes
+  ok(run('treasures') > 0 || !run('hudCounters().some(c => c[0] === "item/goldbone")'), 'pas de compteur d’os dorés avant le premier');
   run('clues = [false, false, false]; var g2 = digs.find(g => !g.dug); P.x = g2.x; P.y = g2.y - 20; P.mode = "free"; P.cdBite = 0; P.dir = "down"; var t0 = treasures, s0 = score; pressed.bite = true;');
   step(70);
   ok(run('treasures') === run('t0') + 1 && run('items.some(i => i.n === "goldbone")') || run('score') > run('s0') + 100,
@@ -78,6 +79,6 @@ function main() {
   advanceDialog(); step(40);
   ok(!run('items.some(i => i.n === "goldbone")') && run('score') === run('s0') + 200, 'ramassé : +200 en tout');
   run('var used = []; var ds0 = drawSpr; drawSpr = function (k) { used.push(k); return ds0.apply(this, arguments); }; drawHUD(); drawSpr = ds0;');
-  ok(run('used.includes("item/goldbone")'), 'compteur d’os dorés dans le HUD');
+  ok(run('used.includes("item/goldbone")') && run('hudCounters()[0][0]') === 'item/goldbone', 'compteur d’os dorés dans le HUD, en haut de la colonne');
 }
 eval(base + 'setTimeout(' + main.toString() + ', 50);');

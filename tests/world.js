@@ -13,7 +13,9 @@ function main() {
   ok(run('S.mode') === 'roam' && run('dist(S.x, S.y, S.hx, S.hy)') < run('CRITTER.roam') + 10, 'l’écureuil flâne près de son coin');
   run('var sc0 = score; P.x = S.x - 120; P.y = S.y;'); step(1);
   ok(run('S.mode') === 'flee' && run('S.ref && (S.ref.deco.n === "tree" || S.ref.deco.n === "fir")'), 'Tecky approche : il file vers un arbre');
-  ok(run('dist(P.x, P.y, S.ref.x, S.ref.y) >= dist(S.x, S.y, S.ref.x, S.ref.y)'), 'un arbre qui n’est pas du côté de Tecky');
+  // (s'il n'y en a aucun à portée, il prend le plus proche)
+  ok(run('dist(P.x, P.y, S.ref.x, S.ref.y) >= dist(S.x, S.y, S.ref.x, S.ref.y) || !decor.some(d => (d.n === "tree" || d.n === "fir") && ' +
+         'dist(S.x, S.y, d.x, d.y + 6) < 900 && dist(P.x, P.y, d.x, d.y) >= dist(S.x, S.y, d.x, d.y + 6))'), 'un arbre qui n’est pas du côté de Tecky');
   { let k = 0; while (run('S.mode') !== 'perched' && k++ < 400) step(1); }
   ok(run('S.mode') === 'perched' && !run('critterVisible(S)'), 'il grimpe et disparaît dans le feuillage');
   ok(run('score') === run('sc0') + run('CRITTER.pts') && run('pops.some(p => /Tchic/.test(p.text))'), 'premier écureuil surpris : +' + run('CRITTER.pts') + ' et « Tchic tchic ! »');
