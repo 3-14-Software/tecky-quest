@@ -30,6 +30,7 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   `farmer.py` (le fermier Gaston, vu de face, 48x64, pieds en (24, 60) ; `FACE` pour son portrait),
   `ducks.py` (colvert, cane, caneton, de profil, 32x32, ligne d'eau en (16, 24)),
   `cows.py` (vaches pie noire et pie rouge, veau, de profil, 64x48, pieds en (32, 44)),
+  `villageois.py` (villageois sans quête, vus de face comme ceux de npcs.py, dont il réutilise les outils),
   `npcs.py` (le facteur Marcel et la voisine Mamie Rose, comme `farmer.py` ; `letter_frames()` : la lettre),
   `critters.py` (écureuil, chats roux et noir, de profil, 32x32), `vehicles.py` (voitures, camionnette, bus),
   `butterflies.py` (papillons, vus de dessus), `items.py`, `decor.py`, `tiles.py`, `hud.py` :
@@ -156,6 +157,11 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   posent sur les pots de fleurs ou les massifs (`FLOWER_BEDS`, dessinés aussi au sol), s'envolent si Tecky approche
   ou aboie. Chacun doit avoir une fleur à portée (testé). Dessinés au-dessus de tout, sans collision. Test :
   `butterflies.js`.
+- Villageois (`villagers`, `VILLAGER`, `VILLAGER_LINES`, `MAP.villagers`, villageois.py) : Bernard le boulanger,
+  Josette la marchande de fruits, Lili la fleuriste, Lucas et son ballon. Sans quête : ils ne sont pas dans
+  `npcList()` (ni « ! », ni « Parler »), mais saluent Tecky qui passe d'une bulle (une phrase après l'autre, au plus
+  une fois toutes les `VILLAGER.again` s) et de la main (Lucas sautille : `hop`). Obstacles comme les personnages.
+  Test : `villagers.js`.
 - Vaches (`cows`, `COW`, `MAP.cows`, cows.py) : trois dans le grand pré de la campagne (le veau reste près de sa
   mère, `cowMother()`). Elles broutent, se promènent autour de leur place, lèvent la tête vers Tecky, meuglent de temps
   en temps quand il est dans les parages (`cowMoo()`, `SFX.moo`) ; un aboiement les fait trotter plus loin

@@ -977,6 +977,7 @@ function reset() {
   leon = newNpc('leon', MAP.leon, 0.95); fete = { state: 'new' }; balls = MAP.balls.map(newBall);
   iris = Object.assign(newNpc('iris', MAP.iris, 0.8), { markY: IRIS.markY, woof: true, tip: 0 }); jouets = { state: 'new' };
   toys = MAP.toys.map(newToy);
+  villagers = MAP.villagers.map(newVillager);
   train = newTrain();
   piquette = Object.assign(newNpc('piquette', MAP.piquette, 1.3), { markY: BABY.markY }); piq = { state: 'new' };
   babies = MAP.babies.map(newBaby); babySeq = 0;
@@ -2247,6 +2248,43 @@ function talkIris() {
     { who: 'iris', face: 0, text: "Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !" },
     { who: 'tecky', face: 2, text: "Ouaf ! « Va chercher », c'est mon jeu préféré !" },
   ], saveGame);
+}
+
+/* ------------------------------------------------------------------ les villageois */
+/* Des habitants du village, sans quête (MAP.villagers : [qui, x, y] ; villageois.py) : Bernard le boulanger à la porte de
+   sa boutique, Josette la marchande de fruits et Lili la fleuriste à côté de leurs étals, Lucas et son ballon près de la
+   fontaine. Quand Tecky arrive près d'eux (VILLAGER.near), ils le saluent d'une bulle (une phrase après l'autre,
+   VILLAGER_LINES ; pas plus d'une fois toutes les VILLAGER.again s) et de la main (Lucas sautille). On ne leur parle
+   pas : ni « ! » ni « Parler » (ils ne sont pas dans npcList). Obstacles, comme les personnages. Rien n'est sauvegardé. */
+const VILLAGER = { near: 170, again: 10, wave: 1.8, markY: 150, kidMarkY: 112 };
+const VILLAGER_LINES = {
+  baker: ['Bonjour, Tecky !', 'Ça sent bon le pain chaud !'],
+  vendor: ['Des belles pommes !', 'Tout frais, tout beau !'],
+  florist: ['Coucou, Tecky !', 'Une jolie fleur ?'],
+  kid: ['Un toutou !', 'Regarde mon ballon !'],
+};
+const VILLAGER_PITCH = { baker: 0.85, vendor: 1.15, florist: 1.35, kid: 1.7 };
+let villagers = [];
+function newVillager([kind, x, y]) {
+  solids.push([x - 16, y - 12, x + 16, y]);
+  return { kind, x, y, t: Math.random() * 2, anim: 'idle', near: false, cd: 0, i: 0, waveT: 0 };
+}
+function updateVillager(v, dt) {
+  v.t += dt; v.cd = Math.max(0, v.cd - dt);
+  const near = P.mode !== 'ko' && dist(P.x, P.y, v.x, v.y) < VILLAGER.near;
+  if (near && !v.near && v.cd <= 0) {
+    const lines = VILLAGER_LINES[v.kind];
+    addWordPop(lines[v.i++ % lines.length], v.x, v.y - (v.kind === 'kid' ? VILLAGER.kidMarkY : VILLAGER.markY) + 10, v.kind);
+    SFX.hey(VILLAGER_PITCH[v.kind]);
+    v.waveT = VILLAGER.wave; v.cd = VILLAGER.again;
+  }
+  v.near = near;
+  v.waveT = Math.max(0, v.waveT - dt);
+  const a = v.waveT > 0 ? (v.kind === 'kid' ? 'hop' : 'wave') : 'idle';
+  if (a !== v.anim) { v.anim = a; v.t = 0; }
+}
+function drawVillager(v) {
+  drawSpr(v.kind + '/' + v.anim, Math.floor(v.t * MAP.villagerFps[v.kind][v.anim]), v.x, v.y);
 }
 
 /* ------------------------------------------------------------------ Maman Piquette et ses petits */
@@ -4193,6 +4231,7 @@ function update(dt) {
       for (const d of dogs) if (d.mode !== 'ko') d.t += dt;
       for (const h of hens) h.t += dt;
       for (const c of cows) c.t += dt;
+      for (const v of villagers) v.t += dt;
       updateFx(dt);
       updateCamera(dt);
       break;
@@ -4220,6 +4259,7 @@ function update(dt) {
       for (const d of dogs) updateDog(d, dt);
       for (const h of hens) updateHen(h, dt);
       for (const c of cows) updateCow(c, dt);
+      for (const v of villagers) updateVillager(v, dt);
       for (const v of cars) updateVehicle(v, dt);
       for (const b of butterflies) updateButterfly(b, dt);
       separateDogs();
@@ -4315,6 +4355,7 @@ function drawWorld() {
   for (const d of dogs) if (vis(d.x, d.y, 120)) list.push({ y: d.y, draw: () => d.draw(Math.max(0, 1 - d.fade)) });
   for (const h of hens) if (vis(h.x, h.y, 60)) list.push({ y: h.y, draw: () => h.draw() });
   for (const c of cows) if (vis(c.x, c.y, 140)) list.push({ y: c.y, draw: () => drawCow(c) });
+  for (const v of villagers) if (vis(v.x, v.y, 140)) list.push({ y: v.y, draw: () => drawVillager(v) });
   for (const v of cars) if (vis(v.x, v.y, 280)) list.push({ y: v.y, draw: () =>
     drawSpr('vehicle/' + v.name, Math.floor(v.t * 4), v.x, v.y, { flip: v.dir < 0 }) });
   if (!alice.hidden && vis(alice.x, alice.y, 120)) list.push({ y: alice.y, draw: () => alice.draw() });

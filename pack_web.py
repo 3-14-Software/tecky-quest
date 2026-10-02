@@ -32,6 +32,7 @@ import tecky
 import vehicles
 import music
 import tiles
+import villageois
 from spritelib import render_svg, flash, PAD
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -349,6 +350,9 @@ DUCKS = [("duck_f", 9.9, 2.4, 1), ("duckling", 9.4, 2.55, 1), ("duckling", 9.0, 
          ("duck", 20.4, 34.8, 0), ("duck_f", 21.6, 35.4, 0)]
 # les vaches du grand pré de la campagne (cows.py) : la pie noire, la pie rouge et son veau
 COWS = [("cow_bw", 19.5, 25.4), ("cow_brown", 21.2, 29.6), ("calf", 19.0, 30.0)]
+# les villageois, sans quête (villageois.py) : le boulanger à la porte de sa boutique, la marchande de fruits et la
+# fleuriste à côté de leurs étals, le petit garçon et son ballon près de la fontaine
+VILLAGERS = [("baker", 39.3, 16.45), ("vendor", 31.4, 9.9), ("florist", 40.2, 9.9), ("kid", 44.6, 9.6)]
 # petites bêtes que Tecky peut poursuivre : écureuils (forêt, parc) qui grimpent aux arbres, chats (village, zone
 # industrielle) qui sautent sur les toits et les conteneurs
 CRITTERS = [("squirrel", 73.4, 53.9), ("squirrel", 82.2, 52.9), ("squirrel", 64.6, 60.4), ("squirrel", 87.2, 60.4),
@@ -499,6 +503,8 @@ def build_map():
         "keys": hud.KEYS, "pads": [k for k, _ in hud.PAD_BUTTONS],   # noms des images de hud/key et hud/pad
         "ducks": [[n, px(x), px(y), f] for n, x, y, f in DUCKS],
         "cows": [[n, px(x), px(y)] for n, x, y in COWS],
+        "villagers": [[n, px(x), px(y)] for n, x, y in VILLAGERS],
+        "villagerFps": {k: {a: v[1] for a, v in villageois.ANIMS[k].items()} for k in villageois.KINDS},
         "cowFps": {k: {a: fps for a, (_, fps, _) in cows.anims(k).items()} for k in cows.KINDS},
         "duckFps": {k: {a: fps for a, (_, fps, _) in ducks.anims(k).items()} for k in ducks.KINDS},
         "duckLoop": {k: {a: loop for a, (_, _, loop) in ducks.anims(k).items()} for k in ducks.KINDS},
@@ -554,6 +560,9 @@ def collect():
     for kind in npcs.KINDS:                             # le facteur et la voisine, vus de face, pieds en (24, 60)
         for a in npcs.ANIMS[kind]:
             out.append((f"{kind}/{a}", [render_svg(sv, npcs.W, npcs.H, S, PAD) for sv in npcs.frames(kind, a)], (24 * S + M, 60 * S + M), True))
+    for kind in villageois.KINDS:                       # les villageois, vus de face, pieds en (24, 60)
+        for a in villageois.ANIMS[kind]:
+            out.append((f"{kind}/{a}", [render_svg(sv, npcs.W, npcs.H, S, PAD) for sv in villageois.frames(kind, a)], (24 * S + M, 60 * S + M), True))
     out.append(("item/letter", [render_svg(sv, 32, 32, S, PAD) for sv in npcs.letter_frames()], (32 + M, 32 + M), True))
     out.append(("port/balloon", [render_svg(sv, 32, 32, S, PAD) for sv in port.balloon_frames()], (16 * S + M, 16 * S + M), True))
     out.append(("port/toy", [render_svg(sv, 32, 32, S, PAD) for sv in port.toy_frames()], (16 * S + M, 16 * S + M), True))

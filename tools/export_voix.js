@@ -33,6 +33,10 @@ const VOICES = {
   train: ['Titine', 'la petite locomotive du port : voix joyeuse et chantante'],
   hedgehog: ['Les bébés hérissons', 'toute petite voix aiguë (« Couic ! »)'],
   cow: ['Les vaches', 'meuglement grave et paisible (le veau : plus aigu)'],
+  baker: ['Bernard', 'le boulanger du village : voix ronde et joviale'],
+  vendor: ['Josette', 'la marchande de fruits : voix chantante, un peu gouailleuse, de marché'],
+  florist: ['Lili', 'la fleuriste : jeune femme, voix douce et souriante'],
+  kid: ['Lucas', 'un petit garçon d’environ 6 ans, tout content : voix aiguë et enthousiaste'],
 };
 // répliques dont le texte est calculé (pas une chaîne écrite en dur) : chacune doit être produite ci-dessous ; si ce
 // nombre change, une réplique calculée a été ajoutée ou retirée dans game.js : adapter ce fichier
@@ -138,6 +142,10 @@ function main() {
     ask('Maman Piquette : rappel', `piq.state = "asked"; babies.forEach((b, i) => b.mode = i >= ${n} ? "home" : "hidden"); talkPiquette();`);
   ask('Maman Piquette : merci', 'babies.forEach(b => b.mode = "home"); talkPiquette();');
   ask('Maman Piquette : après la quête', 'piq.state = "done"; talkPiquette();');
+  for (const k of ['baker', 'vendor', 'florist', 'kid'])
+    for (let i = 0; i < 2; i++)
+      ask(`${VOICES[k][0]} salue Tecky qui passe`, `var V = villagers.find(v => v.kind === "${k}"); V.near = false; V.cd = 0; V.i = ${i};` +
+          ' P.x = V.x; P.y = V.y + 100; P.mode = "free"; updateVillager(V, 0);');
   ask('Retrouvailles avec Alice', 'finale();');
   const rec = JSON.parse(run('JSON.stringify(REC)'));
 

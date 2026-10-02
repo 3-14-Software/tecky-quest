@@ -67,6 +67,22 @@
     "cow": {
       "nom": "Les vaches",
       "voix": "meuglement grave et paisible (le veau : plus aigu)"
+    },
+    "baker": {
+      "nom": "Bernard",
+      "voix": "le boulanger du village : voix ronde et joviale"
+    },
+    "vendor": {
+      "nom": "Josette",
+      "voix": "la marchande de fruits : voix chantante, un peu gouailleuse, de marché"
+    },
+    "florist": {
+      "nom": "Lili",
+      "voix": "la fleuriste : jeune femme, voix douce et souriante"
+    },
+    "kid": {
+      "nom": "Lucas",
+      "voix": "un petit garçon d’environ 6 ans, tout content : voix aiguë et enthousiaste"
     }
   },
   "repliques": [
@@ -2445,6 +2461,94 @@
       "texte": "Meuuuh !",
       "affiche": "Meuuuh !",
       "contexte": "Tecky aboie vers une vache"
+    },
+    {
+      "voix": "baker",
+      "fichier": "baker-2cdd7c97",
+      "personnage": "Bernard",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Bonjour, Tecky !",
+      "affiche": "Bonjour, Tecky !",
+      "contexte": "Bernard salue Tecky qui passe"
+    },
+    {
+      "voix": "baker",
+      "fichier": "baker-8317d483",
+      "personnage": "Bernard",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Ça sent bon le pain chaud !",
+      "affiche": "Ça sent bon le pain chaud !",
+      "contexte": "Bernard salue Tecky qui passe"
+    },
+    {
+      "voix": "vendor",
+      "fichier": "vendor-a2ebf844",
+      "personnage": "Josette",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Des belles pommes !",
+      "affiche": "Des belles pommes !",
+      "contexte": "Josette salue Tecky qui passe"
+    },
+    {
+      "voix": "vendor",
+      "fichier": "vendor-c71c3ba6",
+      "personnage": "Josette",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tout frais, tout beau !",
+      "affiche": "Tout frais, tout beau !",
+      "contexte": "Josette salue Tecky qui passe"
+    },
+    {
+      "voix": "florist",
+      "fichier": "florist-5709388a",
+      "personnage": "Lili",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Coucou, Tecky !",
+      "affiche": "Coucou, Tecky !",
+      "contexte": "Lili salue Tecky qui passe"
+    },
+    {
+      "voix": "florist",
+      "fichier": "florist-28ca0991",
+      "personnage": "Lili",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Une jolie fleur ?",
+      "affiche": "Une jolie fleur ?",
+      "contexte": "Lili salue Tecky qui passe"
+    },
+    {
+      "voix": "kid",
+      "fichier": "kid-e76f8779",
+      "personnage": "Lucas",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Un toutou !",
+      "affiche": "Un toutou !",
+      "contexte": "Lucas salue Tecky qui passe"
+    },
+    {
+      "voix": "kid",
+      "fichier": "kid-3d8b3952",
+      "personnage": "Lucas",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Regarde mon ballon !",
+      "affiche": "Regarde mon ballon !",
+      "contexte": "Lucas salue Tecky qui passe"
     }
   ]
 }

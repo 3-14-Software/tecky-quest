@@ -477,7 +477,7 @@ def _leon(p):
     return d
 
 
-# ================================================================== NESTOR, LE VIEUX CHIEN DU GARDIEN
+# ================================================================== IRIS, LE VIEUX JACK RUSSELL
 def _iris(p):
     """Iris, le vieux Jack Russell, ami et mentor de Tecky : assis, de face, poil blanc, taches feu sur les yeux et
     les oreilles (liste blanche au milieu du front), une tache sur le flanc, oreilles pliées vers l'avant, queue
