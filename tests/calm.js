@@ -28,7 +28,7 @@ function main() {
   for (let i = 0; i < 60 * 15; i++) { step(1); if (run('dogs.some(d => ENGAGED.has(d.mode))')) eng = true; if (run('state') === 'dialog') advanceDialog(); }
   ok(!eng && run('P.hp') === run('hp1'), '15 s près du facteur : aucun chien ne s’en prend à Tecky');
   // répit : juste après un dialogue, une morsure ne porte pas ; ensuite si
-  run('P.x = 10 * 64; P.y = 14 * 64; say([{ who: "tecky", text: "Ouaf !" }]);'); advanceDialog();
+  run('dogs = []; cars = []; P.x = 10 * 64; P.y = 14 * 64; say([{ who: "tecky", text: "Ouaf !" }]);'); advanceDialog();
   run('P.inv = 0; var hp2 = P.hp; hurtPlayer(1, P.x + 40, P.y);');
   ok(run('P.hp') === run('hp2') && run('graceT') > 1, 'en sortant d’un dialogue : un petit répit');
   step(60 * 2); run('P.inv = 0; P.mode = "free"; hurtPlayer(1, P.x + 40, P.y);');

@@ -51,8 +51,8 @@ function main() {
   run('R.x = R.hx; R.y = R.hy; R.mode = "idle"; P.x = R.hx - 100; P.y = R.hy; var nh = 0;');
   for (let i = 0; i < 60 * 3; i++) { step(1); run('nh = Math.max(nh, fxs.filter(f => f.key === "fx/heart").length)'); }
   ok(run('nh') > 0 && run('R.dir') === 'left', 'mais il lui fait la fête quand il passe');
-  // rejouer avec un copain : pas de nouveaux points
-  run('sc0 = score; P.mode = "free"; P.cdBite = 0; pressed.bite = true'); step(1);
+  // rejouer avec un copain : pas de nouveaux points (canards et petites bêtes écartés : la 1re fois, ils en rapportent)
+  run('ducks = []; critters = []; sc0 = score; P.mode = "free"; P.cdBite = 0; pressed.bite = true'); step(1);
   ok(run('R.mode') === 'play', 'on peut rejouer avec un copain');
   step(60 * 3);
   ok(run('score') === run('sc0'), 'sans regagner de points');
