@@ -246,17 +246,16 @@ def _field(bits, n):
     return dist
 
 
-def transition(terrain, bits, scale, seed=0, marking=None, lower="grass"):
-    """Tuile de transition : `terrain` (dessus) dans les coins `bits`, `lower` ailleurs."""
+def _layer(out, terrain, bits, below, scale, seed=0, marking=None):
+    """Pose `terrain` sur `out` (tableau sur-échantillonné) dans les coins `bits`, avec le style de la paire
+    (terrain, below) : berge côté herbe, liseré, contour."""
     n = T * scale * SS
     k = scale * SS
     spec = dict(TERRAINS[terrain])
-    spec.update(PAIR_STYLE.get((terrain, lower), {}))
-    base = np.array(TEX[lower](scale, seed))
+    spec.update(PAIR_STYLE.get((terrain, below), {}))
     ter = np.array(TEX[terrain](scale, seed, marking) if terrain == "road" else TEX[terrain](scale, seed))
     dist = _field(bits, n)
-    out = base.copy()
-    if "halo" in spec and lower == "grass":
+    if "halo" in spec and below == "grass":
         col, w = spec["halo"]
         out[(dist < 0) & (dist >= -w * k)] = hexrgb(col) + (255,)
     inside = dist >= 0
@@ -265,8 +264,36 @@ def transition(terrain, bits, scale, seed=0, marking=None, lower="grass"):
     out[edge] = hexrgb(spec["edge"]) + (255,)
     outline = (dist >= 0) & (dist < spec["out_w"] * k)
     out[outline] = hexrgb(spec["out"]) + (255,)
-    im = Image.fromarray(out.astype(np.uint8))
-    return im.resize((T * scale, T * scale), Image.LANCZOS)
+
+
+def _finish(out, scale):
+    return Image.fromarray(out.astype(np.uint8)).resize((T * scale, T * scale), Image.LANCZOS)
+
+
+def transition(terrain, bits, scale, seed=0, marking=None, lower="grass"):
+    """Tuile de transition : `terrain` (dessus) dans les coins `bits`, `lower` ailleurs."""
+    out = np.array(TEX[lower](scale, seed))
+    _layer(out, terrain, bits, lower, scale, seed, marking)
+    return _finish(out, scale)
+
+
+def needs_composite(corners):
+    """Vrai si la tuile mêle trois terrains, ou deux qui n'ont pas de paire dans PAIRS : `resolve()` ne saurait pas
+    la dessiner sans remplacer un terrain par un autre (encoches carrées au bout des chemins, des trottoirs…)."""
+    kinds = sorted(set(corners), key=PRIORITY.index)
+    return len(kinds) >= 3 or (len(kinds) == 2 and (kinds[1], kinds[0]) not in PAIRS)
+
+
+def composite(corners, scale, seed=0):
+    """Tuile composée (voir needs_composite) : le terrain le plus bas en fond, puis chaque terrain par-dessus le
+    précédent, dans l'ordre de PRIORITY, sur les coins où il est ou bien un terrain plus haut (il passe ainsi sous les
+    suivants). Les contours viennent du même champ de coins que les tuiles voisines : ils s'y raccordent."""
+    kinds = sorted(set(corners), key=PRIORITY.index)
+    out = np.array(TEX[kinds[0]](scale, seed))
+    for below, t in zip(kinds, kinds[1:]):
+        bits = sum(1 << i for i, c in enumerate(corners) if PRIORITY.index(c) >= PRIORITY.index(t))
+        _layer(out, t, bits, below, scale, seed)
+    return _finish(out, scale)
 
 
 def full_tile(terrain, scale, seed=0):
@@ -415,21 +442,24 @@ ROW0 = ["(vide)", "herbe", "herbe + brins", "herbe + fleurs", "herbe + cailloux"
         "terre var. 1", "terre var. 2", "route var. 1", "route var. 2",
         "pavés var. 1", "béton var. 1", "béton var. 2"]
 OVERLAY_ROW = 1 + len(PAIRS)
+COMPOSITE_BASE = (OVERLAY_ROW + 1) * COLS      # tuiles composées (version web), après la ligne des détails
 
 
-def tileset(scale, water_marks=True):
-    """water_marks=False : eau unie, pour la version web qui anime ses vaguelettes."""
+def tileset(scale, water_marks=True, composites=()):
+    """water_marks=False : eau unie, pour la version web qui anime ses vaguelettes.
+    composites : coins (NO, NE, SO, SE) des tuiles composées, ajoutées à partir de l'index COMPOSITE_BASE."""
     global WATER_MARKS
     WATER_MARKS, before = water_marks, WATER_MARKS
     try:
-        return _tileset(scale)
+        return _tileset(scale, composites)
     finally:
         WATER_MARKS = before
 
 
-def _tileset(scale):
+def _tileset(scale, composites=()):
     ts = T * scale
-    sheet = Image.new("RGBA", (COLS * ts, (2 + len(PAIRS)) * ts), (0, 0, 0, 0))
+    rows = 2 + len(PAIRS) + (len(composites) + COLS - 1) // COLS
+    sheet = Image.new("RGBA", (COLS * ts, rows * ts), (0, 0, 0, 0))
     row0 = [None] + [grass_tile(scale, v) for v in range(4)]
     row0 += [road_marking(scale, m) for m in ("dash_h", "dash_v", "zebra_h", "zebra_v")]
     row0 += [transition(t, 15, scale, seed=s_) for t, s_ in
@@ -442,6 +472,9 @@ def _tileset(scale):
             sheet.paste(transition(up, bits, scale, seed=bits, lower=lo), (bits * ts, (1 + r) * ts))
     for i in range(len(OVERLAYS)):
         sheet.paste(overlay(scale, i), (i * ts, OVERLAY_ROW * ts))
+    for i, cs in enumerate(composites):
+        j = COMPOSITE_BASE + i
+        sheet.paste(composite(cs, scale, seed=i), ((j % COLS) * ts, (j // COLS) * ts))
     return sheet
 
 

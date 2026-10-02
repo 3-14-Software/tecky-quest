@@ -33,7 +33,11 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   `critters.py` (écureuil, chats roux et noir, de profil, 32x32), `vehicles.py` (voitures, camionnette, bus),
   `butterflies.py` (papillons, vus de dessus), `items.py`, `decor.py`, `tiles.py`, `hud.py` :
   dessins et animations. `tiles.py` : tileset Wang/marching squares de 16 tuiles par transition (bits NO=1, NE=2, SO=4, SE=8),
-  tuile 0 vide, 16 colonnes, `PAIRS`, `PRIORITY`, `resolve()`.
+  tuile 0 vide, 16 colonnes, `PAIRS`, `PRIORITY`, `resolve()`. Là où trois terrains se rencontrent (ou deux sans
+  paire), `needs_composite()` : la version web pose une tuile composée (`composite()` : chaque terrain par-dessus le
+  précédent ; `COMPOSITES` dans pack_web, ajoutées au tileset à partir de `COMPOSITE_BASE`) au lieu de remplacer un
+  terrain par un autre (encoches carrées au bout des chemins et des trottoirs). Un chemin s'arrête au bord de la
+  route (coins de la route intacts) : sinon il mord sur la chaussée, sous le passage piéton.
 - `music.py` : **source unique** de la musique (thème « Promenade de Tecky », 32 mesures, boucle ; fanfare de victoire et
   musique de défaite, 3 mesures chacune à 140 BPM, même durée). Génère les WAV GameMaker et les données
   `SONG`/`WINSONG`/`LOSESONG` jouées par le séquenceur WebAudio du jeu (`Music.start('main' | 'win' | 'lose')`).

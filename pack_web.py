@@ -74,7 +74,7 @@ def corner_grid():
     paint("road", 30, 16, 31, 17)
     # ferme (nord-est) : cour en terre, chemin vers la route, champs labourés
     paint("dirt", 50, 5, 62, 10)
-    paint("dirt", 55, 10, 56, 12)
+    paint("dirt", 55, 10, 56, 11)          # (s'arrête au bord de la route : rien sous le passage piéton)
     paint("field", 43, 2, 48, 9)
     paint("field", 65, 2, 77, 9)
     paint("field", 52, 18, 60, 23)
@@ -317,15 +317,23 @@ FULL_VARIANTS = {"dirt": [9, 10], "road": [11, 12], "paving": [13], "concrete": 
 OV = {n: i for i, (n, _) in enumerate(tiles.OVERLAYS)}
 
 
+COMPOSITES = []       # tuiles composées (trois terrains : bout de chemin sur la route…), ajoutées au tileset web
+
+
 def build_map():
     g = corner_grid()
     rnd = random.Random(7)
     ground = []
+    COMPOSITES.clear()
     for ty in range(MH):
         for tx in range(MW):
             cs = [g[ty][tx], g[ty][tx + 1], g[ty + 1][tx], g[ty + 1][tx + 1]]
             up, lo, bits = tiles.resolve(cs)
-            if up == "grass":
+            if tiles.needs_composite(cs):
+                if tuple(cs) not in COMPOSITES:
+                    COMPOSITES.append(tuple(cs))
+                idx = tiles.COMPOSITE_BASE + COMPOSITES.index(tuple(cs))
+            elif up == "grass":
                 idx = rnd.choice([1, 1, 1, 1, 2, 2, 3, 4])
             else:
                 idx = tiles.tile_index(up, bits, "grass" if bits == 15 else lo)
@@ -540,7 +548,7 @@ def main():
     m = build_map()
     atlas, meta = pack(collect())
     atlas.save(os.path.join(WEB, "atlas.png"), optimize=True)
-    tileset = tiles.tileset(S, water_marks=False)          # eau unie : le jeu anime ses vaguelettes
+    tileset = tiles.tileset(S, water_marks=False, composites=COMPOSITES)   # eau unie : le jeu anime ses vaguelettes
     tileset.save(os.path.join(WEB, "tiles.png"), optimize=True)
     preview(m, atlas, meta, tileset)
     tpl = open(os.path.join(SRC, "index.template.html"), encoding="utf-8").read()
