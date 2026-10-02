@@ -59,10 +59,11 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   marge, sinon ils mordent sur le liseré des berges).
 - Ambiance (`game.js`, section « petits effets ») : poussière sous les pattes (`dusts`, `DUST`), feuilles qui tombent des
   arbres et sapins visibles (`leaves`, `LEAF`, sprite `fx/leaf` : une image par couleur), ombres de nuages pré-rendues
-  (`clouds`, `CLOUD`, `buildClouds()`), coucher de soleil (`sun`, `SUN`, `drawLight()` : teinte multipliée sur le
+  (`clouds`, `CLOUD`, `buildClouds()`), du jour à la nuit (`sun`, `SUN`, `drawLight()` : teinte multipliée sur le
   monde seulement ; vignette et halo pré-rendus en petit par `buildLight()` ; lampadaires et lumière des retrouvailles
-  par `glowSpot()`). `sun` suit `sunGoal()` = nombre d'indices
-  (4 aux retrouvailles) : il est donc restauré avec la sauvegarde.
+  par `glowSpot()`). `sun` suit `sunGoal()` = nombre d'indices (4 aux retrouvailles) : il est donc restauré avec la
+  sauvegarde. 0 plein jour, 1 fin d'après-midi, 2 coucher orangé (lampadaires allumés passé `SUN.lamp`, `lampsOn()`),
+  3 nuit bleutée et plus sombre (lampadaires plus forts), 4 la nuit avec la lumière des retrouvailles.
 - Menus (`menu`, `openTitleMenu()`, `openOverMenu()`, `openPauseMenu()`, `menuInput()`, `menuHit()`, `chooseMenu()`) :
   écran titre (Continuer s'il y a une sauvegarde, Nouvelle aventure, Nouvelle balade, Options, Badges, records du
   mode choisi),
@@ -84,7 +85,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   de temps en temps (neige en décembre). `weather.k` = force (monte et descend en `WEATHER.ramp` s). Pluie : gouttes
   (traits, `drops`), `fx/splash`, teinte gris-bleu (dans le remplissage de `drawLight()`, `weatherTint()`), flaques
   (`puddles` : places tirées une fois par `hash3`, remplies selon `weather.wet`), plouf (`puddleSplash()`), crépitement
-  (`Ambience.startRain()`, les oiseaux se taisent). Fin d'averse : arc-en-ciel (`drawRainbow()`, repère GUI) et Tecky
+  (`Ambience.startRain()`, les oiseaux se taisent). Fin d'averse : arc-en-ciel (`drawRainbow()`, repère GUI ;
+  jamais une fois les lampadaires allumés, il s'efface quand ils s'allument) et Tecky
   s'ébroue (`shakePending`, mode `shake`, gouttes `fx/drop`). Neige : flocons (`flakes`, dessinés directement depuis
   l'atlas), sol blanchi (`weather.cover`). Rien n'est sauvegardé. Test : `weather.js`.
 - Vibrations (`rumble(kind)`, `RUMBLE`) : manette (`vibrationActuator.playEffect('dual-rumble')`) si `pad.on`, sinon

@@ -2224,12 +2224,15 @@ function drawClouds(cx, cy) {
   ctx.restore();
 }
 
-/* Coucher de soleil : la lumière suit la progression, un cran par indice (0 : plein jour, 3 : soleil couchant), et se
-   réchauffe encore aux retrouvailles avec Alice (4). Teinte multipliée sur le monde (pas sur l'interface), halo doré
-   venant de l'ouest, vignette au crépuscule ; les lampadaires s'allument à partir du deuxième indice. */
-const SUN = { speed: 0.25, tints: [[255, 255, 255], [255, 241, 220], [255, 222, 182], [238, 180, 150], [255, 200, 160]],
-  glow: [0, 0.08, 0.16, 0.22, 0.3], vignette: [0, 0, 0.06, 0.2, 0.1] };
+/* Du jour à la nuit : la lumière suit la progression, un cran par indice. 0 : plein jour ; 1 : fin d'après-midi ;
+   2 : coucher de soleil orangé, les lampadaires s'allument (passé SUN.lamp) ; 3 : nuit bleutée, plus sombre, pour faire
+   ressortir les lumières ; 4 (retrouvailles avec Alice) : toujours la nuit, une lumière chaude autour d'eux.
+   Teinte multipliée sur le monde (pas sur l'interface), halo doré venant de l'ouest au coucher, vignette le soir. */
+const SUN = { speed: 0.25, lamp: 1.5,
+  tints: [[255, 255, 255], [255, 241, 220], [255, 214, 170], [132, 142, 196], [142, 152, 204]],
+  glow: [0, 0.08, 0.2, 0, 0], vignette: [0, 0, 0.08, 0.3, 0.2] };
 const sunGoal = () => alice.found ? 4 : clues.filter(Boolean).length;
+const lampsOn = () => sun > SUN.lamp;
 function updateSun(dt) { sun += clamp(sunGoal() - sun, -SUN.speed * dt, SUN.speed * dt); }
 const sunAt = (arr, k) => { const i = Math.min(arr.length - 2, Math.floor(k)), f = k - i; return arr[i] + (arr[i + 1] - arr[i]) * f; };
 /* Pour rester rapide (Firefox dessine souvent le canvas avec le processeur : les dégradés recalculés à chaque image sur
@@ -2246,7 +2249,7 @@ function buildLight(k) {
   const vig = sunAt(SUN.vignette, k);
   if (vig > 0) {
     const g = o.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, W * 0.62);
-    g.addColorStop(0, 'rgba(90, 50, 110, 0)'); g.addColorStop(1, `rgba(90, 50, 110, ${vig})`);
+    g.addColorStop(0, 'rgba(40, 40, 100, 0)'); g.addColorStop(1, `rgba(40, 40, 100, ${vig})`);
     o.fillStyle = g; o.fillRect(0, 0, W, H);
   }
   // halo doré venant de l'ouest (posé par-dessus, un peu moins fort que l'ancien mode « screen »)
@@ -2279,12 +2282,12 @@ function drawLight(cx, cy) {
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(lightImg, cx, cy, VW, VH);
   ctx.imageSmoothingEnabled = true;
-  // lampadaires allumés en fin de journée : halo autour de la lanterne et flaque de lumière au sol
-  const lamp = clamp(k - 1.5, 0, 1);
+  // lampadaires allumés en fin de journée : halo autour de la lanterne et flaque de lumière au sol, plus forts la nuit
+  const lamp = clamp(k - SUN.lamp, 0, 1), night = clamp(k - 2, 0, 1);
   if (lamp > 0) for (const d of decor) {
-    if (d.n !== 'lamppost' || d.x < cx - 120 || d.x > cx + VW + 120 || d.y < cy - 40 || d.y > cy + VH + 160) continue;
-    glowSpot(d.x, d.y - 93, 64, 0.55 * lamp);
-    glowSpot(d.x, d.y - 4, 70, 0.3 * lamp);
+    if (d.n !== 'lamppost' || d.x < cx - 160 || d.x > cx + VW + 160 || d.y < cy - 40 || d.y > cy + VH + 200) continue;
+    glowSpot(d.x, d.y - 93, 64 + 16 * night, (0.55 + 0.3 * night) * lamp);
+    glowSpot(d.x, d.y - 4, 70 + 40 * night, (0.3 + 0.3 * night) * lamp);
   }
   // retrouvailles : une lumière chaude autour d'Alice et de Tecky
   const hug = clamp(k - 3, 0, 1);
@@ -2337,7 +2340,7 @@ function updateWeather(dt) {
   w.cover = clamp(w.cover + (snow > 0.3 ? WEATHER.coverUp * snow : -WEATHER.coverDown) * dt, 0, 1);
   // fin de l'averse : un arc-en-ciel, et Tecky s'ébroue
   if (rain > 0.6) w.wasRain = true;
-  if (w.wasRain && w.k < 0.05) { w.wasRain = false; w.bow = 1; if (state === 'play') shakePending = true; }
+  if (w.wasRain && w.k < 0.05) { w.wasRain = false; if (!lampsOn()) w.bow = 1; if (state === 'play') shakePending = true; }
   w.bow = Math.max(0, w.bow - dt / WEATHER.bow);
   // gouttes et flocons (en coordonnées de l'écran du monde : ils tombent devant la caméra)
   if (rain > 0) {
@@ -2391,12 +2394,12 @@ function drawSkyWeather(cx, cy) {     // par-dessus le monde : gouttes, flocons
     }
   }
 }
-function drawRainbow() {              // après l'averse : un grand arc-en-ciel, doux, qui s'efface
-  const b = weather.bow;
-  if (b < 0.01) return;
+function drawRainbow() {              // après l'averse : un grand arc-en-ciel, doux, qui s'efface (et vite, si les lampadaires s'allument)
+  const b = weather.bow, day = 1 - clamp((sun - SUN.lamp) * 2, 0, 1);
+  if (b < 0.01 || day <= 0) return;
   guiTransform();
   ctx.save();
-  ctx.globalAlpha = 0.24 * Math.min(1, b * 3) * Math.min(1, (1 - b) * 8);
+  ctx.globalAlpha = 0.24 * Math.min(1, b * 3) * Math.min(1, (1 - b) * 8) * day;
   ctx.lineWidth = 22;
   ['#E5484D', '#F2994A', '#F2C94C', '#6FCF97', '#56CCF2', '#5B6CF2', '#9B51E0'].forEach((c, i) => {
     ctx.strokeStyle = c;

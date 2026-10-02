@@ -46,6 +46,17 @@ function main() {
   run('december = () => false; resetWeather(); weather.timer = 1;'); step(60 * 3);
   ok(run('weather.kind') === 'rain', 'le reste de l’année : de la pluie');
   ok(run('weather.timer') > 30, 'l’averse dure un moment (' + Math.round(run('weather.timer')) + ' s)');
-  run('opts.weather = "auto";');
+  // lampadaires allumés (coucher de soleil, nuit) : plus d'arc-en-ciel
+  run('var arcs = 0; ctx.arc = () => arcs++; sun = 0; weather.bow = 0.8; drawRainbow();');
+  ok(run('arcs') > 0, 'en plein jour : l’arc-en-ciel est dessiné');
+  run('arcs = 0; sun = SUN.lamp + 0.25; drawRainbow();');
+  ok(run('arcs') > 0, 'les lampadaires s’allument : il pâlit…');
+  run('arcs = 0; sun = SUN.lamp + 0.6; drawRainbow();');
+  ok(run('arcs') === 0, '… et disparaît');
+  run('opts.weather = "pluie"; resetWeather(); clues = [true, true, true]; sun = 3;'); step(60 * 10);
+  ok(run('weather.k') === 1 && run('lampsOn()'), 'une averse la nuit');
+  run('opts.weather = "soleil";'); step(60 * 8);
+  ok(run('weather.k') === 0 && run('weather.bow') === 0, 'elle finit : pas d’arc-en-ciel la nuit');
+  run('delete ctx.arc; opts.weather = "auto";');
 }
 eval(base + 'setTimeout(' + main.toString() + ', 50);');

@@ -38,11 +38,11 @@ function main() {
   const s1 = sunAfter(1, 'clues = [true, false, false]');
   ok(s1 > 0.1 && s1 < 0.5, 'premier indice : la lumière commence à baisser (' + s1.toFixed(2) + ' après 1 s)');
   ok(Math.abs(sunAfter(4, '') - 1) < 1e-6, 'puis atteint l’après-midi (1)');
-  ok(Math.abs(sunAfter(9, 'clues = [true, true, true]') - 3) < 1e-6, 'trois indices : soleil couchant (3)');
+  ok(Math.abs(sunAfter(9, 'clues = [true, true, true]') - 3) < 1e-6, 'trois indices : la nuit (3)');
   ok(run('Math.max(0, sun - 1.5)') > 0 && run('decor.some(d => d.n === "lamppost")'), 'les lampadaires sont allumés');
   run('render()');
   run('revealAlice(); P.x = alice.x - 100; P.y = alice.y + 10; P.mode = "free";'); step(2);
-  ok(run('alice.found') && run('sunGoal()') === 4, 'retrouvailles : lumière chaude (4)');
+  ok(run('alice.found') && run('sunGoal()') === 4, 'retrouvailles (4)');
   advanceDialog(); step(60 * 5);
   ok(Math.abs(run('sun') - 4) < 1e-6, 'atteinte pendant l’écran de fin');
   run('render()');

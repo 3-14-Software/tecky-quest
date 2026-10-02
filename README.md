@@ -6,7 +6,8 @@ ensuite, et Alice ne sort de sa cachette qu'une fois les trois retrouvées. En c
 chiens (dont les chiens de berger, qui chargent), gratte la terre pour déterrer des trésors, ramasse des os (qui rendent
 de la vie) et des saucisses (qui ajoutent un os de vie maximum). Il traverse campagne, route (gare aux voitures :
 mieux vaut passer par les passages piétons), village, zone industrielle, ferme, rivière (un seul pont), forêt et parc.
-La journée avance avec la recherche : la lumière baisse à chaque indice jusqu'au coucher du soleil. De temps en temps,
+La journée avance avec la recherche : un cran par indice, du plein jour au coucher de soleil orangé, quand les
+lampadaires s'allument, puis à la nuit bleutée. De temps en temps,
 une averse (flaques, arc-en-ciel, Tecky qui s'ébroue) ; en décembre, il neige.
 En chemin : le fermier Gaston (allez lui parler, C) a besoin d'aide pour ramener ses poules dans l'enclos, Marcel le
 facteur a perdu ses lettres dans le vent, Mamie Rose cherche son chat Pompon, des écureuils et des chats
@@ -60,7 +61,7 @@ morsure prioritaire sur le grattage quand un chien menace, contournement des obs
 objets (rien dans l'eau, tout atteignable à pied depuis la niche), indices d'Alice, charge du chien de berger, poules,
 papillons, fontaine animée, circulation (bousculade, passages piétons), pont, eau animée, séquenceur musical, fanfare
 et musique de défaite, sauvegarde (continuer, reprise après KO, stockage refusé), records par mode, mode balade,
-manette simulée, poussière, feuilles, ombres de nuages et coucher de soleil, quête des poules, terriers, flair,
+manette simulée, poussière, feuilles, ombres de nuages, du jour à la nuit, quête des poules, terriers, flair,
 os dorés, écureuils et chats, zones (bandeau, ambiance, timbre), transitions musicales, carte de la pause, copains qui suivent Tecky. `tests/edges.py` détecte les sprites dont des pixels touchent le bord du cadre.
 
 ## Organisation
