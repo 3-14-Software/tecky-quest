@@ -225,13 +225,16 @@ ITEMS = [
     # indices d'Alice : barrette à la ferme, chaussure dans la clairière de la forêt, doudou au parc
     ("hairclip", 58.4, 9.4), ("shoe", 73.6, 41.2), ("plush", 29.6, 37.4),
 ]
+# zones calmes (x0, y0, x1, y1 en tuiles) : comme les villes d'un RPG, aucun chien hostile n'y vit ni n'y poursuit
+# Tecky. Le village, au nord de la grande route, et la cour de la ferme (Gaston, l'enclos).
+CALM = [(19.6, 0, 40.4, 11.5), (49, 2.6, 65.4, 11.4)]
 ENEMIES = [
     # le 1er roquet est assez loin de la niche pour ne pas attaquer dès la fin de l'intro
-    ("roquet", 12, 8.8), ("roquet", 14, 3.5), ("roquet", 10.5, 19.2), ("roquet", 27, 6.5),
+    ("roquet", 12, 8.8), ("roquet", 14, 3.5), ("roquet", 10.5, 19.2), ("roquet", 22.8, 19.6),   # (ce dernier, aux entrepôts)
     ("bouledogue", 19.6, 16.9), ("bouledogue", 15.5, 22.2),
     ("molosse", 33.5, 20.2),
-    # ferme : les chiens de berger gardent la cour et les prés
-    ("berger", 52.6, 10.6), ("berger", 66, 19.5), ("berger", 72, 6.5), ("bouledogue", 47.5, 20.4), ("roquet", 60.5, 23),
+    # ferme : les chiens de berger gardent les prés (la cour, elle, est une zone calme)
+    ("berger", 45.6, 6.4), ("berger", 66, 19.5), ("berger", 72, 6.5), ("bouledogue", 47.5, 20.4), ("roquet", 60.5, 23),
     # forêt
     ("roquet", 57, 34), ("roquet", 69, 39.6), ("bouledogue", 46.5, 40.4), ("molosse", 74.5, 40.6),
     # parc
@@ -387,6 +390,7 @@ def build_map():
         "hens": [[n, px(x), px(y), q] for n, x, y, q in HENS],
         "pen": [px(v) for v in PEN], "penGate": [px(v) for v in PEN_GATE],
         "farmer": [px(FARMER[0]), px(FARMER[1])],
+        "calm": [[px(a), px(b), px(c), px(d)] for a, b, c, d in CALM],
         "postman": [px(POSTMAN[0]), px(POSTMAN[1])], "neighbor": [px(NEIGHBOR[0]), px(NEIGHBOR[1])],
         "pompon": [px(POMPON[0]), px(POMPON[1])], "letters": [[px(x), px(y)] for x, y in LETTERS],
         "npcFps": dict({"farmer": {a: v[1] for a, v in farmer.ANIMS.items()}},

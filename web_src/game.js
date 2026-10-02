@@ -871,7 +871,7 @@ function reset() {
   critters = MAP.critters.map(newCritter);
   ducks = MAP.ducks.map(newDuck); linkDucks();
   bitten = false; newBadges = []; toasts = []; napped = false;
-  resetWeather(); puddles = null;
+  resetWeather(); puddles = null; graceT = 0;
   walkGrid = null; distField = null; trail = []; tunnelSeen = false; crumbs = []; followN = 0;
   seenCells = new Uint8Array(cellsW() * cellsH()); zone = null; zoneT = 0; banner = null; Music.zone = 'niche';
   cars = MAP.traffic.vehicles.map(newVehicle);
@@ -911,6 +911,7 @@ function updateDialog(dt) {
     else if (++dialog.i >= dialog.lines.length) {
       const cb = dialog.onEnd, queue = dialog.queue || [];
       dialog = null;
+      graceT = GRACE;                  // un petit répit en sortant d'un dialogue
       state = dialogReturn === 'dialog' ? 'play' : dialogReturn;
       if (cb) cb();
       for (const [l, e] of queue) say(l, e);
@@ -1937,8 +1938,15 @@ function drawTrail() {
 // menace immédiate : un chien lancé contre Tecky et tout proche. Mordre passe alors avant gratter ou lire.
 const THREAT_R = 240;
 const ENGAGED = new Set(['chase', 'attack', 'bark', 'hurt', 'crouch', 'charge', 'tired']);
+/* Zones calmes (MAP.calm : le village, la cour de la ferme), comme les villes d'un RPG : aucun chien hostile n'y vit,
+   un chien qui poursuit Tecky s'arrête quand il y entre (« Grrr… ») et rentre chez lui, et aucune morsure n'y porte.
+   En plus, un petit répit (GRACE s) après chaque dialogue. */
+const GRACE = 1.5;
+let graceT = 0;
+const calmAt = (x, y) => MAP.calm.some(([x0, y0, x1, y1]) => x >= x0 && x <= x1 && y >= y0 && y <= y1);
 function threatened() {
   if (balade()) return false;          // en balade, les chiens ne menacent personne
+  if (calmAt(P.x, P.y)) return false;  // (zone calme)
   return dogs.some(d => ENGAGED.has(d.mode) && dist(P.x, P.y, d.x, d.y) < THREAT_R);
 }
 function nearDig() {
@@ -2047,7 +2055,7 @@ function uncover(g) {
 }
 
 function hurtPlayer(dmg, fromX, fromY) {
-  if (P.inv > 0 || P.mode === 'ko' || state !== 'play' || balade()) return;
+  if (P.inv > 0 || P.mode === 'ko' || state !== 'play' || balade() || graceT > 0 || calmAt(P.x, P.y)) return;
   if (facile()) dmg = Math.max(1, Math.floor(dmg / 2));
   P.hp = Math.max(0, P.hp - dmg);
   bitten = true;                      // (badge « Sans une égratignure »)
@@ -3011,7 +3019,8 @@ function updateDog(d, dt) {
     d.hop = d.hopT > 0 ? Math.sin((1 - d.hopT / 0.4) * Math.PI) * 16 : 0;
   }
   const dx = P.x - d.x, dy = P.y - d.y, l = Math.hypot(dx, dy);
-  const alive = P.mode !== 'ko';
+  const calmP = !balade() && calmAt(P.x, P.y);         // Tecky en zone calme : on ne le poursuit pas
+  const alive = P.mode !== 'ko' && !calmP;
 
   switch (d.mode) {
     case 'crouch':                     // berger : il se ramasse et tremble avant de charger
@@ -3119,7 +3128,10 @@ function updateDog(d, dt) {
 
   if (d.mode === 'chase') {
     if (balade() && (d.wait = (d.wait || 0) + dt) > PLAY.patience) { d.mode = 'return'; d.calm = PLAY.calm; d.wait = 0; }
-    else if (!alive || l > T.aggro * 1.5 || homeD > 750) { d.mode = 'return'; }
+    else if (!alive || l > T.aggro * 1.5 || homeD > 750) {
+      if (calmP && l < T.aggro * 1.5) addWordPop('Grrr…', d.x, d.y - 100);     // il n'ose pas le suivre plus loin
+      d.mode = 'return';
+    }
     else if (balade() && l < T.range) {
       d.dir = dirFrom(dx, dy, d.dir);
       d.mode = 'wait'; d.timer = 0.3; d.setAnim('idle'); SFX.yip(T.pitch);
@@ -3334,6 +3346,7 @@ function update(dt) {
       timePlayed += dt;
       if (pendingSay && (pendingSay.t -= dt) <= 0) { const ps = pendingSay; pendingSay = null; say(ps.lines, ps.onEnd); break; }
       arrowT = Math.max(0, arrowT - dt);
+      graceT = Math.max(0, graceT - dt);
       if (!alice.found && (stuckT += dt) > ARROW.nudgeAfter) showArrow(ARROW.nudge);
       updatePlayer(dt);
       if ((saveT += dt) >= SAVE_EVERY && safeToSave()) { saveT = 0; saveGame(); }

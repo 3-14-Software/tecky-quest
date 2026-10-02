@@ -5,7 +5,8 @@ eval(base + `setTimeout(() => {
   const cases = [['road_sign', 'bouledogue'], ['road_sign', 'roquet'], ['tree', 'bouledogue'], ['hay', 'molosse'], ['lamppost', 'roquet']];
   for (const [obst, kind] of cases) {
     for (const side of [1, -1]) {
-      run(\`var O = decor.filter(o => o.n === "\${obst}").find(o => o.x > 300 && o.y > 300 && o.x < MAP.w * TS - 300 && !blockedFeet(o.x - 70, o.y - 4, 14) && !blockedFeet(o.x + 70, o.y - 4, 14));
+      run(\`var O = decor.filter(o => o.n === "\${obst}").find(o => o.x > 300 && o.y > 300 && o.x < MAP.w * TS - 300 && !blockedFeet(o.x - 70, o.y - 4, 14) && !blockedFeet(o.x + 70, o.y - 4, 14) &&
+        !calmAt(o.x - 200, o.y) && !calmAt(o.x + 200, o.y));   // (hors des zones calmes : on n'y poursuit pas Tecky)
         var K = dogs.find(d => d.kind === "\${kind}") || dogs[0];
         dogs = [K]; K.mode = "chase"; K.detT = 0; K.detSide = undefined; K.cd = 99; K.barkCd = 99;
         K.x = O.x + \${side} * -70; K.y = O.y - 4; K.hx = K.x; K.hy = K.y;

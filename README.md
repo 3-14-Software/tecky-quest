@@ -15,6 +15,8 @@ flairer la piste d'Alice (de petits pieds nus apparaissent au sol). Les trésors
 collectionner, et la pause montre la carte des coins déjà explorés. Chaque zone a son ambiance sonore et ses
 instruments.
 
+Le village et la cour de la ferme sont des zones calmes : aucun chien n'y embête Tecky pendant qu'il parle aux habitants.
+
 Deux modes au choix sur l'écran titre : **aventure** (les chiens mordent) et **balade**, pour les plus petits (personne ne
 se fait mal : les chiens attendent qu'on joue avec eux et deviennent des copains). La partie est enregistrée automatiquement dans le navigateur
 (« Continuer » sur l'écran titre, « Reprendre la partie » après un KO) et les records (meilleur score, meilleur temps)

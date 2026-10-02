@@ -43,7 +43,7 @@ function main() {
   const nAll = run('MAP.enemies.length'), nF = run('MAP.enemies.filter((e, i) => i % 3 !== 2).length');
   ok(run('gameDiff') === 'facile' && run('P.hpMax') === 10 && run('P.hp') === 10, 'facile : 5 os au départ');
   ok(run('dogs.length') === nF && nF < nAll, 'un chien sur trois en moins (' + nF + ' sur ' + nAll + ')');
-  run('P.inv = 0; var hp0 = P.hp; hurtPlayer(2, P.x + 50, P.y);');
+  run('P.inv = 0; var hp0 = P.hp; graceT = 0; hurtPlayer(2, P.x + 50, P.y);');
   ok(run('P.hp') === run('hp0') - 1, 'une grosse morsure n’enlève qu’un demi-os');
   run('saveGame(); opts.diff = "normal";');
   ok(run('loadSave().diff') === 'facile', 'la sauvegarde garde la difficulté');
@@ -59,12 +59,12 @@ function main() {
   advanceDialog();
 
   // vibrations : téléphone au toucher, manette quand elle sert, rien si l'option est coupée
-  run('var vib = []; navigator.vibrate = ms => { vib.push(ms); return true; }; touchMode = true; pad.on = false; P.inv = 0; P.mode = "free"; hurtPlayer(2, P.x + 50, P.y);');
+  run('var vib = []; navigator.vibrate = ms => { vib.push(ms); return true; }; touchMode = true; pad.on = false; P.inv = 0; P.mode = "free"; graceT = 0; hurtPlayer(2, P.x + 50, P.y);');
   ok(run('vib.length') === 1 && run('vib[0]') > 50, 'mordu : le téléphone vibre (' + run('vib[0]') + ' ms)');
-  run('opts.vib = "non"; P.inv = 0; P.mode = "free"; hurtPlayer(2, P.x + 50, P.y);');
+  run('opts.vib = "non"; P.inv = 0; P.mode = "free"; graceT = 0; hurtPlayer(2, P.x + 50, P.y);');
   ok(run('vib.length') === 1, 'option « Vibrations : non » : rien');
   run('var eff = []; var GP2 = { axes: [0, 0], buttons: [], vibrationActuator: { playEffect: (t, o) => { eff.push([t, o.duration, o.strongMagnitude]); return Promise.resolve(); } } };');
-  run('navigator.getGamepads = () => [null, GP2]; touchMode = false; pad.on = true; opts.vib = "oui"; P.inv = 0; P.mode = "free"; hurtPlayer(2, P.x + 50, P.y);');
+  run('navigator.getGamepads = () => [null, GP2]; touchMode = false; pad.on = true; opts.vib = "oui"; P.inv = 0; P.mode = "free"; graceT = 0; hurtPlayer(2, P.x + 50, P.y);');
   ok(run('eff.length') === 1 && run('eff[0][0]') === 'dual-rumble' && run('vib.length') === 1, 'à la manette : elle vibre, pas le téléphone');
   run('uncover(digs.find(g => !g.dug));'); advanceDialog();
   ok(run('eff.length') === 2 && run('eff[1][2]') < run('eff[0][2]'), 'os doré déterré : un petit coup');

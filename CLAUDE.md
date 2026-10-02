@@ -97,6 +97,11 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   **Mordre passe avant tout** si un chien menace Tecky (`threatened()` : chien « engagé » — `ENGAGED` : chasse,
   attaque, aboiement, sonné, accroupi, charge, essoufflé — à moins de `THREAT_R` = 240 px) ; C interrompt alors aussi un grattage en cours. Tests : `threat.js`, `read.js`.
   Le **doberman est immunisé aux aboiements** (`barkImmune`) : il faut le mordre (Tecky l'explique, bulle « Même pas peur ! »).
+- Zones calmes (`MAP.calm` = `CALM` dans pack_web : le village au nord de la route, la cour de la ferme ; `calmAt()`),
+  comme les villes d'un RPG, en aventure : aucun chien n'y habite, un chien qui poursuit Tecky renonce quand il y
+  entre (« Grrr… ») et rentre chez lui, `hurtPlayer()` n'y fait rien, `threatened()` y est faux. En balade, les
+  copains peuvent y suivre Tecky. Répit de `GRACE` (1,5 s, `graceT`) après chaque dialogue : aucune morsure ne porte.
+  Les personnages qui donnent des quêtes vivent dans ces zones. Test : `calm.js`.
 - Aboiement : touche dans un cône devant soi, jusqu'à `BARK` (Tecky, 300 px) ou `DOG_BARK` (doberman, 320 px).
   Une onde au sol (`addBarkRing` / `drawRings`, crème ou rouge) montre exactement cette zone : toujours passer par ces
   constantes pour changer une portée. Test : `tests/ring.js`.
@@ -209,7 +214,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   copie générée (`tests/regen.py`) — la régénérer après toute modif de `game.js` (fait par `run_all.sh`).
 - Dialogues : 3 lignes maximum affichées (4 en texte grand) ; chaîne longue = la découper en plusieurs répliques.
 - Tests : isoler la scène (`dogs = []`, `cars = []`, autres chiens renvoyés chez eux) ; un chien qui flâne ou une voiture
-  qui passe rendent sinon un test aléatoire. Relancer un nouveau test plusieurs fois avant de le valider.
+  qui passe rendent sinon un test aléatoire. Relancer un nouveau test plusieurs fois avant de le valider. Pour qu'une
+  morsure porte : hors zone calme, et `graceT = 0` (sinon le répit qui suit un dialogue l'annule).
 - Le service worker de `docs/` est réseau d'abord avec repli cache : pas de version à incrémenter à chaque livraison.
 - Canvas simulé des tests (`sim.js`, `check_placement.js`) : il doit renvoyer un objet pour `createRadialGradient` /
   `createLinearGradient` (nuages, lumière) ; tout nouvel appel de canvas qui renvoie un objet doit y être ajouté.

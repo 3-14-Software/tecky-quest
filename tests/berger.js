@@ -4,7 +4,7 @@ eval(base + `setTimeout(() => {
   run('audioOn(); pressed.ok = true'); step(1); advanceDialog();
   // terrain dégagé : la route principale, à l'est du village
   run('var B = dogs.find(d => d.kind === "berger"); dogs = [B];');
-  const setup = 'P.x = 46*64; P.y = 13.5*64; P.mode = "free"; P.inv = 0; P.hp = P.hpMax; P.kx = P.ky = 0;' +
+  const setup = 'P.x = 46*64; P.y = 13.5*64; P.mode = "free"; P.inv = 0; graceT = 0; P.hp = P.hpMax; P.kx = P.ky = 0;' +
                 'B.x = B.hx = P.x + 230; B.y = B.hy = P.y; B.mode = "chase"; B.chargeCd = 0; B.cd = 9; B.kx = B.ky = 0;';
   run(setup); step(1);
   ok(run('B.mode') === 'crouch' && run('pops.some(p => p.text === "!")'), 'à bonne distance : il s\\'accroupit et prévient « ! »');
