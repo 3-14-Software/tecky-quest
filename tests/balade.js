@@ -3,7 +3,8 @@ const base = require('fs').readFileSync(__dirname + '/sim.js', 'utf8').split("se
 function main() {
   run('audioOn(); menu.sel = menu.items.findIndex(i => i.id === "balade"); pressed.ok = true'); step(1);
   ok(run('gameMode') === 'balade' && /envie de jouer/.test(run('dialog.lines[2].text')), 'nouvelle balade : l’intro annonce des chiens joueurs');
-  ok(/\[bite\] sert à jouer avec lui/.test(run('dialog.lines[5].text')), 'l’intro explique comment jouer avec un chien');
+  ok(/sert à jouer avec un chien, à parler/.test(run('dialog.lines[4].text')) && /copains/.test(run('dialog.lines[6].text')),
+     'l’intro explique comment jouer avec un chien (et le reste du bouton de morsure)');
   advanceDialog();
   // aucun chien ne perd jamais de vie dans ce test
   run('var hurt = false; var hd0 = hurtDog; hurtDog = function (d) { hurt = true; return hd0.apply(this, arguments); };');

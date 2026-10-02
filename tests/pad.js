@@ -22,7 +22,7 @@ function main() {
   ok(run('menu.sel') === 1, 'nouvelle inclinaison : entrée suivante');
   tap(0);
   ok(run('state') === 'dialog' && run('gameMode') === 'balade', 'A valide : nouvelle balade');
-  ok(/\[walk\] pour marcher/.test(run('dialog.lines[3].text')) && /\[bite\] sert à gratter/.test(run('dialog.lines[4].text')) &&
+  ok(/\[walk\] pour marcher/.test(run('dialog.lines[3].text')) && /^\[bite\] ne fait mal à personne/.test(run('dialog.lines[4].text')) &&
      run('glyphFrame("walk")[0]') === 'hud/pad' && run('MAP.pads[glyphFrame("bite")[1]]') === 'A',
      'l’intro explique les commandes de la manette (stick, A…)');
   for (let k = 0; k < 40 && run('state') === 'dialog'; k++) { tap(0); run('if (dialog) dialog.c = 999'); }

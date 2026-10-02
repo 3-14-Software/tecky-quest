@@ -19,11 +19,11 @@ function main() {
   ok(run('richWidth("[ok]", 26)') > 0 && run('richWidth("[ok] pour", 26)') > run('richWidth("[ok]", 26)'), 'largeur d’un texte avec icônes');
   // la réplique s'écrit lettre à lettre sans jamais couper une [action]
   run('pad.on = false;');
-  const intro = run('introLines()[3].text');
+  const intro = run('introLines()[3].text + introLines()[4].text');
   ok(intro.includes('[walk]') && intro.includes('[bite]'), 'l’aide de l’introduction passe par les icônes');
   let cut = false;
   for (let n = 0; n <= intro.length; n++) {
-    const t = run(`typed(introLines()[3].text, ${n})`);
+    const t = run(`typed(introLines()[3].text + introLines()[4].text, ${n})`);
     if (t.lastIndexOf('[') > t.lastIndexOf(']')) cut = true;
   }
   ok(!cut, 'frappe lettre à lettre : une [action] apparaît d’un bloc');
@@ -38,7 +38,7 @@ function main() {
     'victoire': 'state = "win"; overT = 2.6;',
     'son coupé': 'state = "play"; muted = true;',
     'introduction': 'muted = false; newGame("aventure", false); dialog.i = 3; dialog.c = 9999; state = "dialog";',
-    'introduction (os)': 'dialog.i = 4; dialog.c = 9999;',
+    'introduction (bouton de morsure)': 'dialog.i = 4; dialog.c = 9999;',
   };
   for (const p of [false, true]) {
     for (const [name, setup] of Object.entries(screens)) {

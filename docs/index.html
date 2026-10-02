@@ -591,7 +591,7 @@ addEventListener('keyup', e => {
 addEventListener('blur', () => { for (const k in held) held[k] = false; });
 
 /* manette (API Gamepad, disposition « standard ») : stick gauche ou croix pour marcher et choisir dans les menus,
-   A = mordre / gratter / lire et valider, X ou B = aboyer, Y = flairer, Start = pause, Select = son.
+   A = mordre (ou parler, lire, gratter…) et valider, X ou B = aboyer, Y = flairer, Start = pause, Select = son.
    Les boutons sont lus à chaque image (pollPad) : un appui = une impulsion dans `pressed`, comme une touche. */
 const PAD_MAP = { 0: ['bite', 'ok'], 1: ['bark'], 2: ['bark'], 3: ['sniff'], 8: ['mute'], 9: ['pause'],
                   12: ['up'], 13: ['down'], 14: ['left'], 15: ['right'] };
@@ -1045,15 +1045,16 @@ function introLines() {
         ? "La flèche au bord de l'écran me guide. Et les chiens du coin ont l'air d'avoir envie de jouer !"
         : "La flèche au bord de l'écran me guide. Gare aux chiens du coin, ils ne sont pas commodes." },
     { who: 'info', text: touchMode
-        ? "Glisse le doigt à gauche pour marcher. Boutons à droite pour aboyer, mordre et flairer la piste d'Alice. Près d'un panneau, le bouton de morsure devient « lire »."
-        : "[walk] pour marcher, [bark] pour aboyer, [bite] pour mordre ou lire un panneau, [sniff] pour flairer la piste d'Alice. [pause] pour la pause, [mute] pour le son." },
-    { who: 'info', text: touchMode
-        ? "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Près des traces de pattes, le bouton de morsure devient « gratter » : un trésor est peut-être enterré !"
-        : "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Près des traces de pattes, [bite] sert à gratter le sol : un trésor est peut-être enterré !" },
+        ? "Glisse le doigt à gauche pour marcher. Les boutons à droite servent à aboyer, à mordre et à flairer la piste d'Alice."
+        : "[walk] pour marcher, [bark] pour aboyer, [sniff] pour flairer la piste d'Alice. [pause] pour la pause, [mute] pour le son." },
+    // le bouton de morsure fait tout ce qui se fait de près (biteAction) : la bulle au-dessus de la cible le dit
+    { who: 'info', text: (touchMode ? 'Le bouton de morsure' : '[bite]') + (balade()
+        ? " ne fait mal à personne en balade : il sert à jouer avec un chien, à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire."
+        : " sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.") },
+    { who: 'info', text: "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Et des traces de pattes au sol cachent peut-être un trésor : il n'y a plus qu'à gratter !" },
   ].concat(balade() ? [
-    { who: 'info', text: touchMode
-        ? "En balade, près d'un chien, le bouton de morsure devient « jouer » : vous deviendrez copains ! Aboyer appelle les chiens."
-        : "En balade, près d'un chien, [bite] sert à jouer avec lui : vous deviendrez copains ! [bark] appelle les chiens." },
+    { who: 'info', text: "En balade, joue avec les chiens du coin : vous deviendrez copains ! " +
+        (touchMode ? 'Aboyer les appelle.' : '[bark] les appelle.') },
   ] : []);
 }
 
