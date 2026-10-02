@@ -47,6 +47,10 @@ function main() {
   ok(run('Music.zone') === 'foret' && !run('Music.want'), 'Continuer en forêt : sa variation tout de suite');
   step(60);
   ok(run('Music.layers.length') === 1 && run('Music.layers[0].id') === 'foret', 'après un fondu rapide');
+  // le verger (au sud de la route) : la musique de la ferme, avec son bandeau à lui
+  run('P.x = 70 * 64; P.y = 33 * 64; saveGame(); toTitle(); loadGame(loadSave(), false);'); advanceDialog(); step(3);
+  ok(run('zoneAt(P.x, P.y).id') === 'verger' && run('Music.zone') === 'ferme', 'Continuer au verger : la variation de la ferme');
+  run('P.x = 76 * 64; P.y = 56 * 64; saveGame(); toTitle(); loadGame(loadSave(), false);'); advanceDialog(); step(60);
   // de la forêt au parc : le tempo remonte
   run('P.x = 30 * 64; P.y = 53 * 64;');
   t = 0; while (run('Music.bpm') !== run('SONGS.parc.bpm') && t < 60 * 14) { step(1); t++; }

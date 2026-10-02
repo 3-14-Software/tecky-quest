@@ -396,7 +396,7 @@ const AMB = { vol: 0.55, water: 0.09, waterR: [140, 300], rain: 0.07 };
 const AMB_EVENTS = {   // zone : [son, intervalle min (s), max]
   foret: [['bird', 1.4, 3.8]], parc: [['bird', 3, 7]], campagne: [['bird', 4, 9]], niche: [['bird', 4, 9]],
   village: [['bell', 18, 32], ['bird', 7, 13]], industrie: [['clank', 5, 11]],
-  ferme: [['cluck', 3.5, 8], ['rooster', 28, 50], ['bird', 8, 14]],
+  ferme: [['cluck', 3.5, 8], ['rooster', 28, 50], ['bird', 8, 14]], verger: [['bird', 3, 7], ['cluck', 9, 18]],
 };
 function ambSound(name) {
   const v = AMB.vol;
@@ -730,7 +730,7 @@ function drawHole(x, y) {
 
 /* ------------------------------------------------------------------ collisions */
 const FOOT = {
-  tree: [-18, -16, 18, 0], bush: [-28, -18, 28, 0], hay: [-26, -22, 26, 0], rock: [-22, -18, 22, 0],
+  tree: [-18, -16, 18, 0], apple_tree: [-18, -16, 18, 0], apple_crate: [-24, -18, 24, 0], bush: [-28, -18, 28, 0], hay: [-26, -22, 26, 0], rock: [-22, -18, 22, 0],
   fence_wood_h: [0, -14, 64, 0], fence_wood_v: [-8, -64, 8, 0], signpost: [-7, -8, 7, 0],
   cone: [-12, -10, 12, 0], road_sign: [-7, -8, 7, 0], lamppost: [-10, -10, 10, 0],
   house_red: [-76, -84, 76, -2], house_blue: [-76, -84, 76, -2], doghouse: [-28, -26, 28, 0],
@@ -2669,7 +2669,7 @@ function drawDust() {
    Elles tournoient en descendant avec une petite ombre au sol, se posent, puis s'effacent. */
 const LEAF = { rate: 0.08, max: 50, fall: 34, sway: 14, rest: 2.2, fade: 0.8 };
 function updateLeaves(dt) {
-  if (!leafTrees) leafTrees = decor.filter(d => d.n === 'tree' || d.n === 'fir');
+  if (!leafTrees) leafTrees = decor.filter(d => d.n === 'tree' || d.n === 'apple_tree' || d.n === 'fir');
   for (const tr of leafTrees) {
     if (leaves.length >= LEAF.max) break;
     if (tr.x < camX - 60 || tr.x > camX + VW + 60 || tr.y < camY - 20 || tr.y > camY + VH + 160) continue;
@@ -2963,7 +2963,9 @@ const RIVER_MID = 43.6;
 const ZONES = [
   { id: 'foret', name: 'La grande forêt', label: 'Grande forêt', at: [87, 50.5], has: (x, y) => y >= RIVER_MID && x >= 56 },
   { id: 'parc', name: 'Le parc des enfants', label: 'Parc des enfants', at: [28, 55.5], has: (x, y) => y >= RIVER_MID },
-  // la ferme : à l'est du village et du dépôt (grillage en x 56.6) ; au bord de la rivière, après le port (x 64.6)
+  // la ferme : à l'est du village et du dépôt (grillage en x 56.6) ; au bord de la rivière, après le port (x 64.6).
+  // Au sud de la route, le verger et les prés (même musique que la ferme : music)
+  { id: 'verger', name: 'Le verger', label: 'Verger', music: 'ferme', at: [71, 31.4], has: (x, y) => x >= 56.6 && y >= 21.5 && (y < 30.5 || x >= 64.6) },
   { id: 'ferme', name: 'La ferme des Tilleuls', label: 'Ferme des Tilleuls', at: [74.5, 2.6], has: (x, y) => x >= 56.6 && (y < 30.5 || x >= 64.6) },
   { id: 'industrie', name: 'La zone industrielle', label: 'Zone industrielle', at: [47, 27.4], has: (x, y) => y >= 22.5 && x >= 29.5 },
   { id: 'village', name: 'Le village', label: 'Village', at: [42, 1.4], has: (x, y) => x >= 27.5 && y < 22.5 },
@@ -2976,13 +2978,13 @@ const BANNER = { settle: 0.8, life: 3 };
 let zone = null, zoneT = 0, banner = null, tuneT = 0;
 function updateZone(dt) {
   const z = zoneAt(P.x, P.y);
-  if (!zone) { zone = z; Music.setZone(z.id, true); }   // nouvelle partie, Continuer : la musique suit tout de suite
+  if (!zone) { zone = z; Music.setZone(z.music || z.id, true); }   // nouvelle partie, Continuer : la musique suit tout de suite
   if (z !== zone) {                    // nouvelle zone : on attend un peu (pas de bandeau en longeant une frontière)
     if ((zoneT += dt) > BANNER.settle) { zone = z; zoneT = 0; banner = { text: z.name, t: 0 }; }
   } else zoneT = 0;
   // musique : seulement si Tecky reste MUSIC_ZONE.settle s dans la zone (un passage éclair ne la change pas)
-  if (z.id !== (Music.want || Music.zone)) {
-    if ((tuneT += dt) > MUSIC_ZONE.settle) { Music.setZone(z.id); tuneT = 0; }
+  if ((z.music || z.id) !== (Music.want || Music.zone)) {
+    if ((tuneT += dt) > MUSIC_ZONE.settle) { Music.setZone(z.music || z.id); tuneT = 0; }
   } else tuneT = 0;
   if (banner && (banner.t += dt) > BANNER.life) banner = null;
 }

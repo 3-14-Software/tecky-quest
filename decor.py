@@ -26,6 +26,41 @@ def tree():
     return d
 
 
+def apple_tree():
+    """Pommier du verger : plus petit que l'arbre, feuillage rond et plus clair, des pommes rouges ; deux sont tombées
+    dans l'herbe."""
+    d = Drawing(64, 64)
+    _shadow(d, 32, 58, 17, 3.6)
+    d.add(poly([(29, 42), (35, 42), (36.5, 58), (27.5, 58)]), "#8A5A3A")
+    d.add(rect(31.2, 46, 1.8, 10, 0.9), "#6E4428", sil=False)
+    for cx, cy, r in ((32, 28, 14.5), (19.5, 33, 9.5), (44.5, 33, 9.5), (24.5, 19.5, 9), (39.5, 19.5, 9)):
+        d.add(circle(cx, cy, r), "#5DAA4E")
+    for cx, cy, r in ((34, 33, 10), (21, 36, 6), (43, 36, 6)):
+        d.add(circle(cx, cy, r), "#4A9142", sil=False, opacity=0.55)
+    for cx, cy, r in ((26, 18, 4.5), (39, 16.5, 3.4), (18, 30, 3)):
+        d.add(circle(cx, cy, r), "#86C96A", sil=False)
+    for x, y in ((22, 27), (30.5, 21.5), (41.5, 25.5), (36, 34), (18.5, 36.5), (46, 37), (27, 36.5), (37.5, 18.5)):
+        d.add(circle(x, y, 2.3), "#E0413A", sil=False, edge=True)
+        d.add(circle(x - 0.7, y - 0.8, 0.6), "#FFFFFF", sil=False, opacity=0.7)
+    for x, y in ((21.5, 57.2), (42.5, 58.4)):                      # tombées dans l'herbe
+        d.add(circle(x, y, 2.0), "#E0413A", edge=True)
+        d.add(circle(x - 0.6, y - 0.7, 0.5), "#FFFFFF", sil=False, opacity=0.7)
+    return d
+
+
+def apple_crate():
+    """Cagette de pommes cueillies, au pied d'un pommier du verger."""
+    d = Drawing(32, 32)
+    _shadow(d, 16, 28.5, 13, 2)
+    d.add(rect(4, 14, 24, 14, 0.5), "#C98A4B")
+    d.raw(line("M4,20.5 L28,20.5", "#A36D37", 1.0))
+    for x, y in ((8.5, 13), (13.5, 12), (18.5, 12.5), (23.5, 13), (11, 9.5), (16, 9), (21, 9.8)):
+        d.add(circle(x, y, 2.6), "#E0413A", sil=False, edge=True)
+        d.add(circle(x - 0.8, y - 0.9, 0.6), "#FFFFFF", sil=False, opacity=0.7)
+    d.add(rect(4, 14, 24, 2.2, 0.5), "#DDA566", sil=False, edge=True)
+    return d
+
+
 def bush():
     d = Drawing(32, 32)
     _shadow(d, 16, 28, 12, 2.5)
@@ -1261,6 +1296,8 @@ def frames(name):
 
 DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x)
     "tree": (tree, (64, 64), (32, 58)),
+    "apple_tree": (apple_tree, (64, 64), (32, 58)),
+    "apple_crate": (apple_crate, (32, 32), (16, 28)),
     "bush": (bush, (32, 32), (16, 28)),
     "hay": (hay, (32, 32), (16, 28)),
     "rock": (rock, (32, 32), (16, 27)),

@@ -46,8 +46,9 @@ function main() {
   ok(run('zone.id') === 'village' && run('banner && banner.text') === 'Le village', 'en arrivant au village : bandeau « Le village »');
   run('P.x = 76 * 64; P.y = 56 * 64;'); step(70);
   ok(run('zone.id') === 'foret' && run('TIMBRE.foret.lead') === 'triangle', 'dans la forêt : flûte (onde triangle ; transitions : music.js)');
-  ok(run('zoneAt(80.5 * 64, 43.2 * 64).id') === 'ferme' && run('zoneAt(80.5 * 64, 44 * 64).id') === 'foret', 'sur le pont : la ferme jusqu’au milieu de la rivière, puis la forêt');
-  ok(run('JSON.stringify(ZONES.map(z => z.id))') === '["foret","parc","ferme","industrie","village","campagne","niche"]', 'sept zones (la rivière n’en est pas une)');
+  ok(run('zoneAt(80.5 * 64, 43.2 * 64).id') === 'verger' && run('zoneAt(80.5 * 64, 44 * 64).id') === 'foret', 'sur le pont : le verger jusqu’au milieu de la rivière, puis la forêt');
+  ok(run('JSON.stringify(ZONES.map(z => z.id))') === '["foret","parc","verger","ferme","industrie","village","campagne","niche"]', 'huit zones (la rivière n’en est pas une)');
+  ok(run('zoneAt(70 * 64, 17 * 64).id') === 'ferme' && run('zoneAt(70 * 64, 23 * 64).id') === 'verger', 'la route sépare la ferme (au nord) du verger (au sud)');
   ok(run('[2, 23, 46, 66, 91].every(x => zoneAt(x * 64, 41.2 * 64) === zoneAt(x * 64, 43.4 * 64) && zoneAt(x * 64, 43.8 * 64) === zoneAt(x * 64, 46 * 64))'),
      'en longeant la rivière, d’un côté ou de l’autre, on reste dans la même zone');
   run('P.x = 46 * 64; P.y = 5 * 64;'); step(30); run('P.x = 46.3 * 64;'); step(30);

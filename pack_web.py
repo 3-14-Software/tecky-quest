@@ -187,9 +187,9 @@ DECOR = [
     ("bush", 71.0, 38.6), ("bush", 84.0, 36.4), ("bush", 95.0, 31.6), ("hay", 75.6, 37.2), ("hay", 76.8, 37.5),
     ("rock", 90.6, 36.0),
     # au sud de la route : verger, champ, mare, chemin du pont
-    # le verger : des arbres en rangées, et au milieu, la petite clairière où Iris a son panier
-    *[("tree", x, y) for y in (24.0, 29.2) for x in (58.0, 60.4, 62.8, 65.2)], ("tree", 58.0, 26.6), ("tree", 65.2, 26.6),
-    ("dog_bed", 61.6, 26.95),
+    # le verger : des pommiers en rangées, et au milieu, la petite clairière où Iris a son panier
+    *[("apple_tree", x, y) for y in (24.0, 29.2) for x in (58.0, 60.4, 62.8, 65.2)],
+    ("apple_tree", 58.0, 26.6), ("apple_tree", 65.2, 26.6), ("dog_bed", 61.6, 26.95), ("apple_crate", 66.7, 28.6),
     ("tree", 92.5, 23.6), ("tree", 94.5, 28.6), ("bush", 77.6, 23.4), ("bush", 83.4, 29.3),
     ("reeds", 85.6, 24.6), ("reeds", 90.6, 27.4), ("hay", 77.8, 27.4), ("scarecrow", 72, 27.4),
     ("signpost", 78, 40.6),

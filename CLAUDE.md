@@ -56,7 +56,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   aucun objet n'est à portée de parole d'un personnage, les personnages vivent en zone calme et aucun chien n'y habite.
 - Carte (96 x 64, agrandie depuis 80 x 48 : colonnes ajoutées en x 15 et x 30, rangées en y 10,4 et y 25 ; sauvegarde
   v2) : au nord de la route (y 18..21), la niche et son jardin, le village (place, fontaine, rue et ruelle), la ferme ;
-  au sud, la campagne (mare aux canards au bord de l'eau), la zone industrielle, les prés de la ferme (verger, champ).
+  au sud, la campagne (mare aux canards au bord de l'eau), la zone industrielle, le verger (pommiers `apple_tree` en
+  rangées, panier d'Iris) et les prés de la ferme (champ, mare, pâture au bord de la rivière).
   Rivière d'un bord à l'autre (y 42..45) avec **un seul pont** (`BRIDGES`, x 79..81 : coins rendus non-eau ;
   garde-corps = `RAILS` dans game.js), forêt au sud-est (sous-bois, sapins générés par `forest_firs()` hors des sentiers),
   parc au sud-ouest (cabane d'Alice). Les coordonnées des zones (`ZONES`, `RIVER_MID`), de la route (marquages,
@@ -261,7 +262,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   les adultes s'envolent vers un autre coin d'eau loin de lui (`pickLanding()`), ombre au sol, et s'y posent ; la cane
   suivie de canetons (même famille, `lead`) s'éloigne à la nage avec eux en file. Points la première fois (`scored`,
   sauvegardé dans `ducks`). Test : `ducks.js`.
-- Zones (`ZONES`, `zoneAt()`, `updateZone()`) : bandeau à l'arrivée (`banner`), étiquettes de la carte, ambiance sonore
+- Zones (`ZONES`, `zoneAt()`, `updateZone()` ; huit, dont « Le verger » au sud de la route, qui reprend la musique de
+  la ferme : champ `music` d'une zone) : bandeau à l'arrivée (`banner`), étiquettes de la carte, ambiance sonore
   (`Ambience`, `AMB_EVENTS`, `ambSound()` : oiseaux, coq, sonnette, cliquetis ; clapotis selon l'eau autour) et timbre
   de la musique (`TIMBRE` et variation du thème `SONGS`, `Music.zone`). Changement (`MUSIC_ZONE`) : Tecky doit
   rester `settle` (2 s) dans la zone (`tuneT` ; un passage éclair ne change rien), puis `Music.setZone()` le demande
