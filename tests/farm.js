@@ -13,9 +13,9 @@ function main() {
   run('P.y = farmer.y + 110;'); step(2);
   ok(run('pops.some(p => /Hé, petit chien/.test(p.text))'), 'Tecky arrive : petite exclamation (« Hé, petit chien ! »)');
   ok(run('farm.state') === 'new' && !(run('state') === 'dialog' && run('dialog.lines[0].who') === 'farmer'), 'mais il ne donne pas la quête tout seul');
-  if (run('state') === 'dialog') advanceDialog();                     // (la barrette, ramassée au passage)
-  ok(run('clues[0]'), 'la barrette ramassée au passage');
-  step(1);
+  ok(!run('clues[0]') && !run('items.some(i => i.n === "hairclip" && dist(i.x, i.y, farmer.x, farmer.y) < 400)'),
+     'la barrette n’est pas à côté de lui (on ne la ramasse pas en lui parlant)');
+  step(1); run('updateCamera(10)');                                    // (caméra recentrée sur Tecky)
   ok(run('biteAction()') === 'talk' && run('talkHint !== null'), 'près de lui : C fait « Parler »');
   run('var used = []; var ds0 = drawSpr; drawSpr = function (k) { used.push(k); return ds0.apply(this, arguments); }; render(); drawSpr = ds0;');
   ok(run('used.includes("hud/talk")') === false, 'tout près, la bulle « Parler » remplace le « ! »');

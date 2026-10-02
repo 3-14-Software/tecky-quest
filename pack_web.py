@@ -144,7 +144,7 @@ DECOR = [
     ("scarecrow", 70.5, 6), ("scarecrow", 45.5, 5.6),
     ("tree", 41.5, 2), ("tree", 49.5, 1.3), ("tree", 63, 1.3), ("tree", 78.6, 1.6), ("tree", 41.5, 10.8),
     ("tree", 78.8, 10.6), ("bush", 63.6, 10.6), ("bush", 49, 10.5), ("rock", 66, 10.8),
-    ("signpost", 57.6, 11.2),
+    ("signpost", 53.9, 11.2),
     # au sud de la route : verger, champ, mare, chemin du pont
     ("tree", 43, 18.6), ("tree", 46.4, 18.4), ("tree", 49.8, 18.6), ("tree", 43.2, 21.8), ("tree", 46.6, 22),
     ("tree", 50, 21.8), ("tree", 76.5, 17.6), ("tree", 78.5, 22.6), ("bush", 61.6, 17.4), ("bush", 67.4, 23.3),
@@ -195,9 +195,9 @@ for y in (6.2, 7.2, 8.2, PEN[3]):
 FARMER = (57.9, 8.4)                # le fermier Gaston, contre la clôture ouest de l’enclos
 POSTMAN = (26.4, 10.45)             # Marcel le facteur, près de la boîte aux lettres du village
 NEIGHBOR = (32.4, 4.95)             # Mamie Rose, devant sa maison bleue
-POMPON = (38.7, 21.2)               # son chat, caché près des entrepôts
+POMPON = (24.6, 23.6)               # son chat, caché entre les caisses, près des entrepôts
 # les lettres du facteur, emportées par le vent : campagne, village, zone industrielle, près de la niche
-LETTERS = [(13.6, 8.2), (22.0, 6.6), (34.6, 7.0), (24.6, 18.0), (2.6, 5.6)]
+LETTERS = [(9.0, 9.6), (22.0, 6.6), (35.6, 9.2), (31.0, 23.6), (2.6, 5.6)]
 # terriers sous les grillages : Tecky passe d'une extrémité à l'autre (raccourcis)
 TUNNELS = [((40.0, 21.0), (41.25, 21.0)),        # zone industrielle <-> verger de la ferme
            ((36.5, 16.75), (36.5, 18.0)),        # trottoir <-> zone industrielle
@@ -211,8 +211,8 @@ ITEMS = [
     ("bone", 6, 7.5), ("bone", 12, 17.6), ("bone", 28.5, 7.2), ("bone", 23.5, 19.8), ("bone", 19.5, 11.3),
     ("sausage", 14.5, 22.5), ("sausage", 37.5, 19.2),
     ("medal", 1.4, 9.4), ("medal", 38.6, 18.3),
-    ("squeaky", 9.5, 6.2), ("squeaky", 2.5, 16.9), ("squeaky", 33, 5.2),
-    ("ball", 6.3, 5.4), ("ball", 15, 6.3), ("ball", 19.5, 20), ("ball", 25, 13.8), ("ball", 36.8, 9.4),
+    ("squeaky", 9.5, 6.2), ("squeaky", 2.5, 16.9), ("squeaky", 36.8, 6.0),
+    ("ball", 6.3, 5.4), ("ball", 15, 6.3), ("ball", 19.5, 20), ("ball", 25, 13.8), ("ball", 38.2, 7.0),
     # ferme
     ("bone", 53.6, 7.4), ("bone", 66.4, 21.6), ("sausage", 78.4, 4.6), ("medal", 78.2, 19.6),
     ("squeaky", 72.4, 22.6), ("ball", 44.8, 20.2), ("ball", 59, 11.3),
@@ -223,14 +223,14 @@ ITEMS = [
     ("bone", 30.4, 41.6), ("sausage", 20.4, 46.4), ("squeaky", 24.6, 33.2), ("ball", 12.6, 42.6),
     ("medal", 35.6, 44.6),
     # indices d'Alice : barrette à la ferme, chaussure dans la clairière de la forêt, doudou au parc
-    ("hairclip", 58.4, 9.4), ("shoe", 73.6, 41.2), ("plush", 29.6, 37.4),
+    ("hairclip", 70.6, 3.6), ("shoe", 73.6, 41.2), ("plush", 29.6, 37.4),
 ]
 # zones calmes (x0, y0, x1, y1 en tuiles) : comme les villes d'un RPG, aucun chien hostile n'y vit ni n'y poursuit
 # Tecky. Le village, au nord de la grande route, et la cour de la ferme (Gaston, l'enclos).
 CALM = [(19.6, 0, 40.4, 11.5), (49, 2.6, 65.4, 11.4)]
 ENEMIES = [
     # le 1er roquet est assez loin de la niche pour ne pas attaquer dès la fin de l'intro
-    ("roquet", 12, 8.8), ("roquet", 14, 3.5), ("roquet", 10.5, 19.2), ("roquet", 22.8, 19.6),   # (ce dernier, aux entrepôts)
+    ("roquet", 12, 8.8), ("roquet", 14, 3.5), ("roquet", 10.5, 19.2), ("roquet", 31.5, 18.0),   # (ce dernier, aux entrepôts)
     ("bouledogue", 19.6, 16.9), ("bouledogue", 15.5, 22.2),
     ("molosse", 33.5, 20.2),
     # ferme : les chiens de berger gardent les prés (la cour, elle, est une zone calme)
@@ -271,8 +271,8 @@ DUCKS = [("duck_f", 9.9, 2.4, 1), ("duckling", 9.4, 2.55, 1), ("duckling", 9.0, 
 # industrielle) qui sautent sur les toits et les conteneurs
 CRITTERS = [("squirrel", 57.4, 37.9), ("squirrel", 66.2, 36.9), ("squirrel", 48.6, 44.4), ("squirrel", 71.2, 44.4),
             ("squirrel", 10.6, 32.6), ("cat", 29.6, 9.0), ("cat_black", 31.6, 19.4)]
-DIG = [(12.5, 6.5), (5.5, 19.5), (21.5, 18.5),
-       (47.5, 20.5), (68.5, 11.5), (44.5, 33.5), (76.5, 44.5), (34.5, 33.5)]
+DIG = [(12.5, 6.5), (11.5, 21.5), (21.5, 18.5),
+       (47.5, 20.5), (74.5, 10.5), (44.5, 33.5), (76.5, 44.5), (34.5, 33.5)]
 START = (4.5, 4.2)
 ALICE = (5, 37.3 + 14 / 64)   # juste devant la porte de la cabane du parc (cachée jusqu'aux trois indices)
 TITLE = (33.5, 7.3)        # caméra de l'écran titre : la place du village
@@ -280,7 +280,7 @@ SIGNS = [
     (5.6, 11.1, "Niche de Tecky : en haut. Village : suivre la route vers l'est."),
     (7.3, 16.6, "Les champs du Père Gaston. Attention, chiens pas commodes !"),
     (8.8, 24.8, "Pas de pont ici ! Le seul pont est loin à l'est, après la ferme."),
-    (57.6, 11.2, "Ferme des Tilleuls. Attention aux chiens de berger : quand ils s'accroupissent, ils vont charger !"),
+    (53.9, 11.2, "Ferme des Tilleuls. Attention aux chiens de berger : quand ils s'accroupissent, ils vont charger !"),
     (62, 24.6, "Pont de la rivière. Au sud : la grande forêt."),
     (53.2, 32.6, "Sentier de la forêt. Le parc des enfants est à l'ouest."),
     (36.6, 38.4, "Parc des enfants : toboggan, balançoire, bac à sable et cabane !"),
