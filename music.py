@@ -65,6 +65,7 @@ STYLES = {
     "foret": dict(bpm=108),         # calme : basse tenue, arpèges lents, presque pas de batterie, écho sur la mélodie
     "parc": dict(bpm=126),          # boîte à musique : mélodie à l'octave, notes courtes, pas de batterie
     "industrie": dict(bpm=140),     # mécanique : basse martelée, grosse caisse à chaque temps, cliquetis
+    "berceuse": dict(bpm=84),       # la fin, la nuit à la niche : lente, mélodie à l'octave tenue, pas de batterie
 }
 
 
@@ -94,6 +95,8 @@ def _lead(style, st, n, ln, total):
         return [[st, "lead", n, ln - 0.1, 1.0], [(st + 3) % total, "lead", n, max(0.8, min(ln, 4) - 0.3), 0.28]]
     if style == "parc":                 # à l'octave, notes courtes de boîte à musique
         return [[st, "lead", n + 12, min(ln - 0.3, 3.2), 0.9]]
+    if style == "berceuse":             # à l'octave, notes tenues, douce
+        return [[st, "lead", n + 12, min(ln - 0.2, 5.5), 0.75]]
     return [[st, "lead", n, ln - 0.3, 1.0]]
 
 
@@ -111,6 +114,8 @@ def _bass(style, bar, sec):
         return [(0, 0, 3.4, 0.6), (8, 7, 3.4, 0.55)]
     if style == "industrie":
         return [(k, 12 if k % 4 == 2 else 0, 0.7, 0.8) for k in range(16)]
+    if style == "berceuse":             # une ronde par mesure
+        return [(0, 0, 15.5, 0.45)]
     # basse : fondamentale / octave, quinte en fin de mesure
     pattern = [0, 12, 0, 12, 0, 12, 7, 12] if sec != 3 else [0, 12, 7, 12, 0, 12, 7, 10 if bar % 2 else 12]
     return [(k * 2, iv, 1.6, 1.0) for k, iv in enumerate(pattern)]
@@ -130,6 +135,9 @@ def _arp(style, tones):
     if style == "parc":
         pat = [0, 2, 3, 2, 1, 2, 3, 2]
         return [(k * 2, tones[pat[k]] + 12, 1.5, 0.9) for k in range(8)]
+    if style == "berceuse":             # accords brisés lents, comme un bercement
+        pat = [0, 2, 3, 2, 1, 2, 3, 2]
+        return [(k * 2, tones[pat[k]], 2.4, 0.55) for k in range(8)]
     if style == "industrie":            # motif qui tourne en rond
         pat = [0, 0, 2, 0, 3, 0, 2, 0]
         return [(k, tones[pat[k % 8]], 0.6, 0.9) for k in range(16)]
@@ -157,7 +165,7 @@ def _drums(style, bar, sec):
     elif style == "foret":
         out += [(0, "kick", 0.45), (4, "hat", 0.25), (12, "hat", 0.25)]
         roll = False
-    elif style == "parc":
+    elif style in ("parc", "berceuse"):
         return []
     elif style == "industrie":
         out += [(k, "kick", 0.9) for k in (0, 4, 8, 12)] + [(4, "snare", 0.9), (12, "snare", 0.9)]

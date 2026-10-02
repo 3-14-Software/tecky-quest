@@ -30,6 +30,9 @@ tous les canards…), visibles depuis le menu principal.
 
 Quand on ne touche plus à rien, Tecky s'assoit, bâille, se gratte l'oreille… puis s'endort.
 
+À la fin, Tecky et Alice rentrent ensemble à la niche, la nuit, parmi les lucioles, sur une berceuse : Tecky s'endort
+à ses pieds.
+
 Tout est généré par du code : sprites en SVG (aplats + contour), tileset, décors, HUD, musique chiptune, niveau.
 
 - **Jouer** : https://3-14-software.github.io/tecky-quest/ (clavier : flèches/ZQSD, X aboyer, C mordre (ou parler, gratter, lire, passer sous un grillage, jouer), R flairer, P pause, F plein écran, M son ; manette : stick ou croix, X/B aboyer, A mordre (ou parler, gratter, lire, passer sous un grillage, jouer) et valider, Y flairer, Start pause, Select son ; tactile sur téléphone).

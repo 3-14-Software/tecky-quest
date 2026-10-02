@@ -7,7 +7,8 @@ function main() {
   const BAR = run('Music.song.bar'), PH = run('MUSIC_ZONE.phrase') * BAR, FD = run('MUSIC_ZONE.fade') * BAR;
   const settle = run('MUSIC_ZONE.settle');
   ok(BAR === 16 && run('Music.zone') === 'niche' && run('Music.layers.length') === 1, 'à la niche : son de base, une seule couche');
-  ok(run('JSON.stringify(Object.keys(SONGS))') === '["base","village","ferme","foret","parc","industrie"]', 'une variation du thème par zone (niche et campagne : la base)');
+  ok(run('JSON.stringify(Object.keys(SONGS))') === '["base","village","ferme","foret","parc","industrie","berceuse"]',
+     'une variation du thème par zone (niche et campagne : la base), et la berceuse de la fin');
   ok(run('Object.values(SONGS).every(S => S.total === SONGS.base.total && S.bar === SONGS.base.bar)'), 'même longueur, même grille de phrases');
   ok(run('SONGS.foret.bpm') < run('SONGS.base.bpm') && run('SONGS.village.bpm') > run('SONGS.base.bpm'), 'forêt plus lente, village plus entraînant');
   ok(run('SONGS.ferme.ev.some(e => e[1] === "lead" && e[5] < 0)') && !run('SONGS.parc.ev.some(e => e[1] === "drums")'), 'ferme : notes glissées ; parc : pas de batterie');

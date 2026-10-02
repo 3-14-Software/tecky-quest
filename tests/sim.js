@@ -109,10 +109,12 @@ setTimeout(() => {
   ok(run('Music.cur') === 'win', 'le thème principal ne repart pas pendant la fanfare');
   step(60 * 4);
   ok(run('Music.step') >= run('Music.song.total'), 'la fanfare arrive à son terme (' + run('Music.song.total') + ' pas)');
-  advanceDialog();
-  ok(run('state') === 'win', 'écran de victoire');
-  step(60 * 3);
   ok(intervals.length === 0, 'le séquenceur s\'arrête à la fin de la fanfare (pas de bouclage)');
+  advanceDialog();
+  ok(run('state') === 'ending', 'scène de fin');
+  step(70); run('pressed.ok = true'); step(1);
+  ok(run('state') === 'win', 'écran de victoire');
+  run('Music.stop()');
   const n0 = nodes; run('Music.start()'); step(120);
   ok(nodes > n0 + 20, 'le séquenceur joue des notes (' + (nodes - n0) + ' nœuds en 2 s)');
   step(120);

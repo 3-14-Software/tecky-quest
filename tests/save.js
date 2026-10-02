@@ -67,7 +67,7 @@ function main() {
   run('pressed.ok = true'); step(1); advanceDialog();
   const win = (sc, t) => {
     run('clues = [true, true, true]; revealAlice(); score = ' + sc + '; timePlayed = ' + t + '; P.x = alice.x - 100; P.y = alice.y + 10; P.mode = "free"; P.inv = 9;');
-    step(2); advanceDialog(); step(70);
+    step(2); advanceDialog(); step(70); run('pressed.ok = true'); step(1); step(70);   // la scène de fin, passée
   };
   win(900, 1500);
   ok(run('state') === 'win' && !('tecky-quest-save' in run('LS')), 'victoire : la sauvegarde est effacée');

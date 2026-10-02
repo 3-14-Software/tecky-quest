@@ -210,7 +210,7 @@ const Music = {
     const mk = S => { const b = Array.from({ length: S.total }, () => []); for (const e of S.ev) b[e[0]].push(e); return { byStep: b, total: S.total, bpm: S.bpm, bar: S.bar }; };
     this.themes = {};
     for (const k in SONGS) this.themes[k] = mk(SONGS[k]);
-    this.songs = { main: this.themes.base, win: mk(WINSONG), lose: mk(LOSESONG) };
+    this.songs = { main: this.themes.base, win: mk(WINSONG), lose: mk(LOSESONG), end: this.themes.berceuse };
     this.byStep = true;
     const len = AC.sampleRate;
     this.noiseBuf = AC.createBuffer(1, len, AC.sampleRate);
@@ -228,9 +228,10 @@ const Music = {
   // thème discret (derrière les bruitages), fanfare de fin à plein volume
   level() {                            // réglage « Musique » : 7 = normal
     const quiet = state === 'pause' || (state === 'options' && optReturn === 'pause');
-    return muted ? 0 : (quiet ? 0.12 : this.cur === 'main' ? 0.35 : 0.55) * opts.music / OPT_DEF.music;
+    return muted ? 0 : (quiet ? 0.12 : this.cur === 'main' || this.cur === 'end' ? 0.35 : 0.55) * opts.music / OPT_DEF.music;
   },
-  /* name : 'main' (boucle), 'win' (fanfare de victoire) ou 'lose' (musique de défaite), ces deux-là jouées une seule fois */
+  /* name : 'main' (boucle), 'win' (fanfare de victoire) ou 'lose' (musique de défaite), ces deux-là jouées une seule fois,
+     'end' (berceuse de la fin, en boucle) */
   start(name) {
     name = name || 'main';
     if (!AC) return;
@@ -313,7 +314,7 @@ const Music = {
       this.step++;
       if (this.glide && ++this.glide.i >= this.glide.n) { this.bpm = this.glide.to; this.glide = null; }
       if (this.step >= this.song.total) {
-        if (this.cur === 'main') this.step = 0;
+        if (this.cur === 'main' || this.cur === 'end') this.step = 0;
         else { clearInterval(this.timer); const g0 = this.gain; setTimeout(() => { if (this.gain === g0) this.stop(); }, 2500); return; }   // fanfare, défaite : une seule fois
       }
     }
@@ -321,7 +322,7 @@ const Music = {
   play(e, t, spb, l) {                 // l : couche de la zone (thème), null pour la fanfare et la défaite
     const out = l ? l.g : this.gain;
     if (e[1] === 'drums') this.drum(e, t, out);
-    else this.voice(e, t, spb, (l && TIMBRE[l.id]) || TIMBRE.niche, out);
+    else this.voice(e, t, spb, (l && TIMBRE[l.id]) || TIMBRE[this.cur] || TIMBRE.niche, out);
   },
   drum(e, t, out) {
     const [, , note, , vol] = e;
@@ -379,6 +380,7 @@ const TIMBRE = {
   industrie: { lead: 0.125, arp: 0.0625, sus: 0.8, lv: 0.95 },    // son fin, un peu métallique
   foret: { lead: 'triangle', arp: 'triangle', sus: 1.15, lv: 1.7 },   // flûte
   parc: { lead: 'sine', arp: 0.25, sus: 0.7, lv: 1.8 },              // boîte à musique
+  end: { lead: 'sine', arp: 'triangle', sus: 1, lv: 1.8 },            // berceuse de la fin (Music.start('end'))
 };
 
 /* ------------------------------------------------------------------ ambiance sonore des zones */
@@ -2330,6 +2332,7 @@ function drawLight(cx, cy) {
   // retrouvailles : une lumière chaude autour d'Alice et de Tecky
   const hug = clamp(k - 3, 0, 1);
   if (hug > 0) glowSpot((alice.x + P.x) / 2, (alice.y + P.y) / 2 - 50, 260, 0.45 * hug);
+  if (ending && ending.home) drawFireflies();
   ctx.restore();
 }
 
@@ -2974,6 +2977,15 @@ function inputVector() {
    menace. Vues : assis, bâille et dort de face ou de profil (de dos, il se tourne vers nous) ; il se gratte de profil. */
 const REST = { sit: 6, sleep: 24, every: [3, 6.5], z: 0.95, snore: 2.6 };
 let napped = false;                   // il a fait la sieste (badge)
+// Tecky endormi : des « z » qui montent, et un ronflement de temps en temps (quiet : sans le son)
+function snooze(dt, quiet) {
+  if ((P.zT -= dt) <= 0) {
+    P.zT = REST.z;
+    const side = P.dir === 'left' ? -1 : 1;
+    addFx('fx/zzz', P.x + side * (P.dir === 'down' ? 18 : 30), P.y - 52, { fps: 0, frame: 0, life: 2, vx: side * 12, vy: -34, grow: [0.55, 1.1] });
+  }
+  if ((P.snoreT -= dt) <= 0) { P.snoreT = REST.snore; if (!muted && !quiet) SFX.snore(); }
+}
 function restPose(dt) {
   if (threatened()) { P.restT = 0; P.setAnim('idle'); return; }
   P.restT = (P.restT || 0) + dt;
@@ -2981,12 +2993,7 @@ function restPose(dt) {
   if (P.dir === 'up') P.dir = 'down';
   if (P.restT >= REST.sleep) {
     if (P.anim !== 'sleep') { P.setAnim('sleep'); P.zT = 0.4; P.snoreT = 1; napped = true; }
-    if ((P.zT -= dt) <= 0) {
-      P.zT = REST.z;
-      const side = P.dir === 'left' ? -1 : 1;
-      addFx('fx/zzz', P.x + side * (P.dir === 'down' ? 18 : 30), P.y - 52, { fps: 0, frame: 0, life: 2, vx: side * 12, vy: -34, grow: [0.55, 1.1] });
-    }
-    if ((P.snoreT -= dt) <= 0) { P.snoreT = REST.snore; if (!muted) SFX.snore(); }
+    snooze(dt, false);
     return;
   }
   // assis ; de temps en temps, un bâillement ou une grattouille derrière l'oreille (à tour de rôle)
@@ -3395,7 +3402,106 @@ function finale() {
     { who: 'tecky', face: 2, text: "Ouaf ! Ouaf ouaf !" },
     { who: 'alice', face: 0, text: "Et tu as ramassé ma barrette, ma chaussure et mon doudou ! Merci mon Tecky." },
     { who: 'alice', face: 0, text: "Viens, on rentre à la maison. Tu as bien mérité une grosse saucisse !" },
-  ], () => { state = 'win'; overT = 0; });
+  ], startEnding);
+}
+
+/* ------------------------------------------------------------------ la fin */
+/* Après les retrouvailles : fondu au noir, Tecky et Alice remontent le chemin de la niche, la nuit, parmi les lucioles ;
+   Alice saute de joie, Tecky s'assoit, bâille et s'endort à ses pieds. Un iris se referme sur eux, « Fin », puis l'écran
+   de victoire. La berceuse (variation lente du thème) joue jusqu'au retour au menu. Après `skip` s, un bouton passe
+   directement à la victoire. Positions en pixels du monde ; `from` : y de départ, au bas de l'écran. */
+const ENDING = { fade: 1, from: 600, alice: [236, 292], tecky: [300, 304], spd: 105, happy: 1.6, sit: 1.4, yawn: 1.4,
+  iris: 9, irisDur: 1.6, irisR: 170, hold: 1.2, close: 0.5, fin: 2.4, skip: 1, flies: 12 };
+let ending = null;
+function startEnding() {
+  state = 'ending'; ending = { t: 0, home: false, flies: [] };
+  Music.stop(); Music.start('end');
+}
+// au noir : tout le monde au bas du chemin de la niche, la caméra fixée sur la niche ; la pluie s'arrête, c'est la nuit
+function endingHome() {
+  const E = ENDING;
+  ending.home = true;
+  alice.x = E.alice[0]; alice.y = E.from; alice.dir = 'up'; alice.setAnim('walk');
+  P.x = E.tecky[0]; P.y = E.from + 30; P.dir = 'up'; P.mode = 'free'; P.setAnim('walk');
+  camX = clamp(E.alice[0] - VW / 2, 0, MAP.w * TS - VW); camY = clamp(E.alice[1] - 40 - VH / 2, 0, MAP.h * TS - VH);
+  fxs = []; pops = []; rings = []; dusts = []; leaves = []; butterflies = []; drops = []; flakes = [];
+  weather.k = 0; weather.on = false; sun = sunGoal();      // la nuit des retrouvailles, sans transition (au noir)
+  ending.flies = Array.from({ length: E.flies }, () => ({ x: camX + 40 + Math.random() * (VW - 80),
+    y: camY + 40 + Math.random() * (VH - 80), p: Math.random() * 7 }));
+}
+// pose finale : Alice debout devant la niche, Tecky endormi à ses pieds
+function endingPose() {
+  const E = ENDING;
+  alice.x = E.alice[0]; alice.y = E.alice[1]; alice.dir = 'down'; alice.setAnim('idle');
+  P.x = E.tecky[0]; P.y = E.tecky[1]; P.dir = 'left';
+  if (P.anim !== 'sleep') { P.setAnim('sleep'); P.zT = 0.4; P.snoreT = 1; }
+}
+function endingDone() {
+  if (!ending.home) endingHome();
+  endingPose();
+  ending = null; state = 'win'; overT = 0;
+  fadeFrom(0.8);
+}
+const endingEnd = () => ENDING.iris + ENDING.irisDur + ENDING.hold + ENDING.close + ENDING.fin;
+function updateEnding(dt) {
+  const E = ENDING, e = ending;
+  e.t += dt; alice.t += dt; P.t += dt;
+  updateFx(dt);
+  if (e.t > E.skip && (pressed.ok || pressed.bite || pressed.bark || pressed.act || pressed.pause)) { endingDone(); return; }
+  if (e.t >= endingEnd()) { endingDone(); return; }
+  if (!e.home) { if (e.t >= E.fade) endingHome(); return; }
+  // Alice remonte le chemin, puis saute de joie devant la niche
+  if (alice.anim === 'walk') {
+    alice.y = Math.max(E.alice[1], alice.y - E.spd * dt);
+    if (alice.y === E.alice[1]) { alice.dir = 'down'; alice.setAnim('happy'); e.happyT = 0; }
+  } else if (alice.anim === 'happy' && (e.happyT += dt) > E.happy) alice.setAnim('idle');
+  // Tecky la suit, s'assoit à côté d'elle, bâille et s'endort
+  if (P.anim === 'walk') {
+    P.y = Math.max(E.tecky[1], P.y - E.spd * dt);
+    if (P.y === E.tecky[1]) { P.dir = 'left'; P.setAnim('sit'); e.restT = 0; }
+  } else if (P.anim === 'sit' || P.anim === 'yawn') {
+    e.restT += dt;
+    if (P.anim === 'sit' && e.restT > E.sit) { P.setAnim('yawn'); if (!muted) SFX.yawn(); }
+    else if (P.anim === 'yawn' && e.restT > E.sit + E.yawn) { P.setAnim('sleep'); P.zT = 0.4; P.snoreT = 1; }
+  } else if (P.anim === 'sleep') snooze(dt, false);
+}
+// lucioles : de petites lumières qui flottent et clignotent (dessinées avec la lumière, par-dessus la nuit)
+function drawFireflies() {
+  const t = ending.t;
+  for (const f of ending.flies) {
+    const x = f.x + Math.sin(t * 0.7 + f.p) * 46, y = f.y + Math.sin(t * 1.1 + f.p * 1.3) * 28;
+    const a = clamp(0.45 + 0.45 * Math.sin(t * 2.2 + f.p * 3), 0, 1) * clamp(t - ENDING.fade, 0, 1);
+    glowSpot(x, y, 26, 0.5 * a);
+    ctx.fillStyle = `rgba(255, 246, 170, ${a})`; ctx.fillRect(x - 2, y - 2, 4, 4);
+  }
+}
+// repère GUI : fondu au noir et retour, puis l'iris qui se referme sur Tecky et Alice, et « Fin »
+function drawEnding() {
+  const E = ENDING, t = ending.t;
+  guiTransform();
+  const a = t < E.fade ? t / E.fade : !ending.home ? 1 : clamp(1 - (t - E.fade) / E.fade, 0, 1);
+  if (a > 0) { ctx.fillStyle = `rgba(0, 0, 0, ${a})`; ctx.fillRect(0, 0, GW, GH); }
+  const ti = t - E.iris;
+  if (ti <= 0) return;
+  const k = GW / VW, cx = ((alice.x + P.x) / 2 - camX) * k, cy = ((alice.y + P.y) / 2 - 45 - camY) * k;
+  const far = Math.hypot(GW, GH);
+  const r = ti < E.irisDur ? lerp(far, E.irisR, 1 - Math.pow(1 - ti / E.irisDur, 3))
+    : ti < E.irisDur + E.hold ? E.irisR : E.irisR * Math.max(0, 1 - (ti - E.irisDur - E.hold) / E.close);
+  ctx.fillStyle = '#000';
+  ctx.beginPath(); ctx.rect(0, 0, GW, GH);
+  if (r > 0.5) { ctx.moveTo(cx + r, cy); ctx.arc(cx, cy, r, 0, Math.PI * 2); }
+  ctx.fill('evenodd');
+  const tf = ti - E.irisDur - E.hold - E.close;
+  if (tf > 0) { ctx.globalAlpha = Math.min(1, tf / 0.6); outlined('Fin', GW / 2, GH / 2 + 45, 130, '#FFF7E6'); ctx.globalAlpha = 1; }
+}
+
+/* Fondu de l'écran entier : fadeFrom(d) part du noir et s'éclaircit en d secondes (au-dessus de tout). */
+let fade = { a: 0, d: 1 };
+function fadeFrom(d) { fade = { a: 1, d }; }
+function drawFade() {
+  if (fade.a <= 0) return;
+  guiTransform();
+  ctx.fillStyle = `rgba(0, 0, 0, ${fade.a})`; ctx.fillRect(0, 0, GW, GH);
 }
 
 function updateCamera(dt) {
@@ -3408,6 +3514,7 @@ function updateCamera(dt) {
 }
 
 function update(dt) {
+  fade.a = Math.max(0, fade.a - dt / fade.d);
   if (pressed.mute) { muted = !muted; Music.refresh(); }
   updateToasts(dt);
   if (state === 'title' || state === 'play' || state === 'dialog') updateWeather(dt);
@@ -3482,10 +3589,14 @@ function update(dt) {
       Ambience.update(dt);
       updateCamera(dt);
       break;
+    case 'ending':
+      updateEnding(dt);
+      break;
     case 'over':
     case 'win':
       overT += dt;
       alice.t += dt; P.t += dt;
+      if (state === 'win' && P.anim === 'sleep') snooze(dt, true);    // Tecky dort derrière le tableau des scores
       updateFx(dt);
       if (overT > 1) {
         if (state === 'over') { const id = menuInput(); if (id) chooseMenu(id); }
@@ -3953,6 +4064,7 @@ function render() {
   if (state === 'title') drawTitle();
   else if (state === 'options' && optReturn === 'title') { veil(0.35); drawOptions(); }
   else if (state === 'badges') { veil(0.35); drawBadges(); }
+  else if (state === 'ending') drawEnding();
   else {
     drawHUD();
     if (state === 'dialog' && dialog) drawDialog();
@@ -3971,6 +4083,7 @@ function render() {
     if (state === 'win') drawEnd(true);
     if (state === 'play' || state === 'dialog' || state === 'win') drawToast();
   }
+  drawFade();
   ctx.restore();
 }
 

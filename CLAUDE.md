@@ -44,7 +44,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   Variations du thème par zone (`STYLES`, `events(style)` : `_lead`, `_bass`, `_arp`, `_drums`) : même mélodie, mêmes
   accords, même grille de phrases, tempo propre ; « base » (niche, campagne) = le thème d'origine et le WAV GameMaker.
   Village plus entraînant (152), ferme country (136 : basse alternée, rouleaux de banjo, notes glissées = 6e champ),
-  forêt calme (108 : basse tenue, écho), parc boîte à musique (126, sans batterie), industrie mécanique (140).
+  forêt calme (108 : basse tenue, écho), parc boîte à musique (126, sans batterie), industrie mécanique (140) ; et la
+  berceuse de la fin (84, sans batterie, timbre `TIMBRE.end`).
 - `pack_web.py` : atlas (frames rognées), niveau (`MW=80`, `MH=48` tuiles, positions des décors/objets/chiens/trésors `DIG`),
   `index.html` à partir de `web_src/index.template.html` + `game.js`, paquet autonome (manifest, service worker, icônes, `serve.sh`).
   Lance `web_src/check_placement.js` : rien dans l'eau ou un obstacle (canards : dans l'eau), et tout (personnages,
@@ -143,7 +144,12 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   trop près les fait fuir en battant des ailes (« cot-cot »). Pas de collision. Test : `hens.js`.
 - Chien de berger (`berger`, `CHARGE`) : s'accroupit (« ! », sprite écrasé), charge en ligne droite si `clearPath()`,
   puis souffle (`tired`) ; un aboiement pendant l'accroupissement annule la charge. Tests : `clues.js`, `berger.js`, `map.js`.
-- Fin : retrouver Alice → dialogue + fanfare (`Music.start('win')`, une seule fois, le thème ne repart pas) → écran de victoire.
+- Fin : retrouver Alice → dialogue + fanfare (`Music.start('win')`, une seule fois, le thème ne repart pas) → scène de fin
+  (`state === 'ending'`, `ending`, `ENDING`, `startEnding()`, `updateEnding()`, `drawEnding()`) : fondu au noir, Tecky et
+  Alice remontent le chemin de la niche la nuit, parmi les lucioles (`drawFireflies()`, avec la lumière), Tecky s'endort
+  à ses pieds (`snooze()`, partagé avec le repos), iris qui se referme, « Fin » ; berceuse (`Music.start('end')`, en
+  boucle jusqu'au menu). Un bouton la passe après `ENDING.skip` s (`endingDone()`) → écran de victoire, qui sort du noir
+  (`fadeFrom()` : fondu de l'écran entier, `drawFade()`). Test : `ending.js`.
 - Sauvegarde (`STORE` : localStorage, repli en mémoire si refusé ; clés `tecky-quest-save` v1 et `tecky-quest-records`) :
   `saveGame()` toutes les `SAVE_EVERY` (4) s de jeu si `safeToSave()` (aucun chien engagé à moins de 600 px), à chaque
   indice et trésor (fin de réplique), en quittant la page (`pagehide`, onglet caché) ; jamais KO ni après la victoire.

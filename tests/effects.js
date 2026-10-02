@@ -44,7 +44,8 @@ function main() {
   run('revealAlice(); P.x = alice.x - 100; P.y = alice.y + 10; P.mode = "free";'); step(2);
   ok(run('alice.found') && run('sunGoal()') === 4, 'retrouvailles (4)');
   advanceDialog(); step(60 * 5);
-  ok(Math.abs(run('sun') - 4) < 1e-6, 'atteinte pendant l’écran de fin');
+  ok(Math.abs(run('sun') - 4) < 1e-6, 'atteinte pendant la scène de fin');
+  run('pressed.ok = true'); step(1); step(70);   // scène de fin passée, écran de victoire
   run('render()');
   run('pressed.ok = true'); step(1);
   ok(run('state') === 'title' && run('sun') === 0, 'retour au menu : plein jour');

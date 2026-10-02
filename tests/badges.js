@@ -28,7 +28,7 @@ function main() {
   // victoire en aventure, sans morsure, en moins de 10 minutes
   run('timePlayed = 300; bitten = false; clues = [true, true, true]; revealAlice(); P.x = alice.x; P.y = alice.y + 100;'); step(2);
   ok(run('!!badges.aventure && !!badges.intact && !!badges.rapide'), 'Alice retrouvée : retrouvailles, sans égratignure, truffe rapide');
-  advanceDialog();
+  advanceDialog(); step(70); run('pressed.ok = true'); step(1);     // la scène de fin, passée
   run('used = []; drawSpr = function (k) { used.push(k); return ds0.apply(this, arguments); }; overT = 2; render(); drawSpr = ds0;');
   ok(run('state') === 'win' && run('newBadges.length') >= 10 && run('used.filter(k => k === "hud/badge").length') >= 10, 'écran de victoire : les badges de la partie');
   // une morsure suffit pour perdre « Sans une égratignure » (nouvelle partie, badge pas encore gagné)
