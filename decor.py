@@ -390,6 +390,33 @@ def barge():
     return d
 
 
+def goal_net():
+    """Le grand filet de Léon (un but, ouverture vers le bas de l'écran) : on y pousse les ballons. Montants avant en
+    x 4..8 et 88..92 (pieds en y 60), montants arrière en x 12 et 84 (pieds en y 32). Collisions : RAILS (game.js)."""
+    d = Drawing(96, 64)
+    d.under.append('<path d="M6,60 L90,60 L84,32 L12,32 Z" fill="#000" opacity="0.1"/>')
+    mesh = "".join(f"M{x},2 L{x},62 " for x in range(8, 92, 5)) + "".join(f"M2,{y} L94,{y} " for y in range(6, 62, 5))
+    for pts in ([(6, 34), (90, 34), (84, 6), (12, 6)],                      # toit et fond
+                [(6, 34), (12, 6), (12, 32), (6, 60)], [(90, 34), (84, 6), (84, 32), (90, 60)]):   # côtés
+        cid = f"net{len(d.under)}{pts[0][0]}{pts[1][0]}"
+        poly_d = "M" + " L".join(f"{x},{y}" for x, y in pts) + " Z"
+        d.raw(f'<clipPath id="{cid}"><path d="{poly_d}"/></clipPath>'
+              f'<path d="{poly_d}" fill="#FFFFFF" opacity="0.28"/>'
+              f'<g clip-path="url(#{cid})">{line(mesh, "#FFFFFF", 0.6)}</g>')
+        d.under.append("")                                                   # (identifiants de clip distincts)
+    for x in (12, 84):                                                       # montants arrière, barre du fond
+        d.raw(line(f"M{x},6 L{x},32", "#E6EBF0", 1.6))
+    d.raw(line("M12,6 L84,6 M12,32 L84,32", "#E6EBF0", 1.4))
+    d.raw(line("M6,34 L12,6 M90,34 L84,6", "#E6EBF0", 1.4))
+    d.add(rect(4, 32, 4, 28, 1), "#FFFFFF")                                  # cadre avant
+    d.add(rect(88, 32, 4, 28, 1), "#FFFFFF")
+    d.add(rect(4, 31, 88, 4, 1), "#FFFFFF")
+    for x in (4, 88):
+        for y in (38, 48):
+            d.add(rect(x, y, 4, 4, 0), "#E24B4B", sil=False)
+    return d
+
+
 def rail():
     """Voie ferrée posée à plat, une tuile qui se répète vers la droite : traverses en bois, deux rails."""
     d = Drawing(32, 32)
@@ -1228,6 +1255,7 @@ DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x)
     "guard_hut": (guard_hut, (64, 64), (32, 58)),
     "bollard": (bollard, (32, 32), (16, 28)),
     "barge": (barge, (176, 48), (88, 42)),
+    "goal_net": (goal_net, (96, 64), (48, 60)),
     "rail": (rail, (32, 32), (0, 16)),
     "buffer_stop": (buffer_stop, (32, 40), (16, 36)),
     "pallet": (pallet, (32, 32), (16, 27)),

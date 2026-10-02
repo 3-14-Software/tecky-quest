@@ -3,8 +3,8 @@ const base = require('fs').readFileSync(__dirname + '/sim.js', 'utf8').split("se
 function main() {
   run('audioOn(); pressed.ok = true'); step(1); advanceDialog();
   run('cars = []; P.inv = 0; graceT = 0;');
-  ok(run('MAP.calm.length') === 2 && run('calmAt(postman.x, postman.y) && calmAt(neighbor.x, neighbor.y) && calmAt(farmer.x, farmer.y)'),
-     'le village et la cour de la ferme sont des zones calmes (Marcel, Mamie Rose, Gaston)');
+  ok(run('MAP.calm.length') === 3 && run('npcList().every(n => calmAt(n.x, n.y))'),
+     'le village, la cour de la ferme et le coin de Léon au port sont des zones calmes (tous les personnages)');
   ok(run('dogs.every(d => !calmAt(d.hx, d.hy))'), 'aucun chien n’y habite');
   ok(run('!calmAt(MAP.start[0], MAP.start[1])') && run('!calmAt(30 * 64, 13.5 * 64)'), 'la niche et la grande route n’en sont pas');
   // un roquet poursuit Tecky jusqu'au village : il s'arrête à l'entrée et rentre chez lui

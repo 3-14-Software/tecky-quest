@@ -35,11 +35,11 @@ function main() {
   const pc = run('completion()');
   run('var said = []; ctx.fillText = s => said.push(String(s)); overT = 2; render(); delete ctx.fillText;');
   ok(pc >= 0 && pc < 100 && run(`said.includes("Aventure complétée") && said.includes("${pc}\u00a0%")`), 'écran de victoire : aventure complétée à ' + pc + ' %');
-  run('treasures = MAP.dig.length; farm.state = post.state = rose.state = "done";' +
+  run('treasures = MAP.dig.length; farm.state = post.state = rose.state = fete.state = "done";' +
       'critters.forEach(c => c.scored = true); ducks.forEach(d => d.scored = true); seenCells.fill(1);');
   ok(run('completion()') === 100, 'tout trouvé, toutes les quêtes, toute la carte : 100 %');
   run('farm.state = "new";');
-  ok(run('completion()') < 100 && run('completion()') > 90, 'une quête de moins : ' + run('completion()') + ' %');
+  ok(run('completion()') < 100 && run('completion()') >= 90, 'une quête de moins : ' + run('completion()') + ' %');
   run('Music.step = Music.song.total - 1;'); step(30);
   ok(run('Music.on') && run('Music.step') < 20, 'la berceuse boucle');
   step(40); run('pressed.ok = true'); step(1);

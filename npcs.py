@@ -39,12 +39,13 @@ from spritelib import Drawing, circle, ellipse, rect, path, poly, leg, line, OUT
 W, H = 48, 64
 G = 60.0                      # ligne des pieds
 HK = 1.08                     # agrandissement de la tête (style chibi), autour du menton — comme Gaston
-KINDS = ("postman", "neighbor")
+KINDS = ("postman", "neighbor", "leon")
 FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-côté conseillé
     "postman": (24, 18.5, 15.5),      # casquette, visage, moustache et menton (comme Gaston)
     "neighbor": (24, 21.5, 15.5),     # chignon, lunettes, menton (elle est plus petite : tout est 3 unités plus bas)
+    "leon": (24, 18.0, 15.5),         # casque, visage, barbe
 }
-PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6"}   # fond conseillé du médaillon (Gaston : "#CFE8B0")
+PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6", "leon": "#FDE3C2"}   # fond du médaillon (Gaston : "#CFE8B0")
 
 PAL = {
     "postman": dict(skin="#F5C8A6", skin_dk="#E2A986", nose="#EA9C82", blush="#F28A8A",
@@ -65,6 +66,13 @@ PAL = {
                      slipper="#EE8FAE", slipper_dk="#D06C8E", pompom="#FFF4F7",
                      pearl="#FFFDF8", lens="#E3F4FB",
                      eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#9ED8F5"),
+    "leon": dict(skin="#E9B892", skin_dk="#D39A72", nose="#DD8F74", blush="#F08A7E",
+                 hair="#5A3A22", hair_dk="#3E2615",
+                 helmet="#F6C83E", helmet_dk="#D9A520", helmet_lt="#FFE07A",
+                 vest="#F28C28", vest_dk="#D06F12", stripe="#E6EBF0", stripe_dk="#AEB6C0",
+                 shirt="#3B6FB6", shirt_dk="#2B5290",
+                 pants="#4A4F57", pants_dk="#363A40", shoe="#2B2B33", shoe_lt="#5C6168", toe="#F2C14E",
+                 eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#9ED8F5"),
 }
 
 
@@ -381,6 +389,85 @@ def _postman(p):
     return d
 
 
+# ================================================================== LÉON, LE CARISTE DU PORT
+def _leon(p):
+    """Léon conduit le chariot élévateur du port : casque de chantier jaune, gilet orange à bandes réfléchissantes
+    sur un tee-shirt bleu à manches longues, pantalon de travail gris, chaussures de sécurité, barbe courte."""
+    c = dict(PAL["leon"], sleeve=PAL["leon"]["shirt"], cuff=PAL["leon"]["shirt_dk"])
+    d = Drawing(W, H)
+    L = p["lift"]
+    Y = lambda v: v + p["bob"] - L
+    T = lambda v: v - L
+    _shadow(d, L, 10.6)
+
+    # chaussures de sécurité (bout renforcé jaune), jambes du pantalon
+    for x, s in ((20.4, -1), (27.6, 1)):
+        d.add(ellipse(x + s * 0.6, T(G - 1.7), 3.7, 2.0), c["shoe"])
+        d.add(ellipse(x + s * 0.6 + s * 1.6, T(G - 1.9), 1.4, 1.0), c["toe"], sil=False, edge=True)
+    for x in (20.4, 27.6):
+        d.add(leg(x, Y(44), x, T(57.0), 5.4), c["pants"])
+    d.raw(line(f"M20.4,{Y(47.4):.2f} L20.4,{T(56.2):.2f} M27.6,{Y(47.4):.2f} L27.6,{T(56.2):.2f}", c["pants_dk"], 0.7))
+
+    # tee-shirt bleu (buste et ventre), gilet orange ouvert par-dessus, bandes réfléchissantes
+    torso = rect(14.2, Y(28.6), 19.6, 17.4, 4.8)
+    belly = ellipse(24, Y(39.6), 10.0 + p["breath"], 6.6)
+    d.add(torso, c["shirt"])
+    d.add(belly, c["shirt"])
+    d.clip("torso", [torso, belly])
+    for x0, x1 in ((8, 21.6), (26.4, 40)):
+        d.add(rect(x0, Y(27), x1 - x0, 22), c["vest"], sil=False, clip="torso")
+        for y in (35.0, 40.2):
+            d.add(rect(x0, Y(y), x1 - x0, 2.4), c["stripe"], sil=False, clip="torso")
+            d.raw(f'<g clip-path="url(#torso)">' + line(f"M{x0},{Y(y):.2f} L{x1},{Y(y):.2f} M{x0},{Y(y + 2.4):.2f} "
+                                                       f"L{x1},{Y(y + 2.4):.2f}", c["stripe_dk"], 0.5) + "</g>")
+    d.raw(f'<g clip-path="url(#torso)">' + line(f"M21.6,{Y(28):.2f} L21.6,{Y(46):.2f} M26.4,{Y(28):.2f} L26.4,{Y(46):.2f}",
+                                               c["vest_dk"], 0.8) + "</g>")
+    d.add(rect(8, Y(43.8), 32, 3.0), c["pants_dk"], sil=False, clip="torso")           # ceinture
+    d.add(rect(22.6, Y(43.9), 2.8, 2.8, 0.5), c["shoe_lt"], sil=False, edge=True)       # boucle
+    d.add(poly([(20.6, Y(28.9)), (27.4, Y(28.9)), (24, Y(31.6))]), c["shirt_dk"], sil=False, edge=True)   # col
+
+    def rest(s, sx):
+        return (sx + s * 2.2, Y(31.2) + 5.8), (sx + s * 2.8, Y(31.2) + 11.6), False
+
+    hy, X, V = _head_frame(Y, p)
+    _arms(d, c, p, 15.0, 33.0, Y(31.2), rest)
+
+    # tête : oreilles, visage, cheveux courts sur les tempes
+    k = HK
+    for x in (14.5, 33.5):
+        d.add(circle(X(x), V(1.4), 2.0 * k), c["skin"])
+        d.add(circle(X(x), V(1.4), 0.9 * k), c["skin_dk"], sil=False)
+    d.add(ellipse(24, hy, 9.7 * k, 9.1 * k), c["skin"])
+    for s in (-1, 1):
+        d.add(path(f"M{X(24 + s * 7.6):.2f},{V(-6.4):.2f} Q{X(24 + s * 10.8):.2f},{V(-4.6):.2f} {X(24 + s * 10.0):.2f},{V(0.8):.2f} "
+                   f"Q{X(24 + s * 9.2):.2f},{V(-0.6):.2f} {X(24 + s * 8.7):.2f},{V(-0.2):.2f} "
+                   f"Q{X(24 + s * 8.4):.2f},{V(-2.8):.2f} {X(24 + s * 6.9):.2f},{V(-3.6):.2f} Z"), c["hair"])
+    # barbe courte : du bas des tempes au menton, qui laisse la bouche libre
+    d.add(path(f"M{X(14.9):.2f},{V(0.4):.2f} Q{X(15.2):.2f},{V(9.0):.2f} 24,{V(11.0):.2f} Q{X(32.8):.2f},{V(9.0):.2f} {X(33.1):.2f},{V(0.4):.2f} "
+               f"L{X(31.6):.2f},{V(1.6):.2f} Q{X(30.6):.2f},{V(6.4):.2f} {X(27.4):.2f},{V(7.4):.2f} Q24,{V(5.4):.2f} {X(20.6):.2f},{V(7.4):.2f} "
+               f"Q{X(17.4):.2f},{V(6.4):.2f} {X(16.4):.2f},{V(1.6):.2f} Z"), c["hair"], sil=False, edge=True)
+    d.raw(line(f"M{X(19.4):.2f},{V(8.6):.2f} Q24,{V(10.2):.2f} {X(28.6):.2f},{V(8.6):.2f}", c["hair_dk"], 0.5))
+
+    # casque de chantier : calotte jaune, nervure, rebord, reflet
+    d.add(path(f"M{X(14.0):.2f},{V(-5.8):.2f} Q{X(14.2):.2f},{V(-15.4):.2f} 24,{V(-15.6):.2f} "
+               f"Q{X(33.8):.2f},{V(-15.4):.2f} {X(34.0):.2f},{V(-5.8):.2f} Z"), c["helmet"])
+    d.raw(line(f"M24,{V(-15.2):.2f} L24,{V(-6.4):.2f}", c["helmet_dk"], 1.4))
+    d.add(ellipse(X(19.4), V(-12.0), 2.6 * k, 1.3 * k), c["helmet_lt"], sil=False, opacity=0.9)
+    d.add(path(f"M{X(12.4):.2f},{V(-6.6):.2f} L{X(35.6):.2f},{V(-6.6):.2f} Q{X(35.6):.2f},{V(-4.2):.2f} 24,{V(-4.0):.2f} "
+               f"Q{X(12.4):.2f},{V(-4.2):.2f} {X(12.4):.2f},{V(-6.6):.2f} Z"), c["helmet_dk"], edge=True)
+
+    # visage
+    _eyes(d, c, p, X, V)
+    _brows(d, p, X, V, c["hair_dk"], 1.3)
+    _blush(d, c, X, V)
+    _mouth(d, c, p, X, V, 5.6)
+    d.add(ellipse(24, V(2.7), 1.6 * k, 1.3 * k), c["nose"], sil=False, edge=True)
+    d.add(circle(X(23.5), V(2.3), 0.42 * k), "#FFFFFF", sil=False, opacity=0.7)
+    if p["sweat"]:
+        _sweat(d, c, X, V)
+    return d
+
+
 # ================================================================== LA VOISINE
 DY = 3.0      # la mamie est plus petite : tout le haut du corps est 3 unités plus bas que chez Gaston
 
@@ -486,7 +573,7 @@ def _neighbor(p):
 
 
 # ================================================================== animations
-_DRAW = {"postman": _postman, "neighbor": _neighbor}
+_DRAW = {"postman": _postman, "neighbor": _neighbor, "leon": _leon}
 
 _WAVE = [P(wave=1, wave_a=-28, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2),
          P(wave=1, wave_a=4, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2)]
@@ -501,6 +588,15 @@ ANIMS = {   # PNJ : {nom : (poses, fps, boucle)}
         "wave": (_WAVE, 8, True),
         "cheer": ([P(cheer=0.6, happy=True, bob=0.4), P(cheer=1, happy=True, lift=1.8),
                    P(cheer=1, happy=True, lift=2.6), P(cheer=0.85, happy=True, lift=1.0)], 8, True),
+    },
+    "leon": {
+        "idle": (_IDLE, 5, True),
+        "talk": (_TALK, 8, True),
+        "wave": (_WAVE, 8, True),
+        "cheer": ([P(cheer=0.6, happy=True, bob=0.4), P(cheer=1, happy=True, lift=1.8),
+                   P(cheer=1, happy=True, lift=2.6), P(cheer=0.85, happy=True, lift=1.0)], 8, True),
+        "worry": ([P(worry=1, look=-1, sweat=True), P(worry=1, look=-1, bob=0.25, sweat=True),
+                   P(worry=1, look=1, sweat=True), P(worry=1, look=1, bob=0.25, blink=1, sweat=True)], 5, True),
     },
     "neighbor": {
         "idle": (_IDLE, 5, True),

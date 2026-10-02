@@ -1,11 +1,12 @@
-// badges : douze médailles gardées d'une partie à l'autre, annonce « Nouveau badge ! », écran des badges
+// badges : médailles gardées d'une partie à l'autre, annonce « Nouveau badge ! », écran des badges
 const base = require('fs').readFileSync(__dirname + '/sim.js', 'utf8').split("setTimeout(() => {")[0];
 function main() {
   const ids = () => run('menu.items.map(i => i.id).join()');
   run('audioOn(); STORE.mem = {}; loadBadges(); toTitle();');
-  ok(run('MAP.badges.length') === 12 && run('ATLAS["hud/badge"].f.length') === 13, '12 badges (et l’image « verrouillé »)');
+  const N = run('MAP.badges.length');
+  ok(N === 13 && run('ATLAS["hud/badge"].f.length') === N + 1, N + ' badges (et l’image « verrouillé »)');
   ok(run('MAP.badges.every(id => BADGE_INFO[id])'), 'chacun a un nom et un objectif');
-  ok(ids().endsWith('options,badges') && /0 sur 12/.test(run('menu.items[menu.items.length - 1].sub')), 'menu principal : « Badges », 0 sur 12');
+  ok(ids().endsWith('options,badges') && run('menu.items[menu.items.length - 1].sub').includes('0 sur ' + N), 'menu principal : « Badges », 0 sur ' + N);
   run('menu.sel = menu.items.findIndex(i => i.id === "aventure"); pressed.ok = true'); step(1); advanceDialog();
   run('dogs = []; cars = []; P.inv = 999; P.x = 8 * 64; P.y = 5 * 64 + 32; P.mode = "free";');
   // la sieste
@@ -43,11 +44,11 @@ function main() {
   ok(run('!!badges.copains'), 'balade : tous copains');
   // écran des badges
   run('toTitle();');
-  ok(/12 sur 12|11 sur 12/.test(run('menu.items[menu.items.length - 1].sub')), 'menu : ' + run('menu.items[menu.items.length - 1].sub'));
+  ok(new RegExp('(' + (N - 2) + '|' + (N - 1) + ') sur ' + N).test(run('menu.items[menu.items.length - 1].sub')), 'menu : ' + run('menu.items[menu.items.length - 1].sub'));
   run('menu.sel = menu.items.length - 1; pressed.ok = true'); step(1);
   ok(run('state') === 'badges', 'écran des badges');
   run('used = []; drawSpr = function (k) { used.push(k); return ds0.apply(this, arguments); }; render(); drawSpr = ds0;');
-  ok(run('used.filter(k => k === "hud/badge").length') === 12, 'les douze médailles');
+  ok(run('used.filter(k => k === "hud/badge").length') === N, 'les ' + N + ' médailles (une rangée de plus : cases compactes)');
   run('pressed.pause = true'); step(1);
   ok(run('state') === 'title' && run('menu.items[menu.sel].id') === 'badges', 'Échap : retour au menu, sur « Badges »');
 }

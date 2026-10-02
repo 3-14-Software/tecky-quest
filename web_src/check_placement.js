@@ -54,6 +54,11 @@ setTimeout(() => {
     if (!reachable(farmer.x, farmer.y, 150)) out.push('fermier');
     if (!reachable(postman.x, postman.y, 150)) out.push('facteur');
     if (!reachable(neighbor.x, neighbor.y, 150)) out.push('voisine');
+    if (!reachable(leon.x, leon.y, 150)) out.push('Léon');
+    // ballons de Léon : posés sur un sol praticable, atteignables, hors du filet ; l'ouverture du filet est atteignable
+    for (const b of balls) if (!standable(b.x, b.y) || !reachable(b.x, b.y, 80) || ballBlocked(b, b.x, b.y)) out.push('ballon ' + tile(b.x, b.y));
+    for (const b of balls) { checkGoal(b); if (b.inNet) out.push('ballon déjà dans le filet ' + tile(b.x, b.y)); }
+    if (!reachable(MAP.goal[0], MAP.goal[1] + 60, 60)) out.push('ouverture du filet');
     for (const l of letters) if (waterAt(l.x, l.y + 20) || !reachable(l.x, l.y + 20, 52)) out.push('lettre ' + tile(l.x, l.y));
     if (!standable(pompon.x, pompon.y) || !reachable(pompon.x, pompon.y, 120)) out.push('Pompon ' + tile(pompon.x, pompon.y));
     // terriers : les deux bouts praticables et atteignables à pied (le terrier est un raccourci, pas un passage obligé)

@@ -10,7 +10,7 @@ La journée avance avec la recherche : un cran par indice, du plein jour au couc
 lampadaires s'allument, puis à la nuit bleutée. De temps en temps,
 une averse (flaques, arc-en-ciel, Tecky qui s'ébroue) ; en décembre, il neige.
 En chemin : le fermier Gaston (allez lui parler, C) a besoin d'aide pour ramener ses poules dans l'enclos, Marcel le
-facteur a perdu ses lettres dans le vent, Mamie Rose cherche son chat Pompon, des écureuils et des chats
+facteur a perdu ses lettres dans le vent, Mamie Rose cherche son chat Pompon, Léon, au port, a laissé rouler ses gros ballons (à pousser dans son filet, comme au foot), des écureuils et des chats
 filent se percher quand Tecky les poursuit, des canards s'envolent de l'étang et de la rivière, des terriers permettent de passer sous les grillages, et Tecky peut
 flairer la piste d'Alice (de petits pieds nus apparaissent au sol). Les trésors enterrés sont des os dorés à
 collectionner, et la pause montre la carte des coins déjà explorés (avec les personnages qui ont quelque chose à dire). Chaque zone a son ambiance sonore, ses instruments

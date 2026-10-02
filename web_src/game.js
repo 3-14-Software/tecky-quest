@@ -188,6 +188,8 @@ const SFX = {
   hey(p) { const k = p || 1; tone(560 * k, 0.08, 'triangle', 0.08, 160 * k); tone(760 * k, 0.13, 'triangle', 0.08, -120 * k, 0.09); },
   cluck() { tone(950, 0.05, 'square', 0.05, 250); tone(1150, 0.05, 'square', 0.05, 200, 0.08); tone(1400, 0.12, 'square', 0.05, -600, 0.17); },
   win() { [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, 0.18, 'triangle', 0.09, 0, i * 0.14)); },
+  boing() { tone(260 + Math.random() * 60, 0.13, 'sine', 0.07, 280); tone(520, 0.08, 'sine', 0.03, -200, 0.06); },
+  goal() { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.11, 'square', 0.04, 0, i * 0.07)); noise(0.3, 0.03, 3200, 0.12); },
 };
 
 /* ------------------------------------------------------------------ musique chiptune */
@@ -747,7 +749,8 @@ const FOOT = {
 const FLAT = new Set(['bridge', 'sandbox', 'burrow', 'rail']);   // posés à plat : dessinés sous les personnages
 // collisions en plusieurs morceaux : garde-corps du pont (son tablier n'est pas de l'eau, voir BRIDGES dans
 // pack_web.py), pieds du portique du port
-const RAILS = { bridge: [[-80, -320, -62, 0], [62, -320, 80, 0]], crane: [[-204, -16, -156, 0], [156, -16, 204, 0]] };
+const RAILS = { bridge: [[-80, -320, -62, 0], [62, -320, 80, 0]], crane: [[-204, -16, -156, 0], [156, -16, 204, 0]],
+  goal_net: [[-90, -58, -72, 0], [72, -58, 90, 0], [-80, -64, 80, -52]] };   // filet de Léon : côtés et fond
 let solids = [];
 function waterAt(x, y) {
   const fx = x / TS, fy = y / TS;
@@ -962,6 +965,7 @@ function reset() {
   postman = newNpc('postman', MAP.postman, 1.05); post = { state: 'new' };
   letters = MAP.letters.map(([x, y]) => ({ x, y, t: Math.random() * 2, got: false }));
   neighbor = newNpc('neighbor', MAP.neighbor, 1.35); rose = { state: 'new' }; pompon = newPompon();
+  leon = newNpc('leon', MAP.leon, 0.95); fete = { state: 'new' }; balls = MAP.balls.map(newBall);
   critters = MAP.critters.map(newCritter);
   ducks = MAP.ducks.map(newDuck); linkDucks();
   bitten = false; newBadges = []; toasts = []; napped = false;
@@ -986,6 +990,7 @@ const WHO = {
   farmer: { name: 'Gaston', portrait: 'hud/portrait_farmer' },
   postman: { name: 'Marcel', portrait: 'hud/portrait_postman' },
   neighbor: { name: 'Mamie Rose', portrait: 'hud/portrait_neighbor' },
+  leon: { name: 'Léon', portrait: 'hud/portrait_leon' },
   info:  { name: '', portrait: null },
 };
 // une réplique demandée pendant un dialogue passe à la suite (ex. : le fermier parle, et Tecky ramasse la barrette)
@@ -1128,6 +1133,10 @@ function doBark() {
   for (const c of critters) {
     const dx = c.x - P.x, dy = c.y - P.y, l = Math.hypot(dx, dy);
     if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) scareCritter(c);
+  }
+  for (const b of balls) {             // les ballons de Léon roulent, plus fort de près
+    const dx = b.x - P.x, dy = b.y - P.y, l = Math.hypot(dx, dy);
+    if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) kickBall(b, P.x, P.y, BALL.bark * (1 - 0.5 * l / BARK.range));
   }
   for (const d of ducks) {
     const dx = d.x - P.x, dy = d.y - P.y, l = Math.hypot(dx, dy);
@@ -1693,6 +1702,7 @@ function updateNpcAnim(n, dt) {       // parle, se réjouit, salue, s'inquiète 
 function updateFarmer(dt) {           // tous les personnages
   for (const n of npcList()) updateNpcAnim(n, dt);
   neighbor.worried = rose.state !== 'done' && pompon.mode !== 'home';
+  leon.worried = ballsLeft() > 0;
 }
 function drawNpc(n) {
   const k = n.kind + '/' + n.anim;
@@ -1706,11 +1716,12 @@ function drawNpc(n) {
    saluent d'une petite exclamation (bulle de mots, sans bloquer le jeu). NPC_DO : par personnage, bulle (0 « ! »,
    1 « ? », -1 aucune), salut et conversation. */
 const NPC = { talk: 150, markY: 150 };
-const npcList = () => [farmer, postman, neighbor];
+const npcList = () => [farmer, postman, neighbor, leon];
 const NPC_DO = {
   farmer: { mark: farmerMark, greet: farmerGreet, talk: talkFarmer },
   postman: { mark: postmanMark, greet: postmanGreet, talk: talkPostman },
   neighbor: { mark: neighborMark, greet: neighborGreet, talk: talkNeighbor },
+  leon: { mark: leonMark, greet: leonGreet, talk: talkLeon },
 };
 function nearNpc() {
   let best = null, bd = NPC.talk;
@@ -1873,6 +1884,126 @@ function talkNeighbor() {
     { who: 'neighbor', face: 3, text: "Bonjour, mon petit. Tu n'aurais pas vu mon chat, Pompon ? Il est tout blanc, avec un collier rose et un grelot." },
     { who: 'neighbor', face: 0, text: "Il s'est sauvé ce matin… Il adore se cacher près des entrepôts, de l'autre côté de la grande route." },
     { who: 'tecky', face: 2, text: "Ouaf ! Je te le ramène !" },
+  ], saveGame);
+}
+
+/* ------------------------------------------------------------------ Léon et ses ballons */
+/* Léon, le cariste du port, devait livrer cinq gros ballons pour la fête du parc ; le carton s'est ouvert et ils ont
+   roulé partout dans la zone industrielle (MAP.balls). Tecky les pousse en fonçant dedans (dans le sens où il va) ou en
+   aboyant derrière (cône de l'aboiement) : ils roulent, rebondissent sur les obstacles, et près de l'ouverture du filet
+   (MAP.goal, décor goal_net), leur course est guidée vers lui (funnelBall). Un ballon dans le filet y reste. Comme les
+   autres personnages, Léon ne parle que si Tecky vient le voir : il demande, rappelle, remercie (un os et des points).
+   Tout marche aussi avant de lui avoir parlé, et en balade. Sauvegardé (fete, balls). */
+const BALL = { r: 26, touch: 44, kick: 330, bark: 470, fric: 1.6, bounce: 0.55, hop: 150, g: 1200, cd: 0.2, funnel: 240,
+  box: [22.3, 16.5, 61.4, 25.6] };            // box : la zone industrielle, en tuiles (jamais sur la route)
+const GOAL_IN = [50, -46, -8];                 // intérieur du filet (pied du ballon) : |dx| < 50, -46 < dy < -8
+const LEON = { reward: 150, perBall: 20 };
+let fete = { state: 'new' }, leon = null, balls = [];
+const ballsLeft = () => balls.filter(b => !b.inNet).length;
+function newBall([x, y], i) { return { i, x, y, vx: 0, vy: 0, z: 0, vz: 0, rot: 0, cd: 0, inNet: false }; }
+// pousse le ballon loin de (fx, fy) ; ahead : direction où va Tecky, qui oriente un peu le tir (on dribble)
+function kickBall(b, fx, fy, speed, ahead) {
+  if (b.inNet) return;
+  let dx = b.x - fx, dy = b.y - fy, l = Math.hypot(dx, dy) || 1;
+  dx /= l; dy /= l;
+  if (ahead) {
+    const [ax, ay] = DIRV[ahead];
+    if (dx * ax + dy * ay > 0) { dx = dx * 0.5 + ax * 0.5; dy = dy * 0.5 + ay * 0.5; l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l; }
+  }
+  b.vx = dx * speed; b.vy = dy * speed; b.vz = BALL.hop; b.cd = BALL.cd;
+  funnelBall(b);
+  if (!muted) SFX.boing();
+}
+// devant l'ouverture du filet, un ballon qui monte vers lui est guidé vers le milieu (comme les poules et la barrière) :
+// au tir, puis à chaque image tant qu'il roule
+function funnelBall(b) {
+  const [gx, gy] = MAP.goal, sp = Math.hypot(b.vx, b.vy);
+  if (!sp || b.vy > -sp * 0.2 || b.y < gy - 20 || dist(b.x, b.y, gx, gy) > BALL.funnel) return;
+  const tx = gx - b.x, ty = gy - 30 - b.y, tl = Math.hypot(tx, ty) || 1;
+  const vx = b.vx / sp * 0.35 + tx / tl * 0.65, vy = b.vy / sp * 0.35 + ty / tl * 0.65, l = Math.hypot(vx, vy) || 1;
+  b.vx = vx / l * sp; b.vy = vy / l * sp;
+}
+function ballBlocked(b, x, y) {
+  const B = BALL.box, [gx, gy] = MAP.goal;
+  if (x < B[0] * TS || x > B[2] * TS || y < B[1] * TS || y > B[3] * TS) return true;
+  if (b.inNet && (Math.abs(x - gx) > GOAL_IN[0] + 8 || y < gy + GOAL_IN[1] || y > gy + GOAL_IN[2])) return true;
+  return blockedFeet(x, y, 12);
+}
+function moveBall(b, dx, dy) {           // un obstacle le renvoie (moins vite)
+  if (!ballBlocked(b, b.x + dx, b.y)) b.x += dx; else b.vx = -b.vx * BALL.bounce;
+  if (!ballBlocked(b, b.x, b.y + dy)) b.y += dy; else b.vy = -b.vy * BALL.bounce;
+}
+function checkGoal(b) {
+  const [gx, gy] = MAP.goal, dx = b.x - gx, dy = b.y - gy;
+  if (Math.abs(dx) >= GOAL_IN[0] || dy <= GOAL_IN[1] || dy >= GOAL_IN[2]) return;
+  b.inNet = true; b.vx *= 0.4; b.vy *= 0.4;
+  score += LEON.perBall;
+  addPop('+' + LEON.perBall, b.x - 20, b.y - 80);
+  addWordPop(ballsLeft() ? 'But !' : 'Tous dans le filet !', b.x, b.y - 110);
+  if (!muted) SFX.goal();
+  if (!ballsLeft()) { leon.cheerT = 3; npcShout(leon, fete.state === 'asked' ? 'Bravo, champion ! Viens me voir !' : 'Mes ballons !'); }
+}
+function updateBall(b, dt) {
+  b.cd = Math.max(0, b.cd - dt);
+  if (b.z > 0 || b.vz > 0) {                     // petits rebonds
+    b.vz -= BALL.g * dt; b.z += b.vz * dt;
+    if (b.z <= 0) { b.z = 0; b.vz = b.vz < -160 ? -b.vz * 0.4 : 0; }
+  }
+  if (!b.inNet && b.cd <= 0 && P.mode !== 'ko' && P.alpha !== 0 && dist(b.x, b.y, P.x, P.y) < BALL.touch)
+    kickBall(b, P.x, P.y, BALL.kick, P.anim === 'walk' ? P.dir : null);
+  const k = Math.exp(-BALL.fric * dt);
+  b.vx *= k; b.vy *= k;
+  const sp = Math.hypot(b.vx, b.vy);
+  if (sp < 8) { b.vx = b.vy = 0; return; }
+  if (!b.inNet) funnelBall(b);                 // tant qu'il roule vers l'ouverture, il est guidé
+  moveBall(b, b.vx * dt, b.vy * dt);
+  b.rot += (b.vx >= 0 ? 1 : -1) * sp * dt / BALL.r;
+  if (!b.inNet) checkGoal(b);
+}
+function drawBall(b) {
+  ctx.save();
+  ctx.globalAlpha = 0.22 * Math.max(0.4, 1 - b.z / 120); ctx.fillStyle = '#000';
+  ctx.beginPath(); ctx.ellipse(b.x, b.y - 2, 22, 7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  drawSpr('port/balloon', b.i, b.x, b.y - BALL.r - b.z, { angle: b.rot });
+}
+function leonMark() { return fete.state === 'done' ? -1 : fete.state === 'asked' && ballsLeft() ? 1 : 0; }
+function leonGreet() {
+  if (fete.state === 'new') npcShout(leon, 'Oh non, mes ballons !');
+  else if (fete.state === 'asked') {
+    const n = ballsLeft();
+    npcShout(leon, !n ? 'Bravo, champion ! Viens me voir !' : 'Encore ' + n + (n > 1 ? ' ballons !' : ' ballon !'));
+  } else { npcShout(leon, 'Salut, champion !'); leon.waveT = 1.5; }
+}
+const leonThanks = () => [
+  { who: 'leon', face: 2, text: "Cinq buts ! Tous mes ballons sont dans le filet. Bravo, champion !" },
+  { who: 'leon', face: 0, text: "Tiens, un bon os pour toi. Et si tu croises une petite fille, dis-lui qu'il y aura des ballons à la fête du parc !" },
+];
+function finishLeon() {
+  fete.state = 'done'; score += LEON.reward;
+  addPop('+' + LEON.reward, P.x - 30, P.y - 140);
+  items.push({ n: 'bone', x: P.x + 40, y: P.y - 30, t: 0, pop: 0.001 });
+  leon.cheerT = 3;
+  saveGame();
+}
+function talkLeon() {
+  if (fete.state === 'done') {
+    leon.waveT = 2;
+    say([{ who: 'leon', face: 2, text: "Merci encore, champion ! Mes ballons seront prêts pour la fête du parc." }]);
+    return;
+  }
+  if (!ballsLeft()) { fete.state = 'asked'; say(leonThanks(), finishLeon); return; }
+  if (fete.state === 'asked') {
+    const n = ballsLeft();
+    say([{ who: 'leon', face: 0, text: (n > 1 ? `Il en reste ${n} !` : "Plus qu'un !") +
+      " Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux." }]);
+    return;
+  }
+  fete.state = 'asked';
+  say([
+    { who: 'leon', face: 3, text: "Salut, petit chien ! Je devais livrer ces gros ballons pour la fête du parc… mais le carton s'est ouvert, et ils ont roulé partout !" },
+    { who: 'leon', face: 0, text: "Tu veux bien les pousser dans le grand filet, à côté de moi ? Fonce dedans, ou aboie derrière eux : comme au foot !" },
+    { who: 'tecky', face: 2, text: "Ouaf ! Je vais marquer des buts !" },
   ], saveGame);
 }
 
@@ -2571,6 +2702,7 @@ function drawPauseMap() {
   });
   if (!alice.hidden) drawSpr('hud/arrow_icon', 3, mx(alice.x), my(alice.y) - 10, { sc: 1.2 });
   if (farm.state === 'asked') drawSpr('hen/idle/right', 0, mx((MAP.pen[0] + MAP.pen[2]) / 2), my(MAP.pen[3]) + 6, { sc: 0.7 });
+  if (fete.state === 'asked') drawSpr('port/balloon', 0, mx(MAP.goal[0]), my(MAP.goal[1]) - 10, { sc: 0.55 });
   // personnages déjà vus qui ont quelque chose à dire : leur « ! » (demande, remerciements) ou « ? » (quête en cours)
   const bob = Math.sin(performance.now() / 260) * 3;
   for (const n of npcList()) {
@@ -2617,6 +2749,7 @@ function saveGame() {
     ducks: ducks.map(d => d.scored ? 1 : 0).join(''),
     post: post.state, letters: letters.map(l => l.got ? 1 : 0).join(''),
     rose: rose.state, cat: [r1(pompon.x), r1(pompon.y), pompon.mode], bitten,
+    fete: fete.state, balls: balls.map(b => [r1(b.x), r1(b.y), b.inNet ? 1 : 0]),
   });
 }
 // pas de sauvegarde automatique en plein combat : on reprendrait au milieu des crocs
@@ -2645,6 +2778,8 @@ function loadGame(s, rested) {
   post.state = s.post || 'new';
   letters.forEach((l, i) => { l.got = (s.letters || '')[i] === '1'; });
   rose.state = s.rose || 'new';
+  fete.state = s.fete || 'new';
+  (s.balls || []).forEach((q, i) => { const b = balls[i]; if (b && q) { b.x = q[0]; b.y = q[1]; b.inNet = !!q[2]; } });
   bitten = !!s.bitten || rested;
   if (s.cat) { pompon.x = s.cat[0]; pompon.y = s.cat[1]; pompon.mode = s.cat[2] === 'follow' ? 'wait' : s.cat[2]; }
   questHens().forEach((h, i) => { const q = (s.hens || [])[i]; if (q) { h.x = h.hx = q[0]; h.y = h.hy = q[1]; h.penned = !!q[2]; } });
@@ -2802,6 +2937,7 @@ const BADGE_INFO = {
   canards: ['Coin-coin', 'Faire s’envoler tous les canards.'],
   explorateur: ['Explorateur', 'Découvrir toute la carte.'],
   sieste: ['Roi de la sieste', 'Laisser Tecky s’endormir.'],
+  ballons: ['Champion du ballon', 'Pousser tous les ballons de Léon dans le filet.'],
 };
 const TOAST = { life: 3.6 };
 let badges = {}, toasts = [], newBadges = [], badgeT = 0, bitten = false;
@@ -2820,6 +2956,7 @@ function checkBadges() {
   if (farm.state === 'done') unlockBadge('poules');
   if (post.state === 'done') unlockBadge('facteur');
   if (rose.state === 'done') unlockBadge('chat');
+  if (fete.state === 'done') unlockBadge('ballons');
   if (critters.every(c => c.scored)) unlockBadge('betes');
   if (ducks.filter(d => !d.lead).every(d => d.scored)) unlockBadge('canards');
   if (seenCells.reduce((a, v) => a + v, 0) >= seenCells.length * 0.95) unlockBadge('explorateur');
@@ -2828,7 +2965,8 @@ function checkBadges() {
 /* Complétion de la partie (écran de victoire), en % : moyenne de catégories qui comptent toutes autant — os dorés, quêtes,
    petites bêtes, canards, carte explorée (95 % suffisent, comme pour le badge), et les copains en balade. Une nouvelle
    quête : l'ajouter à QUESTS_DONE. */
-const QUESTS_DONE = [() => farm.state === 'done', () => post.state === 'done', () => rose.state === 'done'];
+const QUESTS_DONE = [() => farm.state === 'done', () => post.state === 'done', () => rose.state === 'done',
+  () => fete.state === 'done'];
 function completion() {
   const part = (n, of) => of ? Math.min(1, n / of) : 1, count = (a, f) => a.filter(f).length;
   const adults = ducks.filter(d => !d.lead);          // comme le badge : sans les canetons
@@ -2867,13 +3005,15 @@ function drawBadges() {
   guiTransform();
   veil(0.6);
   outlined('Badges : ' + badgeCount() + ' / ' + MAP.badges.length, GW / 2, 118, 64, '#FFF7E6');
-  const cw = 420, ch = 236, gx = 26, gy = 22, x0 = GW / 2 - (4 * cw + 3 * gx) / 2, y0 = 168;
+  // trois rangées de quatre au plus : grandes cases ; au-delà (jusqu'à 16 badges), cases plus compactes
+  const big = MAP.badges.length <= 12, sc = big ? 1 : 0.76;
+  const cw = 420, ch = big ? 236 : 196, gx = 26, gy = big ? 22 : 14, x0 = GW / 2 - (4 * cw + 3 * gx) / 2, y0 = 168;
   MAP.badges.forEach((id, i) => {
     const x = x0 + (i % 4) * (cw + gx), y = y0 + Math.floor(i / 4) * (ch + gy), got = !!badges[id];
     drawNine(got ? 'hud/panel' : 'hud/panel_dark', x, y, cw, ch, 32);
-    drawSpr('hud/badge', got ? i : MAP.badges.length, x + cw / 2 - 48, y + 14);
-    text(got ? BADGE_INFO[id][0] : '?', x + cw / 2, y + 144, 30, got ? '#3A1E12' : '#FFF7E6', 'center', 700);
-    para(BADGE_INFO[id][1], x + cw / 2, y + 180, 22, got ? '#6B5A4E' : '#E9DCC8', 'center', 500, cw - 50, 28);
+    drawSpr('hud/badge', got ? i : MAP.badges.length, x + cw / 2 - 48 * sc, y + (big ? 14 : 8), { sc });
+    text(got ? BADGE_INFO[id][0] : '?', x + cw / 2, y + (big ? 144 : 112), 30, got ? '#3A1E12' : '#FFF7E6', 'center', 700);
+    para(BADGE_INFO[id][1], x + cw / 2, y + (big ? 180 : 146), 22, got ? '#6B5A4E' : '#E9DCC8', 'center', 500, cw - 50, 28);
   });
   text(touchMode ? 'Touche l’écran pour revenir' : '[back] pour revenir', GW / 2, GH - 30, 26, '#E9DCC8', 'center', 500);
 }
@@ -3630,6 +3770,7 @@ function update(dt) {
       updateFarmer(dt);
       updateLetters(dt);
       updatePompon(dt);
+      for (const b of balls) updateBall(b, dt);
       for (const c of critters) updateCritter(c, dt);
       for (const d of ducks) updateDuck(d, dt);
       updateTrail(dt);
@@ -3711,6 +3852,7 @@ function drawWorld() {
   for (const n of npcList()) if (vis(n.x, n.y, 140)) list.push({ y: n.y, draw: () => drawNpc(n) });
   for (const l of letters) if (!l.got && vis(l.x, l.y, 60)) list.push({ y: l.y + 20, draw: () => drawSpr('item/letter', Math.floor(l.t * 6), l.x, l.y) });
   if (vis(pompon.x, pompon.y, 60)) list.push({ y: pompon.y, draw: drawPompon });
+  for (const b of balls) if (vis(b.x, b.y, 80)) list.push({ y: b.y, draw: () => drawBall(b) });
   for (const d of ducks) if (d.h === 0 && vis(d.x, d.y, 60)) list.push({ y: d.y, draw: () => drawDuck(d) });
   for (const c of critters) if (critterVisible(c) && vis(c.x, c.y - c.h, 60))
     list.push({ y: c.h > 0 && c.ref ? c.ref.y + 2 : c.y, draw: () => drawCritter(c) });
@@ -3899,6 +4041,7 @@ function hudCounters() {
   if (farm.state === 'asked') c.push(['hen/idle/right', 46, 58, 0.9, questHens().length - hensLeft(), questHens().length]);
   if (post.state === 'asked') c.push(['item/letter', 50, 36, 0.8, letters.length - lettersLeft(), letters.length]);
   if (rose.state === 'asked') c.push(['cat_white/idle', 46, 58, 0.9, pompon.mode === 'lost' ? 0 : 1, 1]);
+  if (fete.state === 'asked') c.push(['port/balloon', 42, 35, 0.8, balls.length - ballsLeft(), balls.length]);
   return c;
 }
 function drawHUD() {

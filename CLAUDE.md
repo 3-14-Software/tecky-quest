@@ -188,6 +188,12 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   sur ses traces (`crumbAt()`, terriers compris), s'assoit s'il est trop loin (`wait`), et reste chez elle une fois
   arrivé (`home`) ; elle remercie (saucisse + points). Un aboiement le fait feuler. Sauvegardés (`post`, `letters`,
   `rose`, `cat`). Test : `quests.js`.
+- Léon, le cariste du port (`fete`, `leon`, `LEON`, `MAP.leon`, npcs.py « leon ») : ses cinq gros ballons (`balls`,
+  `BALL`, `MAP.balls`, sprites `port/balloon` de port.py) ont roulé partout dans la zone industrielle ; Tecky les pousse
+  en fonçant dedans (`kickBall()`, orienté par sa direction) ou en aboyant (cône) dans le grand filet (`MAP.goal`, décor
+  `goal_net`, côtés et fond dans `RAILS`, intérieur `GOAL_IN`) ; ils roulent, rebondissent (`moveBall()`, jamais hors de
+  `BALL.box`), sont guidés vers l'ouverture (`funnelBall()`) et restent dans le filet (`checkGoal()`). Léon remercie
+  (os + points), badge « ballons ». Sauvegardés (`fete`, `balls`). Test : `leon.js`.
 - Personnages (`NPC`, `npcList()`, `NPC_DO` : par personnage `mark` / `greet` / `talk` ; `newNpc()`, `updateNpcAnim()` :
   parle, se réjouit (`cheerT`), salue (`waveT`), s'inquiète (`worried`) ; fps dans `MAP.npcFps`) : comme dans un RPG, ils ne
   parlent que sur C (« Parler », `biteAction()` → `'talk'`, E aussi). Bulle `hud/talk` au-dessus de la tête : « ! »
