@@ -228,8 +228,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   `goal_net`, côtés et fond dans `RAILS`, intérieur `GOAL_IN`) ; ils roulent, rebondissent (`moveBall()`, jamais hors de
   `BALL.box`), sont guidés vers l'ouverture (`funnelBall()`) et restent dans le filet (`checkGoal()`). Léon remercie
   (os + points), badge « ballons ». Sauvegardés (`fete`, `balls`). Test : `leon.js`.
-- Iris, le vieux Jack Russell, ami et mentor de Tecky (`jouets`, `iris`, `IRIS`, `MAP.iris`, npcs.py « iris » : un
-  personnage, pas un chien de `dogs` ; bulle plus basse : `n.markY`, `markY()` ; il « parle » en jappant, `n.woof`) :
+- Iris, le vieux Jack Russell, ami et mentor de Tecky (`jouets`, `iris`, `IRIS`, `MAP.iris`, npcs.py « iris », mince, sans
+  bandana, réduit par `npcs.SCALE` — pas son portrait : un personnage, pas un chien de `dogs` ; bulle plus basse : `n.markY`, `markY()` ; il « parle » en jappant, `n.woof`) :
   sur son panier (décor `dog_bed`, à plat) au milieu du verger, zone calme. Pour entraîner Tecky, il a caché ses trois
   jouets (`toys`, `MAP.toys`, sprites `port/toy`) dans les prés de la ferme. Tecky en prend un dans la gueule en
   passant dessus (un seul à la fois, `carried()`, dessiné à `MOUTH[dir]`), le lâche s'il aboie, mord ou est KO

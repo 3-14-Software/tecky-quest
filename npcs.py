@@ -44,7 +44,7 @@ FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-
     "postman": (24, 18.5, 15.5),      # casquette, visage, moustache et menton (comme Gaston)
     "neighbor": (24, 21.5, 15.5),     # chignon, lunettes, menton (elle est plus petite : tout est 3 unités plus bas)
     "leon": (24, 18.0, 15.5),         # casque, visage, barbe
-    "iris": (24, 33.5, 13.0),         # le vieux Jack Russell : tête, oreilles, sourcils blancs
+    "iris": (24, 34.0, 13.6),         # le vieux Jack Russell : tête, oreilles, sourcils blancs
     "piquette": (24, 31.0, 13.0),     # la maman hérisson : piquants, fleur, museau
 }
 PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6", "leon": "#FDE3C2", "iris": "#DDE9F6", "piquette": "#F6E3EC"}   # fond du médaillon (Gaston : "#CFE8B0")
@@ -80,7 +80,7 @@ PAL = {
                      nose="#2A1E1A", eye="#2A1E1A", blush="#F2A0A0", mouth="#B8505A", tongue="#E9858B",
                      sweat="#9ED8F5"),
     "iris": dict(white="#FFFDF7", white_dk="#D9CFC0", tan="#D99A52", tan_dk="#B47838", gray="#E3DED5", brow="#FBF8F2",
-                 band="#4C86C6", dot="#FFFFFF", nose="#2A1E1A", eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B"),
+                 nose="#2A1E1A", eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B"),
 }
 
 
@@ -479,82 +479,78 @@ def _leon(p):
 
 # ================================================================== IRIS, LE VIEUX JACK RUSSELL
 def _iris(p):
-    """Iris, le vieux Jack Russell, ami et mentor de Tecky : assis, de face, poil blanc, taches feu sur les yeux et
-    les oreilles (liste blanche au milieu du front), une tache sur le flanc, oreilles pliées vers l'avant, queue
-    dressée feu au bout blanc, museau grisonnant et gros sourcils blancs de vieux sage, bandana bleu à pois.
-    Il remue la queue (wag) ; triste (worry), ses oreilles tombent (droop)."""
+    """Iris, le vieux Jack Russell, ami et mentor de Tecky : assis, de face, mince et haut sur pattes, poil blanc,
+    taches feu sur les yeux et les oreilles (liste blanche au milieu du front), une tache sur le flanc, oreilles pliées
+    vers l'avant, queue dressée feu au bout blanc, museau grisonnant et sourcils blancs de vieux sage.
+    Il remue la queue (wag) ; triste (worry), ses oreilles tombent (droop). Plus petit que les gens : IRIS_SCALE."""
     c = PAL["iris"]
     d = Drawing(W, H)
     L = p["lift"]
     Y = lambda v: v + p["bob"] - L          # buste et tête (respire, saute)
     T = lambda v: v - L                     # pattes (sautent seulement)
     k = max(0.6, 1 - L / 10)
-    d.under.append(f'<ellipse cx="24" cy="{G + 0.2}" rx="{12 * k:.2f}" ry="{2.5 * k:.2f}" fill="#000" opacity="0.2"/>')
-    # queue dressée, derrière, qui remue : feu, le bout blanc
-    rot = f"rotate({16 + p['wag']:.1f} 30.6 {T(53):.2f})"
-    d.add(ellipse(32.2, T(46.2), 1.9, 6.4, rot), c["tan"])
-    d.add(ellipse(32.2, T(40.6), 1.5, 1.9, rot), c["white"], sil=False)
-    # cuisses (assis), corps blanc, tache feu sur le flanc, ventre un peu ombré
+    d.under.append(f'<ellipse cx="24" cy="{G + 0.2}" rx="{9.5 * k:.2f}" ry="{2.2 * k:.2f}" fill="#000" opacity="0.2"/>')
+    # queue dressée, fine, derrière, qui remue : feu, le bout blanc
+    rot = f"rotate({14 + p['wag']:.1f} 28.6 {T(53):.2f})"
+    d.add(ellipse(29.8, T(46.4), 1.3, 6.0, rot), c["tan"])
+    d.add(ellipse(29.8, T(41.2), 1.1, 1.7, rot), c["white"], sil=False)
+    # cuisses (assis), corps mince, poitrail, tache feu sur le flanc
     for s in (-1, 1):
-        d.add(ellipse(24 + s * 7.4, T(55.6), 5.2, 4.4), c["white"])
-    d.add(ellipse(24, Y(47.6), 8.4, 10.2), c["white"])
-    d.add(ellipse(30.0, Y(45.6), 2.3, 3.6, f"rotate(-14 30 {Y(45.6):.2f})"), c["tan"], sil=False)
+        d.add(ellipse(24 + s * 5.4, T(56.2), 3.7, 3.4), c["white"])
+    d.add(ellipse(24, Y(48.0), 6.0, 9.4), c["white"])
+    d.add(ellipse(27.6, Y(48.4), 1.6, 3.0, f"rotate(-10 27.6 {Y(48.4):.2f})"), c["tan"], sil=False)
     for s in (-1, 1):                                            # pli des cuisses
-        d.raw(line(f"M{24 + s * 3.6:.2f},{T(57.6):.2f} Q{24 + s * 4.6:.2f},{T(53.4):.2f} {24 + s * 8.6:.2f},{T(52.2):.2f}",
-                   c["white_dk"], 0.9))
+        d.raw(line(f"M{24 + s * 3.0:.2f},{T(58.0):.2f} Q{24 + s * 3.6:.2f},{T(54.6):.2f} {24 + s * 6.6:.2f},{T(53.2):.2f}",
+                   c["white_dk"], 0.8))
+    d.raw(line(f"M22.2,{Y(41.6):.2f} Q24,{Y(43.4):.2f} 25.8,{Y(41.6):.2f}", c["white_dk"], 0.7))   # touffe du poitrail
     # pattes avant, fines et longues, doigts marqués
-    for x in (20.6, 27.4):
-        d.add(leg(x, Y(51), x, T(59.0), 3.3), c["white"])
-        d.add(ellipse(x, T(59.3), 2.5, 1.4), c["white"])
-        for t in (-0.8, 0.8):
-            d.raw(line(f"M{x + t:.2f},{T(58.6):.2f} L{x + t:.2f},{T(60.0):.2f}", c["white_dk"], 0.6))
-    # bandana bleu à pois, noué sous la tête
-    d.add(path(f"M15.8,{Y(39.6):.2f} Q24,{Y(43.0):.2f} 32.2,{Y(39.6):.2f} L24,{Y(47.6):.2f} Z"), c["band"], sil=False, edge=True)
-    for x, y in ((20.6, 41.6), (24, 43.6), (27.4, 41.6), (24, 46.0)):
-        d.add(circle(x, Y(y), 0.55), c["dot"], sil=False)
+    for x in (21.9, 26.1):
+        d.add(leg(x, Y(50), x, T(59.0), 2.6), c["white"])
+        d.add(ellipse(x, T(59.3), 2.0, 1.2), c["white"])
+        d.raw(line(f"M{x:.2f},{T(58.7):.2f} L{x:.2f},{T(60.0):.2f}", c["white_dk"], 0.5))
     # tête blanche, taches feu autour des yeux (liste blanche au milieu)
-    hy = Y(32.8)
-    d.add(circle(24, hy, 8.9), c["white"])
+    hy = Y(33.4)
+    d.add(circle(24, hy, 7.9), c["white"])
     for s in (-1, 1):
-        d.add(ellipse(24 + s * 4.9, hy - 1.6, 3.6, 4.4, f"rotate({s * 10} {24 + s * 4.9:.2f} {hy - 1.6:.2f})"), c["tan"], sil=False)
+        d.add(ellipse(24 + s * 4.4, hy - 1.5, 3.2, 3.9, f"rotate({s * 10} {24 + s * 4.4:.2f} {hy - 1.5:.2f})"), c["tan"], sil=False)
     # oreilles pliées vers l'avant (feu, bord plus foncé) ; triste, elles tombent un peu plus
     dr = p["droop"]
     for s in (-1, 1):
-        x0, x1 = 24 + s * 4.4, 24 + s * 9.3
-        tx, ty = 24 + s * (10.6 + dr * 0.1), hy + 1.2 + dr * 0.5
-        d.add(path(f"M{x0:.2f},{hy - 7.4:.2f} Q{24 + s * 7.6:.2f},{hy - 9.6:.2f} {x1:.2f},{hy - 6.0:.2f} "
-                   f"Q{tx + s * 0.6:.2f},{ty - 2.6:.2f} {tx:.2f},{ty:.2f} Q{24 + s * 6.6:.2f},{hy - 1.8:.2f} {x0:.2f},{hy - 7.4:.2f} Z"),
+        x0, x1 = 24 + s * 3.9, 24 + s * 8.3
+        tx, ty = 24 + s * (9.5 + dr * 0.1), hy + 1.0 + dr * 0.5
+        d.add(path(f"M{x0:.2f},{hy - 6.6:.2f} Q{24 + s * 6.8:.2f},{hy - 8.6:.2f} {x1:.2f},{hy - 5.4:.2f} "
+                   f"Q{tx + s * 0.5:.2f},{ty - 2.3:.2f} {tx:.2f},{ty:.2f} Q{24 + s * 5.9:.2f},{hy - 1.6:.2f} {x0:.2f},{hy - 6.6:.2f} Z"),
               c["tan"])
-        d.raw(line(f"M{24 + s * 5.0:.2f},{hy - 6.8:.2f} Q{24 + s * 7.4:.2f},{hy - 5.0:.2f} {tx - s * 0.6:.2f},{ty - 0.8:.2f}",
-                   c["tan_dk"], 0.8))
-    # museau grisonnant, petite barbiche, truffe, bouche
-    d.add(ellipse(24, hy + 4.4, 4.6, 3.6), c["gray"])
-    d.add(path(f"M22.0,{hy + 7.4:.2f} L23.0,{hy + 9.4:.2f} L24.0,{hy + 7.9:.2f} L25.0,{hy + 9.4:.2f} L26.0,{hy + 7.4:.2f} Z"),
+        d.raw(line(f"M{24 + s * 4.5:.2f},{hy - 6.1:.2f} Q{24 + s * 6.6:.2f},{hy - 4.5:.2f} {tx - s * 0.5:.2f},{ty - 0.7:.2f}",
+                   c["tan_dk"], 0.7))
+    # museau grisonnant, un peu long, petite barbiche, truffe, bouche
+    d.add(ellipse(24, hy + 4.2, 3.9, 3.3), c["gray"])
+    d.add(path(f"M22.3,{hy + 6.8:.2f} L23.1,{hy + 8.6:.2f} L24.0,{hy + 7.3:.2f} L24.9,{hy + 8.6:.2f} L25.7,{hy + 6.8:.2f} Z"),
           c["gray"], sil=False)
     m = p["mouth"]
     if p["happy"] or m > 0.05:
         mm = max(m, 0.5 if p["happy"] else 0)
-        d.add(ellipse(24, hy + 6.4 + mm * 0.6, 1.8 + mm * 0.5, 0.6 + mm * 1.5), c["mouth"], sil=False, edge=True)
-        d.add(ellipse(24, hy + 7.2 + mm * 1.0, 1.1, 0.5 + mm * 0.7), c["tongue"], sil=False)
+        d.add(ellipse(24, hy + 6.0 + mm * 0.5, 1.6 + mm * 0.4, 0.5 + mm * 1.3), c["mouth"], sil=False, edge=True)
+        d.add(ellipse(24, hy + 6.7 + mm * 0.9, 1.0, 0.45 + mm * 0.6), c["tongue"], sil=False)
     else:
-        d.raw(line(f"M21.8,{hy + 5.6:.2f} Q24,{hy + 7.0:.2f} 26.2,{hy + 5.6:.2f}", c["eye"], 0.8))
-    d.add(ellipse(24, hy + 2.5, 2.1, 1.6), c["nose"])
-    d.add(ellipse(23.4, hy + 2.0, 0.65, 0.42), "#FFFFFF", sil=False, opacity=0.7)
-    # yeux et gros sourcils blancs, touffus, de vieux sage (le bout vers l'extérieur tombe : il a l'air gentil)
+        d.raw(line(f"M22.0,{hy + 5.3:.2f} Q24,{hy + 6.6:.2f} 26.0,{hy + 5.3:.2f}", c["eye"], 0.75))
+    d.add(ellipse(24, hy + 2.4, 1.9, 1.45), c["nose"])
+    d.add(ellipse(23.45, hy + 1.95, 0.6, 0.38), "#FFFFFF", sil=False, opacity=0.7)
+    # yeux et sourcils blancs, touffus, de vieux sage (le bout vers l'extérieur tombe : il a l'air gentil)
     q = p["worry"]
     for s in (-1, 1):
-        x, y = 24 + s * 3.6, hy - 1.2
+        x, y = 24 + s * 3.3, hy - 1.1
         if p["happy"]:
-            d.raw(line(f"M{x - 1.4:.2f},{y + 0.6:.2f} Q{x:.2f},{y - 1.1:.2f} {x + 1.4:.2f},{y + 0.6:.2f}", c["eye"], 1.0))
+            d.raw(line(f"M{x - 1.3:.2f},{y + 0.5:.2f} Q{x:.2f},{y - 1.0:.2f} {x + 1.3:.2f},{y + 0.5:.2f}", c["eye"], 0.95))
         elif p["blink"] > 0.5:
-            d.raw(line(f"M{x - 1.3:.2f},{y:.2f} Q{x:.2f},{y + 0.9:.2f} {x + 1.3:.2f},{y:.2f}", c["eye"], 0.9))
+            d.raw(line(f"M{x - 1.2:.2f},{y:.2f} Q{x:.2f},{y + 0.8:.2f} {x + 1.2:.2f},{y:.2f}", c["eye"], 0.85))
         else:
-            d.add(ellipse(x, y - q * 0.3, 1.25, 1.55), c["eye"], sil=False)
-            d.add(circle(x + 0.4, y - 0.6 - q * 0.3, 0.45), "#FFFFFF", sil=False)
-        rb = f"rotate({s * (10 + q * 14):.1f} {x:.2f} {y - 2.6:.2f})"
-        d.add(ellipse(x - s * 0.7, y - 2.4 - q * 0.4, 1.3, 0.8, rb), c["brow"], sil=False)
-        d.add(ellipse(x + s * 0.6, y - 2.6 - q * 0.6, 1.4, 0.9, rb), c["brow"], sil=False)
-        d.add(ellipse(x + s * 1.6, y - 2.2 - q * 0.6, 0.9, 0.7, rb), c["brow"], sil=False)
+            d.add(ellipse(x, y - q * 0.3, 1.15, 1.45), c["eye"], sil=False)
+            d.add(circle(x + 0.38, y - 0.55 - q * 0.3, 0.42), "#FFFFFF", sil=False)
+        rb = f"rotate({s * (10 + q * 14):.1f} {x:.2f} {y - 2.4:.2f})"
+        d.add(ellipse(x - s * 0.6, y - 2.2 - q * 0.4, 1.2, 0.75, rb), c["brow"], sil=False)
+        d.add(ellipse(x + s * 0.55, y - 2.4 - q * 0.6, 1.3, 0.8, rb), c["brow"], sil=False)
+        d.add(ellipse(x + s * 1.45, y - 2.0 - q * 0.6, 0.8, 0.65, rb), c["brow"], sil=False)
     return d
 
 
@@ -821,9 +817,14 @@ def portrait_states(kind):
     return [P(), P(blink=1), P(happy=True), P(worry=1, sweat=kind == "neighbor")]
 
 
+SCALE = {"iris": 0.84}             # Iris, un petit chien : réduit autour de ses pieds (pas son portrait)
+
+
 def frames(kind, anim):
     """SVG des images d'une animation (vue de face)."""
-    return [front(kind, p).svg() for p in ANIMS[kind][anim][0]]
+    k = SCALE.get(kind, 1)
+    tr = f"translate(24 {G}) scale({k}) translate(-24 {-G})" if k != 1 else ""
+    return [front(kind, p).svg(transform=tr) for p in ANIMS[kind][anim][0]]
 
 
 # ================================================================== la lettre perdue

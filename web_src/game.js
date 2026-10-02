@@ -2202,7 +2202,7 @@ const IRIS_TIPS = [
   () => "Pour traverser la grande route, prends les passages piétons : les voitures s'y arrêtent toujours.",
   () => "Tu es fatigué ? Les os te redonnent des forces, et une saucisse, encore plus. Ouvre l'œil, il y en a partout !",
 ];
-const IRIS = { reward: 150, perToy: 20, pick: 54, give: 110, markY: 96, home: [[-46, 10], [46, 12], [-22, 28]],
+const IRIS = { reward: 150, perToy: 20, pick: 54, give: 110, markY: 90, home: [[-46, 10], [46, 12], [-22, 28]],
   regrab: 1.2 };     // regrab : un jouet lâché ne se reprend pas tout de suite (Tecky est juste à côté)
 const TOY_NAMES = ['Le canard d’Iris !', 'L’anneau d’Iris !', 'La corde d’Iris !'];
 const MOUTH = { right: [38, -40], left: [-38, -40], up: [0, -78], down: [0, -22] };   // gueule de Tecky (jouet porté)
