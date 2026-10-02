@@ -1036,9 +1036,10 @@ function introLines() {
         ? "Glisse le doigt à gauche pour marcher. Les boutons à droite servent à aboyer, à mordre et à flairer la piste d'Alice."
         : "[walk] pour marcher, [bark] pour aboyer, [sniff] pour flairer la piste d'Alice. [pause] pour la pause, [mute] pour le son." },
     // le bouton de morsure fait tout ce qui se fait de près (biteAction) : la bulle au-dessus de la cible le dit
-    { who: 'info', text: (touchMode ? 'Le bouton de morsure' : '[bite]') + (balade()
-        ? " ne fait mal à personne en balade : il sert à jouer avec un chien, à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire."
-        : " sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.") },
+    { who: 'info', text: (balade() ? 'En balade, personne ne se fait mal : ' + (touchMode ? 'le bouton de morsure' : '[bite]') +
+        " sert à jouer avec un chien, à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire."
+      : (touchMode ? 'Le bouton de morsure' : '[bite]') +
+        " sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.") },
     { who: 'info', text: "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Et des traces de pattes au sol cachent peut-être un trésor : il n'y a plus qu'à gratter !" },
   ].concat(balade() ? [
     { who: 'info', text: "En balade, joue avec les chiens du coin : vous deviendrez copains ! " +
@@ -4160,6 +4161,28 @@ const GLYPH = {
   pause: ['P', 'Start'], mute: ['M', 'Select'], fs: ['F', null], walk: ['arrows/zqsd', 'stick/croix'],
   updown: ['up+down', 'croix'], leftright: ['left+right', 'croix'], arrows: ['arrows', 'croix'],
 };
+// les mêmes, à dire (synthèse vocale des répliques) : [clavier, manette]
+const GLYPH_SPOKEN = {
+  bite: ['la touche C', 'le bouton A'], bark: ['la touche X', 'le bouton X'], sniff: ['la touche R', 'le bouton Y'],
+  ok: ['la touche Entrée', 'le bouton A'], back: ['la touche Échap', 'le bouton B'], pause: ['la touche P', 'le bouton Start'],
+  mute: ['la touche M', 'le bouton Select'], fs: ['la touche F', 'la touche F'], walk: ['les flèches ou Z, Q, S, D', 'le stick ou la croix'],
+  updown: ['les flèches haut et bas', 'la croix'], leftright: ['les flèches gauche et droite', 'la croix'], arrows: ['les flèches', 'la croix'],
+};
+/* Voix des répliques (tools/export_voix.js, voix/) : le texte à dire (spokenText : les [action] en mots, selon
+   l'appareil, « (3 / 8) » -> « 3 sur 8 »), et le nom de son fichier (voiceKey : personnage + empreinte du texte à dire,
+   si bien qu'une réplique modifiée change de nom et se repère tout de suite). device : 'clavier' ou 'manette'. */
+function spokenText(text, device) {
+  const k = device === 'manette' ? 1 : 0;
+  return text.replace(/\[([a-z]+)\]/g, (m, n, at) => {
+    const w = GLYPH_SPOKEN[n] ? GLYPH_SPOKEN[n][k] : m;
+    return at === 0 || /[.!?]\s+$/.test(text.slice(0, at)) ? w[0].toUpperCase() + w.slice(1) : w;
+  }).replace(/\((\d+) \/ (\d+)\)/g, '$1 sur $2');
+}
+function voiceKey(who, spoken) {
+  let h = 0x811c9dc5;                                    // FNV-1a 32 bits
+  for (let i = 0; i < spoken.length; i++) { h ^= spoken.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return who + '-' + h.toString(16).padStart(8, '0');
+}
 const ICON = { h: 1.25, gap: 0.12, bar: 0.12 };   // en taille de texte : hauteur, écart entre deux icônes, autour de « / »
 // [[[sprite, image], …] par choix, …]
 function glyphIcons(name) {

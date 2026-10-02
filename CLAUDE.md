@@ -211,6 +211,12 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   parlent que sur C (« Parler », `biteAction()` → `'talk'`, E aussi). Bulle `hud/talk` au-dessus de la tête : « ! »
   (une demande ou une récompense à donner), « ? » (demande en cours), remplacée par « Parler » tout près. Quand Tecky
   arrive près d'eux : petite exclamation (`npcShout()`, bulle de mots + `SFX.hey`), sans bloquer le jeu.
+- Voix des répliques (`voix/`, `tools/export_voix.js`) : l'outil fait tourner le jeu sans affichage, appelle chaque
+  dialogue dans tous ses cas et relève les répliques écrites en dur ; il écrit `voix/repliques.csv` / `.json` (une
+  ligne par fichier audio : nom = `voiceKey()` du jeu, personnage + empreinte du texte à dire ; texte à dire =
+  `spokenText()`, les [action] en mots selon l'appareil, `GLYPH_SPOKEN`). Une nouvelle réplique dont le texte est
+  calculé : la produire dans l'outil et ajuster `DYNAMIC_SITES`. `run_all.sh` vérifie que la liste est à jour
+  (`--check`) : après toute modification d'une réplique, relancer `node tools/export_voix.js`.
 - Dialogues : `say()` pendant un dialogue **met la réplique à la suite** (`dialog.queue`) au lieu de le remplacer
   (le fermier parle et Tecky ramasse la barrette dans la même image).
 - Terriers (`MAP.tunnels`, décor `burrow` à plat, `TUNNEL`) : près d'un bout, C fait « Passer » (`startTunnel()`,

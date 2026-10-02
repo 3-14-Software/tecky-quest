@@ -12,4 +12,8 @@ for t in sim immune threat read ring clues berger map hens traffic butterflies s
   echo "$out" | grep -c "^ok" | sed 's/^/   ok : /'
 done
 python3 tests/edges.py | tail -3
+# répliques pour la synthèse vocale : la liste voix/repliques.csv est-elle à jour (et complète) ?
+out=$(node tools/export_voix.js --check 2>&1) || fail=1
+echo "$out"
+echo "$out" | grep -qE "^PB |Error" && fail=1
 exit $fail

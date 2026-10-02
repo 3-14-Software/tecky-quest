@@ -34,6 +34,7 @@ Quand on ne touche plus à rien, Tecky s'assoit, bâille, se gratte l'oreille…
 à ses pieds. L'écran de victoire dit à quel point l'aventure a été complétée (os dorés, quêtes, animaux, carte).
 
 Tout est généré par du code : sprites en SVG (aplats + contour), tileset, décors, HUD, musique chiptune, niveau.
+Les répliques sont prêtes à être lues par une synthèse vocale, une voix par personnage : voir [voix/README.md](voix/README.md).
 
 - **Jouer** : https://3-14-software.github.io/tecky-quest/ (clavier : flèches/ZQSD, X aboyer, C mordre (ou parler, gratter, lire, passer sous un grillage, jouer), R flairer, P pause, F plein écran, M son ; manette : stick ou croix, X/B aboyer, A mordre (ou parler, gratter, lire, passer sous un grillage, jouer) et valider, Y flairer, Start pause, Select son ; tactile sur téléphone).
 - **Kit GameMaker Studio 2** (sprites en strips x1/x2, tileset, décor, HUD, sons ; en pause pour l'instant) : voir [GAMEMAKER.md](GAMEMAKER.md).

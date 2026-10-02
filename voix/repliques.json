@@ -1,0 +1,1078 @@
+{
+  "voix": {
+    "tecky": {
+      "nom": "Tecky",
+      "voix": "petit teckel joyeux, courageux et un peu espiègle"
+    },
+    "alice": {
+      "nom": "Alice",
+      "voix": "petite fille de 5 ans, enjouée"
+    },
+    "info": {
+      "nom": "Narrateur",
+      "voix": "aides et panneaux : voix calme, claire et posée"
+    },
+    "farmer": {
+      "nom": "Gaston",
+      "voix": "le fermier : jovial, voix grave et chaleureuse"
+    },
+    "postman": {
+      "nom": "Marcel",
+      "voix": "le facteur : enjoué, un peu pressé"
+    },
+    "neighbor": {
+      "nom": "Mamie Rose",
+      "voix": "la voisine : douce vieille dame"
+    },
+    "leon": {
+      "nom": "Léon",
+      "voix": "le cariste du port : sympathique, voix forte"
+    },
+    "nestor": {
+      "nom": "Nestor",
+      "voix": "le vieux chien du gardien : voix lente, grave et bonhomme"
+    }
+  },
+  "repliques": [
+    {
+      "voix": "tecky",
+      "fichier": "tecky-88f6c3c3",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "",
+      "texte": "Ouaf ! Alice est partie jouer… et elle n'est pas rentrée !",
+      "affiche": "Ouaf ! Alice est partie jouer… et elle n'est pas rentrée !",
+      "contexte": "Introduction (aventure) ; Introduction (aventure, au toucher) ; Introduction (balade) ; Introduction (balade, au toucher)"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-3022d70d",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Elle a dû semer des affaires en chemin. En les retrouvant, je saurai où elle se cache !",
+      "affiche": "Elle a dû semer des affaires en chemin. En les retrouvant, je saurai où elle se cache !",
+      "contexte": "Introduction (aventure) ; Introduction (aventure, au toucher) ; Introduction (balade) ; Introduction (balade, au toucher)"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-cbedf579",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "",
+      "texte": "La flèche au bord de l'écran me guide. Gare aux chiens du coin, ils ne sont pas commodes.",
+      "affiche": "La flèche au bord de l'écran me guide. Gare aux chiens du coin, ils ne sont pas commodes.",
+      "contexte": "Introduction (aventure) ; Introduction (aventure, au toucher)"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-584a69b7",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "",
+      "texte": "La flèche au bord de l'écran me guide. Et les chiens du coin ont l'air d'avoir envie de jouer !",
+      "affiche": "La flèche au bord de l'écran me guide. Et les chiens du coin ont l'air d'avoir envie de jouer !",
+      "contexte": "Introduction (balade) ; Introduction (balade, au toucher)"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-6b450cbd",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "",
+      "texte": "C'est reparti ! Je vais retrouver les affaires d'Alice, et Alice avec.",
+      "affiche": "C'est reparti ! Je vais retrouver les affaires d'Alice, et Alice avec.",
+      "contexte": "Recommencer"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-32683c84",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Me revoilà ! Je reprends mes recherches.",
+      "affiche": "Me revoilà ! Je reprends mes recherches.",
+      "contexte": "Continuer"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-68d9307c",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "",
+      "texte": "Je vais chercher du côté de la ferme, tout à l'est, en suivant la grande route.",
+      "affiche": "Je vais chercher du côté de la ferme, tout à l'est, en suivant la grande route.",
+      "contexte": "Continuer ; Reprendre après un KO ; Où chercher ensuite"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-eef1dc33",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "",
+      "texte": "Ouf, une petite sieste et ça repart !",
+      "affiche": "Ouf, une petite sieste et ça repart !",
+      "contexte": "Reprendre après un KO"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-33cc8019",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "",
+      "texte": "La barrette d'Alice ! Elle est passée par la ferme.",
+      "affiche": "La barrette d'Alice ! Elle est passée par la ferme.",
+      "contexte": "Indice trouvé"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-3280f974",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "",
+      "texte": "Une chaussure d'Alice ! Elle a traversé la rivière par le pont.",
+      "affiche": "Une chaussure d'Alice ! Elle a traversé la rivière par le pont.",
+      "contexte": "Indice trouvé"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-6c94ced6",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "",
+      "texte": "Le doudou d'Alice ! Elle ne doit plus être bien loin.",
+      "affiche": "Le doudou d'Alice ! Elle ne doit plus être bien loin.",
+      "contexte": "Indice trouvé"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-05ff58c5",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "",
+      "texte": "Ses traces partent vers le pont, au sud de la ferme… Elle est allée dans la forêt !",
+      "affiche": "Ses traces partent vers le pont, au sud de la ferme… Elle est allée dans la forêt !",
+      "contexte": "Où chercher ensuite"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-c8b5e50c",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "",
+      "texte": "Elle a continué à travers la forêt, vers l'ouest. Ça sent le parc, par là !",
+      "affiche": "Elle a continué à travers la forêt, vers l'ouest. Ça sent le parc, par là !",
+      "contexte": "Où chercher ensuite"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-f99865c0",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "",
+      "texte": "Et maintenant, je sens son odeur ! Elle se cache au parc, du côté de la cabane.",
+      "affiche": "Et maintenant, je sens son odeur ! Elle se cache au parc, du côté de la cabane.",
+      "contexte": "Où chercher ensuite"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-59c000c4",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Wouf ! Un os doré était enterré ! 1 sur 8",
+      "affiche": "Wouf ! Un os doré était enterré ! (1 / 8)",
+      "contexte": "Os doré déterré"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-37149e15",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Wouf ! Un os doré était enterré ! 2 sur 8",
+      "affiche": "Wouf ! Un os doré était enterré ! (2 / 8)",
+      "contexte": "Os doré déterré"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-124be936",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Wouf ! Un os doré était enterré ! 3 sur 8",
+      "affiche": "Wouf ! Un os doré était enterré ! (3 / 8)",
+      "contexte": "Os doré déterré"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-60e59337",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Wouf ! Un os doré était enterré ! 4 sur 8",
+      "affiche": "Wouf ! Un os doré était enterré ! (4 / 8)",
+      "contexte": "Os doré déterré"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-1a2e7ed0",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Wouf ! Un os doré était enterré ! 5 sur 8",
+      "affiche": "Wouf ! Un os doré était enterré ! (5 / 8)",
+      "contexte": "Os doré déterré"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-b9455c91",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Wouf ! Un os doré était enterré ! 6 sur 8",
+      "affiche": "Wouf ! Un os doré était enterré ! (6 / 8)",
+      "contexte": "Os doré déterré"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-39280492",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Wouf ! Un os doré était enterré ! 7 sur 8",
+      "affiche": "Wouf ! Un os doré était enterré ! (7 / 8)",
+      "contexte": "Os doré déterré"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-1fe64133",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Wouf ! Un os doré était enterré ! 8 sur 8",
+      "affiche": "Wouf ! Un os doré était enterré ! (8 / 8)",
+      "contexte": "Os doré déterré"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-0dd8f6c5",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Ouaf ! Je m'en occupe !",
+      "affiche": "Ouaf ! Je m'en occupe !",
+      "contexte": "Gaston : demande"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-4a58d3aa",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Ouaf ! Je vais les chercher !",
+      "affiche": "Ouaf ! Je vais les chercher !",
+      "contexte": "Marcel : demande"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-5ce738ae",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Ouaf ! Je te le ramène !",
+      "affiche": "Ouaf ! Je te le ramène !",
+      "contexte": "Mamie Rose : demande"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-b1b309e5",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Ouaf ! Je vais marquer des buts !",
+      "affiche": "Ouaf ! Je vais marquer des buts !",
+      "contexte": "Léon : demande"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-f769abf8",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Ouaf ! « Va chercher », c'est mon jeu préféré !",
+      "affiche": "Ouaf ! « Va chercher », c'est mon jeu préféré !",
+      "contexte": "Nestor : demande"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-9232cc10",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Ouaf ! Ouaf ouaf !",
+      "affiche": "Ouaf ! Ouaf ouaf !",
+      "contexte": "Retrouvailles avec Alice"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-e08772a9",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "",
+      "texte": "Grr… Ce doberman n'a pas peur de mes aboiements. Il va falloir le mordre !",
+      "affiche": "Grr… Ce doberman n'a pas peur de mes aboiements. Il va falloir le mordre !",
+      "contexte": "Premier aboiement sur le doberman"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-48c853ee",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Te voilà, Pompon ! Viens, on rentre chez Mamie Rose.",
+      "affiche": "Te voilà, Pompon ! Viens, on rentre chez Mamie Rose.",
+      "contexte": "Tecky retrouve Pompon"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-72e5a7c8",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Un teckel, ça creuse des terriers : hop, sous le grillage ! Les autres chiens, eux, doivent faire le tour.",
+      "affiche": "Un teckel, ça creuse des terriers : hop, sous le grillage ! Les autres chiens, eux, doivent faire le tour.",
+      "contexte": "Premier terrier"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-5dfd1ea4",
+      "personnage": "Tecky",
+      "appareil": "",
+      "ton": "",
+      "texte": "Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !",
+      "affiche": "Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !",
+      "contexte": "Devant la cachette d’Alice, avant les trois indices"
+    },
+    {
+      "voix": "alice",
+      "fichier": "alice-4ea2cf40",
+      "personnage": "Alice",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Tecky ! Tu m'as trouvée ! Tu as vu ma super cachette dans la cabane ?",
+      "affiche": "Tecky ! Tu m'as trouvée ! Tu as vu ma super cachette dans la cabane ?",
+      "contexte": "Retrouvailles avec Alice"
+    },
+    {
+      "voix": "alice",
+      "fichier": "alice-e5612b71",
+      "personnage": "Alice",
+      "appareil": "",
+      "ton": "",
+      "texte": "Et tu as ramassé ma barrette, ma chaussure et mon doudou ! Merci mon Tecky.",
+      "affiche": "Et tu as ramassé ma barrette, ma chaussure et mon doudou ! Merci mon Tecky.",
+      "contexte": "Retrouvailles avec Alice"
+    },
+    {
+      "voix": "alice",
+      "fichier": "alice-2584e8ec",
+      "personnage": "Alice",
+      "appareil": "",
+      "ton": "",
+      "texte": "Viens, on rentre à la maison. Tu as bien mérité une grosse saucisse !",
+      "affiche": "Viens, on rentre à la maison. Tu as bien mérité une grosse saucisse !",
+      "contexte": "Retrouvailles avec Alice"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-c8ba57ad",
+      "personnage": "Narrateur",
+      "appareil": "clavier",
+      "ton": "",
+      "texte": "Les flèches ou Z, Q, S, D pour marcher, la touche X pour aboyer, la touche R pour flairer la piste d'Alice. La touche P pour la pause, la touche M pour le son.",
+      "affiche": "[walk] pour marcher, [bark] pour aboyer, [sniff] pour flairer la piste d'Alice. [pause] pour la pause, [mute] pour le son.",
+      "contexte": "Introduction (aventure) ; Introduction (balade)"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-d7d65135",
+      "personnage": "Narrateur",
+      "appareil": "manette",
+      "ton": "",
+      "texte": "Le stick ou la croix pour marcher, le bouton X pour aboyer, le bouton Y pour flairer la piste d'Alice. Le bouton Start pour la pause, le bouton Select pour le son.",
+      "affiche": "[walk] pour marcher, [bark] pour aboyer, [sniff] pour flairer la piste d'Alice. [pause] pour la pause, [mute] pour le son.",
+      "contexte": "Introduction (aventure) ; Introduction (balade)"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-bb99a061",
+      "personnage": "Narrateur",
+      "appareil": "clavier",
+      "ton": "",
+      "texte": "La touche C sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.",
+      "affiche": "[bite] sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.",
+      "contexte": "Introduction (aventure)"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-147a51f2",
+      "personnage": "Narrateur",
+      "appareil": "manette",
+      "ton": "",
+      "texte": "Le bouton A sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.",
+      "affiche": "[bite] sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.",
+      "contexte": "Introduction (aventure)"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-4e659a1b",
+      "personnage": "Narrateur",
+      "appareil": "",
+      "ton": "",
+      "texte": "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Et des traces de pattes au sol cachent peut-être un trésor : il n'y a plus qu'à gratter !",
+      "affiche": "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Et des traces de pattes au sol cachent peut-être un trésor : il n'y a plus qu'à gratter !",
+      "contexte": "Introduction (aventure) ; Introduction (aventure, au toucher) ; Introduction (balade) ; Introduction (balade, au toucher)"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-07958d3d",
+      "personnage": "Narrateur",
+      "appareil": "",
+      "ton": "",
+      "texte": "Glisse le doigt à gauche pour marcher. Les boutons à droite servent à aboyer, à mordre et à flairer la piste d'Alice.",
+      "affiche": "Glisse le doigt à gauche pour marcher. Les boutons à droite servent à aboyer, à mordre et à flairer la piste d'Alice.",
+      "contexte": "Introduction (aventure, au toucher) ; Introduction (balade, au toucher)"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-295a8ab7",
+      "personnage": "Narrateur",
+      "appareil": "",
+      "ton": "",
+      "texte": "Le bouton de morsure sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.",
+      "affiche": "Le bouton de morsure sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.",
+      "contexte": "Introduction (aventure, au toucher)"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-e7f40632",
+      "personnage": "Narrateur",
+      "appareil": "clavier",
+      "ton": "",
+      "texte": "En balade, personne ne se fait mal : la touche C sert à jouer avec un chien, à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.",
+      "affiche": "En balade, personne ne se fait mal : [bite] sert à jouer avec un chien, à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.",
+      "contexte": "Introduction (balade)"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-b212cb85",
+      "personnage": "Narrateur",
+      "appareil": "manette",
+      "ton": "",
+      "texte": "En balade, personne ne se fait mal : le bouton A sert à jouer avec un chien, à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.",
+      "affiche": "En balade, personne ne se fait mal : [bite] sert à jouer avec un chien, à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.",
+      "contexte": "Introduction (balade)"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-ea8ea346",
+      "personnage": "Narrateur",
+      "appareil": "clavier",
+      "ton": "",
+      "texte": "En balade, joue avec les chiens du coin : vous deviendrez copains ! La touche X les appelle.",
+      "affiche": "En balade, joue avec les chiens du coin : vous deviendrez copains ! [bark] les appelle.",
+      "contexte": "Introduction (balade)"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-f6b3d139",
+      "personnage": "Narrateur",
+      "appareil": "manette",
+      "ton": "",
+      "texte": "En balade, joue avec les chiens du coin : vous deviendrez copains ! Le bouton X les appelle.",
+      "affiche": "En balade, joue avec les chiens du coin : vous deviendrez copains ! [bark] les appelle.",
+      "contexte": "Introduction (balade)"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-72038ac6",
+      "personnage": "Narrateur",
+      "appareil": "",
+      "ton": "",
+      "texte": "En balade, personne ne se fait mal : le bouton de morsure sert à jouer avec un chien, à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.",
+      "affiche": "En balade, personne ne se fait mal : le bouton de morsure sert à jouer avec un chien, à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.",
+      "contexte": "Introduction (balade, au toucher)"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-24e009a3",
+      "personnage": "Narrateur",
+      "appareil": "",
+      "ton": "",
+      "texte": "En balade, joue avec les chiens du coin : vous deviendrez copains ! Aboyer les appelle.",
+      "affiche": "En balade, joue avec les chiens du coin : vous deviendrez copains ! Aboyer les appelle.",
+      "contexte": "Introduction (balade, au toucher)"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-17c4d439",
+      "personnage": "Narrateur",
+      "appareil": "",
+      "ton": "",
+      "texte": "Niche de Tecky : en haut. Village : suivre la route vers l'est.",
+      "affiche": "Niche de Tecky : en haut. Village : suivre la route vers l'est.",
+      "contexte": "Panneau"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-4d24ac17",
+      "personnage": "Narrateur",
+      "appareil": "",
+      "ton": "",
+      "texte": "Les champs du Père Gaston. Attention, chiens pas commodes !",
+      "affiche": "Les champs du Père Gaston. Attention, chiens pas commodes !",
+      "contexte": "Panneau"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-bef4b5c5",
+      "personnage": "Narrateur",
+      "appareil": "",
+      "ton": "",
+      "texte": "Pas de pont ici ! Le seul pont est loin à l'est, après la ferme.",
+      "affiche": "Pas de pont ici ! Le seul pont est loin à l'est, après la ferme.",
+      "contexte": "Panneau"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-0c500b1a",
+      "personnage": "Narrateur",
+      "appareil": "",
+      "ton": "",
+      "texte": "Ferme des Tilleuls. Attention aux chiens de berger : quand ils s'accroupissent, ils vont charger !",
+      "affiche": "Ferme des Tilleuls. Attention aux chiens de berger : quand ils s'accroupissent, ils vont charger !",
+      "contexte": "Panneau"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-68b4ae34",
+      "personnage": "Narrateur",
+      "appareil": "",
+      "ton": "",
+      "texte": "Pont de la rivière. Au sud : la grande forêt.",
+      "affiche": "Pont de la rivière. Au sud : la grande forêt.",
+      "contexte": "Panneau"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-53d9bbf7",
+      "personnage": "Narrateur",
+      "appareil": "",
+      "ton": "",
+      "texte": "Sentier de la forêt. Le parc des enfants est à l'ouest.",
+      "affiche": "Sentier de la forêt. Le parc des enfants est à l'ouest.",
+      "contexte": "Panneau"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-c2a508d0",
+      "personnage": "Narrateur",
+      "appareil": "",
+      "ton": "",
+      "texte": "Parc des enfants : toboggan, balançoire, bac à sable et cabane !",
+      "affiche": "Parc des enfants : toboggan, balançoire, bac à sable et cabane !",
+      "contexte": "Panneau"
+    },
+    {
+      "voix": "farmer",
+      "fichier": "farmer-45e0e1b7",
+      "personnage": "Gaston",
+      "appareil": "",
+      "ton": "",
+      "texte": "Bonjour, petit teckel ! Une petite fille est passée par ici tout à l'heure… Mais pardon, mes poules se sont sauvées !",
+      "affiche": "Bonjour, petit teckel ! Une petite fille est passée par ici tout à l'heure… Mais pardon, mes poules se sont sauvées !",
+      "contexte": "Gaston : demande"
+    },
+    {
+      "voix": "farmer",
+      "fichier": "farmer-5b8f35be",
+      "personnage": "Gaston",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tu voudrais bien les ramener dans l'enclos ? Aboie derrière elles pour les pousser vers la barrière ouverte, au sud.",
+      "affiche": "Tu voudrais bien les ramener dans l'enclos ? Aboie derrière elles pour les pousser vers la barrière ouverte, au sud.",
+      "contexte": "Gaston : demande"
+    },
+    {
+      "voix": "farmer",
+      "fichier": "farmer-4c12fde2",
+      "personnage": "Gaston",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il en reste 5 dehors ! Aboie derrière elles pour les pousser vers la barrière ouverte, au sud de l'enclos.",
+      "affiche": "Il en reste 5 dehors ! Aboie derrière elles pour les pousser vers la barrière ouverte, au sud de l'enclos.",
+      "contexte": "Gaston : rappel"
+    },
+    {
+      "voix": "farmer",
+      "fichier": "farmer-259bd557",
+      "personnage": "Gaston",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il en reste 4 dehors ! Aboie derrière elles pour les pousser vers la barrière ouverte, au sud de l'enclos.",
+      "affiche": "Il en reste 4 dehors ! Aboie derrière elles pour les pousser vers la barrière ouverte, au sud de l'enclos.",
+      "contexte": "Gaston : rappel"
+    },
+    {
+      "voix": "farmer",
+      "fichier": "farmer-3f7c9f88",
+      "personnage": "Gaston",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il en reste 3 dehors ! Aboie derrière elles pour les pousser vers la barrière ouverte, au sud de l'enclos.",
+      "affiche": "Il en reste 3 dehors ! Aboie derrière elles pour les pousser vers la barrière ouverte, au sud de l'enclos.",
+      "contexte": "Gaston : rappel"
+    },
+    {
+      "voix": "farmer",
+      "fichier": "farmer-6552dac5",
+      "personnage": "Gaston",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il en reste 2 dehors ! Aboie derrière elles pour les pousser vers la barrière ouverte, au sud de l'enclos.",
+      "affiche": "Il en reste 2 dehors ! Aboie derrière elles pour les pousser vers la barrière ouverte, au sud de l'enclos.",
+      "contexte": "Gaston : rappel"
+    },
+    {
+      "voix": "farmer",
+      "fichier": "farmer-4467d69c",
+      "personnage": "Gaston",
+      "appareil": "",
+      "ton": "",
+      "texte": "Plus qu'une ! Aboie derrière elle pour la pousser vers la barrière ouverte, au sud de l'enclos.",
+      "affiche": "Plus qu'une ! Aboie derrière elle pour la pousser vers la barrière ouverte, au sud de l'enclos.",
+      "contexte": "Gaston : rappel"
+    },
+    {
+      "voix": "farmer",
+      "fichier": "farmer-3da30002",
+      "personnage": "Gaston",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Toutes mes poules sont rentrées ! Tu es un vrai chien de berger, Tecky.",
+      "affiche": "Toutes mes poules sont rentrées ! Tu es un vrai chien de berger, Tecky.",
+      "contexte": "Gaston : merci"
+    },
+    {
+      "voix": "farmer",
+      "fichier": "farmer-46f79ac2",
+      "personnage": "Gaston",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tiens, voilà une bonne saucisse pour toi. Et bonne chance pour retrouver Alice !",
+      "affiche": "Tiens, voilà une bonne saucisse pour toi. Et bonne chance pour retrouver Alice !",
+      "contexte": "Gaston : merci"
+    },
+    {
+      "voix": "farmer",
+      "fichier": "farmer-d0ef3349",
+      "personnage": "Gaston",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Merci encore pour mes poules, Tecky ! Bonne chance pour retrouver Alice.",
+      "affiche": "Merci encore pour mes poules, Tecky ! Bonne chance pour retrouver Alice.",
+      "contexte": "Gaston : après la quête"
+    },
+    {
+      "voix": "postman",
+      "fichier": "postman-7c73240a",
+      "personnage": "Marcel",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Bonjour, petit chien ! Un coup de vent a fait s'envoler mes lettres, juste au début de ma tournée…",
+      "affiche": "Bonjour, petit chien ! Un coup de vent a fait s'envoler mes lettres, juste au début de ma tournée…",
+      "contexte": "Marcel : demande"
+    },
+    {
+      "voix": "postman",
+      "fichier": "postman-c5986551",
+      "personnage": "Marcel",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il y en a cinq, dans le village et autour. Si tu les trouves, rapporte-les-moi, s'il te plaît !",
+      "affiche": "Il y en a cinq, dans le village et autour. Si tu les trouves, rapporte-les-moi, s'il te plaît !",
+      "contexte": "Marcel : demande"
+    },
+    {
+      "voix": "postman",
+      "fichier": "postman-c1caf73f",
+      "personnage": "Marcel",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tu en as déjà trouvé 1 ? Bravo ! Il y en a cinq en tout, autour du village. Rapporte-les-moi, s'il te plaît !",
+      "affiche": "Tu en as déjà trouvé 1 ? Bravo ! Il y en a cinq en tout, autour du village. Rapporte-les-moi, s'il te plaît !",
+      "contexte": "Marcel : demande"
+    },
+    {
+      "voix": "postman",
+      "fichier": "postman-b1d7a8f0",
+      "personnage": "Marcel",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tu en as déjà trouvé 2 ? Bravo ! Il y en a cinq en tout, autour du village. Rapporte-les-moi, s'il te plaît !",
+      "affiche": "Tu en as déjà trouvé 2 ? Bravo ! Il y en a cinq en tout, autour du village. Rapporte-les-moi, s'il te plaît !",
+      "contexte": "Marcel : demande"
+    },
+    {
+      "voix": "postman",
+      "fichier": "postman-7d6654b5",
+      "personnage": "Marcel",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tu en as déjà trouvé 3 ? Bravo ! Il y en a cinq en tout, autour du village. Rapporte-les-moi, s'il te plaît !",
+      "affiche": "Tu en as déjà trouvé 3 ? Bravo ! Il y en a cinq en tout, autour du village. Rapporte-les-moi, s'il te plaît !",
+      "contexte": "Marcel : demande"
+    },
+    {
+      "voix": "postman",
+      "fichier": "postman-645a1956",
+      "personnage": "Marcel",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tu en as déjà trouvé 4 ? Bravo ! Il y en a cinq en tout, autour du village. Rapporte-les-moi, s'il te plaît !",
+      "affiche": "Tu en as déjà trouvé 4 ? Bravo ! Il y en a cinq en tout, autour du village. Rapporte-les-moi, s'il te plaît !",
+      "contexte": "Marcel : demande"
+    },
+    {
+      "voix": "postman",
+      "fichier": "postman-0c3d4081",
+      "personnage": "Marcel",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il m'en manque encore 5. Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts.",
+      "affiche": "Il m'en manque encore 5. Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts.",
+      "contexte": "Marcel : rappel"
+    },
+    {
+      "voix": "postman",
+      "fichier": "postman-78202f70",
+      "personnage": "Marcel",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il m'en manque encore 4. Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts.",
+      "affiche": "Il m'en manque encore 4. Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts.",
+      "contexte": "Marcel : rappel"
+    },
+    {
+      "voix": "postman",
+      "fichier": "postman-0042ae13",
+      "personnage": "Marcel",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il m'en manque encore 3. Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts.",
+      "affiche": "Il m'en manque encore 3. Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts.",
+      "contexte": "Marcel : rappel"
+    },
+    {
+      "voix": "postman",
+      "fichier": "postman-1fce980a",
+      "personnage": "Marcel",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il m'en manque encore 2. Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts.",
+      "affiche": "Il m'en manque encore 2. Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts.",
+      "contexte": "Marcel : rappel"
+    },
+    {
+      "voix": "postman",
+      "fichier": "postman-1bde4985",
+      "personnage": "Marcel",
+      "appareil": "",
+      "ton": "",
+      "texte": "Plus qu'une ! Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts.",
+      "affiche": "Plus qu'une ! Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts.",
+      "contexte": "Marcel : rappel"
+    },
+    {
+      "voix": "postman",
+      "fichier": "postman-a4bb3f8f",
+      "personnage": "Marcel",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Toutes mes lettres ! Merci, Tecky : tout le monde va enfin recevoir son courrier.",
+      "affiche": "Toutes mes lettres ! Merci, Tecky : tout le monde va enfin recevoir son courrier.",
+      "contexte": "Marcel : merci"
+    },
+    {
+      "voix": "postman",
+      "fichier": "postman-a9bcf2b1",
+      "personnage": "Marcel",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tiens, un bel os pour la peine. Et si je croise ta petite Alice, je lui dis que tu la cherches !",
+      "affiche": "Tiens, un bel os pour la peine. Et si je croise ta petite Alice, je lui dis que tu la cherches !",
+      "contexte": "Marcel : merci"
+    },
+    {
+      "voix": "postman",
+      "fichier": "postman-6a0a6057",
+      "personnage": "Marcel",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Grâce à toi, la tournée est finie à l'heure ! Bonne chance pour retrouver Alice.",
+      "affiche": "Grâce à toi, la tournée est finie à l'heure ! Bonne chance pour retrouver Alice.",
+      "contexte": "Marcel : après la quête"
+    },
+    {
+      "voix": "neighbor",
+      "fichier": "neighbor-e42f5daf",
+      "personnage": "Mamie Rose",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Bonjour, mon petit. Tu n'aurais pas vu mon chat, Pompon ? Il est tout blanc, avec un collier rose et un grelot.",
+      "affiche": "Bonjour, mon petit. Tu n'aurais pas vu mon chat, Pompon ? Il est tout blanc, avec un collier rose et un grelot.",
+      "contexte": "Mamie Rose : demande"
+    },
+    {
+      "voix": "neighbor",
+      "fichier": "neighbor-29f9c75a",
+      "personnage": "Mamie Rose",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il s'est sauvé ce matin… Il adore se cacher près des entrepôts, de l'autre côté de la grande route.",
+      "affiche": "Il s'est sauvé ce matin… Il adore se cacher près des entrepôts, de l'autre côté de la grande route.",
+      "contexte": "Mamie Rose : demande"
+    },
+    {
+      "voix": "neighbor",
+      "fichier": "neighbor-45353be6",
+      "personnage": "Mamie Rose",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Pompon adore se cacher près des entrepôts, de l'autre côté de la grande route. Attention aux voitures !",
+      "affiche": "Pompon adore se cacher près des entrepôts, de l'autre côté de la grande route. Attention aux voitures !",
+      "contexte": "Mamie Rose : rappel"
+    },
+    {
+      "voix": "neighbor",
+      "fichier": "neighbor-4b5ec6df",
+      "personnage": "Mamie Rose",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Tu l'as trouvé ! Ramène-le-moi : il te suivra si tu ne vas pas trop vite.",
+      "affiche": "Tu l'as trouvé ! Ramène-le-moi : il te suivra si tu ne vas pas trop vite.",
+      "contexte": "Mamie Rose : rappel (Pompon suit Tecky)"
+    },
+    {
+      "voix": "neighbor",
+      "fichier": "neighbor-610bdefe",
+      "personnage": "Mamie Rose",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Pompon ! Te voilà enfin, mon chaton ! J'étais si inquiète…",
+      "affiche": "Pompon ! Te voilà enfin, mon chaton ! J'étais si inquiète…",
+      "contexte": "Mamie Rose : merci"
+    },
+    {
+      "voix": "neighbor",
+      "fichier": "neighbor-b1968480",
+      "personnage": "Mamie Rose",
+      "appareil": "",
+      "ton": "",
+      "texte": "Merci, Tecky ! Tiens, une bonne saucisse : tu l'as bien méritée.",
+      "affiche": "Merci, Tecky ! Tiens, une bonne saucisse : tu l'as bien méritée.",
+      "contexte": "Mamie Rose : merci"
+    },
+    {
+      "voix": "neighbor",
+      "fichier": "neighbor-0096ec64",
+      "personnage": "Mamie Rose",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Pompon ne quitte plus le jardin, grâce à toi. Bonne chance pour retrouver ta petite Alice !",
+      "affiche": "Pompon ne quitte plus le jardin, grâce à toi. Bonne chance pour retrouver ta petite Alice !",
+      "contexte": "Mamie Rose : après la quête"
+    },
+    {
+      "voix": "leon",
+      "fichier": "leon-6a2c6609",
+      "personnage": "Léon",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Salut, petit chien ! Je devais livrer ces gros ballons pour la fête du parc… mais le carton s'est ouvert, et ils ont roulé partout !",
+      "affiche": "Salut, petit chien ! Je devais livrer ces gros ballons pour la fête du parc… mais le carton s'est ouvert, et ils ont roulé partout !",
+      "contexte": "Léon : demande"
+    },
+    {
+      "voix": "leon",
+      "fichier": "leon-ca296332",
+      "personnage": "Léon",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tu veux bien les pousser dans le grand filet, à côté de moi ? Fonce dedans, ou aboie derrière eux : comme au foot !",
+      "affiche": "Tu veux bien les pousser dans le grand filet, à côté de moi ? Fonce dedans, ou aboie derrière eux : comme au foot !",
+      "contexte": "Léon : demande"
+    },
+    {
+      "voix": "leon",
+      "fichier": "leon-03cee306",
+      "personnage": "Léon",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il en reste 5 ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.",
+      "affiche": "Il en reste 5 ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.",
+      "contexte": "Léon : rappel"
+    },
+    {
+      "voix": "leon",
+      "fichier": "leon-9dadda87",
+      "personnage": "Léon",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il en reste 4 ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.",
+      "affiche": "Il en reste 4 ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.",
+      "contexte": "Léon : rappel"
+    },
+    {
+      "voix": "leon",
+      "fichier": "leon-2640e7c8",
+      "personnage": "Léon",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il en reste 3 ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.",
+      "affiche": "Il en reste 3 ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.",
+      "contexte": "Léon : rappel"
+    },
+    {
+      "voix": "leon",
+      "fichier": "leon-ea5c9309",
+      "personnage": "Léon",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il en reste 2 ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.",
+      "affiche": "Il en reste 2 ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.",
+      "contexte": "Léon : rappel"
+    },
+    {
+      "voix": "leon",
+      "fichier": "leon-67d3e01a",
+      "personnage": "Léon",
+      "appareil": "",
+      "ton": "",
+      "texte": "Plus qu'un ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.",
+      "affiche": "Plus qu'un ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.",
+      "contexte": "Léon : rappel"
+    },
+    {
+      "voix": "leon",
+      "fichier": "leon-58e5edb7",
+      "personnage": "Léon",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Cinq buts ! Tous mes ballons sont dans le filet. Bravo, champion !",
+      "affiche": "Cinq buts ! Tous mes ballons sont dans le filet. Bravo, champion !",
+      "contexte": "Léon : merci"
+    },
+    {
+      "voix": "leon",
+      "fichier": "leon-15f9a66d",
+      "personnage": "Léon",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tiens, un bon os pour toi. Et si tu croises une petite fille, dis-lui qu'il y aura des ballons à la fête du parc !",
+      "affiche": "Tiens, un bon os pour toi. Et si tu croises une petite fille, dis-lui qu'il y aura des ballons à la fête du parc !",
+      "contexte": "Léon : merci"
+    },
+    {
+      "voix": "leon",
+      "fichier": "leon-335e5708",
+      "personnage": "Léon",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Merci encore, champion ! Mes ballons seront prêts pour la fête du parc.",
+      "affiche": "Merci encore, champion ! Mes ballons seront prêts pour la fête du parc.",
+      "contexte": "Léon : après la quête"
+    },
+    {
+      "voix": "nestor",
+      "fichier": "nestor-55c3f120",
+      "personnage": "Nestor",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Wouf… Bonjour, petit. Moi, c'est Nestor, le chien du gardien. Mes vieilles pattes ne courent plus bien vite…",
+      "affiche": "Wouf… Bonjour, petit. Moi, c'est Nestor, le chien du gardien. Mes vieilles pattes ne courent plus bien vite…",
+      "contexte": "Nestor : demande"
+    },
+    {
+      "voix": "nestor",
+      "fichier": "nestor-9be869b9",
+      "personnage": "Nestor",
+      "appareil": "",
+      "ton": "",
+      "texte": "J'ai perdu mes trois jouets : mon canard, mon anneau et ma corde. Tu veux bien me les rapporter, un par un, dans ta gueule ?",
+      "affiche": "J'ai perdu mes trois jouets : mon canard, mon anneau et ma corde. Tu veux bien me les rapporter, un par un, dans ta gueule ?",
+      "contexte": "Nestor : demande"
+    },
+    {
+      "voix": "nestor",
+      "fichier": "nestor-6f33d173",
+      "personnage": "Nestor",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il m'en manque encore 3. Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !",
+      "affiche": "Il m'en manque encore 3. Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !",
+      "contexte": "Nestor : rappel"
+    },
+    {
+      "voix": "nestor",
+      "fichier": "nestor-7ae66c66",
+      "personnage": "Nestor",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il m'en manque encore 2. Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !",
+      "affiche": "Il m'en manque encore 2. Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !",
+      "contexte": "Nestor : rappel"
+    },
+    {
+      "voix": "nestor",
+      "fichier": "nestor-074ff1e4",
+      "personnage": "Nestor",
+      "appareil": "",
+      "ton": "",
+      "texte": "Plus qu'un ! Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !",
+      "affiche": "Plus qu'un ! Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !",
+      "contexte": "Nestor : rappel"
+    },
+    {
+      "voix": "nestor",
+      "fichier": "nestor-24ee070d",
+      "personnage": "Nestor",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Mes trois jouets ! Merci, petit. Tu as de bonnes pattes, toi !",
+      "affiche": "Mes trois jouets ! Merci, petit. Tu as de bonnes pattes, toi !",
+      "contexte": "Nestor : merci"
+    },
+    {
+      "voix": "nestor",
+      "fichier": "nestor-90333c42",
+      "personnage": "Nestor",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tiens, prends ma saucisse. Moi, je vais faire une petite sieste avec mon canard.",
+      "affiche": "Tiens, prends ma saucisse. Moi, je vais faire une petite sieste avec mon canard.",
+      "contexte": "Nestor : merci"
+    },
+    {
+      "voix": "nestor",
+      "fichier": "nestor-ddc1d8f5",
+      "personnage": "Nestor",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Wouf… Merci encore, petit. Bonne chance pour retrouver ta petite Alice !",
+      "affiche": "Wouf… Merci encore, petit. Bonne chance pour retrouver ta petite Alice !",
+      "contexte": "Nestor : après la quête"
+    }
+  ]
+}

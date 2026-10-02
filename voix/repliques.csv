@@ -1,0 +1,105 @@
+fichier;personnage;appareil;ton;texte à dire;contexte
+tecky-88f6c3c3;Tecky;;;Ouaf ! Alice est partie jouer… et elle n'est pas rentrée !;"Introduction (aventure) ; Introduction (aventure, au toucher) ; Introduction (balade) ; Introduction (balade, au toucher)"
+tecky-3022d70d;Tecky;;joyeux;Elle a dû semer des affaires en chemin. En les retrouvant, je saurai où elle se cache !;"Introduction (aventure) ; Introduction (aventure, au toucher) ; Introduction (balade) ; Introduction (balade, au toucher)"
+tecky-cbedf579;Tecky;;;La flèche au bord de l'écran me guide. Gare aux chiens du coin, ils ne sont pas commodes.;"Introduction (aventure) ; Introduction (aventure, au toucher)"
+tecky-584a69b7;Tecky;;;La flèche au bord de l'écran me guide. Et les chiens du coin ont l'air d'avoir envie de jouer !;"Introduction (balade) ; Introduction (balade, au toucher)"
+tecky-6b450cbd;Tecky;;;C'est reparti ! Je vais retrouver les affaires d'Alice, et Alice avec.;Recommencer
+tecky-32683c84;Tecky;;joyeux;Me revoilà ! Je reprends mes recherches.;Continuer
+tecky-68d9307c;Tecky;;;Je vais chercher du côté de la ferme, tout à l'est, en suivant la grande route.;"Continuer ; Reprendre après un KO ; Où chercher ensuite"
+tecky-eef1dc33;Tecky;;;Ouf, une petite sieste et ça repart !;Reprendre après un KO
+tecky-33cc8019;Tecky;;;La barrette d'Alice ! Elle est passée par la ferme.;Indice trouvé
+tecky-3280f974;Tecky;;;Une chaussure d'Alice ! Elle a traversé la rivière par le pont.;Indice trouvé
+tecky-6c94ced6;Tecky;;;Le doudou d'Alice ! Elle ne doit plus être bien loin.;Indice trouvé
+tecky-05ff58c5;Tecky;;;Ses traces partent vers le pont, au sud de la ferme… Elle est allée dans la forêt !;Où chercher ensuite
+tecky-c8b5e50c;Tecky;;;Elle a continué à travers la forêt, vers l'ouest. Ça sent le parc, par là !;Où chercher ensuite
+tecky-f99865c0;Tecky;;;Et maintenant, je sens son odeur ! Elle se cache au parc, du côté de la cabane.;Où chercher ensuite
+tecky-59c000c4;Tecky;;joyeux;Wouf ! Un os doré était enterré ! 1 sur 8;Os doré déterré
+tecky-37149e15;Tecky;;joyeux;Wouf ! Un os doré était enterré ! 2 sur 8;Os doré déterré
+tecky-124be936;Tecky;;joyeux;Wouf ! Un os doré était enterré ! 3 sur 8;Os doré déterré
+tecky-60e59337;Tecky;;joyeux;Wouf ! Un os doré était enterré ! 4 sur 8;Os doré déterré
+tecky-1a2e7ed0;Tecky;;joyeux;Wouf ! Un os doré était enterré ! 5 sur 8;Os doré déterré
+tecky-b9455c91;Tecky;;joyeux;Wouf ! Un os doré était enterré ! 6 sur 8;Os doré déterré
+tecky-39280492;Tecky;;joyeux;Wouf ! Un os doré était enterré ! 7 sur 8;Os doré déterré
+tecky-1fe64133;Tecky;;joyeux;Wouf ! Un os doré était enterré ! 8 sur 8;Os doré déterré
+tecky-0dd8f6c5;Tecky;;joyeux;Ouaf ! Je m'en occupe !;Gaston : demande
+tecky-4a58d3aa;Tecky;;joyeux;Ouaf ! Je vais les chercher !;Marcel : demande
+tecky-5ce738ae;Tecky;;joyeux;Ouaf ! Je te le ramène !;Mamie Rose : demande
+tecky-b1b309e5;Tecky;;joyeux;Ouaf ! Je vais marquer des buts !;Léon : demande
+tecky-f769abf8;Tecky;;joyeux;Ouaf ! « Va chercher », c'est mon jeu préféré !;Nestor : demande
+tecky-9232cc10;Tecky;;joyeux;Ouaf ! Ouaf ouaf !;Retrouvailles avec Alice
+tecky-e08772a9;Tecky;;;Grr… Ce doberman n'a pas peur de mes aboiements. Il va falloir le mordre !;Premier aboiement sur le doberman
+tecky-48c853ee;Tecky;;joyeux;Te voilà, Pompon ! Viens, on rentre chez Mamie Rose.;Tecky retrouve Pompon
+tecky-72e5a7c8;Tecky;;joyeux;Un teckel, ça creuse des terriers : hop, sous le grillage ! Les autres chiens, eux, doivent faire le tour.;Premier terrier
+tecky-5dfd1ea4;Tecky;;;Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !;Devant la cachette d’Alice, avant les trois indices
+alice-4ea2cf40;Alice;;joyeux;Tecky ! Tu m'as trouvée ! Tu as vu ma super cachette dans la cabane ?;Retrouvailles avec Alice
+alice-e5612b71;Alice;;;Et tu as ramassé ma barrette, ma chaussure et mon doudou ! Merci mon Tecky.;Retrouvailles avec Alice
+alice-2584e8ec;Alice;;;Viens, on rentre à la maison. Tu as bien mérité une grosse saucisse !;Retrouvailles avec Alice
+info-c8ba57ad;Narrateur;clavier;;Les flèches ou Z, Q, S, D pour marcher, la touche X pour aboyer, la touche R pour flairer la piste d'Alice. La touche P pour la pause, la touche M pour le son.;"Introduction (aventure) ; Introduction (balade)"
+info-d7d65135;Narrateur;manette;;Le stick ou la croix pour marcher, le bouton X pour aboyer, le bouton Y pour flairer la piste d'Alice. Le bouton Start pour la pause, le bouton Select pour le son.;"Introduction (aventure) ; Introduction (balade)"
+info-bb99a061;Narrateur;clavier;;La touche C sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.;Introduction (aventure)
+info-147a51f2;Narrateur;manette;;Le bouton A sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.;Introduction (aventure)
+info-4e659a1b;Narrateur;;;Les os rendent un os perdu, les saucisses ajoutent un os en plus. Et des traces de pattes au sol cachent peut-être un trésor : il n'y a plus qu'à gratter !;"Introduction (aventure) ; Introduction (aventure, au toucher) ; Introduction (balade) ; Introduction (balade, au toucher)"
+info-07958d3d;Narrateur;;;Glisse le doigt à gauche pour marcher. Les boutons à droite servent à aboyer, à mordre et à flairer la piste d'Alice.;"Introduction (aventure, au toucher) ; Introduction (balade, au toucher)"
+info-295a8ab7;Narrateur;;;Le bouton de morsure sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.;Introduction (aventure, au toucher)
+info-e7f40632;Narrateur;clavier;;En balade, personne ne se fait mal : la touche C sert à jouer avec un chien, à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.;Introduction (balade)
+info-b212cb85;Narrateur;manette;;En balade, personne ne se fait mal : le bouton A sert à jouer avec un chien, à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.;Introduction (balade)
+info-ea8ea346;Narrateur;clavier;;En balade, joue avec les chiens du coin : vous deviendrez copains ! La touche X les appelle.;Introduction (balade)
+info-f6b3d139;Narrateur;manette;;En balade, joue avec les chiens du coin : vous deviendrez copains ! Le bouton X les appelle.;Introduction (balade)
+info-72038ac6;Narrateur;;;En balade, personne ne se fait mal : le bouton de morsure sert à jouer avec un chien, à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.;Introduction (balade, au toucher)
+info-24e009a3;Narrateur;;;En balade, joue avec les chiens du coin : vous deviendrez copains ! Aboyer les appelle.;Introduction (balade, au toucher)
+info-17c4d439;Narrateur;;;Niche de Tecky : en haut. Village : suivre la route vers l'est.;Panneau
+info-4d24ac17;Narrateur;;;Les champs du Père Gaston. Attention, chiens pas commodes !;Panneau
+info-bef4b5c5;Narrateur;;;Pas de pont ici ! Le seul pont est loin à l'est, après la ferme.;Panneau
+info-0c500b1a;Narrateur;;;Ferme des Tilleuls. Attention aux chiens de berger : quand ils s'accroupissent, ils vont charger !;Panneau
+info-68b4ae34;Narrateur;;;Pont de la rivière. Au sud : la grande forêt.;Panneau
+info-53d9bbf7;Narrateur;;;Sentier de la forêt. Le parc des enfants est à l'ouest.;Panneau
+info-c2a508d0;Narrateur;;;Parc des enfants : toboggan, balançoire, bac à sable et cabane !;Panneau
+farmer-45e0e1b7;Gaston;;;Bonjour, petit teckel ! Une petite fille est passée par ici tout à l'heure… Mais pardon, mes poules se sont sauvées !;Gaston : demande
+farmer-5b8f35be;Gaston;;;Tu voudrais bien les ramener dans l'enclos ? Aboie derrière elles pour les pousser vers la barrière ouverte, au sud.;Gaston : demande
+farmer-4c12fde2;Gaston;;;Il en reste 5 dehors ! Aboie derrière elles pour les pousser vers la barrière ouverte, au sud de l'enclos.;Gaston : rappel
+farmer-259bd557;Gaston;;;Il en reste 4 dehors ! Aboie derrière elles pour les pousser vers la barrière ouverte, au sud de l'enclos.;Gaston : rappel
+farmer-3f7c9f88;Gaston;;;Il en reste 3 dehors ! Aboie derrière elles pour les pousser vers la barrière ouverte, au sud de l'enclos.;Gaston : rappel
+farmer-6552dac5;Gaston;;;Il en reste 2 dehors ! Aboie derrière elles pour les pousser vers la barrière ouverte, au sud de l'enclos.;Gaston : rappel
+farmer-4467d69c;Gaston;;;Plus qu'une ! Aboie derrière elle pour la pousser vers la barrière ouverte, au sud de l'enclos.;Gaston : rappel
+farmer-3da30002;Gaston;;joyeux;Toutes mes poules sont rentrées ! Tu es un vrai chien de berger, Tecky.;Gaston : merci
+farmer-46f79ac2;Gaston;;;Tiens, voilà une bonne saucisse pour toi. Et bonne chance pour retrouver Alice !;Gaston : merci
+farmer-d0ef3349;Gaston;;joyeux;Merci encore pour mes poules, Tecky ! Bonne chance pour retrouver Alice.;Gaston : après la quête
+postman-7c73240a;Marcel;;inquiet;Bonjour, petit chien ! Un coup de vent a fait s'envoler mes lettres, juste au début de ma tournée…;Marcel : demande
+postman-c5986551;Marcel;;;Il y en a cinq, dans le village et autour. Si tu les trouves, rapporte-les-moi, s'il te plaît !;Marcel : demande
+postman-c1caf73f;Marcel;;;Tu en as déjà trouvé 1 ? Bravo ! Il y en a cinq en tout, autour du village. Rapporte-les-moi, s'il te plaît !;Marcel : demande
+postman-b1d7a8f0;Marcel;;;Tu en as déjà trouvé 2 ? Bravo ! Il y en a cinq en tout, autour du village. Rapporte-les-moi, s'il te plaît !;Marcel : demande
+postman-7d6654b5;Marcel;;;Tu en as déjà trouvé 3 ? Bravo ! Il y en a cinq en tout, autour du village. Rapporte-les-moi, s'il te plaît !;Marcel : demande
+postman-645a1956;Marcel;;;Tu en as déjà trouvé 4 ? Bravo ! Il y en a cinq en tout, autour du village. Rapporte-les-moi, s'il te plaît !;Marcel : demande
+postman-0c3d4081;Marcel;;;Il m'en manque encore 5. Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts.;Marcel : rappel
+postman-78202f70;Marcel;;;Il m'en manque encore 4. Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts.;Marcel : rappel
+postman-0042ae13;Marcel;;;Il m'en manque encore 3. Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts.;Marcel : rappel
+postman-1fce980a;Marcel;;;Il m'en manque encore 2. Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts.;Marcel : rappel
+postman-1bde4985;Marcel;;;Plus qu'une ! Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts.;Marcel : rappel
+postman-a4bb3f8f;Marcel;;joyeux;Toutes mes lettres ! Merci, Tecky : tout le monde va enfin recevoir son courrier.;Marcel : merci
+postman-a9bcf2b1;Marcel;;;Tiens, un bel os pour la peine. Et si je croise ta petite Alice, je lui dis que tu la cherches !;Marcel : merci
+postman-6a0a6057;Marcel;;joyeux;Grâce à toi, la tournée est finie à l'heure ! Bonne chance pour retrouver Alice.;Marcel : après la quête
+neighbor-e42f5daf;Mamie Rose;;inquiet;Bonjour, mon petit. Tu n'aurais pas vu mon chat, Pompon ? Il est tout blanc, avec un collier rose et un grelot.;Mamie Rose : demande
+neighbor-29f9c75a;Mamie Rose;;;Il s'est sauvé ce matin… Il adore se cacher près des entrepôts, de l'autre côté de la grande route.;Mamie Rose : demande
+neighbor-45353be6;Mamie Rose;;inquiet;Pompon adore se cacher près des entrepôts, de l'autre côté de la grande route. Attention aux voitures !;Mamie Rose : rappel
+neighbor-4b5ec6df;Mamie Rose;;inquiet;Tu l'as trouvé ! Ramène-le-moi : il te suivra si tu ne vas pas trop vite.;Mamie Rose : rappel (Pompon suit Tecky)
+neighbor-610bdefe;Mamie Rose;;joyeux;Pompon ! Te voilà enfin, mon chaton ! J'étais si inquiète…;Mamie Rose : merci
+neighbor-b1968480;Mamie Rose;;;Merci, Tecky ! Tiens, une bonne saucisse : tu l'as bien méritée.;Mamie Rose : merci
+neighbor-0096ec64;Mamie Rose;;joyeux;Pompon ne quitte plus le jardin, grâce à toi. Bonne chance pour retrouver ta petite Alice !;Mamie Rose : après la quête
+leon-6a2c6609;Léon;;inquiet;Salut, petit chien ! Je devais livrer ces gros ballons pour la fête du parc… mais le carton s'est ouvert, et ils ont roulé partout !;Léon : demande
+leon-ca296332;Léon;;;Tu veux bien les pousser dans le grand filet, à côté de moi ? Fonce dedans, ou aboie derrière eux : comme au foot !;Léon : demande
+leon-03cee306;Léon;;;Il en reste 5 ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.;Léon : rappel
+leon-9dadda87;Léon;;;Il en reste 4 ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.;Léon : rappel
+leon-2640e7c8;Léon;;;Il en reste 3 ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.;Léon : rappel
+leon-ea5c9309;Léon;;;Il en reste 2 ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.;Léon : rappel
+leon-67d3e01a;Léon;;;Plus qu'un ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.;Léon : rappel
+leon-58e5edb7;Léon;;joyeux;Cinq buts ! Tous mes ballons sont dans le filet. Bravo, champion !;Léon : merci
+leon-15f9a66d;Léon;;;Tiens, un bon os pour toi. Et si tu croises une petite fille, dis-lui qu'il y aura des ballons à la fête du parc !;Léon : merci
+leon-335e5708;Léon;;joyeux;Merci encore, champion ! Mes ballons seront prêts pour la fête du parc.;Léon : après la quête
+nestor-55c3f120;Nestor;;inquiet;Wouf… Bonjour, petit. Moi, c'est Nestor, le chien du gardien. Mes vieilles pattes ne courent plus bien vite…;Nestor : demande
+nestor-9be869b9;Nestor;;;J'ai perdu mes trois jouets : mon canard, mon anneau et ma corde. Tu veux bien me les rapporter, un par un, dans ta gueule ?;Nestor : demande
+nestor-6f33d173;Nestor;;;Il m'en manque encore 3. Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !;Nestor : rappel
+nestor-7ae66c66;Nestor;;;Il m'en manque encore 2. Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !;Nestor : rappel
+nestor-074ff1e4;Nestor;;;Plus qu'un ! Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !;Nestor : rappel
+nestor-24ee070d;Nestor;;joyeux;Mes trois jouets ! Merci, petit. Tu as de bonnes pattes, toi !;Nestor : merci
+nestor-90333c42;Nestor;;;Tiens, prends ma saucisse. Moi, je vais faire une petite sieste avec mon canard.;Nestor : merci
+nestor-ddc1d8f5;Nestor;;joyeux;Wouf… Merci encore, petit. Bonne chance pour retrouver ta petite Alice !;Nestor : après la quête
