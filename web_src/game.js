@@ -2061,7 +2061,7 @@ function biteAction() {
   if (balade() && playTarget(true)) return 'play';
   return 'bite';
 }
-const ACTION_FRAME = { bite: 2, dig: 4, read: 6, talk: 6, play: 8, tunnel: 4, sniff: 10 };   // images de hud/action
+const ACTION_FRAME = { bite: 2, dig: 4, read: 6, talk: 12, play: 8, tunnel: 4, sniff: 10 };   // images de hud/action
 // Tecky et le chien sautillent ensemble ; à la fin, le chien devient un copain (voir updateDog, mode 'play')
 function startPlay(d) {
   P.mode = 'play'; P.timer = PLAY.tecky; P.setAnim('idle'); P.cdBite = 0.5; P.cdBiteMax = 0.5;

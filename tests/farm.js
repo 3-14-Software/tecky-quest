@@ -17,6 +17,8 @@ function main() {
      'la barrette n’est pas à côté de lui (on ne la ramasse pas en lui parlant)');
   step(1); run('updateCamera(10)');                                    // (caméra recentrée sur Tecky)
   ok(run('biteAction()') === 'talk' && run('talkHint !== null'), 'près de lui : C fait « Parler »');
+  ok(run('ACTION_FRAME.talk') !== run('ACTION_FRAME.read') && run('ATLAS["hud/action"].f.length') > run('ACTION_FRAME.talk') + 1,
+     'bouton « Parler » : sa bulle de dialogue, pas la pancarte de « Lire »');
   run('var used = []; var ds0 = drawSpr; drawSpr = function (k) { used.push(k); return ds0.apply(this, arguments); }; render(); drawSpr = ds0;');
   ok(run('used.includes("hud/talk")') === false, 'tout près, la bulle « Parler » remplace le « ! »');
   run('P.cdBite = 0; pressed.bite = true'); step(1);

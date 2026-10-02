@@ -280,7 +280,7 @@ Pensé pour l'event **Draw GUI** avec `display_set_gui_size(1920, 1080)` et les 
 | `spr_hud_digits` | 16 | (0, 0) | police en sprite : `0123456789+-x/:%` |
 | `spr_hud_key` | 11 | (0, 0) | touches : X, C, E, Z, ↑, ↓, ←, →, Esc, Entrée, R |
 | `spr_hud_pad` | 5 | (0, 0) | boutons de manette, même cadre que les touches : A, B, X, Y, Start |
-| `spr_hud_action` | 12 | (0, 0) | boutons : aboyer, aboyer grisé, mordre, mordre grisé, gratter, gratter grisé, lire, lire grisé, jouer (cœur, mode balade), jouer grisé, flairer, flairer grisé |
+| `spr_hud_action` | 14 | (0, 0) | boutons : aboyer, aboyer grisé, mordre, mordre grisé, gratter, gratter grisé, lire, lire grisé, jouer (cœur, mode balade), jouer grisé, flairer, flairer grisé, parler (bulle), parler grisé |
 | `spr_hud_cooldown` | 8 | (0, 0) | voile de recharge à poser sur un bouton (0 = vient d'être utilisé) |
 | `spr_hud_enemy_bar_bg` / `_fill` | 1 | (28, 0) / (0, 0) | barre de vie au-dessus d'un ennemi |
 | `spr_hud_arrow` | 4 | centre (40, 40) | flèche au bord de l'écran (pointe à droite, pastille vide) : seule elle tourne |

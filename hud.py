@@ -229,9 +229,9 @@ def pad_frames(scale):
 
 
 def action_frames(scale):
-    """Boutons ronds 40x40 : aboyer, mordre, gratter, lire, jouer (mode balade), flairer (+ versions grisées)."""
+    """Boutons ronds 40x40 : aboyer, mordre, gratter, lire, jouer (mode balade), flairer, parler (+ versions grisées)."""
     out = []
-    for kind in ("bark", "bite", "dig", "read", "play", "sniff"):
+    for kind in ("bark", "bite", "dig", "read", "play", "sniff", "talk"):
         for dim in (False, True):
             d = Drawing(40, 40)
             d.add(circle(20, 20, 17.5), "#F2C14E" if not dim else "#8A8F99")
@@ -266,6 +266,13 @@ def action_frames(scale):
                 d.add(ellipse(11, 22.6, 2.2, 1.3), "#FFFFFF" if not dim else "#C9CCD2", sil=False, opacity=0.7)
                 for k, (x, y) in enumerate(((22, 12), (26.5, 17.5), (21, 23))):
                     d.raw(line(f"M{x},{y + 4} q2.2,-1.6 0,-3.2 q-2.2,-1.6 0,-3.2", ink, 1.7))
+            elif kind == "talk":
+                # bulle de dialogue (queue en bas à gauche) et trois petits points
+                bubble = ("M14,8 H26 A6,6 0 0 1 32,14 V19 A6,6 0 0 1 26,25 H19 L12,31 L13.5,25 H14 "
+                          "A6,6 0 0 1 8,19 V14 A6,6 0 0 1 14,8 Z")
+                d.add(path(bubble), "#FFFFFF" if not dim else "#D9DBE0", sil=False, edge=True)
+                for x in (14.5, 20, 25.5):
+                    d.add(circle(x, 16.5, 1.9), ink, sil=False)
             elif kind == "play":
                 # cœur (comme fx/heart) : jouer avec un chien en mode balade
                 heart = ("M16,23.5 C9,18.6 7,15.2 7,12.6 C7,9.9 9.1,8 11.6,8 C13.6,8 15.1,9.2 16,10.9 "
