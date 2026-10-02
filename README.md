@@ -13,8 +13,9 @@ En chemin : le fermier Gaston (allez lui parler, C) a besoin d'aide pour ramener
 facteur a perdu ses lettres dans le vent, Mamie Rose cherche son chat Pompon, des écureuils et des chats
 filent se percher quand Tecky les poursuit, des canards s'envolent de l'étang et de la rivière, des terriers permettent de passer sous les grillages, et Tecky peut
 flairer la piste d'Alice (de petits pieds nus apparaissent au sol). Les trésors enterrés sont des os dorés à
-collectionner, et la pause montre la carte des coins déjà explorés. Chaque zone a son ambiance sonore et ses
-instruments, qui arrivent en fondu enchaîné au début d'une phrase musicale.
+collectionner, et la pause montre la carte des coins déjà explorés. Chaque zone a son ambiance sonore, ses instruments
+et sa variation du thème musical (plus entraînante au village, country à la ferme, calme et lente en forêt, boîte à
+musique au parc…), qui arrive en fondu enchaîné au début d'une phrase, le tempo glissant de l'une à l'autre.
 
 Le village et la cour de la ferme sont des zones calmes : aucun chien n'y embête Tecky pendant qu'il parle aux habitants.
 

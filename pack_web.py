@@ -558,7 +558,8 @@ def main():
     data = ("const ATLAS_SRC = \"" + b64(os.path.join(WEB, "atlas.png")) + "\";\n"
             "const TILES_SRC = \"" + b64(os.path.join(WEB, "tiles.png")) + "\";\n"
             "const ATLAS = " + json.dumps(meta, separators=(",", ":")) + ";\n"
-            "const SONG = " + json.dumps(dict(zip(("total", "ev"), music.events()), bpm=music.BPM, bar=music.STEPS_PER_BAR), separators=(",", ":")) + ";\n"
+            "const SONGS = " + json.dumps({k: dict(zip(("total", "ev"), music.events(k)), bpm=st["bpm"], bar=music.STEPS_PER_BAR)
+                                           for k, st in music.STYLES.items()}, separators=(",", ":")) + ";\n"
             "const WINSONG = " + json.dumps(dict(zip(("total", "ev"), music.fanfare_events()), bpm=music.FANFARE_BPM, bar=music.STEPS_PER_BAR), separators=(",", ":")) + ";\n"
             "const LOSESONG = " + json.dumps(dict(zip(("total", "ev"), music.defeat_events()), bpm=music.DEFEAT_BPM, bar=music.STEPS_PER_BAR), separators=(",", ":")) + ";\n"
             "const MAP = " + json.dumps(m, separators=(",", ":"), ensure_ascii=False) + ";\n")

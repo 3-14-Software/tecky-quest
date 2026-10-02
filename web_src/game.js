@@ -191,10 +191,11 @@ const SFX = {
 };
 
 /* ------------------------------------------------------------------ musique chiptune */
-/* « Promenade de Tecky » : événements générés par music.py (même partition que le WAV GameMaker).
-   Timbre selon la zone (TIMBRE) : la mélodie et les arpèges passent par une couche (layers : gain propre) par timbre.
-   setZone() demande un changement ; il se fait en fondu enchaîné pendant la dernière mesure d'une phrase
-   (MUSIC_ZONE), pour que la phrase suivante commence avec les nouveaux instruments. Basse et batterie ne changent pas. */
+/* « Promenade de Tecky » : événements générés par music.py (SONGS : une variation du thème par zone, même mélodie,
+   mêmes accords, même grille de phrases ; « base » = le WAV GameMaker, pour la niche et la campagne).
+   Chaque zone joue sa variation avec ses instruments (TIMBRE) dans une couche (layers : gain propre). setZone()
+   demande un changement ; il se fait en fondu enchaîné pendant la dernière mesure d'une phrase (MUSIC_ZONE), le tempo
+   glissant d'une variation à l'autre (glide) : la phrase suivante commence avec la nouvelle variation, à son tempo. */
 const MUSIC_ZONE = {
   settle: 2,        // s : Tecky doit rester ce temps dans une zone pour que la musique change (pas de passage éclair)
   phrase: 4,        // mesures par phrase
@@ -203,11 +204,13 @@ const MUSIC_ZONE = {
 };
 const Music = {
   on: false, gain: null, timer: null, step: 0, next: 0, waves: {}, noiseBuf: null, byStep: null,
-  zone: 'niche', want: null, layers: [], fadeStep: -1,
+  zone: 'niche', want: null, layers: [], fadeStep: -1, bpm: 140, glide: null, fadeDur: 0,
   VOL: { lead: 0.16, arp: 0.045, bass: 0.2, kick: 0.5, snare: 0.2, hat: 0.07 },
   init() {
     const mk = S => { const b = Array.from({ length: S.total }, () => []); for (const e of S.ev) b[e[0]].push(e); return { byStep: b, total: S.total, bpm: S.bpm, bar: S.bar }; };
-    this.songs = { main: mk(SONG), win: mk(WINSONG), lose: mk(LOSESONG) };
+    this.themes = {};
+    for (const k in SONGS) this.themes[k] = mk(SONGS[k]);
+    this.songs = { main: this.themes.base, win: mk(WINSONG), lose: mk(LOSESONG) };
     this.byStep = true;
     const len = AC.sampleRate;
     this.noiseBuf = AC.createBuffer(1, len, AC.sampleRate);
@@ -240,7 +243,8 @@ const Music = {
     this.gain.gain.value = this.level();
     this.gain.connect(AC.destination);
     this.layers = this.cur === 'main' ? [this.layer(this.zone, 1)] : [];
-    this.want = null;
+    this.want = null; this.glide = null;
+    this.bpm = (this.layers[0] ? this.layers[0].song : this.song).bpm;
     this.step = 0;
     this.next = AC.currentTime + 0.08;
     this.timer = setInterval(() => this.tick(), 25);
@@ -261,11 +265,11 @@ const Music = {
     if (now) { if (id !== this.zone || this.layers.length > 1) this.fadeTo(id, AC.currentTime, MUSIC_ZONE.cut); this.want = null; return; }
     this.want = id === this.zone ? null : id;
   },
-  layer(id, v) {
+  layer(id, v) {                       // la variation et les instruments de la zone id
     const g = AC.createGain();
     g.gain.value = v;
     g.connect(this.gain);
-    return { id, g, t0: 0, t1: 0, v0: v, v1: v };
+    return { id, g, song: this.themes[id] || this.themes.base, t0: 0, t1: 0, v0: v, v1: v };
   },
   ramp(l, to, t, d) {                  // fondu linéaire de la couche l vers to, de t à t + d, depuis sa valeur à t
     const k = l.t1 > l.t0 ? Math.min(1, Math.max(0, (t - l.t0) / (l.t1 - l.t0))) : 1, v = l.v0 + (l.v1 - l.v0) * k;
@@ -273,37 +277,51 @@ const Music = {
     p.cancelScheduledValues(t); p.setValueAtTime(v, t); p.linearRampToValueAtTime(to, t + d);
     Object.assign(l, { t0: t, t1: t + d, v0: v, v1: to });
   },
+  /* Fondu vers la zone id à partir du temps t : en d secondes (fondu rapide, nouveau tempo tout de suite) ou, sans d,
+     pendant MUSIC_ZONE.fade mesures où le tempo glisse de l'ancien au nouveau (d = durée de ces pas). */
   fadeTo(id, t, d) {
     let n = this.layers.find(l => l.id === id);
     if (!n) { n = this.layer(id, 0); this.layers.push(n); }
+    const to = n.song.bpm;
+    if (d === undefined) {
+      const steps = MUSIC_ZONE.fade * this.song.bar;
+      this.glide = { from: this.bpm, to, n: steps, i: 0 };
+      d = 0;
+      for (let i = 0; i < steps; i++) d += this.stepLen(i);
+    } else { this.glide = null; this.bpm = to; }
     for (const l of this.layers) this.ramp(l, l === n ? 1 : 0, t, d);
-    this.zone = id; this.want = null; this.fadeStep = this.step;
+    this.zone = id; this.want = null; this.fadeStep = this.step; this.fadeDur = d;
+  },
+  stepLen(i) {                         // durée d'un pas (double-croche), selon le tempo qui glisse pendant un fondu
+    const gl = this.glide;
+    if (!gl) return 15 / this.bpm;
+    return 15 / (gl.from + (gl.to - gl.from) * ((i === undefined ? gl.i : i) + 0.5) / gl.n);
   },
   tick() {
-    const spb = 60 / this.song.bpm / 4;
     if (this.next < AC.currentTime - 0.2) this.next = AC.currentTime + 0.05;   // retour d'onglet
     while (this.next < AC.currentTime + 0.15) {
       const bar = this.song.bar;
-      if (this.want && (this.step + MUSIC_ZONE.fade * bar) % (MUSIC_ZONE.phrase * bar) === 0)
-        this.fadeTo(this.want, this.next, MUSIC_ZONE.fade * bar * spb);
+      if (this.want && (this.step + MUSIC_ZONE.fade * bar) % (MUSIC_ZONE.phrase * bar) === 0) this.fadeTo(this.want, this.next);
       for (const l of this.layers.filter(l => l.v1 === 0 && l.t1 < this.next)) {   // couches éteintes : plus de notes
         this.layers.splice(this.layers.indexOf(l), 1);
         setTimeout(() => l.g.disconnect(), 1000);
       }
-      for (const e of this.song.byStep[this.step]) this.play(e, this.next, spb);
+      const spb = this.stepLen();
+      if (this.cur === 'main') for (const l of this.layers) for (const e of l.song.byStep[this.step]) this.play(e, this.next, spb, l);
+      else for (const e of this.song.byStep[this.step]) this.play(e, this.next, spb, null);
       this.next += spb;
       this.step++;
+      if (this.glide && ++this.glide.i >= this.glide.n) { this.bpm = this.glide.to; this.glide = null; }
       if (this.step >= this.song.total) {
         if (this.cur === 'main') this.step = 0;
         else { clearInterval(this.timer); const g0 = this.gain; setTimeout(() => { if (this.gain === g0) this.stop(); }, 2500); return; }   // fanfare, défaite : une seule fois
       }
     }
   },
-  play(e, t, spb) {
-    const ch = e[1];
-    if (ch === 'drums') this.drum(e, t, this.gain);
-    else if (ch === 'bass' || this.cur !== 'main') this.voice(e, t, spb, TIMBRE.niche, this.gain);
-    else for (const l of this.layers) this.voice(e, t, spb, TIMBRE[l.id] || TIMBRE.niche, l.g);   // une note par timbre
+  play(e, t, spb, l) {                 // l : couche de la zone (thème), null pour la fanfare et la défaite
+    const out = l ? l.g : this.gain;
+    if (e[1] === 'drums') this.drum(e, t, out);
+    else this.voice(e, t, spb, (l && TIMBRE[l.id]) || TIMBRE.niche, out);
   },
   drum(e, t, out) {
     const [, , note, , vol] = e;
@@ -329,12 +347,16 @@ const Music = {
       src.start(t, Math.random() * 0.5, d + 0.02);
     }
   },
-  voice(e, t, spb, tb, out) {          // tb : instruments de la zone (TIMBRE) ; la basse ne change pas
+  voice(e, t, spb, tb, out) {          // tb : instruments de la zone (TIMBRE) ; la basse garde son triangle
     const [, ch, note, len, vol] = e;
     const o = AC.createOscillator(), g = AC.createGain();
     if (ch === 'bass') o.type = 'triangle';
     else { const w = ch === 'lead' ? tb.lead : tb.arp; if (typeof w === 'number') o.setPeriodicWave(this.wave(w)); else o.type = w; }
-    o.frequency.value = 440 * Math.pow(2, (note - 69) / 12);
+    const f = 440 * Math.pow(2, (note - 69) / 12);
+    if (e[5]) {                        // note glissée (ferme) : part de e[5] demi-tons et rejoint la sienne
+      o.frequency.setValueAtTime(f * Math.pow(2, e[5] / 12), t);
+      o.frequency.exponentialRampToValueAtTime(f, t + 0.07);
+    } else o.frequency.value = f;
     const dur = len * spb, v = this.VOL[ch] * vol * (ch === 'bass' ? 1 : tb.lv);
     const sus = (ch === 'arp' ? 0.4 : ch === 'bass' ? 0.8 : 0.65) * (ch === 'bass' ? 1 : tb.sus);
     g.gain.setValueAtTime(0.0001, t);
@@ -347,7 +369,8 @@ const Music = {
   },
 };
 /* Timbre de la mélodie (lead) et des arpèges (arp) selon la zone : rapport cyclique d'une onde carrée, ou forme d'onde
-   ('triangle', 'sine') ; sus : tenue des notes ; lv : volume (les ondes douces sonnent moins fort). Même partition. */
+   ('triangle', 'sine') ; sus : tenue des notes ; lv : volume (les ondes douces sonnent moins fort). La partition est
+   la variation du thème de la zone (SONGS, music.py). */
 const TIMBRE = {
   niche: { lead: 0.25, arp: 0.125, sus: 1, lv: 1 },
   village: { lead: 0.25, arp: 0.125, sus: 1, lv: 1 },

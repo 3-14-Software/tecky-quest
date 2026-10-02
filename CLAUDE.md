@@ -40,7 +40,11 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   route (coins de la route intacts) : sinon il mord sur la chaussée, sous le passage piéton.
 - `music.py` : **source unique** de la musique (thème « Promenade de Tecky », 32 mesures, boucle ; fanfare de victoire et
   musique de défaite, 3 mesures chacune à 140 BPM, même durée). Génère les WAV GameMaker et les données
-  `SONG`/`WINSONG`/`LOSESONG` jouées par le séquenceur WebAudio du jeu (`Music.start('main' | 'win' | 'lose')`).
+  `SONGS`/`WINSONG`/`LOSESONG` jouées par le séquenceur WebAudio du jeu (`Music.start('main' | 'win' | 'lose')`).
+  Variations du thème par zone (`STYLES`, `events(style)` : `_lead`, `_bass`, `_arp`, `_drums`) : même mélodie, mêmes
+  accords, même grille de phrases, tempo propre ; « base » (niche, campagne) = le thème d'origine et le WAV GameMaker.
+  Village plus entraînant (152), ferme country (136 : basse alternée, rouleaux de banjo, notes glissées = 6e champ),
+  forêt calme (108 : basse tenue, écho), parc boîte à musique (126, sans batterie), industrie mécanique (140).
 - `pack_web.py` : atlas (frames rognées), niveau (`MW=80`, `MH=48` tuiles, positions des décors/objets/chiens/trésors `DIG`),
   `index.html` à partir de `web_src/index.template.html` + `game.js`, paquet autonome (manifest, service worker, icônes, `serve.sh`).
   Lance `web_src/check_placement.js` : rien dans l'eau ou un obstacle (canards : dans l'eau), et tout (personnages,
@@ -196,11 +200,12 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   sauvegardé dans `ducks`). Test : `ducks.js`.
 - Zones (`ZONES`, `zoneAt()`, `updateZone()`) : bandeau à l'arrivée (`banner`), étiquettes de la carte, ambiance sonore
   (`Ambience`, `AMB_EVENTS`, `ambSound()` : oiseaux, coq, sonnette, cliquetis ; clapotis selon l'eau autour) et timbre
-  de la musique (`TIMBRE`, `Music.zone`). Changement de timbre (`MUSIC_ZONE`) : Tecky doit rester `settle` (2 s)
-  dans la zone (`tuneT` ; un passage éclair ne change rien), puis `Music.setZone()` le demande (`Music.want`) et le
-  séquenceur fait un fondu enchaîné pendant la dernière mesure d'une phrase (4 mesures) : une couche de gain par timbre
-  (`Music.layers`, `fadeTo()`, `ramp()`), mélodie et arpèges joués dans chaque couche, basse et batterie à part.
-  Nouvelle partie, Continuer : fondu rapide (`cut`). Test : `music.js`. La rivière n'est pas une zone : celles du nord et du sud vont jusqu'à son
+  de la musique (`TIMBRE` et variation du thème `SONGS`, `Music.zone`). Changement (`MUSIC_ZONE`) : Tecky doit
+  rester `settle` (2 s) dans la zone (`tuneT` ; un passage éclair ne change rien), puis `Music.setZone()` le demande
+  (`Music.want`) et le séquenceur fait un fondu enchaîné pendant la dernière mesure d'une phrase (4 mesures) : une
+  couche de gain par zone (`Music.layers` : sa variation, ses instruments ; `fadeTo()`, `ramp()`), et le tempo glisse
+  de l'une à l'autre pendant ce fondu (`Music.glide`, `stepLen()`). Nouvelle partie, Continuer : fondu rapide (`cut`),
+  nouveau tempo tout de suite. Test : `music.js`. La rivière n'est pas une zone : celles du nord et du sud vont jusqu'à son
   milieu (`RIVER_MID`), pour que rien ne change en la longeant ou en passant le pont ; elle garde son étiquette sur la
   carte de la pause (`LANDMARKS`). Test : `world.js`.
 - Carte de la pause (`drawPauseMap()`, `mapImg` pré-rendue au quart, `seenCells` : cases de 4 tuiles vues à l'écran,
