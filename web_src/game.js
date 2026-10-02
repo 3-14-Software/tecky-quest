@@ -11,7 +11,7 @@ const TS = MAP.ts;
 
 /* Réglages du joueur (écran d'options, plus bas) : lus ici, avant le premier resize(). */
 const OPTIONS_KEY = 'tecky-quest-options';
-const OPT_DEF = { music: 7, sfx: 8, diff: 'normal', text: 'normal', image: 'fluide', vib: 'oui' };
+const OPT_DEF = { music: 7, sfx: 8, diff: 'normal', text: 'normal', image: 'fluide', vib: 'oui', weather: 'auto' };
 const opts = (() => {
   let o = null;
   try { o = JSON.parse(localStorage.getItem(OPTIONS_KEY)); } catch (e) { /* stockage refusé */ }
@@ -183,6 +183,8 @@ const SFX = {
   yawn() { tone(420, 0.55, 'triangle', 0.035, -200); tone(630, 0.4, 'sine', 0.015, -260, 0.05); },
   snore() { noise(0.5, 0.025, 260); },
   badge() { [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.14, 'triangle', 0.07, 0, i * 0.09)); },
+  plop() { tone(380 + Math.random() * 120, 0.08, 'sine', 0.05, -200); noise(0.06, 0.04, 1600); },
+  shake() { for (let i = 0; i < 5; i++) noise(0.05, 0.05, 1200 + i * 200, i * 0.06); },
   hey(p) { const k = p || 1; tone(560 * k, 0.08, 'triangle', 0.08, 160 * k); tone(760 * k, 0.13, 'triangle', 0.08, -120 * k, 0.09); },
   cluck() { tone(950, 0.05, 'square', 0.05, 250); tone(1150, 0.05, 'square', 0.05, 200, 0.08); tone(1400, 0.12, 'square', 0.05, -600, 0.17); },
   win() { [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, 0.18, 'triangle', 0.09, 0, i * 0.14)); },
@@ -313,7 +315,7 @@ const TIMBRE = {
 /* Petits sons selon la zone où se trouve Tecky (voir ZONES) : oiseaux (surtout en forêt et au parc), caquètements et coq
    à la ferme, sonnette de vélo au village, cliquetis à la zone industrielle ; et un clapotis continu dont le volume suit
    la quantité d'eau autour de Tecky (rivière, étang, mare). Seulement en jeu (coupé en pause et pendant les dialogues). */
-const AMB = { vol: 0.55, water: 0.09, waterR: [140, 300] };
+const AMB = { vol: 0.55, water: 0.09, waterR: [140, 300], rain: 0.07 };
 const AMB_EVENTS = {   // zone : [son, intervalle min (s), max]
   foret: [['bird', 1.4, 3.8]], parc: [['bird', 3, 7]], campagne: [['bird', 4, 9]], niche: [['bird', 4, 9]],
   riviere: [['bird', 6, 11]], village: [['bell', 18, 32], ['bird', 7, 13]], industrie: [['clank', 5, 11]],
@@ -351,7 +353,10 @@ const Ambience = {
     for (const [name, a, b] of AMB_EVENTS[z] || []) {
       const k = z + '/' + name;
       if (this.timers[k] === undefined) this.timers[k] = a + Math.random() * (b - a);
-      if ((this.timers[k] -= dt) <= 0) { this.timers[k] = a + Math.random() * (b - a); if (!muted) { ambSound(name); this.played++; } }
+      if ((this.timers[k] -= dt) <= 0) {
+        this.timers[k] = a + Math.random() * (b - a);
+        if (!muted && !(name === 'bird' && weather.k > 0.3)) { ambSound(name); this.played++; }     // sous la pluie, les oiseaux se taisent
+      }
     }
     // clapotis : part d'eau sur deux cercles autour de Tecky, avec une lente respiration
     let n = 0, w = 0;
@@ -363,7 +368,19 @@ const Ambience = {
     const lap = 0.75 + 0.25 * Math.sin(this.phase * 1.7) * Math.sin(this.phase * 0.63);
     this.level = muted ? 0 : (w / n) * AMB.water * lap * opts.sfx / OPT_DEF.sfx;
     if (!this.gain && this.level > 0.001) this.startWater();
-    if (this.gain) this.gain.gain.setTargetAtTime(this.level, AC.currentTime, 0.3);
+    if (this.gain && Math.abs(this.level - (this.set || 0)) > 0.0005) { this.set = this.level; this.gain.gain.setTargetAtTime(this.level, AC.currentTime, 0.3); }
+    // pluie : un souffle aigu, selon l'averse
+    this.rainLevel = muted || weather.kind !== 'rain' ? 0 : weather.k * AMB.rain * opts.sfx / OPT_DEF.sfx;
+    if (!this.rainGain && this.rainLevel > 0.001) this.startRain();
+    if (this.rainGain && Math.abs(this.rainLevel - (this.rainSet || 0)) > 0.0005) { this.rainSet = this.rainLevel; this.rainGain.gain.setTargetAtTime(this.rainLevel, AC.currentTime, 0.4); }
+  },
+  startRain() {                        // bruit blanc en boucle, filtré autour des aigus : le crépitement de la pluie
+    const len = AC.sampleRate * 2, buf = AC.createBuffer(1, len, AC.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+    src.buffer = buf; src.loop = true; f.type = 'bandpass'; f.frequency.value = 2600; f.Q.value = 0.5; g.gain.value = 0;
+    src.connect(f); f.connect(g); g.connect(AC.destination); src.start();
+    this.rainGain = g;
   },
   startWater() {                       // bruit grave et doux, en boucle, à travers un filtre passe-bas
     const len = AC.sampleRate * 2, buf = AC.createBuffer(1, len, AC.sampleRate), d = buf.getChannelData(0);
@@ -374,7 +391,11 @@ const Ambience = {
     src.connect(f); f.connect(g); g.connect(AC.destination); src.start();
     this.gain = g;
   },
-  quiet() { this.level = 0; if (this.gain) this.gain.gain.setTargetAtTime(0, AC.currentTime, 0.2); },
+  quiet() {
+    this.level = 0; this.rainLevel = 0;
+    if (this.gain && this.set !== 0) { this.set = 0; this.gain.gain.setTargetAtTime(0, AC.currentTime, 0.2); }
+    if (this.rainGain && this.rainSet !== 0) { this.rainSet = 0; this.rainGain.gain.setTargetAtTime(0, AC.currentTime, 0.2); }
+  },
 };
 
 document.addEventListener('visibilitychange', () => {
@@ -847,6 +868,7 @@ function reset() {
   critters = MAP.critters.map(newCritter);
   ducks = MAP.ducks.map(newDuck); linkDucks();
   bitten = false; newBadges = []; toasts = []; napped = false;
+  resetWeather(); puddles = null;
   walkGrid = null; distField = null; trail = []; tunnelSeen = false; crumbs = []; followN = 0;
   seenCells = new Uint8Array(cellsW() * cellsH()); zone = null; zoneT = 0; banner = null; Music.zone = 'niche';
   cars = MAP.traffic.vehicles.map(newVehicle);
@@ -2184,14 +2206,15 @@ function glowSpot(x, y, r, a) {                       // tache de lumière chaud
   ctx.globalAlpha = a; ctx.drawImage(glowImg, x - r, y - r, r * 2, r * 2); ctx.globalAlpha = 1;
 }
 function drawLight(cx, cy) {
-  if (sun < 0.01) return;
-  const k = clamp(sun, 0, 4);
-  const tint = [0, 1, 2].map(j => Math.round(sunAt(SUN.tints.map(t => t[j]), k)));
+  if (sun < 0.01 && weather.k < 0.01) return;
+  const k = clamp(sun, 0, 4), wt = weatherTint();          // (la météo assombrit dans le même remplissage)
+  const tint = [0, 1, 2].map(j => Math.round(sunAt(SUN.tints.map(t => t[j]), k) * wt[j] / 255));
   ctx.save();
   ctx.globalCompositeOperation = 'multiply';
   ctx.fillStyle = `rgb(${tint[0]}, ${tint[1]}, ${tint[2]})`;
   ctx.fillRect(cx, cy, VW, VH);
   ctx.globalCompositeOperation = 'source-over';
+  if (sun < 0.01) { ctx.restore(); return; }
   if (Math.abs(k - lightK) >= LIGHT.step || (k !== lightK && (k === Math.round(k)))) buildLight(k);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(lightImg, cx, cy, VW, VH);
@@ -2207,6 +2230,137 @@ function drawLight(cx, cy) {
   const hug = clamp(k - 3, 0, 1);
   if (hug > 0) glowSpot((alice.x + P.x) / 2, (alice.y + P.y) / 2 - 50, 260, 0.45 * hug);
   ctx.restore();
+}
+
+/* ------------------------------------------------------------------ météo */
+/* Option « Météo » : auto (une averse de temps en temps, de la neige au lieu de la pluie en décembre), soleil, pluie ou
+   neige en continu. weather.k = force de l'averse (0..1, monte et descend en WEATHER.ramp s). Pluie : gouttes (traits),
+   éclaboussures (fx/splash), temps plus gris (teinte dans drawLight), flaques (fx/puddle, places fixes tirées une fois :
+   elles se remplissent avec weather.wet et sèchent ensuite), plouf quand Tecky marche dedans, crépitement (Ambience).
+   Après l'averse : un arc-en-ciel, et Tecky s'ébroue (pose « shake », gouttes fx/drop). Neige : flocons (fx/snowflake),
+   sol qui blanchit (weather.cover), teinte froide. Rien n'est sauvegardé : c'est le temps qu'il fait. */
+const WEATHER = { first: [50, 110], every: [110, 230], rain: [35, 65], snow: [90, 160], ramp: 6, bow: 16, drops: 150, flakes: 130,
+  wetUp: 0.05, wetDown: 0.01, coverUp: 0.012, coverDown: 0.002, splashes: 10, puddle: 30 };
+let weather = { kind: 'rain', k: 0, on: false, timer: 60, wet: 0, cover: 0, bow: 0, wasRain: false, splashT: 0 };
+let drops = [], flakes = [], puddles = null, shakePending = false;
+function december() { return new Date().getMonth() === 11; }
+function weatherKind() { return opts.weather === 'neige' || (opts.weather === 'auto' && december()) ? 'snow' : 'rain'; }
+function resetWeather() {
+  weather = { kind: weatherKind(), k: 0, on: false, timer: rnd(WEATHER.first), wet: 0, cover: 0, bow: 0, wasRain: false, splashT: 0 };
+  drops = Array.from({ length: WEATHER.drops }, () => ({ x: Math.random() * (VW + 200), y: Math.random() * VH, l: 18 + Math.random() * 16, v: 0.8 + Math.random() * 0.4 }));
+  flakes = Array.from({ length: WEATHER.flakes }, () => ({ x: Math.random() * VW, y: Math.random() * VH, f: Math.floor(Math.random() * 3),
+    v: 30 + Math.random() * 45, ph: Math.random() * 6.28 }));
+  shakePending = false;
+}
+function buildPuddles() {             // places des flaques : quelques coins de sol praticable, tirés une fois pour toutes
+  puddles = [];
+  for (let ty = 1; ty < MAP.h - 1; ty++) for (let tx = 1; tx < MAP.w - 1; tx++) {
+    if (hash3(tx, ty, 77) > 0.03) continue;
+    const x = tx * TS + 16 + hash3(ty, tx, 5) * 32, y = ty * TS + 16 + hash3(tx, ty, 9) * 32;
+    if (!blockedFeet(x, y, 30) && !waterAt(x, y) && !blockedFeet(x - 24, y, 12) && !blockedFeet(x + 24, y, 12))
+      puddles.push({ x, y, f: Math.floor(hash3(tx, ty, 3) * 3), s: 0.8 + hash3(ty, tx, 2) * 0.5 });
+  }
+}
+function updateWeather(dt) {
+  const w = weather;
+  if (opts.weather === 'soleil') w.on = false;
+  else if (opts.weather !== 'auto') w.on = true;
+  else if ((w.timer -= dt) <= 0) {     // auto : une averse de temps en temps
+    w.on = !w.on;
+    if (w.on) w.kind = weatherKind();
+    w.timer = w.on ? rnd(w.kind === 'snow' ? WEATHER.snow : WEATHER.rain) : rnd(WEATHER.every);
+  }
+  if (w.k === 0) w.kind = weatherKind();                  // (on change de pluie à neige seulement par temps sec)
+  w.k = clamp(w.k + (w.on ? 1 : -1) * dt / WEATHER.ramp, 0, 1);
+  const rain = w.kind === 'rain' ? w.k : 0, snow = w.kind === 'snow' ? w.k : 0;
+  w.wet = clamp(w.wet + (rain > 0.3 ? WEATHER.wetUp * rain : -WEATHER.wetDown) * dt, 0, 1);
+  w.cover = clamp(w.cover + (snow > 0.3 ? WEATHER.coverUp * snow : -WEATHER.coverDown) * dt, 0, 1);
+  // fin de l'averse : un arc-en-ciel, et Tecky s'ébroue
+  if (rain > 0.6) w.wasRain = true;
+  if (w.wasRain && w.k < 0.05) { w.wasRain = false; w.bow = 1; if (state === 'play') shakePending = true; }
+  w.bow = Math.max(0, w.bow - dt / WEATHER.bow);
+  // gouttes et flocons (en coordonnées de l'écran du monde : ils tombent devant la caméra)
+  if (rain > 0) {
+    for (const d of drops) { d.y += 980 * d.v * dt; d.x -= 170 * d.v * dt; if (d.y > VH + 40) { d.y -= VH + 80; d.x = Math.random() * (VW + 200); } }
+    if (state === 'play' && (w.splashT -= dt * WEATHER.splashes * rain) <= 0) {
+      w.splashT = 1;
+      addFx('fx/splash', camX + Math.random() * VW, camY + Math.random() * VH, { fps: 16 });
+    }
+  }
+  if (snow > 0) for (const f of flakes) {
+    f.y += f.v * dt; f.x += (Math.sin(f.y / 40 + f.ph) * 18 - 12) * dt;
+    if (f.y > VH + 20) { f.y -= VH + 40; f.x = Math.random() * VW; }
+    if (f.x < -20) f.x += VW + 40;
+  }
+}
+const rainNow = () => weather.kind === 'rain' ? weather.k : 0;
+const snowNow = () => weather.kind === 'snow' ? weather.k : 0;
+function weatherTint() {              // teinte multipliée : gris-bleu sous la pluie, froide sous la neige (255 = rien)
+  const r = rainNow(), n = snowNow();
+  return [255 - 50 * r - 22 * n, 255 - 40 * r - 14 * n, 255 - 22 * r];
+}
+function drawGroundWeather(cx, cy) {   // sous les personnages : neige au sol, flaques
+  const w = weather;
+  if (w.cover > 0.01) { ctx.fillStyle = `rgba(246, 250, 255, ${0.45 * w.cover})`; ctx.fillRect(cx, cy, VW, VH); }
+  if (w.wet < 0.02) return;
+  if (!puddles) buildPuddles();
+  for (const p of puddles) {
+    if (p.x < cx - 80 || p.x > cx + VW + 80 || p.y < cy - 60 || p.y > cy + VH + 60) continue;
+    drawSpr('fx/puddle', p.f, p.x, p.y, { alpha: Math.min(1, w.wet * 1.4), sc: p.s * (0.6 + 0.4 * w.wet) });
+  }
+}
+function drawSkyWeather(cx, cy) {     // par-dessus le monde : gouttes, flocons
+  const r = rainNow(), n = snowNow();
+  if (r > 0.01) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(210, 225, 255, 0.55)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    ctx.beginPath();
+    const count = Math.round(drops.length * r);
+    for (let i = 0; i < count; i++) {
+      const d = drops[i], x = cx + d.x - 100, y = cy + d.y;
+      ctx.moveTo(x, y); ctx.lineTo(x - d.l * 0.17, y + d.l);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+  if (n > 0.01) {                      // flocons : directement depuis l'atlas (beaucoup d'images, sans save/restore)
+    const S = ATLAS['fx/snowflake'], count = Math.round(flakes.length * n);
+    for (let i = 0; i < count; i++) {
+      const fl = flakes[i], f = S.f[fl.f];
+      ctx.drawImage(atlas, f[0], f[1], f[2], f[3], cx + fl.x + f[4] - S.o[0], cy + fl.y + f[5] - S.o[1], f[2], f[3]);
+    }
+  }
+}
+function drawRainbow() {              // après l'averse : un grand arc-en-ciel, doux, qui s'efface
+  const b = weather.bow;
+  if (b < 0.01) return;
+  guiTransform();
+  ctx.save();
+  ctx.globalAlpha = 0.24 * Math.min(1, b * 3) * Math.min(1, (1 - b) * 8);
+  ctx.lineWidth = 22;
+  ['#E5484D', '#F2994A', '#F2C94C', '#6FCF97', '#56CCF2', '#5B6CF2', '#9B51E0'].forEach((c, i) => {
+    ctx.strokeStyle = c;
+    ctx.beginPath(); ctx.arc(GW * 0.62, GH + 260, 1060 - i * 22, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke();
+  });
+  ctx.restore();
+}
+function startShake() {               // Tecky s'ébroue : des gouttes partent tout autour
+  if (P.dir === 'up') P.dir = 'down';
+  P.mode = 'shake'; P.setAnim('shake');
+  for (let k = 0; k < 12; k++) {
+    const a = k / 12 * Math.PI * 2;
+    addFx('fx/drop', P.x + Math.cos(a) * 14, P.y - 36, { fps: 0, frame: 0, life: 0.45, vx: Math.cos(a) * 170, vy: Math.sin(a) * 110 - 40 });
+  }
+  if (!muted) SFX.shake();
+}
+function puddleSplash(dt) {           // Tecky marche dans une flaque : plouf
+  if (weather.wet < 0.3 || !puddles || (P.plopT = (P.plopT || 0) - dt) > 0) return;
+  for (const p of puddles) if (Math.abs(p.x - P.x) < WEATHER.puddle && Math.abs(p.y - P.y) < WEATHER.puddle * 0.6) {
+    P.plopT = 0.3;
+    addFx('fx/splash', P.x, P.y, { fps: 18 });
+    if (!muted) SFX.plop();
+    return;
+  }
 }
 
 /* ------------------------------------------------------------------ zones */
@@ -2420,7 +2574,7 @@ function openTitleMenu() {
   }
   items.push({ id: 'aventure', label: 'Nouvelle aventure', sub: 'Gare aux chiens du coin !', mode: 'aventure' });
   items.push({ id: 'balade', label: 'Nouvelle balade', sub: 'Les chiens veulent seulement jouer', mode: 'balade' });
-  items.push({ id: 'options', label: 'Options', sub: 'Son, difficulté, texte, image, vibrations' });
+  items.push({ id: 'options', label: 'Options', sub: 'Son, difficulté, texte, météo…' });
   items.push({ id: 'badges', label: 'Badges', sub: badgeCount() + ' sur ' + MAP.badges.length + ' gagnés' });
   menu = items.length > 4 ? { items, sel: 0, y0: 500, w: 760, h: 80, gap: 12 } : { items, sel: 0, y0: 506, w: 760, h: 88, gap: 14 };
 }
@@ -2583,7 +2737,7 @@ function drawBadges() {
 /* ------------------------------------------------------------------ écran d'options */
 /* Réglages gardés dans le navigateur (OPTIONS_KEY, lus au démarrage) : volumes de la musique et des bruitages (0 à 10),
    difficulté (« facile », pour les nouvelles parties), taille du texte des dialogues, image (« fluide » : canvas
-   plafonné à MAX_PIXELS ; « nette » : pleine résolution, pour les machines rapides), vibrations, plein écran. Ouvert depuis le menu
+   plafonné à MAX_PIXELS ; « nette » : pleine résolution, pour les machines rapides), vibrations, météo, plein écran. Ouvert depuis le menu
    principal ou le menu de la pause. Flèches ↑ ↓ pour choisir une ligne, ← → pour la régler (Entrée / A aussi),
    Échap / B pour revenir ; au toucher, la moitié gauche d'une ligne baisse, la moitié droite monte. */
 const OPTV = { y0: 196, w: 1120, h: 76, gap: 10 };
@@ -2598,6 +2752,8 @@ function optRows() {
     { id: 'image', label: 'Image', values: [['fluide', 'Fluide'], ['nette', 'Nette']],
       note: opts.image === 'nette' ? 'Pleine résolution : pour les ordinateurs rapides' : 'Plus légère sur les grands écrans' },
     { id: 'vib', label: 'Vibrations', values: [['oui', 'Oui'], ['non', 'Non']], note: 'Manette et téléphone' },
+    { id: 'weather', label: 'Météo', values: [['auto', 'Auto'], ['soleil', 'Soleil'], ['pluie', 'Pluie'], ['neige', 'Neige']],
+      note: opts.weather === 'auto' ? 'Une averse de temps en temps, de la neige en décembre' : '' },
   ];
   if (canFullscreen()) rows.push({ id: 'fs', label: 'Plein écran', value: fsElement() ? 'Oui' : 'Non' });
   rows.push({ id: 'back', label: 'Retour' });
@@ -2618,6 +2774,7 @@ function changeOpt(r, dir) {
   } else return;
   STORE.set(OPTIONS_KEY, opts);
   if (r.id === 'image') resize();
+  if (r.id === 'weather') weather.timer = Math.min(weather.timer, 2);
   Music.refresh();
   SFX.blip();
 }
@@ -2756,6 +2913,8 @@ function updatePlayer(dt) {
     return;
   }
   if (P.mode === 'bark') { if (P.done()) P.mode = 'free'; return; }
+  if (P.mode === 'shake') { if (P.done()) P.mode = 'free'; return; }
+  if (shakePending && P.mode === 'free') { shakePending = false; startShake(); return; }
   if (P.mode === 'tunnel') { updateTunnel(dt); return; }
   if (P.mode === 'sniff') {
     P.timer -= dt;
@@ -2789,6 +2948,7 @@ function updatePlayer(dt) {
     moveActor(P, ix * spd * dt, iy * spd * dt);
     P.dir = dirFrom(ix, iy, P.dir);
     P.setAnim('walk');
+    puddleSplash(dt);
     // petits nuages de poussière derrière les pattes
     if ((P.dustT = (P.dustT || 0) - dt) <= 0 && Math.hypot(P.x - ox, P.y - oy) > spd * dt * 0.5) {
       P.dustT = DUST.every;
@@ -3127,6 +3287,7 @@ function updateCamera(dt) {
 function update(dt) {
   if (pressed.mute) { muted = !muted; Music.refresh(); }
   updateToasts(dt);
+  if (state === 'title' || state === 'play' || state === 'dialog') updateWeather(dt);
   if (state !== 'play' && AC) Ambience.quiet();
   updateClouds(dt);
   if (state !== 'title') updateSun(dt);
@@ -3220,6 +3381,7 @@ function drawWorld() {
   ctx.setTransform(scale, 0, 0, scale, offX - cx * scale, offY - cy * scale);
   drawGround(cx, cy);
   drawWater(cx, cy, performance.now() / 1000);
+  drawGroundWeather(cx, cy);
 
   const vis = (x, y, m) => x > cx - m && x < cx + VW + m && y > cy - m && y < cy + VH + m + 140;
   // trous et scintillements des trésors
@@ -3283,6 +3445,7 @@ function drawWorld() {
       alpha: f.life ? clamp(Math.min(f.t / 0.25, (f.life - f.t) / 0.5), 0, 1) : undefined });
   drawClouds(cx, cy);
   drawLight(cx, cy);
+  drawSkyWeather(cx, cy);
 
   // barres de vie ennemies
   for (const d of dogs) {
@@ -3592,6 +3755,7 @@ function render() {
   ctx.save();
   ctx.beginPath(); ctx.rect(offX, offY, VW * scale, VH * scale); ctx.clip();
   drawWorld();
+  drawRainbow();
   if (state === 'title') drawTitle();
   else if (state === 'options' && optReturn === 'title') { veil(0.35); drawOptions(); }
   else if (state === 'badges') { veil(0.35); drawBadges(); }

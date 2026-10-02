@@ -7,7 +7,7 @@ function main() {
   run('audioOn(); STORE.mem = {};');
   ok(run('state') === 'title' && /options/.test(ids()), 'menu principal : entrée « Options »');
   run('menu.sel = menu.items.findIndex(i => i.id === "options"); pressed.ok = true'); step(1);
-  ok(run('state') === 'options' && /^music,sfx,diff,text,image,vib,(fs,)?back$/.test(rowIds()), 'écran d’options : ' + rowIds());
+  ok(run('state') === 'options' && /^music,sfx,diff,text,image,vib,weather,(fs,)?back$/.test(rowIds()), 'écran d’options : ' + rowIds());
   // volumes
   const lv0 = run('Music.level()');
   run('pressed.right = true'); step(1);

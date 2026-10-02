@@ -70,13 +70,20 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   (`sfxGain()`, ambiance comprise), Difficulté (facile : `gameDiff`, `facile()`, 5 os, morsures moitié moins fortes,
   chiens `d.id % 3 === 2` retirés ; fixée à la nouvelle partie et sauvegardée ; records à part `aventure-facile`),
   Texte des dialogues (grand : 46 px, 4 lignes), Image (fluide = `MAX_PIXELS`, nette = sans plafond), Plein écran
-  (dans les événements clavier / toucher : il faut un geste de l'utilisateur), Vibrations. Test : `options.js`.
+  (dans les événements clavier / toucher : il faut un geste de l'utilisateur), Vibrations, Météo. Test : `options.js`.
 - Badges (`MAP.badges` = `hud.BADGES`, image i de `hud/badge`, la dernière = verrouillé ; `BADGE_INFO`, `BADGES_KEY`,
   gardés d'une partie à l'autre) : `checkBadges()` toutes les demi-secondes, `winBadges()` à la victoire (aventure,
   sans morsure = `bitten` faux, sauvegardé ; moins de 10 min). `unlockBadge()` : annonce « Nouveau badge ! »
   (`toasts`), rappel sur l'écran de victoire (`newBadges`), écran « Badges » depuis le menu principal
   (`state === 'badges'`). Un nouveau badge : l'ajouter à `hud.BADGES` (dessin), `BADGE_INFO` et une condition.
   Test : `badges.js`.
+- Météo (`weather`, `WEATHER`, option `opts.weather` : auto / soleil / pluie / neige ; `december()`) : en auto, une averse
+  de temps en temps (neige en décembre). `weather.k` = force (monte et descend en `WEATHER.ramp` s). Pluie : gouttes
+  (traits, `drops`), `fx/splash`, teinte gris-bleu (dans le remplissage de `drawLight()`, `weatherTint()`), flaques
+  (`puddles` : places tirées une fois par `hash3`, remplies selon `weather.wet`), plouf (`puddleSplash()`), crépitement
+  (`Ambience.startRain()`, les oiseaux se taisent). Fin d'averse : arc-en-ciel (`drawRainbow()`, repère GUI) et Tecky
+  s'ébroue (`shakePending`, mode `shake`, gouttes `fx/drop`). Neige : flocons (`flakes`, dessinés directement depuis
+  l'atlas), sol blanchi (`weather.cover`). Rien n'est sauvegardé. Test : `weather.js`.
 - Vibrations (`rumble(kind)`, `RUMBLE`) : manette (`vibrationActuator.playEffect('dual-rumble')`) si `pad.on`, sinon
   téléphone (`navigator.vibrate`) en mode tactile ; morsure reçue, KO, choc de voiture, morsure qui porte, os doré.
   Rien si l'option est à « non ». Test : `options.js`.

@@ -6,7 +6,8 @@ ensuite, et Alice ne sort de sa cachette qu'une fois les trois retrouvées. En c
 chiens (dont les chiens de berger, qui chargent), gratte la terre pour déterrer des trésors, ramasse des os (qui rendent
 de la vie) et des saucisses (qui ajoutent un os de vie maximum). Il traverse campagne, route (gare aux voitures :
 mieux vaut passer par les passages piétons), village, zone industrielle, ferme, rivière (un seul pont), forêt et parc.
-La journée avance avec la recherche : la lumière baisse à chaque indice jusqu'au coucher du soleil.
+La journée avance avec la recherche : la lumière baisse à chaque indice jusqu'au coucher du soleil. De temps en temps,
+une averse (flaques, arc-en-ciel, Tecky qui s'ébroue) ; en décembre, il neige.
 En chemin : le fermier Gaston (allez lui parler, C) a besoin d'aide pour ramener ses poules dans l'enclos, Marcel le
 facteur a perdu ses lettres dans le vent, Mamie Rose cherche son chat Pompon, des écureuils et des chats
 filent se percher quand Tecky les poursuit, des canards s'envolent de l'étang et de la rivière, des terriers permettent de passer sous les grillages, et Tecky peut
@@ -18,7 +19,7 @@ Deux modes au choix sur l'écran titre : **aventure** (les chiens mordent) et **
 se fait mal : les chiens attendent qu'on joue avec eux et deviennent des copains). La partie est enregistrée automatiquement dans le navigateur
 (« Continuer » sur l'écran titre, « Reprendre la partie » après un KO) et les records (meilleur score, meilleur temps)
 sont gardés pour chaque mode. Les options (menu principal ou pause) règlent la musique, les bruitages, la difficulté
-(« facile » : plus d'os, morsures moins fortes, moins de chiens), la taille du texte, l'image, les vibrations (manette et téléphone) et le plein écran.
+(« facile » : plus d'os, morsures moins fortes, moins de chiens), la taille du texte, l'image, les vibrations (manette et téléphone), la météo et le plein écran.
 
 Douze badges sont à gagner (retrouver Alice sans se faire mordre, déterrer tous les os dorés, faire s'envoler
 tous les canards…), visibles depuis le menu principal.
