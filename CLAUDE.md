@@ -190,7 +190,9 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   sauvegardé dans `ducks`). Test : `ducks.js`.
 - Zones (`ZONES`, `zoneAt()`, `updateZone()`) : bandeau à l'arrivée (`banner`), étiquettes de la carte, ambiance sonore
   (`Ambience`, `AMB_EVENTS`, `ambSound()` : oiseaux, coq, sonnette, cliquetis ; clapotis selon l'eau autour) et timbre
-  de la musique (`TIMBRE`, `Music.zone`). Test : `world.js`.
+  de la musique (`TIMBRE`, `Music.zone`). La rivière n'est pas une zone : celles du nord et du sud vont jusqu'à son
+  milieu (`RIVER_MID`), pour que rien ne change en la longeant ou en passant le pont ; elle garde son étiquette sur la
+  carte de la pause (`LANDMARKS`). Test : `world.js`.
 - Carte de la pause (`drawPauseMap()`, `mapImg` pré-rendue au quart, `seenCells` : cases de 4 tuiles vues à l'écran,
   sauvegardées) : brouillard, noms des zones vues, Tecky, indices, os dorés, Alice, enclos pendant la quête.
 - Copains qui suivent (balade, `FOLLOW`, `crumbs`, mode `follow`) : après avoir joué, le chien suit Tecky en file

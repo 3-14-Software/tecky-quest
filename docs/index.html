@@ -347,7 +347,6 @@ const TIMBRE = {
   campagne: { lead: 0.25, arp: 0.125, sus: 1, lv: 1 },
   ferme: { lead: 0.5, arp: 0.25, sus: 0.45, lv: 0.85 },          // notes sèches et rondes, façon banjo
   industrie: { lead: 0.125, arp: 0.0625, sus: 0.8, lv: 0.95 },    // son fin, un peu métallique
-  riviere: { lead: 'triangle', arp: 'sine', sus: 1.2, lv: 1.7 },
   foret: { lead: 'triangle', arp: 'triangle', sus: 1.15, lv: 1.7 },   // flûte
   parc: { lead: 'sine', arp: 0.25, sus: 0.7, lv: 1.8 },              // boîte à musique
 };
@@ -359,7 +358,7 @@ const TIMBRE = {
 const AMB = { vol: 0.55, water: 0.09, waterR: [140, 300], rain: 0.07 };
 const AMB_EVENTS = {   // zone : [son, intervalle min (s), max]
   foret: [['bird', 1.4, 3.8]], parc: [['bird', 3, 7]], campagne: [['bird', 4, 9]], niche: [['bird', 4, 9]],
-  riviere: [['bird', 6, 11]], village: [['bell', 18, 32], ['bird', 7, 13]], industrie: [['clank', 5, 11]],
+  village: [['bell', 18, 32], ['bird', 7, 13]], industrie: [['clank', 5, 11]],
   ferme: [['cluck', 3.5, 8], ['rooster', 28, 50], ['bird', 8, 14]],
 };
 function ambSound(name) {
@@ -2420,12 +2419,13 @@ function puddleSplash(dt) {           // Tecky marche dans une flaque : plouf
 /* ------------------------------------------------------------------ zones */
 /* La carte est découpée en zones (première règle qui correspond, coordonnées en tuiles). Elles donnent le bandeau qui
    s'affiche en arrivant (nom de la zone), les étiquettes de la carte de la pause, l'ambiance sonore et le timbre des
-   instruments de la musique (TIMBRE). */
+   instruments de la musique (TIMBRE). La rivière n'est pas une zone : celles du nord et du sud vont jusqu'à son milieu
+   (RIVER_MID), sinon la musique changerait en la longeant ou en passant le pont. */
+const RIVER_MID = 27.6;
 // name : bandeau à l'arrivée ; label : étiquette de la carte, posée en at (tuiles)
 const ZONES = [
-  { id: 'riviere', name: 'La rivière', label: 'Rivière', at: [35, 27.6], has: (x, y) => y >= 24.5 && y < 30.5 },
-  { id: 'foret', name: 'La grande forêt', label: 'Grande forêt', at: [60, 40.5], has: (x, y) => y >= 30.5 && x >= 40 },
-  { id: 'parc', name: 'Le parc des enfants', label: 'Parc des enfants', at: [20, 39.5], has: (x, y) => y >= 30.5 },
+  { id: 'foret', name: 'La grande forêt', label: 'Grande forêt', at: [60, 40.5], has: (x, y) => y >= RIVER_MID && x >= 40 },
+  { id: 'parc', name: 'Le parc des enfants', label: 'Parc des enfants', at: [20, 39.5], has: (x, y) => y >= RIVER_MID },
   { id: 'ferme', name: 'La ferme des Tilleuls', label: 'Ferme des Tilleuls', at: [58.5, 2.6], has: (x, y) => x >= 40.6 },
   { id: 'industrie', name: 'La zone industrielle', label: 'Zone industrielle', at: [31, 20.2], has: (x, y) => y >= 16.5 && x >= 21.5 },
   { id: 'village', name: 'Le village', label: 'Village', at: [31, 1.4], has: (x, y) => x >= 19.5 && y < 16.5 },
@@ -2433,6 +2433,7 @@ const ZONES = [
   { id: 'niche', name: 'La niche de Tecky', label: 'Niche de Tecky', at: [5.5, 1.4], has: () => true },
 ];
 const zoneAt = (x, y) => ZONES.find(z => z.has(x / TS, y / TS));
+const LANDMARKS = [{ label: 'Rivière', at: [35, RIVER_MID] }];   // autres étiquettes de la carte de la pause
 const BANNER = { settle: 0.8, life: 3 };
 let zone = null, zoneT = 0, banner = null;
 function updateZone(dt) {
@@ -2495,7 +2496,7 @@ function drawPauseMap() {
     ctx.save(); ctx.imageSmoothingEnabled = true; ctx.drawImage(fog, x0, y0, w, h); ctx.restore();
   }
   const seenAt = (tx, ty) => seenCells[Math.min(H - 1, Math.floor(ty / MAPV.cell)) * W + Math.min(W - 1, Math.floor(tx / MAPV.cell))];
-  for (const z of ZONES) if (seenAt(z.at[0], z.at[1])) outlined(z.label, mx(z.at[0] * TS), my(z.at[1] * TS) + 12, 30, '#FFF7E6');
+  for (const z of ZONES.concat(LANDMARKS)) if (seenAt(z.at[0], z.at[1])) outlined(z.label, mx(z.at[0] * TS), my(z.at[1] * TS) + 12, 30, '#FFF7E6');
   // repères
   for (const g of digs) if (g.dug) drawSpr('item/goldbone', 0, mx(g.x), my(g.y) - 4, { sc: 0.55 });
   CLUES.forEach((n, i) => {
