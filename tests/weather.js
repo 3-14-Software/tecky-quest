@@ -58,7 +58,7 @@ function main() {
   run('arcs = 0; sun = SUN.lamp + 0.6; drawRainbow();');
   ok(run('arcs') === 0, '… et disparaît');
   run('opts.weather = "pluie"; resetWeather(); clues = [true, true, true]; sun = 3;'); step(60 * 10);
-  ok(run('weather.k') === 1 && run('lampsOn()'), 'une averse la nuit');
+  ok(run('weather.k') === 1 && run('lampsOn()'), 'une averse au crépuscule');
   run('opts.weather = "soleil";'); step(60 * 8);
   ok(run('weather.k') === 0 && run('weather.bow') === 0, 'elle finit : pas d’arc-en-ciel la nuit');
   run('delete ctx.arc; opts.weather = "auto";');

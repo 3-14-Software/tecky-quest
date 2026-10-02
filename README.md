@@ -6,8 +6,8 @@ ensuite, et Alice ne sort de sa cachette qu'une fois les trois retrouvées. En c
 chiens (dont les chiens de berger, qui chargent), gratte la terre pour déterrer des trésors, ramasse des os (qui rendent
 de la vie) et des saucisses (qui ajoutent un os de vie maximum). Sur une grande carte, il traverse campagne, route (gare aux voitures :
 mieux vaut passer par les passages piétons), village, zone industrielle et son port, ferme, rivière (un seul pont), forêt et parc.
-La journée avance avec la recherche : un cran par indice, du plein jour au coucher de soleil orangé, quand les
-lampadaires s'allument, puis à la nuit bleutée. De temps en temps,
+La journée avance avec la recherche : un cran par indice, du plein jour au coucher de soleil orangé ; au troisième, les
+lampadaires s'allument, et la nuit tombe quand Tecky et Alice rentrent à la niche. De temps en temps,
 une averse (flaques, arc-en-ciel, Tecky qui s'ébroue) ; en décembre, il neige.
 En chemin : le fermier Gaston (allez lui parler, C) a besoin d'aide pour ramener ses poules dans l'enclos, Marcel le
 facteur a perdu ses lettres dans le vent, Mamie Rose cherche son chat Pompon, Léon, au port, a laissé rouler ses gros ballons (à pousser dans son filet, comme au foot), Nestor, le vieux chien du gardien, attend qu'on lui rapporte ses jouets, Maman Piquette, la maman hérisson, cherche ses trois petits cachés dans la forêt, Titine, le petit train du quai, siffle quand on lui aboie dessus, des écureuils et des chats
@@ -21,7 +21,7 @@ Le village et la cour de la ferme sont des zones calmes : aucun chien n'y embêt
 
 Deux modes au choix sur l'écran titre : **aventure** (les chiens mordent) et **balade**, pour les plus petits (personne ne
 se fait mal : les chiens attendent qu'on joue avec eux et deviennent des copains). La partie est enregistrée automatiquement dans le navigateur
-(« Continuer » sur l'écran titre, « Reprendre la partie » après un KO), elle se met en pause toute seule quand on quitte la fenêtre ou que la manette se débranche, et les records (meilleur score, meilleur temps)
+(« Continuer » sur l'écran titre, « Reprendre la partie » après un KO), elle se met en pause toute seule quand on quitte la fenêtre ou que la manette se débranche, et les records (meilleur score, meilleur temps, meilleure complétion)
 sont gardés pour chaque mode. Les options (menu principal ou pause) règlent la musique, les bruitages, la difficulté
 (« facile » : plus d'os, morsures moins fortes, moins de chiens), la taille du texte, l'image, les vibrations (manette et téléphone), la météo et le plein écran.
 

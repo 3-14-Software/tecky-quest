@@ -38,13 +38,17 @@ function main() {
   const s1 = sunAfter(1, 'clues = [true, false, false]');
   ok(s1 > 0.1 && s1 < 0.5, 'premier indice : la lumière commence à baisser (' + s1.toFixed(2) + ' après 1 s)');
   ok(Math.abs(sunAfter(4, '') - 1) < 1e-6, 'puis atteint l’après-midi (1)');
-  ok(Math.abs(sunAfter(9, 'clues = [true, true, true]') - 3) < 1e-6, 'trois indices : la nuit (3)');
-  ok(run('Math.max(0, sun - 1.5)') > 0 && run('decor.some(d => d.n === "lamppost")'), 'les lampadaires sont allumés');
+  ok(Math.abs(sunAfter(5, 'clues = [true, true, false]') - 2) < 1e-6 && !run('lampsOn()'), 'deux indices : le coucher de soleil (2), sans lampadaires');
+  ok(Math.abs(sunAfter(5, 'clues = [true, true, true]') - 3) < 1e-6, 'trois indices : toujours le coucher (3)…');
+  ok(run('lampsOn()') && run('decor.some(d => d.n === "lamppost")'), '… mais les lampadaires sont allumés');
+  ok(run('sunAt(SUN.tints.map(t => t[2]), 3)') > 150, 'pas encore la nuit bleutée');
   run('render()');
   run('revealAlice(); P.x = alice.x - 100; P.y = alice.y + 10; P.mode = "free";'); step(2);
-  ok(run('alice.found') && run('sunGoal()') === 4, 'retrouvailles (4)');
-  advanceDialog(); step(60 * 5);
-  ok(Math.abs(run('sun') - 4) < 1e-6, 'atteinte pendant la scène de fin');
+  ok(run('alice.found') && run('sunGoal()') === 3, 'retrouvailles : encore le coucher de soleil (3)');
+  step(60 * 5);
+  ok(Math.abs(run('sun') - 3) < 1e-6 && run('hug') === 1, 'la lumière chaude autour d’eux');
+  advanceDialog(); step(60 * 6);
+  ok(Math.abs(run('sun') - 4) < 1e-6, 'la nuit tombe pendant la scène de fin (4)');
   run('pressed.ok = true'); step(1); step(70);   // scène de fin passée, écran de victoire
   run('render()');
   run('pressed.ok = true'); step(1);

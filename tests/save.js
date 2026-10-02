@@ -71,15 +71,17 @@ function main() {
   };
   win(900, 1500);
   ok(run('state') === 'win' && !('tecky-quest-save' in run('LS')), 'victoire : la sauvegarde est effacée');
-  ok(run('JSON.stringify(JSON.parse(LS[RECORDS_KEY]).aventure)') === '{"score":900,"time":1500,"wins":1}' &&
-     run('newRecord.score && newRecord.time'), 'premiers records en aventure (900 points, 25 min)');
+  const done1 = run('winDone');
+  ok(run('JSON.stringify(JSON.parse(LS[RECORDS_KEY]).aventure)') === `{"score":900,"time":1500,"done":${done1},"wins":1}` &&
+     run('newRecord.score && newRecord.time && newRecord.done'), 'premiers records en aventure (900 points, 25 min, ' + done1 + ' %)');
   run('pressed.ok = true'); step(1);
-  ok(run('state') === 'title' && ids() === 'aventure,balade,options,badges' && /900 points · 25 min 00 s/.test(run('recordLine("aventure")')),
+  ok(run('state') === 'title' && ids() === 'aventure,balade,options,badges' && new RegExp('900 points · 25 min 00 s · ' + done1 + '\u00a0%').test(run('recordLine("aventure")')),
      'retour au menu : records affichés (' + run('recordLine("aventure")') + ')');
   run('pressed.ok = true'); step(1); advanceDialog();
+  run('farm.state = post.state = rose.state = "done"');     // (trois quêtes de plus : meilleure complétion)
   win(1200, 1800);
-  ok(run('newRecord.score') && !run('newRecord.time'), 'meilleur score battu, pas le meilleur temps');
-  ok(run('JSON.stringify(JSON.parse(LS[RECORDS_KEY]).aventure)') === '{"score":1200,"time":1500,"wins":2}', 'records : 1200 points, 25 min gardées');
+  ok(run('newRecord.score') && !run('newRecord.time') && run('newRecord.done') && run('winDone') > done1, 'meilleur score battu, meilleure complétion, pas le meilleur temps');
+  ok(run('JSON.stringify(JSON.parse(LS[RECORDS_KEY]).aventure)') === `{"score":1200,"time":1500,"done":${run('winDone')},"wins":2}`, 'records : 1200 points, 25 min gardées');
   run('pressed.ok = true'); step(1); run('menu.sel = 1; pressed.ok = true'); step(1); advanceDialog();
   ok(run('gameMode') === 'balade', 'nouvelle balade depuis le menu');
   win(300, 2000);

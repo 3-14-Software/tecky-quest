@@ -987,7 +987,7 @@ function reset() {
   digs = MAP.dig.map(([x, y]) => ({ x, y, dug: false, t: Math.random() * 2 }));
   fxs = []; pops = []; rings = []; dusts = []; leaves = []; leafTrees = null;
   score = 0; timePlayed = 0; fled = 0; treasures = 0; shake = 0; barkImmuneSeen = false; pendingSay = null;
-  clues = [false, false, false]; aliceSniffed = false; arrowT = 0; stuckT = 0; sun = 0; saveT = 0;
+  clues = [false, false, false]; aliceSniffed = false; arrowT = 0; stuckT = 0; sun = 0; hug = 0; saveT = 0;
   camX = clamp(P.x - VW / 2, 0, MAP.w * TS - VW);
   camY = clamp(P.y - VH / 2, 0, MAP.h * TS - VH);
 }
@@ -2716,15 +2716,21 @@ function drawClouds(cx, cy) {
 }
 
 /* Du jour à la nuit : la lumière suit la progression, un cran par indice. 0 : plein jour ; 1 : fin d'après-midi ;
-   2 : coucher de soleil orangé, les lampadaires s'allument (passé SUN.lamp) ; 3 : nuit bleutée, plus sombre, pour faire
-   ressortir les lumières ; 4 (retrouvailles avec Alice) : toujours la nuit, une lumière chaude autour d'eux.
-   Teinte multipliée sur le monde (pas sur l'interface), halo doré venant de l'ouest au coucher, vignette le soir. */
-const SUN = { speed: 0.25, lamp: 1.5,
-  tints: [[255, 255, 255], [255, 241, 220], [255, 214, 170], [132, 142, 196], [142, 152, 204]],
-  glow: [0, 0.08, 0.2, 0, 0], vignette: [0, 0, 0.08, 0.3, 0.2] };
-const sunGoal = () => alice.found ? 4 : clues.filter(Boolean).length;
+   2 : coucher de soleil orangé ; 3 (troisième indice, puis les retrouvailles) : le soleil se couche encore, un peu plus
+   rouge, et les lampadaires s'allument (passé SUN.lamp : plus d'arc-en-ciel) ; 4 : la nuit bleutée, qui ne tombe que
+   pendant la scène de fin, quand Tecky et Alice rentrent à la niche (et reste sur l'écran de victoire).
+   Teinte multipliée sur le monde (pas sur l'interface), halo doré venant de l'ouest au coucher, vignette le soir.
+   hug : la lumière chaude autour d'Alice et de Tecky, qui monte une fois qu'il l'a trouvée. */
+const SUN = { speed: 0.25, lamp: 2.5,
+  tints: [[255, 255, 255], [255, 241, 220], [255, 214, 170], [250, 198, 160], [132, 142, 196]],
+  glow: [0, 0.08, 0.2, 0.24, 0], vignette: [0, 0, 0.08, 0.14, 0.3] };
+let hug = 0;
+const sunGoal = () => !alice.found ? clues.filter(Boolean).length : (ending && ending.home) || state === 'win' ? 4 : 3;
 const lampsOn = () => sun > SUN.lamp;
-function updateSun(dt) { sun += clamp(sunGoal() - sun, -SUN.speed * dt, SUN.speed * dt); }
+function updateSun(dt) {
+  sun += clamp(sunGoal() - sun, -SUN.speed * dt, SUN.speed * dt);
+  hug += clamp((alice.found ? 1 : 0) - hug, -SUN.speed * dt, SUN.speed * dt);
+}
 const sunAt = (arr, k) => { const i = Math.min(arr.length - 2, Math.floor(k)), f = k - i; return arr[i] + (arr[i + 1] - arr[i]) * f; };
 /* Pour rester rapide (Firefox dessine souvent le canvas avec le processeur : les dégradés recalculés à chaque image sur
    tout l'écran coûtaient plus de 150 ms par image en 4K), la teinte est un simple remplissage, et la vignette et le
@@ -2774,14 +2780,13 @@ function drawLight(cx, cy) {
   ctx.drawImage(lightImg, cx, cy, VW, VH);
   ctx.imageSmoothingEnabled = true;
   // lampadaires allumés en fin de journée : halo autour de la lanterne et flaque de lumière au sol, plus forts la nuit
-  const lamp = clamp(k - SUN.lamp, 0, 1), night = clamp(k - 2, 0, 1);
+  const lamp = clamp((k - SUN.lamp) * 2, 0, 1), night = clamp(k - 3, 0, 1);
   if (lamp > 0) for (const d of decor) {
     if (d.n !== 'lamppost' || d.x < cx - 160 || d.x > cx + VW + 160 || d.y < cy - 40 || d.y > cy + VH + 200) continue;
     glowSpot(d.x, d.y - 93, 64 + 16 * night, (0.55 + 0.3 * night) * lamp);
     glowSpot(d.x, d.y - 4, 70 + 40 * night, (0.3 + 0.3 * night) * lamp);
   }
   // retrouvailles : une lumière chaude autour d'Alice et de Tecky
-  const hug = clamp(k - 3, 0, 1);
   if (hug > 0) glowSpot((alice.x + P.x) / 2, (alice.y + P.y) / 2 - 50, 260, 0.45 * hug);
   if (ending && ending.home) drawFireflies();
   ctx.restore();
@@ -3128,13 +3133,15 @@ function newGame(mode, again) {
     () => { showArrow(); saveGame(); });
 }
 
-let recs = {}, newRecord = { score: false, time: false };
+let recs = {}, newRecord = { score: false, time: false, done: false }, winDone = 0;
 const recKey = (mode, diff) => mode + (diff === 'facile' ? '-facile' : '');     // records à part en facile
 function recordRun() {
   const all = STORE.get(RECORDS_KEY) || {}, k = recKey(gameMode, gameDiff), r = all[k] || {}, t = Math.floor(timePlayed);
-  newRecord = { score: !(r.score >= score), time: !(r.time <= t) };
+  winDone = completion();               // (calculée une fois : la scène de fin renvoie des chiens chez eux)
+  newRecord = { score: !(r.score >= score), time: !(r.time <= t), done: !(r.done >= winDone) };
   if (newRecord.score) r.score = score;
   if (newRecord.time) r.time = t;
+  if (newRecord.done) r.done = winDone;
   r.wins = (r.wins || 0) + 1;
   all[k] = r;
   STORE.set(RECORDS_KEY, all);
@@ -3145,7 +3152,8 @@ const MODE_NAME = { aventure: 'Aventure', balade: 'Balade' };
 function recordLine(mode) {
   const r = recs[recKey(mode, opts.diff)];
   if (!r || !r.wins) return '';
-  return 'Records en ' + mode + (opts.diff === 'facile' ? ' facile' : '') + ' : ' + r.score + ' points · ' + fmtTime(r.time);
+  return 'Records en ' + mode + (opts.diff === 'facile' ? ' facile' : '') + ' : ' + r.score + ' points · ' + fmtTime(r.time) +
+    (r.done >= 0 ? ' · ' + r.done + '\u00a0%' : '');
 }
 
 /* ------------------------------------------------------------------ menus (écran titre, KO) */
@@ -3906,7 +3914,8 @@ function finale() {
 }
 
 /* ------------------------------------------------------------------ la fin */
-/* Après les retrouvailles : fondu au noir, Tecky et Alice remontent le chemin de la niche, la nuit, parmi les lucioles ;
+/* Après les retrouvailles : fondu au noir, Tecky et Alice remontent le chemin de la niche au coucher du soleil ; la nuit
+   tombe (sunGoal() passe à 4) et les lucioles s'allument avec elle ;
    Alice saute de joie, Tecky s'assoit, bâille et s'endort à ses pieds. Un iris se referme sur eux, « Fin », puis l'écran
    de victoire. La berceuse (variation lente du thème) joue jusqu'au retour au menu. Après `skip` s, un bouton passe
    directement à la victoire. Positions en pixels du monde ; `from` : y de départ, au bas de l'écran. */
@@ -3917,7 +3926,8 @@ function startEnding() {
   state = 'ending'; ending = { t: 0, home: false, flies: [] };
   Music.stop(); Music.start('end');
 }
-// au noir : tout le monde au bas du chemin de la niche, la caméra fixée sur la niche ; la pluie s'arrête, c'est la nuit
+// au noir : tout le monde au bas du chemin de la niche, la caméra fixée sur la niche ; la pluie s'arrête, le soleil se
+// couche (la nuit tombe ensuite, à la vitesse de SUN.speed)
 function endingHome() {
   const E = ENDING;
   ending.home = true;
@@ -3926,7 +3936,7 @@ function endingHome() {
   camX = clamp(E.alice[0] - VW / 2, 0, MAP.w * TS - VW); camY = clamp(E.alice[1] - 40 - VH / 2, 0, MAP.h * TS - VH);
   fxs = []; pops = []; rings = []; dusts = []; leaves = []; butterflies = []; drops = []; flakes = [];
   dogs = dogs.filter(d => d.x < camX - 150 || d.x > camX + VW + 150 || d.y < camY - 100 || d.y > camY + VH + 200);   // pas de chiens
-  weather.k = 0; weather.on = false; sun = sunGoal();      // la nuit des retrouvailles, sans transition (au noir)
+  weather.k = 0; weather.on = false; sun = 3; hug = 1;     // (au noir : sans transition, si le joueur a fait vite)
   ending.flies = Array.from({ length: E.flies }, () => ({ x: camX + 40 + Math.random() * (VW - 80),
     y: camY + 40 + Math.random() * (VH - 80), p: Math.random() * 7 }));
 }
@@ -3940,7 +3950,7 @@ function endingPose() {
 function endingDone() {
   if (!ending.home) endingHome();
   endingPose();
-  ending = null; state = 'win'; overT = 0;
+  ending = null; state = 'win'; overT = 0; sun = 4;      // (scène passée : directement la nuit)
   fadeFrom(0.8);
 }
 const endingEnd = () => ENDING.iris + ENDING.irisDur + ENDING.hold + ENDING.close + ENDING.fin;
@@ -3971,7 +3981,7 @@ function drawFireflies() {
   const t = ending.t;
   for (const f of ending.flies) {
     const x = f.x + Math.sin(t * 0.7 + f.p) * 46, y = f.y + Math.sin(t * 1.1 + f.p * 1.3) * 28;
-    const a = clamp(0.45 + 0.45 * Math.sin(t * 2.2 + f.p * 3), 0, 1) * clamp(t - ENDING.fade, 0, 1);
+    const a = clamp(0.45 + 0.45 * Math.sin(t * 2.2 + f.p * 3), 0, 1) * clamp(sun - 3, 0, 1);   // avec la nuit
     glowSpot(x, y, 26, 0.5 * a);
     ctx.fillStyle = `rgba(255, 246, 170, ${a})`; ctx.fillRect(x - 2, y - 2, 4, 4);
   }
@@ -4588,12 +4598,12 @@ function drawEnd(win) {
   newBadges.forEach((id, i) => drawSpr('hud/badge', MAP.badges.indexOf(id), GW / 2 - newBadges.length * 30 + i * 60 + 4, py + 242, { sc: 0.55 }));
   const rows = [['Score', String(score)], ['Temps', fmtTime(timePlayed)],
     ['Os dorés', treasures + ' / ' + MAP.dig.length], [balade() ? 'Copains de jeu' : 'Chiens mis en fuite', String(fled)],
-    [balade() ? 'Balade complétée' : 'Aventure complétée', completion() + '\u00a0%']];
+    [balade() ? 'Balade complétée' : 'Aventure complétée', winDone + '\u00a0%']];
   rows.forEach(([k, v], i) => {
     text(k, px + 180, py + 320 + i * 46, 34, '#6B5A4E', 'left', 500);
     text(v, px + pw - 180, py + 320 + i * 46, 34, '#3A1E12', 'right', 600);
-    // meilleur score, meilleur temps : une étiquette dorée à côté de la valeur
-    if ((i === 0 && newRecord.score) || (i === 1 && newRecord.time)) {
+    // meilleur score, meilleur temps, meilleure complétion : une étiquette dorée à côté de la valeur
+    if ((i === 0 && newRecord.score) || (i === 1 && newRecord.time) || (i === 4 && newRecord.done)) {
       ctx.save(); ctx.translate(px + pw - 98, py + 308 + i * 46); ctx.rotate(-0.08);
       outlined('Record !', 0, 0, 26, '#F2C14E'); ctx.restore();
     }

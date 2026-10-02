@@ -20,21 +20,23 @@ function main() {
   run('onLeave();');
   ok(run('state') === 'ending', 'pas de pause automatique pendant la fin');
   step(70);
-  ok(run('ending.home') && run('sun') === 4 && run('butterflies.length') === 0, 'au noir : tout le monde à la niche, la nuit');
+  ok(run('ending.home') && run('sun') < 3.1 && run('butterflies.length') === 0, 'au noir : tout le monde à la niche, au coucher du soleil');
+  ok(run('clamp(sun - 3, 0, 1)') < 0.1, 'pas encore de lucioles');
   ok(run('dogs.every(d => d.x > camX + VW || d.y > camY + VH)'), 'aucun chien dans la scène');
   ok(run('alice.y') > run('ENDING.alice[1]') && run('alice.anim') === 'walk' && run('P.anim') === 'walk', 'ils remontent le chemin');
   ok(run('Math.abs(camX - clamp(ENDING.alice[0] - VW / 2, 0, MAP.w * TS - VW)) < 1'), 'la caméra regarde la niche');
   step(60 * 7);
   ok(run('alice.y') === run('ENDING.alice[1]') && run('alice.dir') === 'down', 'Alice arrive devant la niche');
   ok(run('P.anim') === 'sleep' && run('P.dir') === 'left' && run('fxs.some(f => f.key === "fx/zzz")'), 'Tecky s’endort à ses pieds (des « z »)');
-  ok(run('ending.flies.length') === run('ENDING.flies'), 'des lucioles');
+  ok(run('ending.flies.length') === run('ENDING.flies') && run('sun') > 3.9, 'la nuit est tombée, avec les lucioles');
   step(Math.ceil(60 * (run('endingEnd()') - run('ending.t'))) + 2);
   ok(run('state') === 'win' && run('fade.a') > 0.5, 'puis l’écran de victoire, qui sort du noir');
   ok(run('P.anim') === 'sleep' && run('Music.cur') === 'end', 'Tecky dort toujours, la berceuse continue');
   // complétion : un pourcentage sur l'écran de victoire
-  const pc = run('completion()');
+  const pc = run('winDone');           // (figée aux retrouvailles : la scène de fin dévoile la carte autour de la niche)
   run('var said = []; ctx.fillText = s => said.push(String(s)); overT = 2; render(); delete ctx.fillText;');
-  ok(pc >= 0 && pc < 100 && run(`said.includes("Aventure complétée") && said.includes("${pc}\u00a0%")`), 'écran de victoire : aventure complétée à ' + pc + ' %');
+  ok(pc >= 0 && pc < 100 && run('winDone') === pc && run(`said.includes("Aventure complétée") && said.includes("${pc}\u00a0%")`), 'écran de victoire : aventure complétée à ' + pc + ' %');
+  ok(run('newRecord.done') && run('said.filter(s => s === "Record !").length') === 3, 'premier record de complétion : « Record ! »');
   run('treasures = MAP.dig.length; farm.state = post.state = rose.state = fete.state = nest.state = piq.state = "done";' +
       'critters.forEach(c => c.scored = true); ducks.forEach(d => d.scored = true); seenCells.fill(1);');
   ok(run('completion()') === 100, 'tout trouvé, toutes les quêtes, toute la carte : 100 %');

@@ -76,9 +76,11 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   arbres et sapins visibles (`leaves`, `LEAF`, sprite `fx/leaf` : une image par couleur), ombres de nuages pré-rendues
   (`clouds`, `CLOUD`, `buildClouds()`), du jour à la nuit (`sun`, `SUN`, `drawLight()` : teinte multipliée sur le
   monde seulement ; vignette et halo pré-rendus en petit par `buildLight()` ; lampadaires et lumière des retrouvailles
-  par `glowSpot()`). `sun` suit `sunGoal()` = nombre d'indices (4 aux retrouvailles) : il est donc restauré avec la
-  sauvegarde. 0 plein jour, 1 fin d'après-midi, 2 coucher orangé (lampadaires allumés passé `SUN.lamp`, `lampsOn()`),
-  3 nuit bleutée et plus sombre (lampadaires plus forts), 4 la nuit avec la lumière des retrouvailles.
+  par `glowSpot()`, `hug`). `sun` suit `sunGoal()` = nombre d'indices (3 aux retrouvailles, 4 pendant la scène de fin
+  et l'écran de victoire) : il est donc restauré avec la sauvegarde. 0 plein jour, 1 fin d'après-midi, 2 coucher
+  orangé, 3 (troisième indice) toujours le coucher, un peu plus rouge, lampadaires allumés (passé `SUN.lamp`,
+  `lampsOn()` : plus d'arc-en-ciel), 4 la nuit bleutée (lampadaires plus forts), qui tombe quand Tecky et Alice
+  rentrent à la niche.
 - Version (`VERSION`, écrite par `version()` de pack_web : la date de construction) en bas à droite de l'écran titre.
 - Menus (`menu`, `openTitleMenu()`, `openOverMenu()`, `openPauseMenu()`, `menuInput()`, `menuHit()`, `chooseMenu()`) :
   écran titre (Continuer s'il y a une sauvegarde, Nouvelle aventure, Nouvelle balade, Options, Badges, records du
@@ -156,7 +158,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   puis souffle (`tired`) ; un aboiement pendant l'accroupissement annule la charge. Tests : `clues.js`, `berger.js`, `map.js`.
 - Fin : retrouver Alice → dialogue + fanfare (`Music.start('win')`, une seule fois, le thème ne repart pas) → scène de fin
   (`state === 'ending'`, `ending`, `ENDING`, `startEnding()`, `updateEnding()`, `drawEnding()`) : fondu au noir, Tecky et
-  Alice remontent le chemin de la niche la nuit, parmi les lucioles (`drawFireflies()`, avec la lumière), Tecky s'endort
+  Alice remontent le chemin de la niche au coucher du soleil, la nuit tombe et les lucioles s'allument
+  (`drawFireflies()`, avec la lumière), Tecky s'endort
   à ses pieds (`snooze()`, partagé avec le repos), iris qui se referme, « Fin » ; berceuse (`Music.start('end')`, en
   boucle jusqu'au menu). Un bouton la passe après `ENDING.skip` s (`endingDone()`) → écran de victoire, qui sort du noir
   (`fadeFrom()` : fondu de l'écran entier, `drawFade()`), avec le pourcentage de complétion (`completion()` : os dorés,
@@ -167,8 +170,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   indice et trésor (fin de réplique), en quittant la page (`pagehide`, onglet caché) ; jamais KO ni après la victoire.
   Contenu : mode, place, os, score, temps, indices, trésors, objets au sol, chiens restants (`d.id` = index dans
   `MAP.enemies`). `loadGame(s, rested)` : Continuer, ou reprise après KO (`rested` = vie pleine). La victoire efface la
-  sauvegarde et met à jour les records du mode (`recordRun()` : meilleur score, meilleur temps, nombre de victoires ;
-  `newRecord` pour les étiquettes « Record ! »). Toute nouvelle donnée de partie doit entrer dans `saveGame()` /
+  sauvegarde et met à jour les records du mode (`recordRun()` : meilleur score, meilleur temps, meilleure complétion
+  `done`, calculée une fois `winDone`, nombre de victoires ; `newRecord` pour les étiquettes « Record ! »). Toute nouvelle donnée de partie doit entrer dans `saveGame()` /
   `loadGame()` (test : `save.js`).
 - Mode balade (`gameMode`, `balade()`, `PLAY`) : **personne ne se fait mal**. `hurtPlayer()` sans effet, `threatened()`
   toujours faux, `doBite()` ne blesse aucun chien ; pas d'aboiement (doberman) ni de charge (berger). Les chiens viennent
