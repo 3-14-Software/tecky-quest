@@ -966,6 +966,8 @@ function reset() {
   letters = MAP.letters.map(([x, y]) => ({ x, y, t: Math.random() * 2, got: false }));
   neighbor = newNpc('neighbor', MAP.neighbor, 1.35); rose = { state: 'new' }; pompon = newPompon();
   leon = newNpc('leon', MAP.leon, 0.95); fete = { state: 'new' }; balls = MAP.balls.map(newBall);
+  nestor = Object.assign(newNpc('nestor', MAP.nestor, 0.62), { markY: NESTOR.markY, woof: true }); nest = { state: 'new' };
+  toys = MAP.toys.map(newToy);
   critters = MAP.critters.map(newCritter);
   ducks = MAP.ducks.map(newDuck); linkDucks();
   bitten = false; newBadges = []; toasts = []; napped = false;
@@ -991,6 +993,7 @@ const WHO = {
   postman: { name: 'Marcel', portrait: 'hud/portrait_postman' },
   neighbor: { name: 'Mamie Rose', portrait: 'hud/portrait_neighbor' },
   leon: { name: 'Léon', portrait: 'hud/portrait_leon' },
+  nestor: { name: 'Nestor', portrait: 'hud/portrait_nestor' },
   info:  { name: '', portrait: null },
 };
 // une réplique demandée pendant un dialogue passe à la suite (ex. : le fermier parle, et Tecky ramasse la barrette)
@@ -1095,6 +1098,7 @@ function hurtDog(d, dmg, kx, ky, stun) {
 }
 
 function doBark() {
+  dropToy('Oups !');                   // on n'aboie pas la gueule pleine
   const [vx, vy] = DIRV[P.dir];
   const mouth = { right: [40, -44], left: [-40, -44], up: [0, -86], down: [0, -26] }[P.dir];
   const ang = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 }[P.dir];
@@ -1328,6 +1332,7 @@ function updateHen(h, dt) {
 }
 
 function doBite() {
+  dropToy('Oups !');
   const [vx, vy] = DIRV[P.dir];
   const hx = P.x + vx * 58, hy = P.y - 22 + vy * 46;
   addFx('fx/bite', hx, hy, { fps: 18 });
@@ -1703,6 +1708,7 @@ function updateFarmer(dt) {           // tous les personnages
   for (const n of npcList()) updateNpcAnim(n, dt);
   neighbor.worried = rose.state !== 'done' && pompon.mode !== 'home';
   leon.worried = ballsLeft() > 0;
+  nestor.worried = toysLeft() > 0;
 }
 function drawNpc(n) {
   const k = n.kind + '/' + n.anim;
@@ -1716,19 +1722,21 @@ function drawNpc(n) {
    saluent d'une petite exclamation (bulle de mots, sans bloquer le jeu). NPC_DO : par personnage, bulle (0 « ! »,
    1 « ? », -1 aucune), salut et conversation. */
 const NPC = { talk: 150, markY: 150 };
-const npcList = () => [farmer, postman, neighbor, leon];
+const npcList = () => [farmer, postman, neighbor, leon, nestor];
 const NPC_DO = {
   farmer: { mark: farmerMark, greet: farmerGreet, talk: talkFarmer },
   postman: { mark: postmanMark, greet: postmanGreet, talk: talkPostman },
   neighbor: { mark: neighborMark, greet: neighborGreet, talk: talkNeighbor },
   leon: { mark: leonMark, greet: leonGreet, talk: talkLeon },
+  nestor: { mark: nestorMark, greet: nestorGreet, talk: talkNestor },
 };
+const markY = n => n.markY || NPC.markY;            // hauteur de la bulle (Nestor, assis, est plus petit)
 function nearNpc() {
   let best = null, bd = NPC.talk;
   for (const n of npcList()) { const d = dist(P.x, P.y, n.x, n.y); if (d < bd) { best = n; bd = d; } }
   return best;
 }
-function npcShout(n, text) { addWordPop(text, n.x, n.y - 140); SFX.hey(n.pitch); }
+function npcShout(n, text) { addWordPop(text, n.x, n.y - markY(n) + 10); if (n.woof) SFX.yip(n.pitch); else SFX.hey(n.pitch); }
 function talkTo(n) { P.dir = dirFrom(n.x - P.x, n.y - P.y, P.dir); P.setAnim('idle'); NPC_DO[n.kind].talk(); }
 function updateNpcs() {               // petit salut quand Tecky arrive près d'un personnage
   const near = nearNpc();
@@ -2004,6 +2012,108 @@ function talkLeon() {
     { who: 'leon', face: 3, text: "Salut, petit chien ! Je devais livrer ces gros ballons pour la fête du parc… mais le carton s'est ouvert, et ils ont roulé partout !" },
     { who: 'leon', face: 0, text: "Tu veux bien les pousser dans le grand filet, à côté de moi ? Fonce dedans, ou aboie derrière eux : comme au foot !" },
     { who: 'tecky', face: 2, text: "Ouaf ! Je vais marquer des buts !" },
+  ], saveGame);
+}
+
+/* ------------------------------------------------------------------ Nestor et ses jouets */
+/* Nestor, le vieux chien du gardien du port (un personnage, pas un chien de `dogs`), ne court plus : ses trois jouets
+   (MAP.toys : canard, anneau, corde ; port.py) sont éparpillés. Tecky en prend un dans la gueule en passant dessus (un
+   seul à la fois : `carried`), le lâche devant lui s'il aboie ou mord, ou s'il est KO, et le donne à Nestor en arrivant
+   près de lui (NESTOR.give) : le jouet reste à côté de Nestor, qui remue la queue. Comme les autres personnages, Nestor
+   ne parle que si Tecky vient le voir : il demande, rappelle, remercie (une saucisse et des points). Tout marche aussi
+   avant de lui avoir parlé. Sauvegardé (nest, toys ; un jouet porté l'est par terre, aux pieds de Tecky). */
+const NESTOR = { reward: 150, perToy: 20, pick: 54, give: 110, markY: 96, home: [[-46, 10], [46, 12], [-22, 28]],
+  regrab: 1.2 };     // regrab : un jouet lâché ne se reprend pas tout de suite (Tecky est juste à côté)
+const TOY_NAMES = ['Le canard de Nestor !', 'L’anneau de Nestor !', 'La corde de Nestor !'];
+const MOUTH = { right: [38, -40], left: [-38, -40], up: [0, -78], down: [0, -22] };   // gueule de Tecky (jouet porté)
+let nest = { state: 'new' }, nestor = null, toys = [];
+const toysLeft = () => toys.filter(t => !t.home).length;
+const carried = () => toys.find(t => t.carried);
+function newToy([x, y], i) { return { i, x, y, home: false, carried: false, t: Math.random() * 2, cd: 0 }; }
+function dropToy(word) {
+  const t = carried();
+  if (!t) return;
+  t.carried = false; t.cd = NESTOR.regrab;
+  t.x = P.x + MOUTH[P.dir][0] * 0.8; t.y = P.y + (P.dir === 'up' ? -28 : P.dir === 'down' ? 26 : 6);
+  if (blockedFeet(t.x, t.y, 8)) { t.x = P.x; t.y = P.y; }     // jamais dans l'eau ni dans un obstacle
+  if (word) addWordPop(word, P.x, P.y - 120);
+}
+function giveToy(t) {
+  const [hx, hy] = NESTOR.home[toys.filter(o => o.home).length];
+  t.carried = false; t.home = true; t.x = nestor.x + hx; t.y = nestor.y + hy;
+  score += NESTOR.perToy;
+  addPop('+' + NESTOR.perToy, nestor.x - 20, nestor.y - 120);
+  nestor.cheerT = 2.2;
+  const left = toysLeft();
+  npcShout(nestor, left ? (nest.state === 'asked' ? 'Wouf ! Encore ' + left + ' !' : 'Wouf ? Mon jouet !')
+    : nest.state === 'asked' ? 'Tous mes jouets ! Viens me voir !' : 'Mes jouets ! Wouf !');
+}
+function updateToys(dt) {
+  for (const t of toys) { t.t += dt; t.cd = Math.max(0, t.cd - dt); }
+  const c = carried();
+  if (c) {
+    if (P.mode === 'ko') dropToy();
+    else if (dist(P.x, P.y, nestor.x, nestor.y) < NESTOR.give) giveToy(c);
+    return;
+  }
+  if (P.mode === 'ko' || P.alpha === 0) return;
+  for (const t of toys) {
+    if (t.home || t.cd > 0 || dist(P.x, P.y, t.x, t.y) > NESTOR.pick) continue;
+    t.carried = true;
+    addWordPop(nest.state === 'new' ? 'Un jouet ?' : TOY_NAMES[t.i], P.x, P.y - 120);
+    SFX.pick();
+    break;
+  }
+}
+function drawToy(t) {
+  if (t.carried) {
+    if (P.alpha === 0) return;
+    const [mx, my] = MOUTH[P.dir];
+    drawSpr('port/toy', t.i, P.x + mx, P.y + my, { sc: 0.7, flip: P.dir === 'right' });
+    return;
+  }
+  ctx.save(); ctx.globalAlpha = 0.18; ctx.fillStyle = '#000';
+  ctx.beginPath(); ctx.ellipse(t.x, t.y, 15, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  const bob = t.home ? 0 : Math.sin(t.t * 3) * 2;
+  drawSpr('port/toy', t.i, t.x, t.y - 16 + bob, { sc: 0.85 });
+}
+function nestorMark() { return nest.state === 'done' ? -1 : nest.state === 'asked' && toysLeft() ? 1 : 0; }
+function nestorGreet() {
+  if (nest.state === 'new') npcShout(nestor, 'Wouf… bonjour, petit.');
+  else if (nest.state === 'asked') {
+    const n = toysLeft();
+    npcShout(nestor, !n ? 'Tous mes jouets ! Viens me voir !' : 'Encore ' + n + (n > 1 ? ' jouets !' : ' jouet !'));
+  } else { npcShout(nestor, 'Wouf ! Bonjour, petit !'); nestor.waveT = 1.5; }
+}
+const nestorThanks = () => [
+  { who: 'nestor', face: 2, text: "Mes trois jouets ! Merci, petit. Tu as de bonnes pattes, toi !" },
+  { who: 'nestor', face: 0, text: "Tiens, prends ma saucisse. Moi, je vais faire une petite sieste avec mon canard." },
+];
+function finishNestor() {
+  nest.state = 'done'; score += NESTOR.reward;
+  addPop('+' + NESTOR.reward, P.x - 30, P.y - 140);
+  items.push({ n: 'sausage', x: P.x + 40, y: P.y - 30, t: 0, pop: 0.001 });
+  nestor.cheerT = 3;
+  saveGame();
+}
+function talkNestor() {
+  if (nest.state === 'done') {
+    nestor.waveT = 2;
+    say([{ who: 'nestor', face: 2, text: "Wouf… Merci encore, petit. Bonne chance pour retrouver ta petite Alice !" }]);
+    return;
+  }
+  if (!toysLeft()) { nest.state = 'asked'; say(nestorThanks(), finishNestor); return; }
+  if (nest.state === 'asked') {
+    const n = toysLeft();
+    say([{ who: 'nestor', face: 0, text: (n > 1 ? `Il m'en manque encore ${n}.` : "Plus qu'un !") +
+      " Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !" }]);
+    return;
+  }
+  nest.state = 'asked';
+  say([
+    { who: 'nestor', face: 3, text: "Wouf… Bonjour, petit. Moi, c'est Nestor, le chien du gardien. Mes vieilles pattes ne courent plus bien vite…" },
+    { who: 'nestor', face: 0, text: "J'ai perdu mes trois jouets : mon canard, mon anneau et ma corde. Tu veux bien me les rapporter, un par un, dans ta gueule ?" },
+    { who: 'tecky', face: 2, text: "Ouaf ! « Va chercher », c'est mon jeu préféré !" },
   ], saveGame);
 }
 
@@ -2750,6 +2860,7 @@ function saveGame() {
     post: post.state, letters: letters.map(l => l.got ? 1 : 0).join(''),
     rose: rose.state, cat: [r1(pompon.x), r1(pompon.y), pompon.mode], bitten,
     fete: fete.state, balls: balls.map(b => [r1(b.x), r1(b.y), b.inNet ? 1 : 0]),
+    nest: nest.state, toys: toys.map(t => t.carried ? [r1(P.x), r1(P.y), 0] : [r1(t.x), r1(t.y), t.home ? 1 : 0]),
   });
 }
 // pas de sauvegarde automatique en plein combat : on reprendrait au milieu des crocs
@@ -2780,6 +2891,8 @@ function loadGame(s, rested) {
   rose.state = s.rose || 'new';
   fete.state = s.fete || 'new';
   (s.balls || []).forEach((q, i) => { const b = balls[i]; if (b && q) { b.x = q[0]; b.y = q[1]; b.inNet = !!q[2]; } });
+  nest.state = s.nest || 'new';
+  (s.toys || []).forEach((q, i) => { const t = toys[i]; if (t && q) { t.x = q[0]; t.y = q[1]; t.home = !!q[2]; } });
   bitten = !!s.bitten || rested;
   if (s.cat) { pompon.x = s.cat[0]; pompon.y = s.cat[1]; pompon.mode = s.cat[2] === 'follow' ? 'wait' : s.cat[2]; }
   questHens().forEach((h, i) => { const q = (s.hens || [])[i]; if (q) { h.x = h.hx = q[0]; h.y = h.hy = q[1]; h.penned = !!q[2]; } });
@@ -2938,6 +3051,7 @@ const BADGE_INFO = {
   explorateur: ['Explorateur', 'Découvrir toute la carte.'],
   sieste: ['Roi de la sieste', 'Laisser Tecky s’endormir.'],
   ballons: ['Champion du ballon', 'Pousser tous les ballons de Léon dans le filet.'],
+  nestor: ['Va chercher !', 'Rapporter ses trois jouets à Nestor.'],
 };
 const TOAST = { life: 3.6 };
 let badges = {}, toasts = [], newBadges = [], badgeT = 0, bitten = false;
@@ -2957,6 +3071,7 @@ function checkBadges() {
   if (post.state === 'done') unlockBadge('facteur');
   if (rose.state === 'done') unlockBadge('chat');
   if (fete.state === 'done') unlockBadge('ballons');
+  if (nest.state === 'done') unlockBadge('nestor');
   if (critters.every(c => c.scored)) unlockBadge('betes');
   if (ducks.filter(d => !d.lead).every(d => d.scored)) unlockBadge('canards');
   if (seenCells.reduce((a, v) => a + v, 0) >= seenCells.length * 0.95) unlockBadge('explorateur');
@@ -2966,7 +3081,7 @@ function checkBadges() {
    petites bêtes, canards, carte explorée (95 % suffisent, comme pour le badge), et les copains en balade. Une nouvelle
    quête : l'ajouter à QUESTS_DONE. */
 const QUESTS_DONE = [() => farm.state === 'done', () => post.state === 'done', () => rose.state === 'done',
-  () => fete.state === 'done'];
+  () => fete.state === 'done', () => nest.state === 'done'];
 function completion() {
   const part = (n, of) => of ? Math.min(1, n / of) : 1, count = (a, f) => a.filter(f).length;
   const adults = ducks.filter(d => !d.lead);          // comme le badge : sans les canetons
@@ -3276,7 +3391,7 @@ function updatePlayer(dt) {
   if (act === 'dig') digHint = nearDig();
   if (act === 'play') playHint = playDog();
   if (act === 'tunnel') { const t = nearTunnel(); tunnelHint = { x: t.fx, y: t.fy }; }
-  if (act === 'talk') { const n = nearNpc(); talkHint = { x: n.x, y: n.y - NPC.markY }; }
+  if (act === 'talk') { const n = nearNpc(); talkHint = { x: n.x, y: n.y - markY(n) }; }
   updateNpcs();
   // Alice
   if (!alice.found && !alice.hidden && dist(P.x, P.y, alice.x, alice.y) < 120) finale();
@@ -3771,6 +3886,7 @@ function update(dt) {
       updateLetters(dt);
       updatePompon(dt);
       for (const b of balls) updateBall(b, dt);
+      updateToys(dt);
       for (const c of critters) updateCritter(c, dt);
       for (const d of ducks) updateDuck(d, dt);
       updateTrail(dt);
@@ -3853,6 +3969,10 @@ function drawWorld() {
   for (const l of letters) if (!l.got && vis(l.x, l.y, 60)) list.push({ y: l.y + 20, draw: () => drawSpr('item/letter', Math.floor(l.t * 6), l.x, l.y) });
   if (vis(pompon.x, pompon.y, 60)) list.push({ y: pompon.y, draw: drawPompon });
   for (const b of balls) if (vis(b.x, b.y, 80)) list.push({ y: b.y, draw: () => drawBall(b) });
+  for (const t of toys) {   // un jouet porté : devant Tecky (derrière lui s'il nous tourne le dos)
+    const y = t.carried ? P.y + (P.dir === 'up' ? -0.5 : 0.5) : t.y;
+    if (vis(t.carried ? P.x : t.x, y, 80)) list.push({ y, draw: () => drawToy(t) });
+  }
   for (const d of ducks) if (d.h === 0 && vis(d.x, d.y, 60)) list.push({ y: d.y, draw: () => drawDuck(d) });
   for (const c of critters) if (critterVisible(c) && vis(c.x, c.y - c.h, 60))
     list.push({ y: c.h > 0 && c.ref ? c.ref.y + 2 : c.y, draw: () => drawCritter(c) });
@@ -3911,7 +4031,7 @@ function drawWorld() {
     const m = NPC_DO[n.kind].mark(), k = ATLAS['hud/talk'];
     if (m < 0 || !k || (talkHint && n.near) || !vis(n.x, n.y, 140)) continue;
     const [, , w, h] = k.f[m];
-    drawSpr('hud/talk', m, n.x - w / 2, n.y - NPC.markY - h + 26 + bob * 1.5);
+    drawSpr('hud/talk', m, n.x - w / 2, n.y - markY(n) - h + 26 + bob * 1.5);
   }
 }
 function actionBubble(label, bx, by) {
@@ -4042,6 +4162,7 @@ function hudCounters() {
   if (post.state === 'asked') c.push(['item/letter', 50, 36, 0.8, letters.length - lettersLeft(), letters.length]);
   if (rose.state === 'asked') c.push(['cat_white/idle', 46, 58, 0.9, pompon.mode === 'lost' ? 0 : 1, 1]);
   if (fete.state === 'asked') c.push(['port/balloon', 42, 35, 0.8, balls.length - ballsLeft(), balls.length]);
+  if (nest.state === 'asked') c.push(['port/toy', 42, 35, 0.8, toys.length - toysLeft(), toys.length]);
   return c;
 }
 function drawHUD() {

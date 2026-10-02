@@ -57,7 +57,7 @@ function main() {
   ok(run('leonMark()') === -1, 'plus de bulle au-dessus de sa tête');
   step(40);
   ok(run('!!badges.ballons'), 'badge « Champion du ballon »');
-  ok(run('QUESTS_DONE.length') === 4 && run('QUESTS_DONE[3]()'), 'compté dans la complétion');
+  ok(run('QUESTS_DONE.length') >= 4 && run('QUESTS_DONE[3]()'), 'compté dans la complétion');
   run('P.cdBite = 0; pressed.bite = true'); step(1);
   ok(run('state') === 'dialog' && /Merci encore/.test(run('dialog.lines[0].text')), 'ensuite : « Merci encore, champion ! »');
   advanceDialog();

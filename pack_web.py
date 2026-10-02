@@ -133,7 +133,7 @@ DECOR = [
     ("forklift", 43.6, 19.6), ("truck", 50.2, 19.4), ("crate", 41.8, 18.4), ("pallet", 41.9, 21.2),
     ("goal_net", 47.4, 21.6),
     ("container_stack", 54.3, 22.4), ("container_green", 57.3, 22.4), ("crane", 55.8, 22.9),
-    ("guard_hut", 60.4, 18.9), ("cone", 54.6, 18.0), ("cone", 57.4, 18.0),
+    ("guard_hut", 58.9, 18.7), ("cone", 54.6, 18.0), ("cone", 57.4, 18.0),
     ("lamppost", 47.5, 18.0), ("lamppost", 59.5, 24.9),
     ("bollard", 44.5, 25.0), ("bollard", 50.5, 25.0), ("bollard", 56.5, 25.0), ("barge", 50, 27.6),
     ("buffer_stop", 41.25, 23.7), ("buffer_stop", 60.75, 23.7),
@@ -211,6 +211,9 @@ LEON = (45.0, 20.2)                 # Léon, le cariste du port, à côté de so
 GOAL = (47.4, 21.6)                 # son grand filet (pied du cadre avant, ouverture vers le bas)
 # ses cinq gros ballons, qui ont roulé partout dans la zone industrielle (une couleur chacun, port.BALL_COLORS)
 BALLS = [(44.6, 23.0), (52.4, 20.8), (57.2, 20.2), (38.2, 21.0), (34.6, 23.4)]
+NESTOR = (57.0, 19.1)               # Nestor, le vieux chien du gardien, près du portail et de la cabane
+# ses trois jouets (port.TOYS : canard, anneau, corde) : sur la berge du port, au dépôt, sur le chemin du pont
+TOYS = [(47.2, 24.7), (28.0, 18.8), (64.0, 18.0)]
 # les lettres du facteur, emportées par le vent : campagne, village, zone industrielle, près de la niche
 LETTERS = [(18.4, 10.8), (22.0, 6.6), (35.6, 9.2), (31.0, 23.6), (15.2, 21.4)]   # avant le village, … , campagne
 # terriers sous les grillages : Tecky passe d'une extrémité à l'autre (raccourcis)
@@ -243,7 +246,7 @@ ITEMS = [
 # zones calmes (x0, y0, x1, y1 en tuiles) : comme les villes d'un RPG, aucun chien hostile n'y vit ni n'y poursuit
 # Tecky. Le village, au nord de la grande route, et la cour de la ferme (Gaston, l'enclos).
 CALM = [(19.6, 0, 40.4, 12), (49, 2.6, 65.4, 11.4),   # le village jusqu'au bord de la route (trottoir compris), la ferme
-        (41.0, 17.4, 49.4, 23.0)]                     # le coin de Léon, au port
+        (41.0, 17.4, 49.4, 23.0), (55.0, 17.4, 61.5, 21.2)]   # au port : le coin de Léon, celui de Nestor
 ENEMIES = [
     # le 1er roquet est assez loin de la niche pour ne pas attaquer dès la fin de l'intro
     ("roquet", 12, 8.8), ("roquet", 14, 3.5), ("roquet", 10.5, 19.2), ("roquet", 31.5, 18.0),   # (ce dernier, aux entrepôts)
@@ -418,6 +421,7 @@ def build_map():
         "postman": [px(POSTMAN[0]), px(POSTMAN[1])], "neighbor": [px(NEIGHBOR[0]), px(NEIGHBOR[1])],
         "pompon": [px(POMPON[0]), px(POMPON[1])], "letters": [[px(x), px(y)] for x, y in LETTERS],
         "leon": [px(LEON[0]), px(LEON[1])], "goal": [px(GOAL[0]), px(GOAL[1])], "balls": [[px(x), px(y)] for x, y in BALLS],
+        "nestor": [px(NESTOR[0]), px(NESTOR[1])], "toys": [[px(x), px(y)] for x, y in TOYS],
         "npcFps": dict({"farmer": {a: v[1] for a, v in farmer.ANIMS.items()}},
                        **{k: {a: v[1] for a, v in npcs.ANIMS[k].items()} for k in npcs.KINDS}),
         "critters": [[n, px(x), px(y)] for n, x, y in CRITTERS],
@@ -481,6 +485,7 @@ def collect():
             out.append((f"{kind}/{a}", [render_svg(sv, npcs.W, npcs.H, S, PAD) for sv in npcs.frames(kind, a)], (24 * S + M, 60 * S + M), True))
     out.append(("item/letter", [render_svg(sv, 32, 32, S, PAD) for sv in npcs.letter_frames()], (32 + M, 32 + M), True))
     out.append(("port/balloon", [render_svg(sv, 32, 32, S, PAD) for sv in port.balloon_frames()], (16 * S + M, 16 * S + M), True))
+    out.append(("port/toy", [render_svg(sv, 32, 32, S, PAD) for sv in port.toy_frames()], (16 * S + M, 16 * S + M), True))
     for kind in critters.KINDS:                         # écureuil, chats : de profil vers la droite, pieds en (16, 28)
         for a in critters.anims(kind):
             out.append((f"{kind}/{a}", [render_svg(sv, 32, 32, S, PAD) for sv in critters.frames(kind, a)], (16 * S + M, 28 * S + M), True))

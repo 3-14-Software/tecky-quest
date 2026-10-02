@@ -39,13 +39,14 @@ from spritelib import Drawing, circle, ellipse, rect, path, poly, leg, line, OUT
 W, H = 48, 64
 G = 60.0                      # ligne des pieds
 HK = 1.08                     # agrandissement de la tête (style chibi), autour du menton — comme Gaston
-KINDS = ("postman", "neighbor", "leon")
+KINDS = ("postman", "neighbor", "leon", "nestor")
 FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-côté conseillé
     "postman": (24, 18.5, 15.5),      # casquette, visage, moustache et menton (comme Gaston)
     "neighbor": (24, 21.5, 15.5),     # chignon, lunettes, menton (elle est plus petite : tout est 3 unités plus bas)
     "leon": (24, 18.0, 15.5),         # casque, visage, barbe
+    "nestor": (24, 34.0, 13.0),       # le vieux chien : tête, oreilles, museau gris
 }
-PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6", "leon": "#FDE3C2"}   # fond du médaillon (Gaston : "#CFE8B0")
+PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6", "leon": "#FDE3C2", "nestor": "#DCEBD2"}   # fond du médaillon (Gaston : "#CFE8B0")
 
 PAL = {
     "postman": dict(skin="#F5C8A6", skin_dk="#E2A986", nose="#EA9C82", blush="#F28A8A",
@@ -73,6 +74,9 @@ PAL = {
                  shirt="#3B6FB6", shirt_dk="#2B5290",
                  pants="#4A4F57", pants_dk="#363A40", shoe="#2B2B33", shoe_lt="#5C6168", toe="#F2C14E",
                  eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#9ED8F5"),
+    "nestor": dict(fur="#D9A65E", fur_dk="#C08A45", ear="#A87436", light="#F4E8CF", gray="#ECE7DD",
+                   nose="#2A1E1A", collar="#D7332B", tag="#F2C14E",
+                   eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B"),
 }
 
 
@@ -87,7 +91,8 @@ def P(**kw):
     verticale (négatif = vers l'extérieur) ; gesture : 0..1 main gauche (à droite de l'image) ouverte qui
     accompagne la parole ; cheer : 0..1 les deux bras levés ; cheeks : les deux mains sur les joues."""
     base = dict(bob=0.0, breath=0.0, lift=0.0, nod=0.0, blink=0.0, look=0.0, mouth=0.0, happy=False,
-                worry=0.0, sweat=False, wave=0.0, wave_a=0.0, gesture=0.0, cheer=0.0, cheeks=False)
+                worry=0.0, sweat=False, wave=0.0, wave_a=0.0, gesture=0.0, cheer=0.0, cheeks=False,
+                wag=0.0, droop=0.0)       # Nestor : angle de la queue (°), oreilles plus basses (triste)
     base.update(kw)
     return base
 
@@ -468,6 +473,67 @@ def _leon(p):
     return d
 
 
+# ================================================================== NESTOR, LE VIEUX CHIEN DU GARDIEN
+def _nestor(p):
+    """Nestor, le vieux chien du gardien du port : assis, de face, poil doré, longues oreilles tombantes, museau et
+    sourcils gris, collier rouge et sa médaille. Il remue la queue (wag) ; triste (worry), ses oreilles tombent."""
+    c = PAL["nestor"]
+    d = Drawing(W, H)
+    L = p["lift"]
+    Y = lambda v: v + p["bob"] - L          # buste et tête (respire, saute)
+    T = lambda v: v - L                     # pattes (sautent seulement)
+    k = max(0.6, 1 - L / 10)
+    d.under.append(f'<ellipse cx="24" cy="{G + 0.2}" rx="{13 * k:.2f}" ry="{2.6 * k:.2f}" fill="#000" opacity="0.2"/>')
+    # queue touffue, derrière, qui remue
+    d.add(ellipse(34.6, T(49.6), 2.5, 6.6, f"rotate({18 + p['wag']:.1f} 31.5 {T(55):.2f})"), c["fur"])
+    d.add(ellipse(35.2, T(44.8), 1.4, 2.0, f"rotate({18 + p['wag']:.1f} 31.5 {T(55):.2f})"), c["light"], sil=False)
+    # cuisses (assis), corps, poitrail clair
+    for x in (16, 32):
+        d.add(ellipse(x, T(55.4), 6.2, 5.0), c["fur"])
+    d.add(ellipse(24, Y(47.4), 9.6, 10.4), c["fur"])
+    d.add(ellipse(24, Y(46.6), 5.0, 4.6), c["light"], sil=False)
+    # pattes avant
+    for x in (20.2, 27.8):
+        d.add(leg(x, Y(51), x, T(59.0), 3.9), c["fur"])
+        d.add(ellipse(x, T(59.3), 2.8, 1.5), c["light"])
+    # collier rouge et médaille
+    d.add(path(f"M15.6,{Y(39.4):.2f} Q24,{Y(43.4):.2f} 32.4,{Y(39.4):.2f} L32.4,{Y(41.8):.2f} Q24,{Y(45.8):.2f} 15.6,{Y(41.8):.2f} Z"),
+          c["collar"], sil=False, edge=True)
+    d.add(circle(24, Y(45.2), 1.7), c["tag"], sil=False, edge=True)
+    # tête
+    hy = Y(33.0)
+    d.add(circle(24, hy, 8.8), c["fur"])
+    d.add(ellipse(24, hy - 6.6, 2.2, 0.9), c["gray"], sil=False, opacity=0.5)       # quelques poils gris sur le crâne
+    dr = 14 + p["droop"]
+    for s in (-1, 1):                                                                 # oreilles tombantes
+        d.add(ellipse(24 + s * 8.6, hy + 3.4 + p["droop"] * 0.3, 3.5, 7.4, f"rotate({-s * dr:.1f} {24 + s * 8.6} {hy - 2:.2f})"), c["ear"])
+    # museau gris, truffe, bouche
+    d.add(ellipse(24, hy + 4.4, 5.6, 4.3), c["gray"])
+    m = p["mouth"]
+    if p["happy"] or m > 0.05:
+        mm = max(m, 0.5 if p["happy"] else 0)
+        d.add(ellipse(24, hy + 6.6 + mm * 0.6, 1.9 + mm * 0.5, 0.6 + mm * 1.6), c["mouth"], sil=False, edge=True)
+        d.add(ellipse(24, hy + 7.4 + mm * 1.0, 1.2, 0.5 + mm * 0.7), c["tongue"], sil=False)
+    else:
+        d.raw(line(f"M21.6,{hy + 5.6:.2f} Q24,{hy + 7.2:.2f} 26.4,{hy + 5.6:.2f}", c["eye"], 0.8))
+    d.add(ellipse(24, hy + 2.4, 2.3, 1.7), c["nose"])
+    d.add(ellipse(23.3, hy + 1.9, 0.7, 0.45), "#FFFFFF", sil=False, opacity=0.7)
+    # yeux et sourcils gris de vieux chien
+    q = p["worry"]
+    for s in (-1, 1):
+        x, y = 24 + s * 3.6, hy - 1.4
+        if p["happy"]:
+            d.raw(line(f"M{x - 1.4:.2f},{y + 0.6:.2f} Q{x:.2f},{y - 1.1:.2f} {x + 1.4:.2f},{y + 0.6:.2f}", c["eye"], 1.0))
+        elif p["blink"] > 0.5:
+            d.raw(line(f"M{x - 1.3:.2f},{y:.2f} Q{x:.2f},{y + 0.9:.2f} {x + 1.3:.2f},{y:.2f}", c["eye"], 0.9))
+        else:
+            d.add(ellipse(x, y - q * 0.3, 1.3, 1.6), c["eye"], sil=False)
+            d.add(circle(x + 0.4, y - 0.6 - q * 0.3, 0.45), "#FFFFFF", sil=False)
+        d.add(ellipse(x, y - 2.5 - q * 0.5, 1.6, 0.7, f"rotate({-s * (4 + q * 16):.1f} {x:.2f} {y - 2.5:.2f})"),
+              c["gray"], sil=False)
+    return d
+
+
 # ================================================================== LA VOISINE
 DY = 3.0      # la mamie est plus petite : tout le haut du corps est 3 unités plus bas que chez Gaston
 
@@ -573,7 +639,7 @@ def _neighbor(p):
 
 
 # ================================================================== animations
-_DRAW = {"postman": _postman, "neighbor": _neighbor, "leon": _leon}
+_DRAW = {"postman": _postman, "neighbor": _neighbor, "leon": _leon, "nestor": _nestor}
 
 _WAVE = [P(wave=1, wave_a=-28, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2),
          P(wave=1, wave_a=4, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2)]
@@ -597,6 +663,16 @@ ANIMS = {   # PNJ : {nom : (poses, fps, boucle)}
                    P(cheer=1, happy=True, lift=2.6), P(cheer=0.85, happy=True, lift=1.0)], 8, True),
         "worry": ([P(worry=1, look=-1, sweat=True), P(worry=1, look=-1, bob=0.25, sweat=True),
                    P(worry=1, look=1, sweat=True), P(worry=1, look=1, bob=0.25, blink=1, sweat=True)], 5, True),
+    },
+    "nestor": {     # wave : il remue la queue ; cheer : il saute de joie ; worry : triste (sans ses jouets)
+        "idle": ([P(), P(bob=0.3, wag=8), P(bob=0.5), P(bob=0.3, blink=1, wag=-6)], 4, True),
+        "talk": ([P(mouth=0.3), P(mouth=0.9, wag=6), P(mouth=0.4), P(mouth=0.8, bob=0.3, wag=-4)], 8, True),
+        "wave": ([P(happy=True, wag=-22), P(happy=True, wag=26, bob=0.2), P(happy=True, wag=-22),
+                  P(happy=True, wag=26, bob=0.2)], 10, True),
+        "cheer": ([P(happy=True, wag=-22, lift=0.8), P(happy=True, wag=26, lift=2.4), P(happy=True, wag=-22, lift=3.0),
+                   P(happy=True, wag=26, lift=1.2)], 8, True),
+        "worry": ([P(worry=1, droop=7), P(worry=1, droop=7, bob=0.3), P(worry=1, droop=7, bob=0.4),
+                   P(worry=1, droop=7, bob=0.3, blink=1)], 4, True),
     },
     "neighbor": {
         "idle": (_IDLE, 5, True),

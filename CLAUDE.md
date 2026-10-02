@@ -194,6 +194,12 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   `goal_net`, côtés et fond dans `RAILS`, intérieur `GOAL_IN`) ; ils roulent, rebondissent (`moveBall()`, jamais hors de
   `BALL.box`), sont guidés vers l'ouverture (`funnelBall()`) et restent dans le filet (`checkGoal()`). Léon remercie
   (os + points), badge « ballons ». Sauvegardés (`fete`, `balls`). Test : `leon.js`.
+- Nestor, le vieux chien du gardien du port (`nest`, `nestor`, `NESTOR`, `MAP.nestor`, npcs.py « nestor » : un
+  personnage, pas un chien de `dogs` ; bulle plus basse : `n.markY`, `markY()` ; il « parle » en jappant, `n.woof`) :
+  ses trois jouets (`toys`, `MAP.toys`, sprites `port/toy`) sont éparpillés. Tecky en prend un dans la gueule en
+  passant dessus (un seul à la fois, `carried()`, dessiné à `MOUTH[dir]`), le lâche s'il aboie, mord ou est KO
+  (`dropToy()`, `NESTOR.regrab`), le donne en arrivant près de Nestor (`giveToy()`). Saucisse + points, badge
+  « nestor ». Sauvegardés (`nest`, `toys` ; un jouet porté l'est aux pieds de Tecky). Test : `nestor.js`.
 - Personnages (`NPC`, `npcList()`, `NPC_DO` : par personnage `mark` / `greet` / `talk` ; `newNpc()`, `updateNpcAnim()` :
   parle, se réjouit (`cheerT`), salue (`waveT`), s'inquiète (`worried`) ; fps dans `MAP.npcFps`) : comme dans un RPG, ils ne
   parlent que sur C (« Parler », `biteAction()` → `'talk'`, E aussi). Bulle `hud/talk` au-dessus de la tête : « ! »
