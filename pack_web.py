@@ -128,9 +128,12 @@ DECOR = [
     # route
     ("road_sign", 2.5, 17.35), ("road_sign", 29.2, 22.1), ("cone", 24.6, 20.7), ("cone", 25.5, 20.7),
     # village
-    ("house_red", 33.5, 3.4), ("house_blue", 46.5, 3.4), ("house_red", 51.5, 3.4),
-    ("tree", 31.3, 9.4), ("tree", 54.6, 9.4), ("tree", 55, 2.4),
-    ("bench", 36, 8.4), ("bench", 49, 8.4), ("flower_pot", 46.5, 6.4), ("flower_pot", 33.3, 6.2),
+    ("house_red", 33.5, 3.4), ("house_blue", 46.5, 3.4), ("house_tall", 51.5, 3.4),
+    ("tree", 29.8, 12.6), ("tree", 54.6, 9.4), ("tree", 55, 2.4),
+    ("flower_pot", 46.5, 6.4), ("flower_pot", 33.3, 6.2),
+    # le marché, au bas de la place (fruits, légumes, fleurs), et la terrasse du café, à l'est de la fontaine
+    ("stall_fruit", 33.0, 9.8), ("stall_veg", 35.8, 9.8), ("stall_flower", 38.6, 9.8),
+    ("cafe_table", 50.0, 9.8), ("cafe_table", 52.8, 9.8),
     ("lamppost", 32.5, 17.35), ("lamppost", 46.5, 17.35), ("lamppost", 52.5, 17.35),
     ("mailbox", 35.2, 17.35), ("hedge", 28, 9.8), ("hedge", 29, 9.8), ("hedge", 28, 4), ("hedge", 29, 4),
     # jardin de la niche (à l'est du pré)
@@ -138,8 +141,8 @@ DECOR = [
     ("tree", 12.5, 13.8), ("bush", 16.5, 5.8), ("bush", 21.6, 9.6), ("bush", 9.4, 14.6), ("bush", 15.4, 12.0),
     ("rock", 19.4, 5.4), ("bench", 18.8, 10.2), ("flower_pot", 17.0, 10.0), ("flower_pot", 20.6, 10.0),
     # village : une maison de plus sur la place, la fontaine, la rue (deux maisons, la ruelle entre elles)
-    ("house_red", 40.0, 3.4), ("fountain", 42.5, 7.8), ("flower_pot", 39.6, 6.2),
-    ("house_blue", 38.6, 15.6), ("house_red", 49.6, 15.6), ("tree", 31.2, 14.6), ("tree", 55.0, 14.8),
+    ("house_timber", 40.0, 3.4), ("fountain", 42.5, 7.8), ("flower_pot", 39.6, 6.2),
+    ("bakery", 38.6, 15.6), ("house_red", 49.6, 15.6), ("house_timber", 31.0, 15.6), ("tree", 55.0, 14.8),
     ("hedge", 41.6, 14.6), ("hedge", 46.0, 14.6), ("flower_pot", 41.2, 16.2), ("flower_pot", 47.8, 16.2),
     ("bench", 35.2, 12.4), ("bench", 52.6, 12.4),
     # zone industrielle
@@ -262,7 +265,7 @@ CLEARING = (72.6, 57.6, 79.6, 62.6)  # la clairière : pas de sapins
 # ses trois petits, cachés sous des fougères (juste à côté, un peu derrière : on voit dépasser leur museau)
 BABIES = [(65.7, 53.48), (82.5, 54.08), (87.9, 62.48)]
 # les lettres du facteur, emportées par le vent : campagne, village, zone industrielle, près de la niche
-LETTERS = [(26.4, 16.8), (30.0, 6.6), (51.6, 9.2), (47.0, 29.6), (23.2, 27.4)]   # avant le village, … , campagne
+LETTERS = [(26.4, 16.8), (30.0, 6.6), (50.8, 11.6), (47.0, 29.6), (23.2, 27.4)]   # avant le village, … , campagne
 # terriers sous les grillages : Tecky passe d'une extrémité à l'autre (raccourcis)
 TUNNELS = [((56.0, 27.0), (57.25, 27.0)),        # dépôt <-> verger de la ferme
            ((52.5, 22.75), (52.5, 24.0)),        # trottoir <-> zone industrielle
@@ -349,7 +352,7 @@ COWS = [("cow_bw", 19.5, 25.4), ("cow_brown", 21.2, 29.6), ("calf", 19.0, 30.0)]
 # petites bêtes que Tecky peut poursuivre : écureuils (forêt, parc) qui grimpent aux arbres, chats (village, zone
 # industrielle) qui sautent sur les toits et les conteneurs
 CRITTERS = [("squirrel", 73.4, 53.9), ("squirrel", 82.2, 52.9), ("squirrel", 64.6, 60.4), ("squirrel", 87.2, 60.4),
-            ("squirrel", 10.6, 48.6), ("cat", 37.6, 9.0), ("cat_black", 47.6, 25.4), ("cat", 52.6, 34.0),
+            ("squirrel", 10.6, 48.6), ("cat", 41.0, 11.6), ("cat_black", 47.6, 25.4), ("cat", 52.6, 34.0),
             ("squirrel", 13.4, 33.6)]
 DIG = [(12.5, 6.5), (11.5, 27.5), (29.5, 24.5),
        (82.0, 34.4), (90.5, 16.5), (60.5, 49.5), (92.5, 60.5), (11.5, 60.5),   # celui-ci : à côté du bac à sable

@@ -186,6 +186,205 @@ def house_blue():
     return house(roof="#5E6E8C", roof_dk="#48556F", wall="#E8EEF2", door="#3F7D5A")
 
 
+def _tiles(d, x0, x1, ys, top, slope, col):
+    """Rangs de tuiles d'un toit en trapèze (bord gauche en x0 + (y - top) * slope) : lignes et joints décalés."""
+    for i, y in enumerate(ys):
+        a = x0 - (y - top) * slope
+        b = x1 + (y - top) * slope
+        d.raw(line(f"M{a + 1:.1f},{y} L{b - 1:.1f},{y}", col, 1.0))
+        for x in range(int(a) + 6 + (i % 2) * 6, int(b) - 4, 12):
+            d.raw(line(f"M{x},{y - 9} L{x},{y}", col, 0.7))
+
+
+def _window(d, x, y, w, h, shutter=None, box=True):
+    """Fenêtre à petits carreaux ; volets de part et d'autre ; jardinière fleurie."""
+    if shutter:
+        for sx in (x - 5, x + w + 0.5):
+            d.add(rect(sx, y - 0.5, 4.5, h + 1, 0.8), shutter)
+            d.raw(line(f"M{sx + 0.8},{y + h * 0.33:.1f} L{sx + 3.7},{y + h * 0.33:.1f} M{sx + 0.8},{y + h * 0.66:.1f} "
+                       f"L{sx + 3.7},{y + h * 0.66:.1f}", OUTLINE, 0.5))
+    d.add(rect(x, y, w, h, 1.2), "#9FD3F0")
+    d.raw(line(f"M{x + w / 2},{y} L{x + w / 2},{y + h} M{x},{y + h / 2} L{x + w},{y + h / 2}", "#FFFFFF", 1.1))
+    if box:
+        d.add(rect(x - 1, y + h - 0.5, w + 2, 3.6, 1), "#9A6B43")
+        for k in range(int(w / 4)):
+            d.add(circle(x + 2 + k * 4, y + h - 0.8, 1.4), ("#E24B4B", "#F7D154", "#F28CB8")[k % 3], sil=False)
+
+
+def house_timber():
+    """Maison à colombages : murs crème, poutres brunes (croix de Saint-André), toit pentu de tuiles brunes, volets
+    rouges, porte ronde."""
+    d = Drawing(96, 96)
+    d.under.append('<rect x="8" y="86" width="82" height="8" rx="4" fill="#000" opacity="0.2"/>')
+    d.add(rect(14, 46, 68, 46, 1), "#F7EDD6")
+    d.add(rect(22, 4, 9, 18, 1), "#9B5B45")
+    d.add(poly([(5, 52), (91, 52), (70, 8), (26, 8)]), "#A0583A")
+    d.add(rect(25, 5, 46, 6, 2), "#7E4229")
+    _tiles(d, 26, 70, (20, 31, 42), 8, 21 / 44, "#7E4229")
+    d.add(rect(14, 52, 68, 3.5, 0), "#000000", sil=False, opacity=0.16)
+    beam = "#6E4428"
+    for x in (14, 31, 47.5, 64, 80):                                  # poteaux
+        d.add(rect(x, 52, 2.6, 40, 0), beam, sil=False)
+    d.add(rect(14, 70, 68, 2.6, 0), beam, sil=False)                  # sablière de l'étage
+    for x0, x1 in ((16.6, 31), (66.6, 80)):                           # croix de Saint-André
+        d.raw(line(f"M{x0},{55} L{x1},{70} M{x0},{70} L{x1},{55}", beam, 2.0))
+    _window(d, 34.5, 55, 10, 11, shutter="#C8453A", box=False)
+    _window(d, 51.5, 55, 10, 11, shutter="#C8453A", box=False)
+    _window(d, 19, 76, 9, 10, box=True)
+    _window(d, 68, 76, 9, 10, box=True)
+    d.add(path("M40,92 L40,80 Q48,72 56,80 L56,92 Z"), "#7E4A2A")     # porte ronde
+    d.add(circle(53, 85, 1.1), "#F2C14E", sil=False)
+    d.add(rect(38, 91, 20, 3, 1), "#B7B2A8")
+    return d
+
+
+def house_tall():
+    """Maison de ville à étage : murs ocre jaune, volets verts, toit d'ardoises avec une lucarne, petit balcon en fer
+    forgé, porte sous un auvent."""
+    d = Drawing(96, 120)
+    d.under.append('<rect x="8" y="110" width="82" height="8" rx="4" fill="#000" opacity="0.2"/>')
+    d.add(rect(12, 38, 72, 78, 1), "#F2D58A")
+    d.add(rect(70, 4, 9, 20, 1), "#9B5B45")
+    d.add(poly([(5, 44), (91, 44), (80, 12), (16, 12)]), "#6F7A8C")
+    d.add(rect(15, 9, 66, 6, 2), "#566173")
+    for y in (24, 34):
+        a = 16 - (y - 12) * 11 / 32
+        d.raw(line(f"M{a + 1:.1f},{y} L{96 - a - 1:.1f},{y}", "#566173", 0.9))
+    d.add(poly([(38, 32), (58, 32), (58, 22), (48, 15), (38, 22)]), "#F2D58A")   # lucarne
+    d.add(rect(43, 23, 10, 8, 1), "#9FD3F0")
+    d.raw(line("M48,23 L48,31", "#FFFFFF", 1.0))
+    d.add(rect(12, 44, 72, 3.5, 0), "#000000", sil=False, opacity=0.16)
+    d.add(rect(12, 76, 72, 2.6, 0), "#E3C06E", sil=False, edge=True)              # bandeau entre les étages
+    for x in (20, 43, 66):
+        _window(d, x, 52, 10, 15, shutter="#4F8F5A", box=x != 43)
+    d.add(rect(38, 66, 20, 2, 0.6), "#3A3A44", sil=False)                         # balcon en fer forgé
+    for x in range(39, 58, 3):
+        d.raw(line(f"M{x},{60} L{x},{67}", "#3A3A44", 0.7))
+    d.raw(line("M38,60 L58,60", "#3A3A44", 1.0))
+    for x in (20, 66):
+        _window(d, x, 86, 10, 14, shutter="#4F8F5A")
+    d.add(rect(41, 88, 14, 28, 1.5), "#3F7D5A")                                   # porte
+    d.add(circle(52, 103, 1.1), "#F2C14E", sil=False)
+    d.add(poly([(37, 88), (59, 88), (56, 83), (40, 83)]), "#566173")              # auvent
+    d.add(rect(39, 115, 18, 3, 1), "#B7B2A8")
+    return d
+
+
+def bakery():
+    """La boulangerie du village : vitrine pleine de pains, store rayé bleu et blanc festonné, enseigne avec une
+    baguette et un croissant dorés, porte vitrée, ardoise des prix sur le trottoir."""
+    d = Drawing(112, 96)
+    d.under.append('<rect x="8" y="86" width="98" height="8" rx="4" fill="#000" opacity="0.2"/>')
+    d.add(rect(12, 44, 88, 48, 1), "#F7E7D0")
+    d.add(rect(80, 4, 9, 18, 1), "#9B5B45")
+    d.add(poly([(4, 50), (108, 50), (98, 12), (14, 12)]), "#C8553D")
+    d.add(rect(14, 9, 84, 6, 2), "#A3412E")
+    _tiles(d, 14, 98, (24, 35, 46), 12, 10 / 38, "#A3412E")
+    d.add(rect(12, 50, 88, 3.5, 0), "#000000", sil=False, opacity=0.16)
+    # enseigne : baguette et croissant
+    d.add(rect(32, 53, 48, 11, 2), "#5B3A22", edge=True)
+    d.add(path("M38,61 Q52,54 64,57 Q66,58.5 64,60 Q52,58 39,63 Q36,63 38,61 Z"), "#E8B55A", sil=False, edge=True)
+    for x in (45, 51, 57):
+        d.raw(line(f"M{x},{58.6 - (x - 45) * 0.12:.1f} L{x + 2.4},{60.2 - (x - 45) * 0.12:.1f}", "#B97A30", 0.8))
+    d.add(path("M67,61.5 Q68,55.5 73,55.5 Q78,55.5 79,61.5 Q76,59 73,59.6 Q70,59 67,61.5 Z"), "#E8B55A", sil=False, edge=True)
+    # store rayé festonné
+    for i, x in enumerate(range(14, 98, 7)):
+        d.add(rect(x, 65, 7, 8, 0), ("#3E7BC4", "#FFFFFF")[i % 2], sil=False)
+        d.add(circle(x + 3.5, 73, 3.5), ("#3E7BC4", "#FFFFFF")[i % 2], sil=False)
+    d.raw(line("M14,65 L98,65", OUTLINE, 1.0))
+    d.raw(path("M14,73 " + " ".join(f"A3.5,3.5 0 0 0 {x + 7},73" for x in range(14, 98, 7))).replace('fill="%F%"', 'fill="none"')
+          .replace("/>", f' stroke="{OUTLINE}" stroke-width="0.9"/>'))
+    # vitrine pleine de pains, porte vitrée
+    d.add(rect(18, 78, 44, 13, 1), "#CFE9F5")
+    for x in (24, 34, 44, 54):
+        d.add(ellipse(x, 86.5, 4.2, 2.6), "#D99A4E", sil=False, edge=True)
+        d.raw(line(f"M{x - 1.8},86 L{x - 0.6},87.4 M{x + 0.6},85.6 L{x + 1.8},87", "#A86A2C", 0.6))
+    d.raw(line("M21,83 L35,79.5 M27,83.5 L41,80", "#D99A4E", 2.2))
+    d.add(rect(68, 77, 16, 15, 1), "#CFE9F5")
+    d.raw(line("M76,77 L76,92", "#8A5A3A", 1.0))
+    d.add(rect(66, 76, 20, 1.6, 0.5), "#8A5A3A", sil=False)
+    d.add(rect(46, 91, 22, 3, 1), "#B7B2A8")
+    # ardoise des prix, posée devant
+    d.add(poly([(90, 92), (93, 78), (99, 78), (102, 92)]), "#3A3A44")
+    d.add(rect(92.4, 80, 7.2, 8, 0.6), "#2E3A33", sil=False)
+    for y in (82.5, 85, 87.5):
+        d.raw(line(f"M93.8,{y} L98.2,{y}", "#F3F0E8", 0.6))
+    return d
+
+
+STALLS = {   # étal du marché : couleurs du store, marchandises
+    "fruit": ("#D7332B", "#FFFFFF"), "veg": ("#3F9A4A", "#FFFFFF"), "flower": ("#E06BA8", "#FFFFFF"),
+}
+
+
+def market_stall(kind):
+    """Un étal du marché, vu de face : store rayé sur deux poteaux, comptoir en bois, cagettes de marchandises."""
+    c1, c2 = STALLS[kind]
+    d = Drawing(64, 64)
+    _shadow(d, 32, 58, 28, 3)
+    for x in (7, 55):
+        d.add(rect(x, 14, 2.6, 44, 1), "#8A5A3A")
+    d.add(rect(5, 34, 54, 22, 1), "#B98556")                       # comptoir
+    for y in (41, 48):
+        d.raw(line(f"M6,{y} L58,{y}", "#9A6B43", 0.9))
+    d.add(rect(4, 32, 56, 4, 1), "#C98A4B")
+    # cagettes et marchandises
+    for i, x in enumerate((9, 24.5, 40)):
+        d.add(rect(x, 26, 15, 7, 0.6), "#DDA566", edge=True)
+        if kind == "fruit":
+            col = ("#E0413A", "#F29A2E", "#B7D45A")[i]
+            for k, (dx, dy) in enumerate(((3, 25.5), (7.5, 25), (12, 25.5), (5.2, 22.5), (9.8, 22.5))):
+                d.add(circle(x + dx, dy, 2.3), col, sil=False, edge=True)
+        elif kind == "veg":
+            if i == 0:                                              # carottes
+                for k in range(4):
+                    d.add(poly([(x + 2 + k * 3.4, 25.5), (x + 5.2 + k * 3.4, 25.5), (x + 3.6 + k * 3.4, 18)]), "#F08A2E", sil=False, edge=True)
+                    d.raw(line(f"M{x + 3.6 + k * 3.4},25.5 L{x + 3 + k * 3.4},28", "#4E9A47", 1.2))
+            elif i == 1:                                            # salades
+                for dx in (4, 11):
+                    d.add(circle(x + dx, 23.5, 4.2), "#7CC45A", sil=False, edge=True)
+                    d.add(circle(x + dx, 23.5, 2), "#A8DC7E", sil=False)
+            else:                                                   # tomates
+                for dx, dy in ((3, 25.5), (7.5, 25), (12, 25.5), (5.2, 22.5), (9.8, 22.5)):
+                    d.add(circle(x + dx, dy, 2.3), "#E0413A", sil=False, edge=True)
+                    d.add(circle(x + dx, dy - 2, 0.8), "#4E9A47", sil=False)
+        else:                                                       # bouquets de fleurs
+            col = ("#F28CB8", "#F7D154", "#B48ED8")[i]
+            for dx in (3.5, 7.5, 11.5):
+                d.raw(line(f"M{x + dx},26 L{x + dx},20", "#4E9A47", 1.0))
+                d.add(circle(x + dx, 19, 2.3), col, sil=False, edge=True)
+                d.add(circle(x + dx, 19, 0.8), "#FFF7E6", sil=False)
+    # store rayé festonné
+    for i, x in enumerate(range(4, 60, 7)):
+        d.add(rect(x, 8, 7, 8, 0), (c1, c2)[i % 2], sil=False)
+        d.add(circle(x + 3.5, 16, 3.5), (c1, c2)[i % 2], sil=False)
+    d.add(rect(3, 5, 58, 4, 1.5), c1)
+    d.raw(line("M4,8 L60,8", OUTLINE, 0.9))
+    return d
+
+
+def cafe_table():
+    """Une table de terrasse : table ronde, deux chaises, parasol rayé rouge et blanc."""
+    d = Drawing(48, 64)
+    _shadow(d, 24, 58, 18, 2.6)
+    d.add(rect(22.8, 10, 2.4, 40, 1), "#8C9098")                   # mât du parasol
+    for x, s in ((8, 1), (40, -1)):                                 # chaises de bistrot
+        d.add(rect(x - 1, 46, 2, 12, 0.6), "#3A3A44")
+        d.add(rect(x - 6 * (s < 0), 45, 6, 2, 0.6), "#3A3A44")
+        d.add(rect(x - 6 * (s < 0) + (5 if s > 0 else 0) - 0.5, 36, 2, 10, 0.6), "#3A3A44")
+        d.add(rect(x - 6 * (s < 0) + (s < 0) * 0 + (0 if s > 0 else 0), 44, 6, 2.4, 0.8), "#C8553D")
+    d.add(rect(23, 44, 2, 14, 0.6), "#3A3A44")                      # pied de la table
+    d.add(ellipse(24, 44, 10, 2.6), "#F3F0E8")
+    d.add(rect(19.5, 39.5, 3, 4, 0.6), "#FFFFFF", sil=False, edge=True)   # une tasse
+    d.add(ellipse(27, 42.4, 2.6, 1), "#E8B55A", sil=False, edge=True)     # un croissant
+    # parasol
+    d.add(path("M2,22 Q24,0 46,22 Z"), "#D7332B")
+    for x0, x1 in ((9, 16), (24, 24), (39, 32)):
+        d.add(path(f"M{x0 - 4},20.5 Q24,3 {x0 + 4},20.5 Z" if x0 != 24 else "M20,21 Q24,3 28,21 Z"), "#FFFFFF", sil=False)
+    d.raw(line("M2,22 L46,22", OUTLINE, 1.0))
+    return d
+
+
 def doghouse():
     d = Drawing(48, 48)
     _shadow(d, 24, 44, 18, 3)
@@ -1309,6 +1508,13 @@ DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x)
     "lamppost": (lamppost, (32, 64), (16, 61)),
     "house_red": (house, (96, 96), (48, 92)),
     "house_blue": (house_blue, (96, 96), (48, 92)),
+    "house_timber": (house_timber, (96, 96), (48, 92)),
+    "house_tall": (house_tall, (96, 120), (48, 116)),
+    "bakery": (bakery, (112, 96), (56, 92)),
+    "stall_fruit": (lambda: market_stall("fruit"), (64, 64), (32, 58)),
+    "stall_veg": (lambda: market_stall("veg"), (64, 64), (32, 58)),
+    "stall_flower": (lambda: market_stall("flower"), (64, 64), (32, 58)),
+    "cafe_table": (cafe_table, (48, 64), (24, 58)),
     "doghouse": (doghouse, (48, 48), (24, 44)),
     "bench": (bench, (48, 32), (24, 28)),
     "mailbox": (mailbox, (32, 32), (16, 29)),

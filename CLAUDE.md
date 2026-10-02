@@ -56,7 +56,9 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   lettre, Pompon) ne se recouvrent jamais (portées `NPC.talk`, `REACH`, `TUNNEL.reach`, `POST.pick`, `CAT.find` + 60 px),
   aucun objet n'est à portée de parole d'un personnage, les personnages vivent en zone calme et aucun chien n'y habite.
 - Carte (96 x 64, agrandie depuis 80 x 48 : colonnes ajoutées en x 15 et x 30, rangées en y 10,4 et y 25 ; sauvegarde
-  v2) : au nord de la route (y 18..21), la niche et son jardin, le village (place, fontaine, rue et ruelle), la ferme ;
+  v2) : au nord de la route (y 18..21), la niche et son jardin, le village (place, fontaine, marché `stall_*`, terrasse
+  `cafe_table`, boulangerie `bakery`, maisons `house_red` / `house_blue` / `house_timber` / `house_tall`, rue et
+  ruelle), la ferme ;
   au sud, la campagne (mare aux canards au bord de l'eau), la zone industrielle, le verger (pommiers `apple_tree` en
   rangées, panier d'Iris) et les prés de la ferme (champ, mare, pâture au bord de la rivière).
   Rivière d'un bord à l'autre (y 42..45) avec **un seul pont** (`BRIDGES`, x 79..81 : coins rendus non-eau ;

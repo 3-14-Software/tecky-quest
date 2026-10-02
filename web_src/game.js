@@ -735,7 +735,9 @@ const FOOT = {
   tree: [-18, -16, 18, 0], apple_tree: [-18, -16, 18, 0], apple_crate: [-24, -18, 24, 0], bush: [-28, -18, 28, 0], hay: [-26, -22, 26, 0], rock: [-22, -18, 22, 0],
   fence_wood_h: [0, -14, 64, 0], fence_wood_v: [-8, -64, 8, 0], signpost: [-7, -8, 7, 0],
   cone: [-12, -10, 12, 0], road_sign: [-7, -8, 7, 0], lamppost: [-10, -10, 10, 0],
-  house_red: [-76, -84, 76, -2], house_blue: [-76, -84, 76, -2], doghouse: [-28, -26, 28, 0],
+  house_red: [-76, -84, 76, -2], house_blue: [-76, -84, 76, -2], house_timber: [-70, -84, 70, -2], house_tall: [-76, -84, 76, -2],
+  bakery: [-90, -84, 90, -2], stall_fruit: [-52, -24, 52, 0], stall_veg: [-52, -24, 52, 0], stall_flower: [-52, -24, 52, 0],
+  cafe_table: [-22, -10, 22, 0], doghouse: [-28, -26, 28, 0],
   bench: [-40, -20, 40, 0], mailbox: [-7, -6, 7, 0], hedge: [0, -36, 64, 0], flower_pot: [-14, -18, 14, 0],
   warehouse: [-116, -104, 116, -4], container: [-92, -54, 92, 0], pallet: [-26, -16, 26, 0],
   barrel_blue: [-18, -16, 18, 0], barrel_red: [-18, -16, 18, 0], crate: [-24, -22, 24, 0],
@@ -1466,7 +1468,8 @@ const CRITTER = { scare: 170, run: 330, walk: 38, roam: 100, climb: 0.55, jump: 
 // refuges : décor -> [décalage x, hauteur (px au-dessus du pied du décor)] du perchoir
 const REFUGES = {
   squirrel: { tree: [[0, -58]], fir: [[0, -46]] },
-  cat: { house_red: [[-44, -116], [44, -116]], house_blue: [[-44, -116], [44, -116]], container: [[-40, -66], [40, -66]],
+  cat: { house_red: [[-44, -116], [44, -116]], house_blue: [[-44, -116], [44, -116]], house_timber: [[-34, -120], [34, -120]],
+    house_tall: [[-36, -170], [36, -170]], bakery: [[-52, -110], [52, -110]], container: [[-40, -66], [40, -66]],
          container_blue: [[-40, -66], [40, -66]], container_green: [[-40, -66], [40, -66]],
          container_stack: [[-40, -118], [40, -118]] },
 };

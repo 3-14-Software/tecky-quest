@@ -5,7 +5,7 @@ cache-cache. Il suit les affaires qu'elle a semées (sa barrette, sa chaussure, 
 ensuite, et Alice ne sort de sa cachette qu'une fois les trois retrouvées. En chemin, Tecky aboie pour repousser les
 chiens (dont les chiens de berger, qui chargent), gratte la terre pour déterrer des trésors, ramasse des os (qui rendent
 de la vie) et des saucisses (qui ajoutent un os de vie maximum). Sur une grande carte, il traverse campagne (et son pré aux vaches), route (gare aux voitures :
-mieux vaut passer par les passages piétons), village, zone industrielle et son port, ferme et son verger, rivière (un seul pont), forêt et parc.
+mieux vaut passer par les passages piétons), village (sa place, son marché, sa boulangerie), zone industrielle et son port, ferme et son verger, rivière (un seul pont), forêt et parc.
 La journée avance avec la recherche : un cran par indice, du plein jour au coucher de soleil orangé ; au troisième, les
 lampadaires s'allument, et la nuit tombe quand Tecky et Alice rentrent à la niche. De temps en temps,
 une averse (flaques, arc-en-ciel, Tecky qui s'ébroue) ; en décembre, il neige.
