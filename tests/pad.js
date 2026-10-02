@@ -50,6 +50,14 @@ function main() {
   ok(run('nb') === 1, 'A tenu une seconde : une seule morsure (' + run('nb') + ')');
   tap(9);
   ok(run('state') === 'pause', 'Start : pause');
+  // menu de la pause, en ligne : le stick à gauche / à droite change d'entrée, comme la croix
+  run('menu.sel = 0;'); axes(0.95, 0.1); pstep(20);
+  ok(run('menu.sel') === 1, 'pause : stick à droite (tenu) : entrée suivante, une seule fois');
+  axes(0, 0); pstep(1); axes(-0.9, 0.2); pstep(2); axes(0, 0); pstep(1);
+  ok(run('menu.sel') === 0, 'stick à gauche : entrée précédente');
+  axes(0.7, 0.75); pstep(2); axes(0, 0); pstep(1);
+  ok(run('menu.sel') === 1, 'en diagonale : un seul pas (l’axe principal), pas deux');
+  run('menu.sel = 0;');
   tap(9);
   ok(run('state') === 'play', 'Start : reprise');
   tap(9); tap(0);

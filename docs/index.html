@@ -596,7 +596,7 @@ addEventListener('blur', () => { for (const k in held) held[k] = false; });
 const PAD_MAP = { 0: ['bite', 'ok'], 1: ['bark'], 2: ['bark'], 3: ['sniff'], 8: ['mute'], 9: ['pause'],
                   12: ['up'], 13: ['down'], 14: ['left'], 15: ['right'] };
 const PAD_DEAD = 0.25;
-const pad = { on: false, vx: 0, vy: 0, prev: {}, sy: 0 };
+const pad = { on: false, vx: 0, vy: 0, prev: {}, sx: 0, sy: 0 };
 function pollPad() {
   const list = (navigator.getGamepads && navigator.getGamepads()) || [];
   const down = {};
@@ -610,10 +610,13 @@ function pollPad() {
   const cx = (down[15] ? 1 : 0) - (down[14] ? 1 : 0), cy = (down[13] ? 1 : 0) - (down[12] ? 1 : 0);
   if (cx || cy) { vx = cx; vy = cy; }
   for (const i in PAD_MAP) if (down[i] && !pad.prev[i]) { for (const a of PAD_MAP[i]) pressed[a] = true; used = true; }
-  // dans les menus, le stick donne une impulsion par mouvement franc (la croix passe par PAD_MAP)
-  const sy = Math.abs(vy) > 0.6 ? Math.sign(vy) : 0;
+  // dans les menus, le stick donne une impulsion par mouvement franc, sur son axe principal : haut / bas (menus en
+  // colonne), gauche / droite (menu de la pause, en ligne ; réglages des options). La croix passe par PAD_MAP.
+  const horiz = Math.abs(vx) > Math.abs(vy);
+  const sx = horiz && Math.abs(vx) > 0.6 ? Math.sign(vx) : 0, sy = !horiz && Math.abs(vy) > 0.6 ? Math.sign(vy) : 0;
   if (sy && sy !== pad.sy && !cy) pressed[sy < 0 ? 'up' : 'down'] = true;
-  pad.sy = sy; pad.prev = down; pad.vx = vx; pad.vy = vy;
+  if (sx && sx !== pad.sx && !cx) pressed[sx < 0 ? 'left' : 'right'] = true;
+  pad.sx = sx; pad.sy = sy; pad.prev = down; pad.vx = vx; pad.vy = vy;
   if (used) audioOn();
   if (used || Math.hypot(vx, vy) > 0.5) { pad.on = true; touchMode = false; }
 }

@@ -214,7 +214,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - Copains qui suivent (balade, `FOLLOW`, `crumbs`, mode `follow`) : après avoir joué, le chien suit Tecky en file
   indienne sur ses traces pendant 30 s, puis rentre. Test : `world.js`.
 - Manette (`pollPad()` appelé par `frame()` avant `update()`, `PAD_MAP`, `pad.on` → indices `hud/pad` au lieu de
-  `hud/key`) : un appui = une impulsion dans `pressed`, la croix et le stick donnent `pressed.up/down` pour les menus,
+  `hud/key`) : un appui = une impulsion dans `pressed`, la croix et le stick (sur son axe principal) donnent
+  `pressed.up/down/left/right` pour les menus (la pause est en ligne) et les options,
   le stick gauche fait marcher (zone morte `PAD_DEAD`, vitesse selon l'inclinaison). Le clavier donne aussi
   `pressed.up/down/left/right`. Test : `pad.js` (dans les tests, appeler `pollPad()` avant `update()`).
 
