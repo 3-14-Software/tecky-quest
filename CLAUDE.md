@@ -42,6 +42,9 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   Lance `web_src/check_placement.js` : rien dans l'eau ou un obstacle (canards : dans l'eau), et tout (personnages,
   lettres, Pompon compris) atteignable **à pied depuis la niche**
   (parcours en largeur sur une grille de 16 px ; c'est lui qui garantit que le pont et les sentiers suffisent).
+  **Règle d'espacement** : deux actions de genres différents (personnage, panneau, os doré, bout de terrier, indice,
+  lettre, Pompon) ne se recouvrent jamais (portées `NPC.talk`, `REACH`, `TUNNEL.reach`, `POST.pick`, `CAT.find` + 60 px),
+  aucun objet n'est à portée de parole d'un personnage, les personnages vivent en zone calme et aucun chien n'y habite.
 - Carte : le quart nord-ouest (40 x 24) est la carte d'origine (mêmes coordonnées, les tests s'y appuient). Ferme au
   nord-est, rivière d'un bord à l'autre (y 26..29) avec **un seul pont** (`BRIDGES`, x 63..65 : coins rendus non-eau ;
   garde-corps = `RAILS` dans game.js), forêt au sud-est (sous-bois, sapins générés par `forest_firs()` hors des sentiers),
@@ -224,6 +227,9 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   petit, `buildLight()`) ; canvas plafonné à `MAX_PIXELS` (1920 x 1080), le navigateur agrandit au-delà (sinon
   216 ms par image en 4K au coucher de soleil). Mesurer dans Firefox sans fenêtre : `firefox --headless` avec un
   profil où `browser.dom.window.dump.enabled` est vrai, la page mesure `render()` et écrit le résultat avec `dump()`.
+- Placer un nouvel élément interactif : `check_placement.js` refuse la construction s'il chevauche une autre action
+  (règle d'espacement). Ne pas réduire les portées pour le faire passer : le déplacer. Une nouvelle action : l'ajouter à
+  la liste de la règle, avec sa portée (constante partagée avec game.js, comme `REACH`).
 - Tests sans `localStorage` : `STORE` passe en mémoire. Après un KO dans un test, le menu propose d'abord
   « Reprendre la partie » : choisir `menu.sel` explicitement pour « Recommencer ».
 

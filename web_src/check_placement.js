@@ -1,6 +1,7 @@
 // Usage : node web_src/check_placement.js web/index.html
-// Vérifie que rien n'est posé dans l'eau ou dans un obstacle, et que tout (objets, indices, trésors, panneaux,
-// Alice) est atteignable à pied depuis la niche de Tecky.
+// Vérifie que rien n'est posé dans l'eau ou dans un obstacle, que tout (objets, indices, trésors, panneaux,
+// Alice) est atteignable à pied depuis la niche de Tecky, que deux actions différentes ne se recouvrent pas (règle
+// d'espacement) et que les personnages vivent en zone calme, sans chien.
 const vm = require('vm'), fs = require('fs');
 const html = fs.readFileSync(process.argv[2], 'utf8');
 const code = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'));
@@ -61,6 +62,28 @@ setTimeout(() => {
     // quête des poules : la barrière de l'enclos est atteignable, et les poules de la quête démarrent dehors
     { const [gx, gy] = gatePoint(); if (!reachable(gx, gy + 40, 60)) out.push('barrière de l’enclos'); }
     for (const h of hens) if (h.quest && h.x > penRect()[0] && h.x < penRect()[2] && h.y > penRect()[1] && h.y < penRect()[3]) out.push('poule déjà dans l’enclos ' + tile(h.x, h.y));
+    // règle d'espacement : deux actions différentes ne se recouvrent jamais (avec une marge), sinon le joueur en déclenche
+    // une en voulant l'autre (ramasser un indice en parlant à quelqu'un, déterrer un os en passant sous un grillage…)
+    const MARGIN = 60, A = [];        // [genre, nom, x, y, portée]
+    for (const n of npcList()) A.push(['personnage', n.kind, n.x, n.y, NPC.talk]);
+    for (const s of MAP.signs) A.push(['panneau', 'panneau', s[0], s[1] + 30, REACH.sign]);
+    for (const g of digs) A.push(['os doré', 'trésor', g.x, g.y + 6, REACH.dig]);
+    MAP.tunnels.forEach(([ax, ay, bx, by]) => { A.push(['terrier', 'terrier', ax, ay, TUNNEL.reach]); A.push(['terrier', 'terrier', bx, by, TUNNEL.reach]); });
+    for (const it of items) if (CLUES.includes(it.n)) A.push(['indice', it.n, it.x, it.y + 32, REACH.item]);
+    for (const l of letters) A.push(['lettre', 'lettre', l.x, l.y + 20, POST.pick]);
+    A.push(['chat', 'Pompon', pompon.x, pompon.y, CAT.find]);
+    for (let i = 0; i < A.length; i++) for (let j = i + 1; j < A.length; j++) {
+      const a = A[i], b = A[j];
+      if (a[0] === b[0] && a[0] !== 'personnage') continue;
+      if (dist(a[2], a[3], b[2], b[3]) < a[4] + b[4] + MARGIN)
+        out.push('trop proches : ' + a[0] + ' ' + tile(a[2], a[3]) + ' et ' + b[0] + ' ' + tile(b[2], b[3]) + ' (deux actions au même endroit)');
+    }
+    // rien à ramasser à portée de parole d'un personnage
+    for (const n of npcList()) for (const it of items)
+      if (dist(n.x, n.y, it.x, it.y + 32) < NPC.talk + REACH.item) out.push('objet ' + it.n + ' ' + tile(it.x, it.y) + ' à portée de parole de ' + n.kind);
+    // les personnages vivent en zone calme, et aucun chien n'y habite
+    for (const n of npcList()) if (!calmAt(n.x, n.y)) out.push('personnage hors zone calme : ' + n.kind + ' ' + tile(n.x, n.y));
+    for (const d of dogs) if (calmAt(d.hx, d.hy)) out.push('chien en zone calme : ' + d.kind + ' ' + tile(d.hx, d.hy));
     return out;
   })())`));
   if (bad.length) { console.log('PROBLÈMES :\n  ' + bad.join('\n  ')); process.exitCode = 1; }

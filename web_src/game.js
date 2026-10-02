@@ -1949,13 +1949,15 @@ function threatened() {
   if (calmAt(P.x, P.y)) return false;  // (zone calme)
   return dogs.some(d => ENGAGED.has(d.mode) && dist(P.x, P.y, d.x, d.y) < THREAT_R);
 }
+// portées des actions (check_placement.js s'en sert aussi : deux actions différentes ne se recouvrent jamais)
+const REACH = { sign: 95, dig: 86, item: 52 };
 function nearDig() {
-  for (const g of digs) if (!g.dug && dist(P.x, P.y, g.x, g.y + 6) < 86) return g;
+  for (const g of digs) if (!g.dug && dist(P.x, P.y, g.x, g.y + 6) < REACH.dig) return g;
   return null;
 }
 // panneau à portée : [x, y, texte]
 function nearSign() {
-  for (const s of MAP.signs) if (dist(P.x, P.y, s[0], s[1] + 30) < 95) return s;
+  for (const s of MAP.signs) if (dist(P.x, P.y, s[0], s[1] + 30) < REACH.sign) return s;
   return null;
 }
 // ce que fait C (le bouton de morsure) : mordre si un chien menace, sinon gratter un trésor
@@ -3214,7 +3216,7 @@ function updateItems(dt) {
   for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
     if (it.t < 0.5 && it.pop !== undefined) continue;
-    if (dist(P.x, P.y - 10, it.x, it.y + 22) < 52 && P.mode !== 'ko') {
+    if (dist(P.x, P.y - 10, it.x, it.y + 22) < REACH.item && P.mode !== 'ko') {
       const e = ITEM[it.n];
       if (e.grow) {
         // saucisse : un os de plus, déjà plein
