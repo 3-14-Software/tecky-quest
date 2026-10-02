@@ -54,6 +54,21 @@ python3 music.py         # WAV de la musique et de la fanfare -> out/audio/
 
 Jouer en local : `cd web/tecky_quest_web && ./serve.sh` (serveur sur le réseau local, pratique pour tester sur téléphone).
 
+## Modifier la carte
+
+La carte est dans `carte.json` (terrain, détails au sol, décors, objets, chiens, personnages, quêtes, bêtes, route,
+zones). Pour la modifier à la souris :
+
+```bash
+python3 editeur.py       # puis ouvrir http://127.0.0.1:8770/
+```
+
+Pinceau de terrain (sur les coins de la grille : les transitions se dessinent toutes seules), détails au sol, décors et
+éléments à poser, déplacer, dupliquer ou supprimer, zones et rectangles à poignées, annuler et rétablir. **Enregistrer**
+(Ctrl+S) écrit `carte.json` ; **Vérifier** construit le jeu et liste les problèmes de placement (dans l'eau, dans un
+obstacle, hors d'atteinte depuis la niche…) ; un clic droit sur la carte, **Essayer ici**, lance le jeu avec Tecky à
+cet endroit.
+
 ## Tests
 
 ```bash
@@ -78,6 +93,8 @@ os dorés, écureuils et chats, zones (bandeau, ambiance, timbre), transitions m
 | `music.py` | partition chiptune (thème en boucle, fanfare de victoire, musique de défaite), export WAV |
 | `sample_map.py`, `hud_mockup.py` | carte d'exemple et maquette du HUD |
 | `build.py` | export du kit GameMaker dans `out/` |
+| `carte.json`, `carte.py` | la carte du jeu, et sa lecture, sa vérification, son écriture |
+| `editeur.py`, `editeur/` | éditeur de carte (page web locale) |
 | `pack_web.py` | atlas, niveau, version web et paquet autonome dans `web/` |
 | `web_src/` | moteur du jeu (`game.js`), gabarits HTML, service worker, vérificateur de placement |
 | `fonts/` | police Fredoka (licence OFL) |

@@ -2,6 +2,7 @@
 # Reconstruit la version web puis lance toute la batterie de tests (Node >= 18 + Python 3).
 set -e
 cd "$(dirname "$0")/.."
+python3 carte.py --verifier          # carte.json : correct, et au format de l'éditeur
 python3 pack_web.py
 python3 tests/regen.py
 fail=0

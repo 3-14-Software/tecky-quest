@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carte — Tecky Quest</title>
+<link rel="stylesheet" href="editeur.css">
+</head>
+<body>
+<header id="barre">
+  <span class="marque">Tecky Quest <b>· carte</b></span>
+  <div class="groupe" id="outils"></div>
+  <div class="groupe">
+    <button id="annuler" title="Annuler (Ctrl+Z)">Annuler</button>
+    <button id="retablir" title="Rétablir (Ctrl+Maj+Z)">Rétablir</button>
+  </div>
+  <div class="groupe">
+    <label title="Magnétisme des déplacements (Alt en glissant : sans)">Pas
+      <select id="pas">
+        <option value="0.05" selected>0,05</option><option value="0.1">0,1</option><option value="0.25">0,25</option>
+        <option value="0.5">0,5</option><option value="1">1</option>
+      </select>
+    </label>
+    <label title="Grille des tuiles (H)"><input type="checkbox" id="grille"> Grille</label>
+    <label title="Emprises de collision des décors"><input type="checkbox" id="collisions"> Collisions</label>
+    <label title="Après une vérification : en rouge, le sol praticable que Tecky ne peut pas atteindre depuis la niche"><input type="checkbox" id="acces" disabled> Accès à pied</label>
+    <button id="toutvoir" title="Toute la carte (F)">Tout voir</button>
+  </div>
+  <div class="groupe droite">
+    <span id="etat"></span>
+    <button id="verifier" title="Enregistre, construit le jeu et vérifie les placements">Vérifier</button>
+    <button id="enregistrer" class="principal" title="Enregistrer carte.json (Ctrl+S)">Enregistrer</button>
+  </div>
+</header>
+<main>
+  <aside id="gauche">
+    <section>
+      <h2>Calques</h2>
+      <ul id="calques"></ul>
+    </section>
+    <section id="palette"></section>
+    <p id="aide" class="note"></p>
+  </aside>
+  <div id="vue"><canvas id="carte" tabindex="0"></canvas></div>
+  <aside id="droite">
+    <section id="inspecteur"></section>
+    <section id="problemes"><h2>Vérification</h2><p class="note">« Vérifier » construit le jeu et liste ici les problèmes de placement (un clic : on y va).</p></section>
+  </aside>
+</main>
+<footer id="souris"></footer>
+<div id="menu" hidden></div>
+<div id="message" hidden></div>
+<div id="occupe" hidden><div><span class="roue"></span><span id="occupe-texte"></span></div></div>
+<script>window.ED = {};</script>
+<script src="sol.js"></script>
+<script src="etat.js"></script>
+<script src="vue.js"></script>
+<script src="outils.js"></script>
+<script src="panneaux.js"></script>
+</body>
+</html>

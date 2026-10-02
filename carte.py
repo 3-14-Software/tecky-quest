@@ -5,7 +5,8 @@ La carte du jeu (carte.json) : terrain, détails au sol, décors, éléments de 
 pack_web.py la lit pour construire le niveau ; l'éditeur de carte (editeur.py) la lit et l'enregistre. Ce module la
 charge, la vérifie et l'écrit dans un format stable (une entrée par ligne : des différences Git lisibles).
 
-    python3 carte.py        # vérifie carte.json et le réécrit au format normalisé
+    python3 carte.py              # vérifie carte.json et le réécrit au format normalisé
+    python3 carte.py --verifier   # vérifie seulement (code de retour 1 si une erreur, ou si le format n'est pas le bon)
 
 Ce qui ne figure pas dans le fichier est déduit par pack_web.build_map() : poteaux des panneaux (signs), terriers
 (tunnels), clôtures de l'enclos (pen, penGate), filet de Léon (goal), rails et heurtoirs (track), coins du pont (un
@@ -285,13 +286,16 @@ def enregistrer(c, chemin=FICHIER):
 
 
 if __name__ == "__main__":
+    import sys
     c = charger(verifier=False)
     err = valider(c)
     if err:
         raise SystemExit("carte.json :\n  " + "\n  ".join(err))
     avant = open(FICHIER, encoding="utf-8").read()
-    if texte(c) != avant:
+    if texte(c) == avant:
+        print("carte.json : ok")
+    elif "--verifier" in sys.argv:
+        raise SystemExit("carte.json : pas au format normalisé (python3 carte.py le réécrit)")
+    else:
         enregistrer(c)
         print("carte.json réécrit au format normalisé")
-    else:
-        print("carte.json : ok")

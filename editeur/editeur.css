@@ -1,0 +1,95 @@
+/* Éditeur de carte de Tecky Quest : un outil de développement, sombre et sobre, la carte au centre. */
+:root {
+  --fond: #16171B; --panneau: #202227; --panneau2: #292C33; --trait: #383C45; --texte: #E8E6E1; --doux: #9CA0A8;
+  --accent: #FFD84D; --accent-texte: #2A2108; --danger: #E5605A; --ok: #6FCF8E; --brun: #3A1E12;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--fond); color: var(--texte); font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+body { display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; }
+button, select, input, textarea { font: inherit; color: inherit; }
+button { background: var(--panneau2); border: 1px solid var(--trait); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+button:hover:not(:disabled) { border-color: #5A5F6A; }
+button:disabled { opacity: 0.4; cursor: default; }
+button.principal { background: var(--accent); color: var(--accent-texte); border-color: var(--accent); font-weight: 600; }
+button.danger { color: #FFB4AF; border-color: #6A3633; }
+button.lien { background: none; border: none; padding: 0; color: inherit; text-align: left; text-decoration: underline dotted; }
+select, input[type=number], input[type=text], textarea { background: var(--fond); border: 1px solid var(--trait); border-radius: 5px; padding: 3px 6px; }
+input[type=number] { width: 100%; }
+textarea { width: 100%; resize: vertical; }
+h2 { font-size: 13px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--doux); }
+h3 { font-size: 12px; margin: 12px 0 6px; color: var(--doux); }
+.note { color: var(--doux); font-size: 12px; margin: 6px 0; }
+
+/* barre du haut */
+#barre { display: flex; align-items: center; gap: 14px; padding: 6px 10px; background: var(--panneau); border-bottom: 1px solid var(--trait); flex-wrap: wrap; }
+.marque { font-weight: 700; color: var(--accent); white-space: nowrap; }
+.marque b { color: var(--texte); font-weight: 500; }
+.groupe { display: flex; align-items: center; gap: 6px; }
+.groupe label { display: flex; align-items: center; gap: 4px; color: var(--doux); white-space: nowrap; }
+.groupe.droite { margin-left: auto; }
+.outil.actif { background: var(--accent); color: var(--accent-texte); border-color: var(--accent); }
+#etat { color: var(--ok); font-size: 12px; white-space: nowrap; }
+#etat.modifie { color: var(--accent); }
+
+/* colonnes */
+main { display: grid; grid-template-columns: 250px 1fr 300px; min-height: 0; }
+aside { background: var(--panneau); overflow-y: auto; padding: 10px; min-height: 0; }
+#gauche { border-right: 1px solid var(--trait); }
+#droite { border-left: 1px solid var(--trait); display: flex; flex-direction: column; gap: 14px; }
+section + section { margin-top: 12px; }
+#vue { position: relative; overflow: hidden; min-width: 0; min-height: 0; }
+#vue canvas { display: block; outline: none; cursor: default; }
+#vue[data-outil=pinceau] canvas, #vue[data-outil=rect] canvas, #vue[data-outil=remplir] canvas, #vue[data-outil=details] canvas, #vue[data-outil=poser] canvas { cursor: crosshair; }
+#vue[data-outil=pipette] canvas { cursor: copy; }
+
+/* calques */
+#calques { list-style: none; margin: 0; padding: 0; }
+#calques li { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 2px 0; }
+#calques label { display: flex; align-items: center; gap: 4px; cursor: pointer; min-width: 0; }
+#calques .n { color: var(--doux); font-size: 11px; }
+.verrou { font-size: 10px; padding: 1px 6px; color: var(--doux); }
+.verrou.on { color: var(--accent); border-color: #6B5A1E; }
+
+/* palette */
+.grille-pal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.pal { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 2px; font-size: 10px; color: var(--doux); overflow: hidden; }
+.pal span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pal.actif { border-color: var(--accent); color: var(--texte); background: #3A3420; }
+.pal .gomme { font-size: 22px; line-height: 34px; height: 34px; }
+.vig { display: block; image-rendering: auto; }
+.ligne { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+#palette select { width: 100%; margin-bottom: 8px; }
+
+/* inspecteur */
+.champ { margin: 8px 0; }
+.champ > label { display: block; color: var(--doux); font-size: 11px; margin-bottom: 2px; }
+.champ label.case { display: flex; gap: 6px; color: var(--texte); font-size: 12px; }
+.deux { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.quatre { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
+.compte { margin: 0; padding-left: 18px; }
+.rects { list-style: none; margin: 0; padding: 0; font-family: ui-monospace, monospace; font-size: 11px; }
+.rects li.actif button { color: var(--accent); }
+#inspecteur .vig { background: var(--fond); border-radius: 6px; margin-bottom: 6px; }
+
+/* problèmes */
+#problemes h2.pb { color: var(--danger); }
+#problemes h2.ok { color: var(--ok); }
+.pbs { margin: 0; padding-left: 16px; }
+.pbs li { margin: 3px 0; }
+.avert { border: 1px solid #6B5A1E; background: #2E2A1A; border-radius: 6px; padding: 6px 8px; margin-top: 8px; }
+.avert p { margin: 0 0 6px; }
+pre { white-space: pre-wrap; font-size: 11px; background: var(--fond); border: 1px solid var(--trait); border-radius: 6px; padding: 6px; max-height: 300px; overflow: auto; }
+pre.fatal { margin: 12px; color: #FFB4AF; }
+
+/* barre d'état, menu, messages */
+#souris { padding: 3px 10px; background: var(--panneau); border-top: 1px solid var(--trait); color: var(--doux); font-size: 12px; font-variant-numeric: tabular-nums; min-height: 22px; }
+#menu { position: fixed; z-index: 10; background: var(--panneau2); border: 1px solid var(--trait); border-radius: 8px; padding: 4px; min-width: 200px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+#menu button { display: block; width: 100%; text-align: left; border: none; background: none; padding: 6px 10px; border-radius: 5px; }
+#menu button:hover { background: #3A3E47; }
+#menu hr { border: none; border-top: 1px solid var(--trait); margin: 4px 0; }
+#message { position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%); background: #2E3138; border: 1px solid var(--trait); border-radius: 8px; padding: 8px 14px; z-index: 11; max-width: 70vw; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+#occupe { position: fixed; inset: 0; background: rgba(10,11,14,0.55); display: grid; place-items: center; z-index: 20; }
+#occupe > div { background: var(--panneau); border: 1px solid var(--trait); border-radius: 10px; padding: 14px 18px; display: flex; gap: 10px; align-items: center; }
+.roue { width: 16px; height: 16px; border: 2px solid var(--trait); border-top-color: var(--accent); border-radius: 50%; animation: tourne 0.8s linear infinite; }
+@keyframes tourne { to { transform: rotate(360deg); } }
+[hidden] { display: none !important; }

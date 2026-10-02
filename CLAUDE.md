@@ -13,6 +13,7 @@ mi-longs avec frange, t-shirt jaune, jupe rose, pieds nus. Garder ces traits en 
 ```bash
 pip install -r requirements.txt           # cairosvg, pillow, numpy (+ Node 18+ pour les tests)
 python3 pack_web.py                       # web/index.html, web/tecky_quest_web/ (autonome), atlas, niveau
+python3 editeur.py                        # éditeur de carte : http://127.0.0.1:8770/ (modifie carte.json)
 python3 build.py                          # kit GameMaker -> out/ (efface d'abord ses anciennes sorties)
 ./tests/run_all.sh                        # reconstruit puis lance tous les tests (doit finir avec exit=0)
 ./publish_docs.sh                         # copie la version autonome dans docs/ (GitHub Pages)
@@ -49,9 +50,30 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   Village plus entraînant (152), ferme country (136 : basse alternée, rouleaux de banjo, notes glissées = 6e champ),
   forêt calme (108 : basse tenue, écho), parc boîte à musique (126, sans batterie), industrie mécanique (140) ; et la
   berceuse de la fin (84, sans batterie, timbre `TIMBRE.end`).
-- `pack_web.py` : atlas (frames rognées), niveau (`MW=96`, `MH=64` tuiles, positions des décors/objets/chiens/trésors `DIG`),
+- **La carte est une donnée** : `carte.json` (en tuiles ; `carte.py` : `charger()`, `valider()`, `enregistrer()`, format
+  stable, une entrée par ligne ; `python3 carte.py --verifier` dans `run_all.sh`). Terrain = 65 lignes de 97 coins (une
+  lettre par terrain, `LEGENDE`), `details` (détails au sol, tuile entière ; « fleurs » = massifs, perchoirs des
+  papillons), `decor` (sapins de la forêt et clôtures compris), listes d'éléments (`items`, `dig`, `enemies`, `signs`,
+  `tunnels`, bêtes, villageois), personnages et repères (`start`, `alice`, `title`, `ending`), quêtes (`letters`,
+  `balls`, `toys`, `babies`, `goal`, `ballBox`, `pen`, `penGate`, `track`), route (`traffic` : `y` = première rangée,
+  passages, véhicules ; `roadTunnels`), `calm`, `zones` (rectangles), `landmarks`. Se déduisent de la carte, dans
+  `pack_web.py` (`derived_decor()`, `build_map()`) : poteaux des panneaux, terriers, clôtures de l'enclos, filet de Léon,
+  rails et heurtoirs, coins du pont (sous chaque décor `bridge`, posé sur une position entière), traces de pattes,
+  perchoirs des papillons, marquages et passages de la route, lisière. Une nouvelle donnée de carte : dans
+  `carte.json`, `carte.py` (`ORDRE`, `valider()`), `pack_web.py`, et l'éditeur (`editeur/etat.js` : `objets()`).
+- Éditeur de carte (`editeur.py` : serveur local 127.0.0.1:8770, atlas et tileset dessinés au démarrage, tuiles
+  composées à la demande `/tuile`, `PUT /carte.json` refusé si le fichier a changé entre-temps (ETag) ; page
+  `editeur/` : `sol.js` = le sol calculé comme `build_map()` (test `editeur_sol.js`), `etat.js` (carte, historique,
+  objets), `vue.js` (dessin), `outils.js` (souris, clavier), `panneaux.js` (interface)). Terrain au pinceau sur les
+  coins, détails, décors et éléments à la souris, zones et rectangles à poignées. « Vérifier » : `pack_web.py`, puis
+  `check_placement.js --json` (problèmes avec leur position, grille du parcours à pied) et `export_voix.js --check`.
+  « Essayer ici » : `web/essai.html` = le jeu précédé de `const ESSAI = [x, y, mode]` ; `startEssai()` lance la partie
+  à cet endroit, sans titre, intro ni sauvegarde.
+- `pack_web.py` : atlas (frames rognées), niveau (lu dans `carte.json`, `MW=96`, `MH=64` tuiles ; variantes des tuiles
+  choisies d'après la position, `hash3` = celui de game.js, et texture d'une tuile composée d'après ses coins,
+  `tiles.composite_seed()` : modifier un coin ne change rien ailleurs),
   `index.html` à partir de `web_src/index.template.html` + `game.js`, paquet autonome (manifest, service worker, icônes, `serve.sh`).
-  Lance `web_src/check_placement.js` : rien dans l'eau ou un obstacle (canards : dans l'eau), et tout (personnages,
+  Lance `web_src/check_placement.js` (`--json`, `--infos` pour l'éditeur) : rien dans l'eau ou un obstacle (canards : dans l'eau), chaque papillon a des fleurs, et tout (personnages,
   lettres, Pompon compris) atteignable **à pied depuis la niche**
   (parcours en largeur sur une grille de 16 px ; c'est lui qui garantit que le pont et les sentiers suffisent).
   **Règle d'espacement** : deux actions de genres différents (personnage, panneau, os doré, bout de terrier, indice,
@@ -63,10 +85,13 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   ruelle), la ferme ;
   au sud, la campagne (mare aux canards au bord de l'eau), la zone industrielle, le verger (pommiers `apple_tree` en
   rangées, panier d'Iris) et les prés de la ferme (champ, mare, pâture au bord de la rivière).
-  Rivière d'un bord à l'autre (y 42..45) avec **un seul pont** (`BRIDGES`, x 79..81 : coins rendus non-eau ;
-  garde-corps = `RAILS` dans game.js), forêt au sud-est (sous-bois, sapins générés par `forest_firs()` hors des sentiers),
-  parc au sud-ouest (cabane d'Alice). Les coordonnées des zones (`ZONES`, `RIVER_MID`), de la route (marquages,
-  `MAP.traffic`, `FARM.roadY`) et des ballons (`BALL.box`) sont écrites en dur : à suivre si la carte change. Zone industrielle au sud de la route : le dépôt (x 30..56) et, en dessous, le port au bord
+  Rivière d'un bord à l'autre (y 42..45) avec **un seul pont** (décor `bridge` en x 80 ; `BRIDGES` déduits : coins
+  x 79..81 rendus non-eau ; garde-corps = `RAILS` dans game.js), forêt au sud-est (sous-bois, sapins hors des sentiers,
+  placés une fois par l'ancien `forest_firs()` et figés dans `carte.json`), parc au sud-ouest (cabane d'Alice). Zones
+  (`MAP.zones`), route (`traffic.y` : marquages, voies, `FARM.roadY` = `MAP.farmRoadY`), terrain des ballons
+  (`BALL.box` = `MAP.ballBox`) et places de la scène de fin (`ENDING.alice` / `.tecky` = `MAP.ending`) viennent de
+  `carte.json`. Restent écrites en dur dans des tests, à suivre si la carte change : `map.js` (pont, rivière),
+  `world.js`, `music.js`, `traffic.js`, `calm.js`, `farm.js`, `leon.js`, `sim.js` (étang), `effects.js`. Zone industrielle au sud de la route : le dépôt (x 30..56) et, en dessous, le port au bord
   de la rivière (x 30..64) : chariot élévateur, camion,
   conteneurs sous le portique (pieds dans `RAILS`), cabane du gardien, voie ferrée du quai (`rail`, à plat), bittes,
   péniche. Terrains ajoutés : `field` (champ), `forest` (sous-bois).
@@ -142,7 +167,7 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   **Mordre passe avant tout** si un chien menace Tecky (`threatened()` : chien « engagé » — `ENGAGED` : chasse,
   attaque, aboiement, sonné, accroupi, charge, essoufflé — à moins de `THREAT_R` = 240 px) ; C interrompt alors aussi un grattage en cours. Tests : `threat.js`, `read.js`.
   Le **doberman est immunisé aux aboiements** (`barkImmune`) : il faut le mordre (Tecky l'explique, bulle « Même pas peur ! »).
-- Zones calmes (`MAP.calm` = `CALM` dans pack_web : le village au nord de la route, trottoir compris — on parle à
+- Zones calmes (`MAP.calm` = `calm` de carte.json, bornes comprises : le village au nord de la route, trottoir compris — on parle à
   Marcel depuis le trottoir —, la cour de la ferme ; `calmAt()`),
   comme les villes d'un RPG, en aventure : aucun chien n'y habite, un chien qui poursuit Tecky renonce quand il y
   entre (« Grrr… ») et rentre chez lui, `hurtPlayer()` n'y fait rien, `threatened()` y est faux. En balade, les
@@ -160,13 +185,13 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   `ARROW.sc`). Seule la
   pointe (`hud/arrow`) tourne ; l'icône de la cible (`hud/arrow_icon` : 3 indices + tête d'Alice) reste droite. Alice est **cachée**
   (`alice.hidden`, ni dessinée ni solide) jusqu'aux trois ; devant la cabane trop tôt, Tecky dit qu'il manque des indices.
-- Circulation (`cars`, `VEHICLE`, `TRAFFIC`, données `MAP.traffic` : voies, passages `CROSSINGS`) : à droite sur la
+- Circulation (`cars`, `VEHICLE`, `TRAFFIC`, données `MAP.traffic` : voies, passages `traffic.crossings`) : à droite sur la
   grande route, retour par l'autre bord de la carte, distances de sécurité. Un choc projette Tecky sur le bas-côté
   (klaxon avant, « Ouf ! ») **sans dégâts** ; aux passages piétons, arrêt systématique. Les chiens sont aussi
   écartés. Test : `traffic.js`.
 - Papillons (`butterflies`, `BFLY`, `MAP.flowers`) : 16, surtout au parc, mais aussi niche, village (visibles dès
   l'écran titre), campagne sud-ouest, verger de la ferme, clairière. Volettent en zigzag avec une ombre au sol, se
-  posent sur les pots de fleurs ou les massifs (`FLOWER_BEDS`, dessinés aussi au sol), s'envolent si Tecky approche
+  posent sur les pots de fleurs ou les massifs (détails « fleurs » de carte.json, `FLOWER_BEDS`), s'envolent si Tecky approche
   ou aboie. Chacun doit avoir une fleur à portée (testé). Dessinés au-dessus de tout, sans collision. Test :
   `butterflies.js`.
 - Villageois (`villagers`, `VILLAGER`, `VILLAGER_LINES`, `MAP.villagers`, villageois.py) : Bernard le boulanger,
@@ -238,7 +263,7 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   tactile sans icônes ; `iris.tip`). Sauvegardés (`jouets`, `toys` ; un jouet porté l'est aux pieds de Tecky). Test :
   `iris.js`.
 - Maman Piquette, la maman hérisson (`piq`, `piquette`, `BABY`, `MAP.piquette`, npcs.py « piquette ») : dans une
-  clairière de la forêt (`CLEARING` dans pack_web : herbe, pas de sapins, sentier depuis le chemin ouest, nid
+  clairière de la forêt (herbe, pas de sapins, une zone de `calm`, sentier depuis le chemin ouest, nid
   `leaf_nest` ; zone calme). Ses trois petits (`babies`, `MAP.babies`, herissons.py, sprites `hedgehog/*`) se cachent
   sous des fougères (« Couic ? » quand Tecky passe) ; une fois la quête demandée, un petit trouvé (`BABY.find`) suit
   Tecky sur ses traces, en file indienne dans l'ordre où ils ont été trouvés (`seq`, après Pompon), attend s'il va
@@ -289,7 +314,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   les adultes s'envolent vers un autre coin d'eau loin de lui (`pickLanding()`), ombre au sol, et s'y posent ; la cane
   suivie de canetons (même famille, `lead`) s'éloigne à la nage avec eux en file. Points la première fois (`scored`,
   sauvegardé dans `ducks`). Test : `ducks.js`.
-- Zones (`ZONES`, `zoneAt()`, `updateZone()` ; huit, dont « Le verger » au sud de la route, qui reprend la musique de
+- Zones (`ZONES` = `MAP.zones` : rectangles en tuiles, la première zone dont un rectangle contient le point, un bord
+  posé sur le bord de la carte sans limite, la dernière couvre tout ; `zoneAt()`, `updateZone()` ; huit, dont « Le verger » au sud de la route, qui reprend la musique de
   la ferme : champ `music` d'une zone) : bandeau à l'arrivée (`banner`), étiquettes de la carte, ambiance sonore
   (`Ambience`, `AMB_EVENTS`, `ambSound()` : oiseaux, coq, sonnette, cliquetis ; clapotis selon l'eau autour) et timbre
   de la musique (`TIMBRE` et variation du thème `SONGS`, `Music.zone`). Changement (`MUSIC_ZONE`) : Tecky doit
@@ -298,8 +324,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   couche de gain par zone (`Music.layers` : sa variation, ses instruments ; `fadeTo()`, `ramp()`), et le tempo glisse
   de l'une à l'autre pendant ce fondu (`Music.glide`, `stepLen()`). Nouvelle partie, Continuer : fondu rapide (`cut`),
   nouveau tempo tout de suite. Test : `music.js`. La rivière n'est pas une zone : celles du nord et du sud vont jusqu'à son
-  milieu (`RIVER_MID`), pour que rien ne change en la longeant ou en passant le pont ; elle garde son étiquette sur la
-  carte de la pause (`LANDMARKS`). Test : `world.js`.
+  milieu (y 43,6), pour que rien ne change en la longeant ou en passant le pont ; elle garde son étiquette sur la
+  carte de la pause (`LANDMARKS` = `MAP.landmarks`). Test : `world.js`.
 - Carte de la pause (`drawPauseMap()`, `mapImg` pré-rendue au quart, `seenCells` : cases de 4 tuiles vues à l'écran,
   sauvegardées) : brouillard, noms des zones vues, Tecky, indices, os dorés, Alice, enclos pendant la quête, « ! » /
   « ? » des personnages déjà vus (`NPC_DO[…].mark()`, taille `MAPV.mark`).
@@ -345,6 +371,12 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   petit, `buildLight()`) ; canvas plafonné à `MAX_PIXELS` (1920 x 1080), le navigateur agrandit au-delà (sinon
   216 ms par image en 4K au coucher de soleil). Mesurer dans Firefox sans fenêtre : `firefox --headless` avec un
   profil où `browser.dom.window.dump.enabled` est vrai, la page mesure `render()` et écrit le résultat avec `dump()`.
+- **Listes de carte.json et sauvegarde** : la sauvegarde retient chiens (`d.id`), trésors, petites bêtes, canards,
+  lettres, poules de quête, ballons, jouets et petits hérissons par leur rang (`carte.INDEXEES`) : en ajouter à la fin,
+  et ne pas en retirer au milieu sans augmenter `SAVE_V` (l'éditeur prévient). Tailles fixes (`carte.TAILLES`) : 5
+  lettres, 5 ballons, 3 jouets (canard, anneau, corde), 3 petits hérissons ; un seul de chaque indice ; un trésor au
+  centre d'une tuile (x,5 ; y,5). Le premier roquet reste assez loin de la niche (pas d'attaque dès la fin de l'intro).
+  Le texte d'un panneau change : `node tools/export_voix.js` (l'éditeur le propose après « Vérifier »).
 - Placer un nouvel élément interactif : `check_placement.js` refuse la construction s'il chevauche une autre action
   (règle d'espacement). Ne pas réduire les portées pour le faire passer : le déplacer. Une nouvelle action : l'ajouter à
   la liste de la règle, avec sa portée (constante partagée avec game.js, comme `REACH`).

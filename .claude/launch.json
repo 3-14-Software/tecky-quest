@@ -6,6 +6,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8765", "--directory", "web/tecky_quest_web"],
       "port": 8765
+    },
+    {
+      "name": "editeur-carte",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["editeur.py"],
+      "port": 8770
     }
   ]
 }
