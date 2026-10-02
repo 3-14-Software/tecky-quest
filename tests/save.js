@@ -23,7 +23,7 @@ function main() {
   // sauvegarde régulière, seulement hors de danger
   run('dogs.forEach(d => { if (d.mode !== "ko") { d.x = d.hx; d.y = d.hy; d.mode = "idle"; } }); P.x = MAP.start[0]; P.y = MAP.start[1]; P.mode = "free";');
   step(60 * 5);
-  ok(Math.abs(save().x - run('P.x')) < 2 && !save().dogs.includes(run('goneId')) && save().dogs.length === 18,
+  ok(Math.abs(save().x - run('P.x')) < 2 && !save().dogs.includes(run('goneId')) && save().dogs.length === run('MAP.enemies.length') - 1,
      'sauvegarde toutes les ' + run('SAVE_EVERY') + ' s : position, chiens restants (' + save().dogs.length + ')');
   // (maison du chien déplacée près de la niche, sinon il rentre chez lui au lieu de rester sur Tecky)
   run('var D = dogs.find(d => d.kind === "bouledogue"), H = [D.hx, D.hy]; D.x = D.hx = P.x + 160; D.y = D.hy = P.y; D.mode = "chase";');
@@ -45,7 +45,7 @@ function main() {
   ok(run('clues.join()') === 'true,false,false' && run('digs[1].dug') && run('treasures') === 1 && run('score') === 420 &&
      run('Math.round(timePlayed)') >= 125 && run('fled') === 1, 'progression restaurée (indice, trésor, score, temps, chiens en fuite)');
   ok(run('P.x') === 1280 && run('P.y') === 576 && run('P.hp') === 3 && run('P.hpMax') === 8 && run('P.dir') === 'left', 'Tecky restauré (place, os)');
-  ok(run('dogs.length') === 18 && !run('dogs.some(d => d.id === goneId)'), 'le chien mis en fuite ne revient pas');
+  ok(run('dogs.length') === run('MAP.enemies.length') - 1 && !run('dogs.some(d => d.id === goneId)'), 'le chien mis en fuite ne revient pas');
   ok(!run('items.some(i => i.n === "hairclip")') && run('items.some(i => i.n === "shoe")'), 'objets au sol restaurés');
   ok(run('alice.hidden') && Math.abs(run('sun') - 1) < 1e-6, 'Alice toujours cachée, lumière d’après-midi (1 indice)');
   ok(run('arrowT') > 7, 'la flèche montre le prochain indice');

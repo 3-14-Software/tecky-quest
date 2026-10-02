@@ -3,7 +3,7 @@ const base = require('fs').readFileSync(__dirname + '/sim.js', 'utf8').split("se
 eval(base + `setTimeout(() => {
   run('audioOn(); pressed.ok = true'); step(1); advanceDialog();
   run('dogs = []; P.x = 5 * 64; P.y = 5 * 64; P.inv = 1e9;');
-  ok(run('butterflies.filter(b => b.x < 40 * 64 && b.y > 30 * 64).length') === 7, '7 papillons dans le parc');
+  ok(run('butterflies.filter(b => zoneAt(b.x, b.y).id === "parc").length') === 7, '7 papillons dans le parc');
   ok(run('butterflies.length') >= 14, run('butterflies.length') + ' papillons en tout (niche, village, campagne, ferme, forêt)');
   ok(run('butterflies.every(b => MAP.flowers.some(f => dist(f[0], f[1], b.hx, b.hy) < BFLY.roam * 1.3))'), 'chacun a des fleurs où se poser');
   run('var rested = new Set(), frames = new Set(), far = 0;');

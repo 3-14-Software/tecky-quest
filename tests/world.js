@@ -41,24 +41,24 @@ function main() {
   ok(run('SV.critters.split("").filter(x => x === "1").length') === 2, 'la sauvegarde retient les bêtes déjà surprises');
 
   // ---- zones : bandeau, ambiance
-  run('P.x = 60 * 64; P.y = 40 * 64;'); step(70);   // d'abord ailleurs (Tecky était au village, près du chat)
-  run('P.x = 30 * 64; P.y = 5 * 64; banner = null;'); step(70);
+  run('P.x = 76 * 64; P.y = 56 * 64;'); step(70);   // d'abord ailleurs (Tecky était au village, près du chat)
+  run('P.x = 46 * 64; P.y = 5 * 64; banner = null;'); step(70);
   ok(run('zone.id') === 'village' && run('banner && banner.text') === 'Le village', 'en arrivant au village : bandeau « Le village »');
-  run('P.x = 60 * 64; P.y = 40 * 64;'); step(70);
+  run('P.x = 76 * 64; P.y = 56 * 64;'); step(70);
   ok(run('zone.id') === 'foret' && run('TIMBRE.foret.lead') === 'triangle', 'dans la forêt : flûte (onde triangle ; transitions : music.js)');
-  ok(run('zoneAt(64.5 * 64, 27.2 * 64).id') === 'ferme' && run('zoneAt(64.5 * 64, 28 * 64).id') === 'foret', 'sur le pont : la ferme jusqu’au milieu de la rivière, puis la forêt');
+  ok(run('zoneAt(80.5 * 64, 43.2 * 64).id') === 'ferme' && run('zoneAt(80.5 * 64, 44 * 64).id') === 'foret', 'sur le pont : la ferme jusqu’au milieu de la rivière, puis la forêt');
   ok(run('JSON.stringify(ZONES.map(z => z.id))') === '["foret","parc","ferme","industrie","village","campagne","niche"]', 'sept zones (la rivière n’en est pas une)');
-  ok(run('[2, 15, 30, 50, 75].every(x => zoneAt(x * 64, 25.2 * 64) === zoneAt(x * 64, 27.4 * 64) && zoneAt(x * 64, 27.8 * 64) === zoneAt(x * 64, 30 * 64))'),
+  ok(run('[2, 23, 46, 66, 91].every(x => zoneAt(x * 64, 41.2 * 64) === zoneAt(x * 64, 43.4 * 64) && zoneAt(x * 64, 43.8 * 64) === zoneAt(x * 64, 46 * 64))'),
      'en longeant la rivière, d’un côté ou de l’autre, on reste dans la même zone');
-  run('P.x = 30 * 64; P.y = 5 * 64;'); step(30); run('P.x = 30.3 * 64;'); step(30);
-  run('banner = null; P.x = 19.7 * 64; P.y = 5 * 64;'); step(20); run('P.x = 19.3 * 64;'); step(20); run('P.x = 19.7 * 64;'); step(20);
+  run('P.x = 46 * 64; P.y = 5 * 64;'); step(30); run('P.x = 46.3 * 64;'); step(30);
+  run('banner = null; P.x = 27.7 * 64; P.y = 5 * 64;'); step(20); run('P.x = 27.3 * 64;'); step(20); run('P.x = 27.7 * 64;'); step(20);
   ok(run('banner') === null, 'pas de bandeau en longeant une frontière');
   // ambiance : oiseaux en forêt, clapotis près de l'eau, rien en pause
-  run('P.x = 60 * 64; P.y = 40 * 64; Ambience.played = 0;'); step(60 * 10);
+  run('P.x = 76 * 64; P.y = 56 * 64; Ambience.played = 0;'); step(60 * 10);
   ok(run('Ambience.played') >= 2, 'des oiseaux chantent en forêt (' + run('Ambience.played') + ' en 10 s)');
-  run('P.x = 64.5 * 64; P.y = 27.6 * 64;'); step(30);
+  run('P.x = 80.5 * 64; P.y = 43.6 * 64;'); step(30);
   const lv = run('Ambience.level');
-  run('P.x = 30 * 64; P.y = 20 * 64;'); step(30);
+  run('P.x = 46 * 64; P.y = 26 * 64;'); step(30);
   ok(lv > 0.02 && run('Ambience.level') < lv / 3, 'clapotis sur le pont (' + lv.toFixed(3) + '), presque rien dans la zone industrielle');
   run('pressed.pause = true'); step(1); run('var pl = Ambience.played;'); step(60 * 3);
   ok(run('Ambience.played') === run('pl') && run('Ambience.level') === 0, 'en pause : silence');

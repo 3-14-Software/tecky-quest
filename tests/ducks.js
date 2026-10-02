@@ -9,7 +9,7 @@ function main() {
   ok(run('ducks.filter(d => d.kind === "duckling").every(d => d.lead)'), 'chaque caneton suit quelqu’un');
   ok(run('ducks.every(d => duckWater(d, d.x, d.y))'), 'tous sur l’eau au départ');
   // Tecky loin de tout : ils nagent, cancanent, plongent, sans jamais quitter l'eau
-  run('P.x = 30 * 64; P.y = 20 * 64; P.mode = "free"; var anims = {}, dry = 0;');
+  run('P.x = 46 * 64; P.y = 26 * 64; P.mode = "free"; var anims = {}, dry = 0;');
   for (let i = 0; i < 60 * 25; i++) {
     step(1);
     if (i % 10 === 0) run('for (const d of ducks) { anims[d.anim] = 1; if (!duckWater(d, d.x, d.y)) dry++; }');
@@ -20,8 +20,8 @@ function main() {
   ok(run('ducks.filter(d => d.lead).every(d => dist(d.x, d.y, d.lead.x, d.lead.y) < DUCK.gap * 2 + 12)'), 'les canetons suivent en file');
 
   // un canard seul sur la rivière : Tecky approche, il s'envole
-  run('var D = ducks.find(d => d.kind === "duck" && !d.hasKids && d.y > 26 * 64 && d.y < 29 * 64); var s0 = score;');
-  run('P.x = D.x; P.y = 25.4 * 64; P.mode = "free";');
+  run('var D = ducks.find(d => d.kind === "duck" && !d.hasKids && d.y > 42 * 64 && d.y < 45 * 64); var s0 = score;');
+  run('P.x = D.x; P.y = 41.4 * 64; P.mode = "free";');
   ok(!run('blockedFeet(P.x, P.y, 16)'), 'Tecky sur la berge');
   step(30);
   ok(run('D.mode') === 'fly' && run('D.h') > 20, 'Tecky approche : le canard s’envole (' + Math.round(run('D.h')) + ' px)');
@@ -36,7 +36,7 @@ function main() {
   ok(run('score') === run('s0'), 'la deuxième fois : plus de points');
 
   // la cane et ses canetons : à la nage, pas d'envol
-  run('P.x = 30 * 64; P.y = 20 * 64;'); step(60 * 12);
+  run('P.x = 46 * 64; P.y = 26 * 64;'); step(60 * 12);
   run('var M = ducks.find(d => d.hasKids); var kids = ducks.filter(d => d.lead && d.fam === M.fam); P.x = M.x; P.y = M.y + 150; P.mode = "free";');
   if (run('blockedFeet(P.x, P.y, 16)')) run('P.y = M.y - 150');
   step(20);
@@ -44,7 +44,7 @@ function main() {
   run('var k0 = dist(M.x, M.y, P.x, P.y);'); step(60 * 2);
   ok(run('dist(M.x, M.y, P.x, P.y)') > run('k0') + 20 && run('kids.every(k => k.mode === "flee")'), 'ses petits la suivent');
   ok(run('[M].concat(kids).every(d => duckWater(d, d.x, d.y))'), 'toujours dans l’eau');
-  run('P.x = 30 * 64; P.y = 20 * 64;'); step(60 * 5);
+  run('P.x = 46 * 64; P.y = 26 * 64;'); step(60 * 5);
   ok(run('M.mode') === 'swim' && run('kids.every(k => k.mode === "swim")'), 'Tecky parti : ils se calment');
 
   // aboyer de loin fait aussi s'envoler

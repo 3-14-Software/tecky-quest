@@ -4,7 +4,7 @@ const base = require('fs').readFileSync(__dirname + '/sim.js', 'utf8').split("se
 function main() {
   run('audioOn(); pressed.ok = true'); step(1); advanceDialog();
   run('dogs = []; cars = []; P.inv = 999;');   // pas de voitures : Tecky aboie parfois au bord de la route
-  ok(run('questHens().length') === 5 && run('hens.length') === 7, '5 poules de la quête (et 2 autres au sud de la route)');
+  ok(run('questHens().length') === 5 && run('hens.length') === 9, '5 poules de la quête (et 4 autres au sud de la route)');
   ok(run('questHens().every(h => !h.penned)') && run('farm.state') === 'new', 'au départ, elles sont toutes hors de l’enclos');
   // le fermier : il ne parle que si Tecky vient le voir et appuie sur C
   run('P.x = farmer.x; P.y = farmer.y + 250; P.mode = "free"; pops = [];'); step(2);

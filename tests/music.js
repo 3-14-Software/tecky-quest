@@ -14,11 +14,11 @@ function main() {
   ok(run('SONGS.ferme.ev.some(e => e[1] === "lead" && e[5] < 0)') && !run('SONGS.parc.ev.some(e => e[1] === "drums")'), 'ferme : notes glissées ; parc : pas de batterie');
   ok(run('Music.bpm') === run('SONGS.base.bpm') && run('Music.layers[0].song') === run('Music.themes.base'), 'thème de base, à son tempo');
   // passage éclair au village : rien ne change
-  run('P.x = 30 * 64; P.y = 5 * 64;'); step(Math.round(60 * settle * 0.7));
+  run('P.x = 46 * 64; P.y = 5 * 64;'); step(Math.round(60 * settle * 0.7));
   run('P.x = MAP.start[0]; P.y = MAP.start[1] + 60;'); step(60 * 4);
   ok(run('Music.zone') === 'niche' && !run('Music.want') && run('Music.layers.length') === 1, 'un passage éclair au village : la musique ne change pas');
   // Tecky reste au village : changement demandé, puis fait au début d'une phrase
-  run('P.x = 30 * 64; P.y = 5 * 64;');
+  run('P.x = 46 * 64; P.y = 5 * 64;');
   let t = 0; while (!run('Music.want') && t < 600) { step(1); t++; }
   ok(run('Music.want') === 'village' && Math.abs(t / 60 - settle) < 0.2, 'au bout de ' + (t / 60).toFixed(1) + ' s au village : changement demandé');
   ok(run('Music.zone') === 'niche' && run('Music.layers.length') === 1, 'il attend la fin de la phrase');
@@ -36,19 +36,19 @@ function main() {
   ok(run('Music.layers.length') === 1 && run('Music.layers[0].id') === 'village' && run('Music.step') % PH < 4, 'la phrase suivante commence avec les nouveaux instruments');
   run('Music.voice = v0;');
   // une demande en attente s'annule si Tecky revient avant le début de la phrase
-  run('P.x = 30 * 64; P.y = 20 * 64;');
+  run('P.x = 46 * 64; P.y = 26 * 64;');
   t = 0; while (!run('Music.want') && t < 600) { step(1); t++; }
   run('Music.step = 0;');                // la prochaine phrase est loin
   ok(run('Music.want') === 'industrie', 'zone industrielle : changement demandé');
-  run('P.x = 30 * 64; P.y = 5 * 64;'); step(Math.round(60 * (settle + 0.3)));
+  run('P.x = 46 * 64; P.y = 5 * 64;'); step(Math.round(60 * (settle + 0.3)));
   ok(!run('Music.want') && run('Music.zone') === 'village' && run('Music.layers.length') === 1, 'Tecky revient au village avant : rien ne change');
   // Continuer : la musique prend tout de suite le timbre de l'endroit
-  run('P.x = 60 * 64; P.y = 40 * 64; saveGame(); toTitle(); loadGame(loadSave(), false);'); advanceDialog(); step(3);
+  run('P.x = 76 * 64; P.y = 56 * 64; saveGame(); toTitle(); loadGame(loadSave(), false);'); advanceDialog(); step(3);
   ok(run('Music.zone') === 'foret' && !run('Music.want'), 'Continuer en forêt : sa variation tout de suite');
   step(60);
   ok(run('Music.layers.length') === 1 && run('Music.layers[0].id') === 'foret', 'après un fondu rapide');
   // de la forêt au parc : le tempo remonte
-  run('P.x = 22 * 64; P.y = 37 * 64;');
+  run('P.x = 30 * 64; P.y = 53 * 64;');
   t = 0; while (run('Music.bpm') !== run('SONGS.parc.bpm') && t < 60 * 14) { step(1); t++; }
   ok(run('Music.bpm') === run('SONGS.parc.bpm'), 'de la forêt au parc : ' + run('SONGS.foret.bpm') + ' puis ' + run('SONGS.parc.bpm') + ' à la noire');
   // la fanfare : son de base, pas de couches

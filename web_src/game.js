@@ -1632,7 +1632,7 @@ function drawDuck(d) {
    elle y reste (keepHen). Le fermier ne parle que si Tecky vient le voir (C, « Parler », voir « personnages ») : il
    lui demande son aide, puis le remercie une fois toutes les poules rentrées (saucisse et points). Tout cela marche
    aussi en balade. */
-const FARM = { reward: 200, perHen: 20, funnel: 190, roadY: 11.3 * 64 };
+const FARM = { reward: 200, perHen: 20, funnel: 190, roadY: 17.3 * 64 };
 let farm = { state: 'new' };          // new (pas encore parlé) | asked | done
 let farmer = null;
 // intérieur de l'enclos (pieds des poules) : [x0, y0, x1, y1]
@@ -1920,7 +1920,7 @@ function talkNeighbor() {
    autres personnages, Léon ne parle que si Tecky vient le voir : il demande, rappelle, remercie (un os et des points).
    Tout marche aussi avant de lui avoir parlé, et en balade. Sauvegardé (fete, balls). */
 const BALL = { r: 26, touch: 44, kick: 330, bark: 470, fric: 1.6, bounce: 0.55, hop: 150, g: 1200, cd: 0.2, funnel: 240,
-  box: [22.3, 16.5, 61.4, 25.6] };            // box : la zone industrielle, en tuiles (jamais sur la route)
+  box: [30.3, 23.6, 64.4, 41.6] };            // box : la zone industrielle, en tuiles (jamais hors du grillage du dépôt)
 const GOAL_IN = [50, -46, -8];                 // intérieur du filet (pied du ballon) : |dx| < 50, -46 < dy < -8
 const LEON = { reward: 150, perBall: 20 };
 let fete = { state: 'new' }, leon = null, balls = [];
@@ -2926,20 +2926,20 @@ function puddleSplash(dt) {           // Tecky marche dans une flaque : plouf
    s'affiche en arrivant (nom de la zone), les étiquettes de la carte de la pause, l'ambiance sonore et le timbre des
    instruments de la musique (TIMBRE). La rivière n'est pas une zone : celles du nord et du sud vont jusqu'à son milieu
    (RIVER_MID), sinon la musique changerait en la longeant ou en passant le pont. */
-const RIVER_MID = 27.6;
+const RIVER_MID = 43.6;
 // name : bandeau à l'arrivée ; label : étiquette de la carte, posée en at (tuiles)
 const ZONES = [
-  { id: 'foret', name: 'La grande forêt', label: 'Grande forêt', at: [60, 40.5], has: (x, y) => y >= RIVER_MID && x >= 40 },
-  { id: 'parc', name: 'Le parc des enfants', label: 'Parc des enfants', at: [20, 39.5], has: (x, y) => y >= RIVER_MID },
-  // au sud de la route, le port (zone industrielle) va jusqu'au grillage du chemin du pont
-  { id: 'ferme', name: 'La ferme des Tilleuls', label: 'Ferme des Tilleuls', at: [58.5, 2.6], has: (x, y) => x >= 61.6 || (x >= 40.6 && y < 16.5) },
-  { id: 'industrie', name: 'La zone industrielle', label: 'Zone industrielle', at: [41.5, 20.6], has: (x, y) => y >= 16.5 && x >= 21.5 },
-  { id: 'village', name: 'Le village', label: 'Village', at: [31, 1.4], has: (x, y) => x >= 19.5 && y < 16.5 },
-  { id: 'campagne', name: 'La campagne', label: 'Campagne', at: [10, 21], has: (x, y) => y >= 11.5 },
+  { id: 'foret', name: 'La grande forêt', label: 'Grande forêt', at: [87, 50.5], has: (x, y) => y >= RIVER_MID && x >= 56 },
+  { id: 'parc', name: 'Le parc des enfants', label: 'Parc des enfants', at: [28, 55.5], has: (x, y) => y >= RIVER_MID },
+  // la ferme : à l'est du village et du dépôt (grillage en x 56.6) ; au bord de la rivière, après le port (x 64.6)
+  { id: 'ferme', name: 'La ferme des Tilleuls', label: 'Ferme des Tilleuls', at: [74.5, 2.6], has: (x, y) => x >= 56.6 && (y < 30.5 || x >= 64.6) },
+  { id: 'industrie', name: 'La zone industrielle', label: 'Zone industrielle', at: [47, 27.4], has: (x, y) => y >= 22.5 && x >= 29.5 },
+  { id: 'village', name: 'Le village', label: 'Village', at: [42, 1.4], has: (x, y) => x >= 27.5 && y < 22.5 },
+  { id: 'campagne', name: 'La campagne', label: 'Campagne', at: [12, 31], has: (x, y) => y >= 17.5 },
   { id: 'niche', name: 'La niche de Tecky', label: 'Niche de Tecky', at: [5.5, 1.4], has: () => true },
 ];
 const zoneAt = (x, y) => ZONES.find(z => z.has(x / TS, y / TS));
-const LANDMARKS = [{ label: 'Rivière', at: [35, RIVER_MID] }];   // autres étiquettes de la carte de la pause
+const LANDMARKS = [{ label: 'Rivière', at: [40, RIVER_MID] }];   // autres étiquettes de la carte de la pause
 const BANNER = { settle: 0.8, life: 3 };
 let zone = null, zoneT = 0, banner = null, tuneT = 0;
 function updateZone(dt) {
@@ -2967,7 +2967,7 @@ function drawBanner() {
 /* La pause montre la carte : sol et décors en réduction (pré-rendus une fois), brouillard sur ce qui n'a pas encore été vu
    (cases de MAPV.cell tuiles, marquées quand elles passent à l'écran, sauvegardées), noms des zones déjà vues, Tecky,
    indices trouvés, os dorés déterrés, Alice une fois sortie de sa cachette, et l'enclos pendant la quête des poules. */
-const MAPV = { cell: 4, w: 1180, top: 150, mark: 0.7 };   // mark : taille des « ! » / « ? » des personnages
+const MAPV = { cell: 4, w: 1080, top: 150, mark: 0.7 };   // mark : taille des « ! » / « ? » des personnages
 let seenCells = null, mapImg = null;
 const cellsW = () => Math.ceil(MAP.w / MAPV.cell), cellsH = () => Math.ceil(MAP.h / MAPV.cell);
 function markSeen() {
@@ -3045,12 +3045,14 @@ const STORE = {
   set(k, v) { this.mem[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* idem */ } },
   del(k) { delete this.mem[k]; try { localStorage.removeItem(k); } catch (e) { /* idem */ } },
 };
-function loadSave() { const s = STORE.get(SAVE_KEY); return s && s.v === 1 ? s : null; }
+// v : version de la sauvegarde ; v2 = la carte agrandie (96 x 64) : une partie de l'ancienne carte ne se reprend pas
+const SAVE_V = 2;
+function loadSave() { const s = STORE.get(SAVE_KEY); return s && s.v === SAVE_V ? s : null; }
 const r1 = v => Math.round(v * 10) / 10;
 function saveGame() {
   if (!P || P.mode === 'ko' || P.hp <= 0 || alice.found) return;
   STORE.set(SAVE_KEY, {
-    v: 1, mode: gameMode, diff: gameDiff, at: Date.now(), x: r1(P.x), y: r1(P.y), dir: P.dir, hp: P.hp, hpMax: P.hpMax,
+    v: SAVE_V, mode: gameMode, diff: gameDiff, at: Date.now(), x: r1(P.x), y: r1(P.y), dir: P.dir, hp: P.hp, hpMax: P.hpMax,
     score, time: r1(timePlayed), fled, treasures, clues: clues.slice(), sniffed: aliceSniffed, immune: barkImmuneSeen,
     dug: digs.map(g => g.dug ? 1 : 0),
     items: items.map(it => [it.n, r1(it.x), r1(it.y)]),

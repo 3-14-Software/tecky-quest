@@ -46,7 +46,7 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   Village plus entraînant (152), ferme country (136 : basse alternée, rouleaux de banjo, notes glissées = 6e champ),
   forêt calme (108 : basse tenue, écho), parc boîte à musique (126, sans batterie), industrie mécanique (140) ; et la
   berceuse de la fin (84, sans batterie, timbre `TIMBRE.end`).
-- `pack_web.py` : atlas (frames rognées), niveau (`MW=80`, `MH=48` tuiles, positions des décors/objets/chiens/trésors `DIG`),
+- `pack_web.py` : atlas (frames rognées), niveau (`MW=96`, `MH=64` tuiles, positions des décors/objets/chiens/trésors `DIG`),
   `index.html` à partir de `web_src/index.template.html` + `game.js`, paquet autonome (manifest, service worker, icônes, `serve.sh`).
   Lance `web_src/check_placement.js` : rien dans l'eau ou un obstacle (canards : dans l'eau), et tout (personnages,
   lettres, Pompon compris) atteignable **à pied depuis la niche**
@@ -54,11 +54,14 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   **Règle d'espacement** : deux actions de genres différents (personnage, panneau, os doré, bout de terrier, indice,
   lettre, Pompon) ne se recouvrent jamais (portées `NPC.talk`, `REACH`, `TUNNEL.reach`, `POST.pick`, `CAT.find` + 60 px),
   aucun objet n'est à portée de parole d'un personnage, les personnages vivent en zone calme et aucun chien n'y habite.
-- Carte : le quart nord-ouest (40 x 24) est la carte d'origine (mêmes coordonnées, les tests s'y appuient). Ferme au
-  nord-est, rivière d'un bord à l'autre (y 26..29) avec **un seul pont** (`BRIDGES`, x 63..65 : coins rendus non-eau ;
+- Carte (96 x 64, agrandie depuis 80 x 48 : colonnes ajoutées en x 15 et x 30, rangées en y 10,4 et y 25 ; sauvegarde
+  v2) : au nord de la route (y 18..21), la niche et son jardin, le village (place, fontaine, rue et ruelle), la ferme ;
+  au sud, la campagne (mare aux canards au bord de l'eau), la zone industrielle, les prés de la ferme (verger, champ).
+  Rivière d'un bord à l'autre (y 42..45) avec **un seul pont** (`BRIDGES`, x 79..81 : coins rendus non-eau ;
   garde-corps = `RAILS` dans game.js), forêt au sud-est (sous-bois, sapins générés par `forest_firs()` hors des sentiers),
-  parc au sud-ouest (cabane d'Alice). Zone industrielle au sud de la route : le dépôt (x 22..40) et le port (x 41..61,
-  jusqu'au grillage du chemin du pont ; portail en face du passage piéton de la ferme) : chariot élévateur, camion,
+  parc au sud-ouest (cabane d'Alice). Les coordonnées des zones (`ZONES`, `RIVER_MID`), de la route (marquages,
+  `MAP.traffic`, `FARM.roadY`) et des ballons (`BALL.box`) sont écrites en dur : à suivre si la carte change. Zone industrielle au sud de la route : le dépôt (x 30..56) et, en dessous, le port au bord
+  de la rivière (x 30..64) : chariot élévateur, camion,
   conteneurs sous le portique (pieds dans `RAILS`), cabane du gardien, voie ferrée du quai (`rail`, à plat), bittes,
   péniche. Terrains ajoutés : `field` (champ), `forest` (sous-bois).
 - `web_src/game.js` : tout le moteur. Monde en pixels x2 (tuile = 64), caméra 960x540, interface 1920x1080 (`GW`/`GH`).
@@ -159,7 +162,7 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   (`fadeFrom()` : fondu de l'écran entier, `drawFade()`), avec le pourcentage de complétion (`completion()` : os dorés,
   quêtes `QUESTS_DONE`, petites bêtes, canards, carte, copains en balade ; une nouvelle quête s'ajoute à `QUESTS_DONE`).
   Test : `ending.js`.
-- Sauvegarde (`STORE` : localStorage, repli en mémoire si refusé ; clés `tecky-quest-save` v1 et `tecky-quest-records`) :
+- Sauvegarde (`STORE` : localStorage, repli en mémoire si refusé ; clés `tecky-quest-save` v2 (`SAVE_V`) et `tecky-quest-records`) :
   `saveGame()` toutes les `SAVE_EVERY` (4) s de jeu si `safeToSave()` (aucun chien engagé à moins de 600 px), à chaque
   indice et trésor (fin de réplique), en quittant la page (`pagehide`, onglet caché) ; jamais KO ni après la victoire.
   Contenu : mode, place, os, score, temps, indices, trésors, objets au sol, chiens restants (`d.id` = index dans
