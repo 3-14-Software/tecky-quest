@@ -3579,7 +3579,7 @@ function drawBadges() {
    plafonné à MAX_PIXELS ; « nette » : pleine résolution, pour les machines rapides), vibrations, météo, plein écran. Ouvert depuis le menu
    principal ou le menu de la pause. Flèches ↑ ↓ pour choisir une ligne, ← → pour la régler (Entrée / A aussi),
    Échap / B pour revenir ; au toucher, la moitié gauche d'une ligne baisse, la moitié droite monte. */
-const OPTV = { y0: 196, w: 1120, h: 76, gap: 10 };
+const OPTV = { y0: 196, w: 1120, h: 76, gap: 10, hTight: 68, gapTight: 8 };
 let optSel = 0, optReturn = 'title';
 function optRows() {
   const rows = [
@@ -3596,17 +3596,35 @@ function optRows() {
   ];
   if (canFullscreen()) rows.push({ id: 'fs', label: 'Plein écran', value: fsElement() ? 'Oui' : 'Non',
     note: performance.now() - fsRefusedAt < FS_REFUSED_NOTE ? 'Ce navigateur le refuse à la manette : [fs] au clavier, ou un clic ici' : '' });
+  // remise à zéro : seulement depuis l'écran titre (en jeu, la partie se resauvegarderait aussitôt) ; elle demande
+  // confirmation, « Non » d'abord (resetAsk)
+  if (optReturn === 'title') rows.push(resetAsk ? { id: 'reset', label: 'Tout effacer ?', ask: true, note: 'Partie en cours, records et badges' }
+    : { id: 'reset', label: 'Réinitialiser la progression', value: '', note: 'Efface la partie en cours, les records et les badges' });
   rows.push({ id: 'back', label: 'Retour' });
   return rows;
 }
-function openOptions(from) { optReturn = from === 'pause' ? 'pause' : 'title'; optSel = 0; menu = null; state = 'options'; Music.refresh(); }
+let resetAsk = null, resetDoneAt = -1e9;        // { yes } pendant la confirmation ; heure de la dernière remise à zéro
+const RESET_NOTE = 2600;                        // ms d'affichage de « Progression effacée »
+function resetProgress() {
+  STORE.del(SAVE_KEY); STORE.del(RECORDS_KEY); STORE.del(BADGES_KEY);
+  badges = {}; recs = {}; newRecord = { score: false, time: false, done: false }; newBadges = [];
+  resetAsk = null; resetDoneAt = performance.now();
+  SFX.hurt();
+}
+function resetChoose(r) {                       // valider la ligne de remise à zéro
+  if (!resetAsk) { resetAsk = { yes: false }; SFX.blip(); }
+  else if (resetAsk.yes) resetProgress();
+  else { resetAsk = null; SFX.blip(); }
+}
+function openOptions(from) { optReturn = from === 'pause' ? 'pause' : 'title'; optSel = 0; menu = null; state = 'options'; resetAsk = null; Music.refresh(); }
 function closeOptions() {
-  state = optReturn;
+  state = optReturn; resetAsk = null;
   if (state === 'title') { openTitleMenu(); menu.sel = menu.items.findIndex(it => it.id === 'options'); }
   else { openPauseMenu(); menu.sel = 1; }
   Music.refresh();
 }
 function changeOpt(r, dir) {
+  if (r.id === 'reset') { if (resetAsk) { resetAsk.yes = dir > 0; SFX.blip(); } return; }
   if (r.level) opts[r.id] = clamp(opts[r.id] + dir, 0, 10);
   else if (r.values) {
     const v = r.values.map(x => x[0]), i = Math.max(0, v.indexOf(opts[r.id]));
@@ -3621,8 +3639,8 @@ function changeOpt(r, dir) {
 function optionsInput() {
   const rows = optRows(), n = rows.length;
   optSel = Math.min(optSel, n - 1);
-  if (pressed.up) { optSel = (optSel + n - 1) % n; SFX.blip(); }
-  if (pressed.down) { optSel = (optSel + 1) % n; SFX.blip(); }
+  if (pressed.up) { optSel = (optSel + n - 1) % n; SFX.blip(); resetAsk = null; }
+  if (pressed.down) { optSel = (optSel + 1) % n; SFX.blip(); resetAsk = null; }
   const r = rows[optSel];
   if (r.id === 'fs') {                 // (au clavier, déjà fait dans l'événement : ici, la manette)
     if (pressed.left || pressed.right || pressed.ok || pressed.bite || pressed.act) toggleFullscreen();
@@ -3632,17 +3650,31 @@ function optionsInput() {
   }
   if ((pressed.ok || pressed.bite || pressed.act) && r.id !== 'fs') {
     if (r.id === 'back') { closeOptions(); return; }
+    if (r.id === 'reset') { resetChoose(r); return; }
     changeOpt(r, r.level && opts[r.id] >= 10 ? -10 : 1);     // Entrée / A : on monte, puis on repart de 0
   }
   if (pressed.pause || pressed.bark) closeOptions();
 }
-function optBox(i) { return { x: GW / 2 - OPTV.w / 2, y: OPTV.y0 + i * (OPTV.h + OPTV.gap), w: OPTV.w, h: OPTV.h }; }
+function optBox(i, n) {                // plus serré quand il y a beaucoup de lignes (remise à zéro, plein écran)
+  const h = n > 9 ? OPTV.hTight : OPTV.h, gap = n > 9 ? OPTV.gapTight : OPTV.gap;
+  return { x: GW / 2 - OPTV.w / 2, y: OPTV.y0 + i * (h + gap), w: OPTV.w, h };
+}
+// au toucher, pendant la confirmation : « Non » et « Oui » sont deux cases à droite de la ligne
+const resetPills = b => [{ yes: false, x: b.x + b.w - 330, w: 130 }, { yes: true, x: b.x + b.w - 180, w: 130 }];
 function optionsTap(gx, gy) {         // toucher / clic : appelé directement par l'événement (plein écran permis)
   const rows = optRows();
   for (let i = 0; i < rows.length; i++) {
-    const b = optBox(i), r = rows[i];
+    const b = optBox(i, rows.length), r = rows[i];
     if (gx < b.x || gx > b.x + b.w || gy < b.y || gy > b.y + b.h) continue;
+    if (i !== optSel) resetAsk = null;
     optSel = i;
+    if (r.id === 'reset') {
+      const p = resetAsk && resetPills(b).find(q => gx >= q.x && gx <= q.x + q.w);
+      if (!resetAsk) resetChoose(r);
+      else if (p && p.yes) resetProgress();
+      else { resetAsk = null; SFX.blip(); }
+      return;
+    }
     if (r.id === 'back') closeOptions();
     else if (r.id === 'fs') toggleFullscreen();
     else changeOpt(r, r.level && gx < b.x + b.w * 0.6 ? -1 : 1);
@@ -3658,13 +3690,24 @@ function drawOptions() {
   guiTransform();
   veil(0.55);
   outlined('Options', GW / 2, 128, 68, '#FFF7E6');
-  optRows().forEach((r, i) => {
-    const b = optBox(i), sel = i === optSel, ink = sel ? '#3A1E12' : '#FFF7E6', soft = sel ? '#6B5A4E' : '#E9DCC8';
+  if (performance.now() - resetDoneAt < RESET_NOTE) outlined('Progression effacée', GW / 2, 178, 32, '#F2C14E');
+  const rows = optRows();
+  rows.forEach((r, i) => {
+    const b = optBox(i, rows.length), sel = i === optSel, ink = sel ? '#3A1E12' : '#FFF7E6', soft = sel ? '#6B5A4E' : '#E9DCC8';
     drawNine(sel ? 'hud/panel' : 'hud/panel_dark', b.x, b.y, b.w, b.h, 32);
     const cy = b.y + b.h / 2, vx = b.x + b.w - 44;
     if (r.id === 'back') { text(r.label, GW / 2, cy + 13, 36, ink, 'center', 700); return; }
     text(r.label, b.x + 44, r.note ? cy - 2 : cy + 12, 34, ink, 'left', 600);
     if (r.note) text(r.note, b.x + 44, cy + 26, 21, soft, 'left', 500);
+    if (r.ask) {                                       // confirmation : « Non » / « Oui », le choix en couleur
+      resetPills(b).forEach(q => {
+        const on = resetAsk.yes === q.yes;
+        ctx.fillStyle = on ? (q.yes ? '#D7332B' : '#4E9A47') : (sel ? '#E3D3B8' : 'rgba(255, 247, 230, 0.22)');
+        ctx.fillRect(q.x, cy - 24, q.w, 48);
+        text(q.yes ? 'Oui' : 'Non', q.x + q.w / 2, cy + 12, 32, on ? '#FFF7E6' : ink, 'center', 700);
+      });
+      return;
+    }
     if (r.level) {                                     // dix crans
       for (let k = 0; k < 10; k++) {
         ctx.fillStyle = k < opts[r.id] ? (sel ? '#E07A2E' : '#F2C14E') : (sel ? '#E3D3B8' : 'rgba(255, 247, 230, 0.22)');

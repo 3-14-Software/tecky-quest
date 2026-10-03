@@ -30,7 +30,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - `tecky.py`, `alice.py`, `enemies.py` (roquet, bouledogue, molosse/doberman, berger), `hens.py` (poules animées),
   `farmer.py` (le fermier Gaston, vu de face, 48x64, pieds en (24, 60) ; `FACE` pour son portrait),
   `ducks.py` (colvert, cane, caneton, de profil, 32x32, ligne d'eau en (16, 24)),
-  `cows.py` (vaches pie noire et pie rouge, veau, de profil, 64x48, pieds en (32, 44)),
+  `cows.py` (vaches pie noire et pie rouge, veau, de profil, tête tournée vers nous, 64x48, pieds en (32, 44) ;
+  les pattes pivotent autour de la hanche, cachée dans le ventre),
   `villageois.py` (villageois sans quête, vus de face comme ceux de npcs.py, dont il réutilise les outils),
   `npcs.py` (le facteur Marcel et la voisine Mamie Rose, comme `farmer.py` ; `letter_frames()` : la lettre),
   `critters.py` (écureuil, chats roux et noir, de profil, 32x32), `vehicles.py` (voitures, camionnette, bus),
@@ -139,7 +140,10 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   chiens `d.id % 3 === 2` retirés ; fixée à la nouvelle partie et sauvegardée ; records à part `aventure-facile`),
   Texte des dialogues (grand : 46 px, 4 lignes), Image (fluide = `MAX_PIXELS`, nette = sans plafond), Plein écran
   (dans les événements clavier / toucher : il faut un geste de l'utilisateur ; un bouton de manette en vaut un pour
-  Chromium, pas pour Firefox : `fsRefusedAt`, la ligne dit alors « touche F, ou un clic » ; en sortir est toujours permis), Vibrations, Météo. Test : `options.js`.
+  Chromium, pas pour Firefox : `fsRefusedAt`, la ligne dit alors « touche F, ou un clic » ; en sortir est toujours permis), Vibrations, Météo,
+  et, depuis l'écran titre seulement, « Réinitialiser la progression » (`resetAsk` : confirmation, « Non » d'abord ;
+  au toucher, deux cases `resetPills()` ; `resetProgress()` efface sauvegarde, records et badges, pas les options ;
+  lignes plus serrées au-delà de 9, `optBox(i, n)`). Test : `options.js`.
 - Badges (`MAP.badges` = `hud.BADGES`, image i de `hud/badge`, la dernière = verrouillé ; `BADGE_INFO`, `BADGES_KEY`,
   gardés d'une partie à l'autre) : `checkBadges()` toutes les demi-secondes, `winBadges()` à la victoire (aventure,
   sans morsure = `bitten` faux, sauvegardé ; moins de 10 min). `unlockBadge()` : annonce « Nouveau badge ! »
