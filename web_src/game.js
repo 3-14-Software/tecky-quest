@@ -3436,6 +3436,8 @@ function startEssai() {
   state = 'play';
   Music.start();
 }
+// l'écran titre joue toujours le thème d'origine (« base »), quelle que soit la zone de la partie quittée
+const TITLE_MUSIC = 'niche';
 function toTitle() {
   transition();
   reset();
@@ -3444,6 +3446,8 @@ function toTitle() {
   camY = camClampY(MAP.title[1] - VH / 2);
   state = 'title'; titleT = 0;
   openTitleMenu();
+  if (Music.on && Music.cur !== 'main') Music.stop();     // la berceuse de la fin, la musique de défaite
+  Music.setZone(TITLE_MUSIC, true);                       // (arrêtée : retient seulement la zone)
   Music.start();
 }
 
@@ -4680,6 +4684,15 @@ function para(str, x, y, size, color, align, weight, maxW, lineH) {
 /* Compteurs du HUD, empilés à droite sous le score : os dorés (dès le premier trouvé : c'est une quête aussi), puis les
    quêtes en cours, dans l'ordre : poules rentrées, lettres retrouvées, Pompon retrouvé.
    [sprite, décalage x, décalage y, échelle, nombre, total] */
+// les compteurs, en colonne à droite sous le score ; ils passent sur une colonne de plus (à gauche) plutôt que de
+// descendre jusqu'aux boutons d'action (au toucher : le bouton du flair ; sinon, les aides de touches du bas)
+const COUNTER = { w: 210, h: 70, step: 82, top: 138, gap: 12 };
+function counterBox(i) {
+  const bottom = touchMode ? BTN.sniff.y - BTN.sniff.r - 14 : GH - 200;
+  const per = Math.max(1, Math.floor((bottom - COUNTER.top - COUNTER.h) / COUNTER.step) + 1);
+  return { x: GW - 24 - COUNTER.w - Math.floor(i / per) * (COUNTER.w + COUNTER.gap), y: COUNTER.top + (i % per) * COUNTER.step,
+    w: COUNTER.w, h: COUNTER.h };
+}
 function hudCounters() {
   const c = [];
   if (treasures > 0) c.push(['item/goldbone', 42, 28, 0.8, treasures, MAP.dig.length]);
@@ -4712,9 +4725,10 @@ function drawHUD() {
   const dz = ATLAS['hud/digits'].f[0];                 // chiffre « 0 » : [x, y, w, h, décalage x, décalage y]
   drawDigits(String(score).padStart(5, '0'), GW - 24 - 330 + 96, 24 + 104 / 2 - dz[5] - dz[3] / 2, 1, undefined, true);
   // compteurs, à droite sous le score (hudCounters)
-  hudCounters().forEach(([k, ox, oy, sc, a, b], i) => {
-    const x = GW - 24 - 210, y = 138 + i * 82;
-    drawNine('hud/panel_dark', x, y, 210, 70, 32);
+  const counters = hudCounters();
+  counters.forEach(([k, ox, oy, sc, a, b], i) => {
+    const { x, y, w, h } = counterBox(i);
+    drawNine('hud/panel_dark', x, y, w, h, 32);
     drawSpr(k, 0, x + ox, y + oy, { sc });
     drawDigits(a + '/' + b, x + 86, y + 8, 0.8);
   });

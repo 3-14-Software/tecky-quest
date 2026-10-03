@@ -305,7 +305,9 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - Os dorés : le trésor sous les traces de pattes (`item/goldbone`, `treasures` = os dorés trouvés, HUD et victoire).
 - Compteurs du HUD (`hudCounters()`) : empilés à droite sous le score, dans l'ordre os dorés (dès le premier trouvé),
   poules rentrées, lettres retrouvées, Pompon retrouvé (0/1, 1/1) ; ceux des quêtes seulement pendant la quête
-  (`asked`). Au toucher, les boutons Pause (`PAUSE_BTN`) et Plein écran (`FS_BTN`) sont en haut, à gauche du score.
+  (`asked`). Quand ils descendraient jusqu'aux boutons d'action (au toucher, le bouton du flair ; sinon, les aides de
+  touches du bas), ils passent sur une colonne de plus, à gauche (`COUNTER`, `counterBox()`). Test : `hud.js`.
+  Au toucher, les boutons Pause (`PAUSE_BTN`) et Plein écran (`FS_BTN`) sont en haut, à gauche du score.
 - Petites bêtes (`critters`, `CRITTER`, `REFUGES`, `MAP.critters`) : écureuils et chats flânent ; Tecky trop près ou
   qui aboie les fait filer vers un refuge pas de son côté (arbre/sapin : l'écureuil grimpe et disparaît ; toit ou
   conteneur : le chat saute et feule), ils redescendent quand il est loin. Points la première fois (`scored`, sauvegardé).
@@ -327,7 +329,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   (`Music.want`) et le séquenceur fait un fondu enchaîné pendant la dernière mesure d'une phrase (4 mesures) : une
   couche de gain par zone (`Music.layers` : sa variation, ses instruments ; `fadeTo()`, `ramp()`), et le tempo glisse
   de l'une à l'autre pendant ce fondu (`Music.glide`, `stepLen()`). Nouvelle partie, Continuer : fondu rapide (`cut`),
-  nouveau tempo tout de suite. Test : `music.js`. La rivière n'est pas une zone : celles du nord et du sud vont jusqu'à son
+  nouveau tempo tout de suite. L'écran titre joue toujours le thème d'origine (`TITLE_MUSIC`, remis par `toTitle()`
+  après une partie, la scène de fin ou une défaite). Test : `music.js`. La rivière n'est pas une zone : celles du nord et du sud vont jusqu'à son
   milieu (y 43,6), pour que rien ne change en la longeant ou en passant le pont ; elle garde son étiquette sur la
   carte de la pause (`LANDMARKS` = `MAP.landmarks`). Test : `world.js`.
 - Carte de la pause (`drawPauseMap()`, `mapImg` pré-rendue au quart, `seenCells` : cases de 4 tuiles vues à l'écran,

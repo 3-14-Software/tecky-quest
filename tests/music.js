@@ -60,5 +60,9 @@ function main() {
   ok(run('vw.length') > 0 && run('vw.every(tb => tb === TIMBRE.niche)') && run('Music.layers.length') === 0, 'fanfare : son de base');
   run('Music.voice = v0; Music.stop(); Music.start("main");');
   ok(run('Music.layers.length') === 1 && run('Music.layers[0].id') === 'parc' && run('Music.bpm') === run('SONGS.parc.bpm'), 'le thème repart avec la variation de la zone, à son tempo');
+  // menu principal depuis le parc : l'écran titre reprend son thème (fondu rapide)
+  run('toTitle();'); step(60);
+  ok(run('state') === 'title' && run('Music.zone') === run('TITLE_MUSIC') && run('Music.layers.length') === 1 &&
+     run('Music.layers[0].id') === run('TITLE_MUSIC') && run('Music.bpm') === run('SONGS.base.bpm'), 'retour au menu : le thème de l’écran titre');
 }
 eval(base + 'setTimeout(' + main.toString() + ', 50);');
