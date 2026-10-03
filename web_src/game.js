@@ -4532,7 +4532,7 @@ function drawWorld() {
   for (const c of critters) if (critterVisible(c) && vis(c.x, c.y - c.h, 60))
     list.push({ y: c.h > 0 && c.ref ? c.ref.y + 2 : c.y, draw: () => drawCritter(c) });
   const blink = P.inv > 0 && P.mode !== 'ko' && Math.floor(P.inv * 12) % 2 === 0;
-  list.push({ y: P.y, draw: () => P.draw(blink ? 0.35 : 1) });
+  list.push({ y: P.y, draw: () => P.draw((blink ? 0.35 : 1) * P.alpha) });   // P.alpha : 0 sous le grillage
   list.sort((a, b) => a.y - b.y);
   for (const o of list) o.draw();
 

@@ -19,7 +19,21 @@ function main() {
   ok(run('state') === 'dialog' && /terrier/.test(run('dialog.lines[0].text')), 'la première fois, Tecky explique');
   advanceDialog();
   ok(run('P.alpha') === 1 && run('P.sy') === undefined && run('P.mode') === 'free', 'il repart normalement');
-  run('P.cdBite = 0; pressed.bite = true'); step(80);
+  // l'opacité vraiment dessinée : 0 sous le grillage, 1 en ressortant (sans clignotement d'invulnérabilité)
+  run('cars = []; var drawnA = []; var dsA = drawSpr; drawSpr = function (k, i, x, y, o) { if (k.startsWith("tecky/")) drawnA.push(o && o.alpha); return dsA.apply(this, arguments); };');
+  const drawnAlpha = () => { run('drawnA = []; render()'); return run('drawnA.slice()'); };
+  run('P.x = TN[0]; P.y = TN[1]; P.mode = "free"; P.inv = 0; P.cdBite = 0; pressed.bite = true'); step(1);
+  let under = null, out = null;
+  for (let i = 0; i < 90 && run('P.mode') === 'tunnel'; i++) {
+    step(1); run('P.inv = 0');
+    if (under === null && run('P.alpha') === 0) under = drawnAlpha();
+    if (out === null && under !== null && run('P.alpha') === 1 && run('P.mode') === 'tunnel') out = drawnAlpha();
+  }
+  run('drawSpr = dsA; P.inv = 999');
+  ok(under && under.length === 1 && under[0] === 0, 'sous le grillage, Tecky n’est pas dessiné (opacité ' + JSON.stringify(under) + ')');
+  ok(out && out.length === 1 && out[0] === 1, 'en ressortant, il est dessiné en entier (opacité ' + JSON.stringify(out) + ')');
+  ok(Math.abs(run('P.x') - run('TN[2]')) < 1 && run('P.mode') === 'free', 'il est bien passé de l’autre côté');
+  run('P.x = TN[2]; P.y = TN[3]; P.cdBite = 0; pressed.bite = true'); step(80);
   ok(Math.abs(run('P.x') - run('TN[0]')) < 1 && run('state') === 'play', 'retour par le même terrier, sans nouvelle explication');
   // tous les terriers, dans les deux sens (trois d'entre eux sont verticaux : même x aux deux bouts)
   const nT = run('MAP.tunnels.length');
