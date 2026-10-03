@@ -22,6 +22,8 @@ python3 build.py                          # kit GameMaker -> out/ (efface d'abor
 Jeu en ligne : https://3-14-software.github.io/tecky-quest/ — publié par `.github/workflows/pages.yml` à chaque push touchant `docs/`.
 Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit (docs/ inclus), push sur `main`.
 `web/` et `out/` sont générés et ignorés par Git ; `docs/` est commité.
+`docs/glitch/` : la démo de **Glitch**, fork pour adultes (dossier `../glitch`, son propre `CLAUDE.md`), publiée là
+par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) ; `publish_docs.sh` d'ici l'épargne.
 
 ## Architecture
 
