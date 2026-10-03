@@ -829,7 +829,7 @@ function moveActor(a, dx, dy, hw, noSlide) {
    marge que la caméra peut montrer au-delà des bords (EDGE.cam), sur un sol qui prolonge celui du bord (buildGround).
    Ce n'est pas un obstacle : c'est le bord de la carte (BOUND) qui arrête Tecky, juste devant. S'il pousse contre le
    bord sans avancer pendant EDGE.push s, il le dit (pas plus d'une fois toutes les EDGE.again s de jeu). */
-const EDGE = { cam: 64, push: 0.6, again: 8, near: 8 };
+const EDGE = { cam: 64, push: 0.6, again: 8, near: 8, tunnelY: 110 };
 const EDGE_DECOR = MAP.edge.decor.map(([n, x, y, flip]) => ({ key: 'decor/' + n, n, x, y, flip }));
 const EDGE_SOLIDS = EDGE_DECOR.filter(d => FOOT[d.n]).map(({ n, x, y, flip }) => {   // (ajoutés à solids par reset)
   const [a, b, c, e] = FOOT[n];
@@ -838,14 +838,18 @@ const EDGE_SOLIDS = EDGE_DECOR.filter(d => FOOT[d.n]).map(({ n, x, y, flip }) =>
 const camClampX = x => clamp(x, -EDGE.cam, MAP.w * TS - VW + EDGE.cam);
 const camClampY = y => clamp(y, -EDGE.cam, MAP.h * TS - VH + EDGE.cam);
 function edgeBump(dt, ix, iy, ox, oy) {
-  // un pas de plus vers l'extérieur sortirait de la carte, ou entrerait dans la butte d'un tunnel
-  const hw = 16, x = P.x + Math.sign(ix) * EDGE.near, y = P.y + Math.sign(iy) * EDGE.near;
-  const x0 = x - hw, x1 = x + hw, y0 = y - 12, y1 = y;
-  const out = offMap(x0, y0, x1, y1) || EDGE_SOLIDS.some(s => x1 > s[0] && x0 < s[2] && y1 > s[1] && y0 < s[3]);
-  P.edgeT = out && Math.hypot(P.x - ox, P.y - oy) < 1 ? P.edgeT + dt : 0;
+  // sur un axe où Tecky pousse, un pas de plus vers l'extérieur sortirait de la carte ou entrerait dans la butte d'un
+  // tunnel, et il n'avance pas sur cet axe ; il peut glisser le long (le joystick ne pousse jamais tout droit) : ça
+  // compte quand même
+  const hw = 16, outAt = (x, y) => offMap(x - hw, y - 12, x + hw, y) ||
+    EDGE_SOLIDS.some(s => x + hw > s[0] && x - hw < s[2] && y > s[1] && y - 12 < s[3]);
+  const outX = Math.abs(ix) > 0.3 && Math.abs(P.x - ox) < 1 && outAt(P.x + Math.sign(ix) * EDGE.near, P.y);
+  const outY = Math.abs(iy) > 0.3 && Math.abs(P.y - oy) < 1 && outAt(P.x, P.y + Math.sign(iy) * EDGE.near);
+  P.edgeT = outX || outY ? P.edgeT + dt : 0;
   if (P.edgeT < EDGE.push || timePlayed - P.edgeAt < EDGE.again) return;
   P.edgeT = 0; P.edgeAt = timePlayed;
-  const [r0, r1] = MAP.traffic.road, tunnel = ix !== 0 && P.y > r0 && P.y < r1 + 24;   // au bout de la grande route
+  // au bout de la grande route (ou juste à côté de la butte du tunnel)
+  const [r0, r1] = MAP.traffic.road, tunnel = outX && P.y > r0 - EDGE.tunnelY && P.y < r1 + EDGE.tunnelY;
   addWordPop(tunnel ? 'Le tunnel, c’est pour les voitures !' : 'Alice n’a pas pu aller si loin !', P.x, P.y - 120, 'tecky');
 }
 
@@ -1640,7 +1644,8 @@ function drawCritter(c) {
    canetons (même famille) ne s'envole pas : elle s'éloigne vite à la nage, ses petits en file derrière elle. Points la
    première fois que chacun s'enfuit (scored, sauvegardé). */
 const DUCK = { scare: 190, swim: 24, roam: 110, flee: 100, gap: 30, flyH: 90, fly: 230, rise: 0.7, away: 1.2,
-  land: [300, 900], safe: 420, calm: 2.5, quack: [5, 14], dive: [10, 24], pts: 30 };
+  land: [300, 900], safe: 420, calm: 2.5, quack: [5, 14], dive: [10, 24], pts: 30,
+  cornered: 0.6, stuckMove: 24, familyFar: 1600 };    // cane coincée (bouge de moins de stuckMove px en cornered s) : la famille s'envole
 let ducks = [];
 const DUCK_EDGE = { big: [[-28, 0], [28, 0], [0, -14], [0, 12], [-20, -10], [20, -10], [-20, 9], [20, 9]],
   small: [[-16, 0], [16, 0], [0, -9], [0, 8]] };
@@ -1692,11 +1697,13 @@ function swimTo(d, tx, ty, sp, dt) {  // avance vers (tx, ty) sans quitter l'eau
   if (Math.abs(dx) > 1) d.flip = dx < 0;
   return true;
 }
-function pickLanding(d) {             // où se poser : de l'eau à bonne distance, loin de Tecky et pas de son côté
-  const ok = [], away = [];
-  for (let y = d.y - DUCK.land[1]; y <= d.y + DUCK.land[1]; y += 32) for (let x = d.x - DUCK.land[1]; x <= d.x + DUCK.land[1]; x += 32) {
+function pickLanding(d, far) {        // où se poser : de l'eau à bonne distance, loin de Tecky et pas de son côté
+  const ok = [], away = [], R = far || DUCK.land[1];       // (far : plus loin, pour une famille coincée)
+  for (let y = d.y - R; y <= d.y + R; y += 32) for (let x = d.x - R; x <= d.x + R; x += 32) {
     const l = dist(x, y, d.x, d.y);
-    if (l < DUCK.land[0] || l > DUCK.land[1] || dist(x, y, P.x, P.y) < DUCK.safe || !duckWater(d, x, y)) continue;
+    // (dans la carte : l'eau continue au-delà du bord ; et un canard en vol reste à 160 px du haut)
+    if (x < 40 || x > MAP.w * TS - 40 || y < 170 || y > MAP.h * TS - 40) continue;
+    if (l < DUCK.land[0] || l > R || dist(x, y, P.x, P.y) < DUCK.safe || !duckWater(d, x, y)) continue;
     ok.push([x, y]);
     if ((x - d.x) * (d.x - P.x) + (y - d.y) * (d.y - P.y) > 0) away.push([x, y]);
   }
@@ -1723,8 +1730,21 @@ function updateDuck(d, dt) {
   const dP = dist(d.x, d.y, P.x, P.y), alive = P.mode !== 'ko' && state === 'play';
   if (d.lead) {                       // caneton : suit celui qui le précède, à DUCK.gap
     const L = d.lead, dx = L.x - d.x, dy = L.y - d.y, l = Math.hypot(dx, dy);
+    if (d.mode === 'fly') {           // en vol, derrière sa mère ; il se pose derrière elle une fois qu'elle est sur l'eau
+      const down = L.h === 0 && L.mode !== 'fly', g = down ? 0 : DUCK.gap * 0.8;
+      const tx = l > g ? L.x - dx / l * g : d.x, ty = l > g ? L.y - dy / l * g : d.y, tl = dist(d.x, d.y, tx, ty);
+      const st = Math.min(tl, DUCK.fly * 1.2 * dt);
+      if (tl > 0.5) { d.x += (tx - d.x) / tl * st; d.y += (ty - d.y) / tl * st; if (Math.abs(tx - d.x) > 1) d.flip = tx < d.x; }
+      d.h = down ? Math.max(0, d.h - DUCK.flyH / DUCK.rise * dt) : Math.min(DUCK.flyH * 0.8, d.h + DUCK.flyH / DUCK.rise * dt);
+      if (down && (d.h === 0 || tl < 6) && duckWater(d, d.x, d.y)) {
+        d.h = 0; d.mode = 'swim'; duckAnim(d, 'swim');
+        addFx(ATLAS['fx/splash'] ? 'fx/splash' : 'fx/ripple', d.x, d.y, { fps: 12 });
+      } else if (down && d.h === 0) d.h = 1;           // (au-dessus de la rive : il volette jusqu'à l'eau)
+      return;
+    }
     if (alive && dP < DUCK.scare * 0.8) scareDuck(d);
     if (l > DUCK.gap) swimTo(d, L.x - dx / l * DUCK.gap, L.y - dy / l * DUCK.gap, d.mode === 'flee' ? DUCK.flee * 1.15 : DUCK.swim * 1.8, dt);
+    else if (d.mode === 'flee' && duckMom(d) && duckMom(d).mode === 'swim') d.mode = 'swim';   // rejointe : on se calme
     duckChatter(d, dt, 1.6);
     return;
   }
@@ -1741,10 +1761,36 @@ function updateDuck(d, dt) {
       if (!swimTo(d, d.tx, d.ty, DUCK.swim, dt)) d.timer = 0;
       return;
     case 'flee': {                    // la cane et ses petits s'éloignent à la nage
-      let moved = false;
-      const a0 = Math.atan2(d.y - P.y, d.x - P.x);
-      for (const da of [0, 0.5, -0.5, 1, -1, 1.5, -1.5])
-        if (swimTo(d, d.x + Math.cos(a0 + da) * 40, d.y + Math.sin(a0 + da) * 40, DUCK.flee, dt)) { moved = true; break; }
+      // elle garde le cap qui marchait (sinon, contre la rive, elle hésiterait entre gauche et droite à chaque image)
+      let moved = false, cornered = false;
+      const a0 = Math.atan2(d.y - P.y, d.x - P.x), fl = d.flip, prev = d.fleeDa || 0;
+      for (const da of [0, 0.5, -0.5, 1, -1, 1.5, -1.5].sort((u, v) => Math.abs(u - prev) - Math.abs(v - prev))) {
+        const ox = d.x, oy = d.y;
+        if (!swimTo(d, d.x + Math.cos(a0 + da) * 40, d.y + Math.sin(a0 + da) * 40, DUCK.flee, dt)) continue;
+        if (Math.abs(prev) >= 1 && Math.abs(da) >= 1 && Math.sign(da) !== Math.sign(prev)) {   // repartir de l'autre côté :
+          d.x = ox; d.y = oy; cornered = true; break;                                         // elle est dans un recoin
+        }
+        moved = true; d.fleeDa = da;
+        if (Math.abs(Math.cos(a0 + da)) < 0.35) d.flip = fl;     // presque tout droit vers le haut ou le bas : elle ne se retourne pas
+        break;
+      }
+      if (!moved) d.flip = fl;
+      // coincée contre la rive, Tecky tout près : toute la famille s'envole vers un autre coin d'eau, les canetons en
+      // file derrière leur mère (ils battent de leurs petits ailerons), et s'y pose
+      if (!d.chk) d.chk = [d.x, d.y, 0];
+      if (cornered) d.chk = [d.x, d.y, DUCK.cornered];            // (dans un recoin : on n'attend pas)
+      if ((d.chk[2] += dt) > DUCK.cornered) {
+        const stuck = dist(d.x, d.y, d.chk[0], d.chk[1]) < DUCK.stuckMove;
+        d.chk = [d.x, d.y, 0];
+        const p = stuck && dP < DUCK.scare + 20 && pickLanding(d, DUCK.familyFar);
+        if (p) {
+          d.mode = 'fly'; d.timer = 0; [d.tx, d.ty] = p; d.fleeDa = 0; duckAnim(d, 'fly');
+          for (const k of ducks) if (k.lead && k.fam === d.fam) { k.mode = 'fly'; k.h = 1; duckAnim(k, 'fly'); }
+          addWordPop('Coin coin !', d.x, d.y - 80, 'duck');
+          if (onScreen(d.x, d.y)) SFX.flap();
+          return;
+        }
+      }
       d.calmT = dP > DUCK.scare + 120 || !moved ? d.calmT + dt : 0;
       if (d.calmT > DUCK.calm) {
         d.mode = 'swim'; d.hx = d.tx = d.x; d.hy = d.ty = d.y; d.timer = 2;
@@ -1760,7 +1806,7 @@ function updateDuck(d, dt) {
       if (Math.abs(dx) > 1) d.flip = dx < 0;
       d.h = Math.min(d.h + DUCK.flyH / DUCK.rise * dt, DUCK.flyH * Math.min(1, l / 180));   // monte, puis descend en arrivant
       if (l - st < 1) {
-        d.h = 0; d.mode = 'swim'; d.hx = d.tx = d.x; d.hy = d.ty = d.y; d.timer = 2; duckAnim(d, 'swim');
+        d.h = 0; d.mode = 'swim'; d.hx = d.tx = d.x; d.hy = d.ty = d.y; d.timer = 2; duckAnim(d, 'swim'); d.chk = null;
         addFx(ATLAS['fx/splash'] ? 'fx/splash' : 'fx/ripple', d.x, d.y, { fps: 12 });
       }
       return;
@@ -2804,11 +2850,13 @@ function uncover(g) {
   say([{ who: 'tecky', face: 2, text: "Wouf ! Un os doré était enterré ! (" + treasures + " / " + MAP.dig.length + ")" }], saveGame);
 }
 
-function hurtPlayer(dmg, fromX, fromY) {
+// bite : une vraie morsure (badge « Sans une égratignure ») ; l'aboiement du doberman et la charge du chien de berger
+// font mal, mais ne sont pas des morsures
+function hurtPlayer(dmg, fromX, fromY, bite = true) {
   if (P.inv > 0 || P.mode === 'ko' || state !== 'play' || balade() || graceT > 0 || calmAt(P.x, P.y)) return;
   if (facile()) dmg = Math.max(1, Math.floor(dmg / 2));
   P.hp = Math.max(0, P.hp - dmg);
-  bitten = true;                      // (badge « Sans une égratignure »)
+  if (bite) bitten = true;
   const l = Math.max(1, dist(P.x, P.y, fromX, fromY));
   P.kx = (P.x - fromX) / l * 420; P.ky = (P.y - fromY) / l * 420;
   P.inv = 1.2; shake = 0.25;
@@ -3923,7 +3971,7 @@ function updateDog(d, dt) {
       const ox = d.x, oy = d.y, st = CHARGE.speed * dt;
       moveActor(d, d.cx * st, d.cy * st, 14, true);
       if ((d.dustT = (d.dustT || 0) - dt) <= 0) { d.dustT = 0.05; addDust(d.x - d.cx * 22, d.y - 2, -d.cx * 40, -d.cy * 40 - 8, 6); }
-      if (!d.hitDone && dist(d.x, d.y, P.x, P.y) < 52) { d.hitDone = true; hurtPlayer(T.dmg, d.x, d.y); }
+      if (!d.hitDone && dist(d.x, d.y, P.x, P.y) < 52) { d.hitDone = true; hurtPlayer(T.dmg, d.x, d.y, false); }   // (une charge)
       if (d.timer <= 0 || Math.hypot(d.x - ox, d.y - oy) < st * 0.3) {   // fin de course ou obstacle
         d.mode = 'tired'; d.timer = CHARGE.tired; d.chargeCd = CHARGE.cd; d.setAnim('idle');
       }
@@ -4005,7 +4053,7 @@ function updateDog(d, dt) {
         addFx('fx/bark', d.x + mouth[0], d.y + mouth[1], { angle: ang, fps: 12 });
         addBarkRing(d.x, d.y, d.dir, DOG_BARK, '#D7332B');
         SFX.bark(T.pitch);
-        if (l < DOG_BARK.range && (dx * vx + dy * vy) / Math.max(1, l) > DOG_BARK.cos) hurtPlayer(1, d.x, d.y);
+        if (l < DOG_BARK.range && (dx * vx + dy * vy) / Math.max(1, l) > DOG_BARK.cos) hurtPlayer(1, d.x, d.y, false);   // (un aboiement)
       }
       if (d.done()) { d.mode = 'chase'; d.barkCd = 3.2; }
       return;

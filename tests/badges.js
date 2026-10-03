@@ -34,7 +34,13 @@ function main() {
   ok(run('state') === 'win' && run('newBadges.length') >= 10 && run('used.filter(k => k === "hud/badge").length') >= 10, 'écran de victoire : les badges de la partie');
   // une morsure suffit pour perdre « Sans une égratignure » (nouvelle partie, badge pas encore gagné)
   run('delete badges.intact; newGame("aventure", true);'); advanceDialog();
-  run('dogs = []; P.inv = 0; graceT = 0; hurtPlayer(1, P.x + 40, P.y);');
+  // l'aboiement du doberman et la charge du chien de berger font mal, mais ce ne sont pas des morsures
+  run('var D = dogs.find(d => d.kind === "molosse"); P.x = 30 * 64; P.y = 33 * 64; D.x = P.x + 120; D.y = P.y; dogs = [D];');
+  run('Object.assign(D, { mode: "bark", dir: "left", t: 0.3, hitDone: false }); P.inv = 0; P.mode = "free"; graceT = 0; var hp0 = P.hp;'); step(1);
+  ok(run('P.hp') < run('hp0') && !run('bitten'), 'l’aboiement du doberman fait mal, mais n’est pas une morsure');
+  run('dogs = []; P.inv = 0; P.mode = "free"; graceT = 0; hurtPlayer(1, P.x + 40, P.y, false);');
+  ok(!run('bitten'), 'une charge non plus');
+  run('dogs = []; P.inv = 0; P.mode = "free"; graceT = 0; hurtPlayer(1, P.x + 40, P.y);');
   ok(run('bitten') && run('saveGame() || loadSave().bitten'), 'une morsure : notée (et sauvegardée)');
   run('timePlayed = 300; clues = [true, true, true]; revealAlice(); P.inv = 999; P.x = alice.x; P.y = alice.y + 100;'); step(2); advanceDialog();
   ok(!run('badges.intact'), 'pas de badge « Sans une égratignure »');

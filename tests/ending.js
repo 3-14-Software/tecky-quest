@@ -32,6 +32,8 @@ function main() {
   step(Math.ceil(60 * (run('endingEnd()') - run('ending.t'))) + 2);
   ok(run('state') === 'win' && run('fade.a') > 0.5, 'puis l’écran de victoire, qui sort du noir');
   ok(run('P.anim') === 'sleep' && run('Music.cur') === 'end', 'Tecky dort toujours, la berceuse continue');
+  step(60 * 3);
+  ok(!run('badges.sieste') && !run('newBadges.includes("sieste")'), 'il s’endort à la fin : ça ne donne pas le badge de la sieste');
   // complétion : un pourcentage sur l'écran de victoire
   const pc = run('winDone');           // (figée aux retrouvailles : la scène de fin dévoile la carte autour de la niche)
   run('var said = []; ctx.fillText = s => said.push(String(s)); overT = 2; render(); delete ctx.fillText;');

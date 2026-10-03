@@ -49,6 +49,14 @@ function main() {
        `bout ${side} de la route : Tecky s’arrête devant le tunnel (x = ${px.toFixed(1)})`);
     ok(run('pops.some(p => p.text === "Le tunnel, c’est pour les voitures !")'), '« Le tunnel, c’est pour les voitures ! »');
   }
+  // au joystick, on ne pousse jamais tout droit : Tecky glisse le long de la butte ou du bord, et le dit quand même
+  for (const [sx, sy, side] of [[1, 0.3, 'est'], [-1, -0.3, 'ouest'], [1, 0.15, 'est']]) {
+    run(`cars = []; pops = []; P.edgeAt = -99; P.x = ${sx > 0 ? 'MAP.w * TS - 200' : '200'}; P.y = (MAP.traffic.road[0] + MAP.traffic.road[1]) / 2; P.mode = "free";`);
+    let said = false;
+    for (let i = 0; i < 60 * 3; i++) { run(`cars = []; stick.id = 1; stick.vx = ${sx}; stick.vy = ${sy};`); step(1); if (run('pops.some(p => p.text === "Le tunnel, c’est pour les voitures !")')) said = true; }
+    run('stick.id = null; stick.vx = stick.vy = 0;');
+    ok(said, `au joystick, un peu en biais (${sy}), tunnel ${side} : il le dit aussi`);
+  }
   // les voitures, elles, passent : elles entrent dans un tunnel et ressortent de l'autre
   run('cars = MAP.traffic.vehicles.map(newVehicle); var c0 = cars[0]; c0.x = 30; P.x = 40 * 64; P.y = 12 * 64;');
   let back = false;

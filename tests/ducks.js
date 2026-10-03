@@ -46,6 +46,24 @@ function main() {
   ok(run('[M].concat(kids).every(d => duckWater(d, d.x, d.y))'), 'toujours dans l’eau');
   run('P.x = 46 * 64; P.y = 26 * 64;'); step(60 * 5);
   ok(run('M.mode') === 'swim' && run('kids.every(k => k.mode === "swim")'), 'Tecky parti : ils se calment');
+  // coincée contre la rive de la petite mare de la niche : toute la famille s'envole vers une autre mare (les canetons en
+  // file, ailerons battants) et s'y pose, au lieu de tourner sur place
+  run('var F = MAP.ducks.find(d => d[0] === "duck_f" && d[3] === 1), M1 = ducks.find(d => d.hasKids && d.fam === F[3]), kids1 = ducks.filter(d => d.lead && d.fam === F[3]);');
+  run('M1.mode = "swim"; M1.h = 0; M1.chk = null; M1.x = M1.hx = F[1]; M1.y = M1.hy = F[2]; kids1.forEach(k => { k.mode = "swim"; k.h = 0; k.x = M1.x; k.y = M1.y; }); P.x = M1.x + 80; P.y = M1.y + 60; P.mode = "free";');
+  let flew = false, kidsFlew = false, turns = [], maxTurns = 0, fl0 = run('M1.flip');
+  for (let i = 0; i < 60 * 14; i++) {
+    if (!flew) run('var dd = dist(M1.x, M1.y, P.x, P.y); if (dd > 110) { P.x += (M1.x - P.x) / dd * 3; P.y += (M1.y - P.y) / dd * 3; }');
+    step(1);
+    if (run('M1.mode') === 'fly') flew = true;
+    if (run('kids1.every(k => k.mode === "fly" && k.anim === "fly")')) kidsFlew = true;
+    const f = run('M1.flip'); turns.push(f !== fl0 ? 1 : 0); fl0 = f; if (turns.length > 60) turns.shift();
+    if (!flew) maxTurns = Math.max(maxTurns, turns.reduce((a, v) => a + v, 0));
+  }
+  ok(maxTurns <= 3, 'coincée, elle ne tourne plus sur place (' + maxTurns + ' demi-tours par seconde au plus)');
+  ok(flew && kidsFlew, 'elle s’envole, ses canetons derrière elle');
+  ok(run('M1.mode') === 'swim' && run('M1.h') === 0 && run('duckWater(M1, M1.x, M1.y)') && run('dist(M1.x, M1.y, F[1], F[2])') > 300,
+     'et se pose sur une autre mare (' + Math.round(run('dist(M1.x, M1.y, F[1], F[2])')) + ' px plus loin)');
+  ok(run('kids1.every(k => k.h === 0 && duckWater(k, k.x, k.y) && dist(k.x, k.y, M1.x, M1.y) < 140)'), 'ses petits se posent avec elle');
 
   // aboyer de loin fait aussi s'envoler
   run('var E = ducks.find(d => d.kind === "duck" && !d.hasKids && d !== D && d.mode === "swim"); P.x = E.x - 280; P.y = E.y; P.dir = "right"; P.mode = "free"; P.cdBark = 0;');

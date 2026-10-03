@@ -105,7 +105,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   (`ROAD_TUNNELS`, sprite `decor/tunnel`, en miroir à l'est) où les voitures disparaissent ; sa butte est un obstacle
   (`FOOT.tunnel`, `EDGE_SOLIDS`) : Tecky s'arrête devant la bouche. La lisière n'est pas un obstacle : c'est `BOUND`
   (`offMap()`, dans `blockedFeet()`) qui arrête au bord. Tecky qui y pousse sans avancer le dit (`edgeBump()`,
-  `EDGE.push` s, au plus une fois toutes les `EDGE.again` s). Les bulles de mots restent dans l'écran. Test : `edge.js`.
+  `EDGE.push` s, au plus une fois toutes les `EDGE.again` s ; axe par axe : au joystick, il glisse le long du bord ou de
+  la butte, et ça compte ; près de la butte, `EDGE.tunnelY`, c'est le message du tunnel). Les bulles de mots restent dans l'écran. Test : `edge.js`.
 - `web_src/game.js` : tout le moteur. Monde en pixels x2 (tuile = 64), caméra 960x540, interface 1920x1080 (`GW`/`GH`).
   Sol pré-rendu en blocs de 16 tuiles (`groundChunks`, 1024 px ; `buildChunk()`, `groundTile()`, plus des bandes
   pour la marge de la lisière) : une seule image de la carte dépasserait la taille de canevas permise sur certains
@@ -146,7 +147,8 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
   lignes plus serrées au-delà de 9, `optBox(i, n)`). Test : `options.js`.
 - Badges (`MAP.badges` = `hud.BADGES`, image i de `hud/badge`, la dernière = verrouillé ; `BADGE_INFO`, `BADGES_KEY`,
   gardés d'une partie à l'autre) : `checkBadges()` toutes les demi-secondes, `winBadges()` à la victoire (aventure,
-  sans morsure = `bitten` faux, sauvegardé ; moins de 10 min). `unlockBadge()` : annonce « Nouveau badge ! »
+  sans morsure = `bitten` faux, sauvegardé : seules les vraies morsures comptent, `hurtPlayer(…, bite)` — l'aboiement du
+  doberman et la charge du chien de berger font mal sans être des morsures ; moins de 10 min). `unlockBadge()` : annonce « Nouveau badge ! »
   (`toasts`), rappel sur l'écran de victoire (`newBadges`), écran « Badges » depuis le menu principal
   (`state === 'badges'`). Un nouveau badge : l'ajouter à `hud.BADGES` (dessin), `BADGE_INFO` et une condition.
   Test : `badges.js`.
@@ -314,11 +316,15 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 - Repos (`restPose()`, `REST`, `tecky.REST_ANIMS` → `MAP.rest`, ajoutés à `FPS` / `LOOP`) : sans geste du joueur, Tecky
   s'assoit (6 s ; de dos, il se tourne vers nous), bâille et se gratte à tour de rôle, puis s'endort (24 s) avec des
   « z » (`fx/zzz`, effets à durée de vie : `life`, `vx`/`vy`, `grow`). Tout geste le réveille ; jamais si un chien menace.
-  `REST_ANIMS` est à part de `ANIMS` (les chiens ennemis réutilisent `ANIMS`). Test : `rest.js`.
+  `REST_ANIMS` est à part de `ANIMS` (les chiens ennemis réutilisent `ANIMS`). Badge « Roi de la sieste » : seulement
+  ce sommeil-là (`napped`), pas celui de la scène de fin. Test : `rest.js`.
 - Canards (`ducks`, `DUCK`, `MAP.ducks` : [espèce, x, y, famille], `ducks.py`) : nagent près de leur place sans quitter
   l'eau (`duckWater()`, vérifié aussi par `check_placement.js`), cancanent, plongent. Tecky trop près ou qui aboie :
-  les adultes s'envolent vers un autre coin d'eau loin de lui (`pickLanding()`), ombre au sol, et s'y posent ; la cane
-  suivie de canetons (même famille, `lead`) s'éloigne à la nage avec eux en file. Points la première fois (`scored`,
+  les adultes s'envolent vers un autre coin d'eau loin de lui (`pickLanding()`, dans la carte : l'eau continue
+  au-delà du bord), ombre au sol, et s'y posent ; la cane suivie de canetons (même famille, `lead`) s'éloigne à la nage
+  avec eux en file, en gardant son cap (`fleeDa`). Coincée contre la rive (`DUCK.cornered`, `stuckMove`, ou un recoin où
+  il faudrait repartir de l'autre côté), toute la famille s'envole vers une autre mare (`DUCK.familyFar`), les
+  canetons en file derrière elle (animation `fly` de ducks.py : petit aileron qui bat), et s'y pose. Points la première fois (`scored`,
   sauvegardé dans `ducks`). Test : `ducks.js`.
 - Zones (`ZONES` = `MAP.zones` : rectangles en tuiles, la première zone dont un rectangle contient le point, un bord
   posé sur le bord de la carte sans limite, la dernière couvre tout ; `zoneAt()`, `updateZone()` ; huit, dont « Le verger » au sud de la route, qui reprend la musique de

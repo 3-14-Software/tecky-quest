@@ -17,6 +17,7 @@ Animations (`anims(kind)` -> {nom : (poses, fps, boucle)}, `frames(kind, anim)` 
   puis remonte ; 8 images, 8 i/s, une fois.
 - fly (adultes) : en vol, sans eau ni ombre, cou tendu, pattes orange repliées sous la queue, ailes qui battent ;
   centre du corps vers (16, 18) ; 4 images, 12 i/s, en boucle. Le jeu dessine l'ombre au sol et remonte le sprite.
+  Canetons : sans eau, leur petit aileron bat vite (14 i/s) : ils suivent leur mère quand elle s'envole.
 
 Même principe que critters.py / hens.py : silhouette d'abord (contour brun), aplats ensuite.
 """
@@ -385,10 +386,12 @@ def _flying(C, theta=-100.0, span=11.0, chord=1.0, bob=0.0):
 
 
 # ================================================================== CANETON
-def _duckling(C, bob=0.0, rock=0.0, stretch=0.0, open_=0.0, wag=0.0, ring=None, wake=0.0):
+def _duckling(C, bob=0.0, rock=0.0, stretch=0.0, open_=0.0, wag=0.0, ring=None, wake=0.0, wing=None):
     """Caneton sur l'eau : gros duvet rond, grosse tête, petit bec. Dessiné à l'échelle des adultes puis réduit
-    de DUCKLING_SCALE autour de (16, G), contour compensé (même épaisseur que les autres sprites)."""
-    d = _Duck(water=True)
+    de DUCKLING_SCALE autour de (16, G), contour compensé (même épaisseur que les autres sprites).
+    wing : en vol (il suit sa mère quand elle s'envole), angle (°) de son petit aileron qui bat ; pas d'eau."""
+    air = wing is not None
+    d = _Duck(water=not air)
     pivot = (15.0, 23.0)
     k = DUCKLING_SCALE
     d.tr = (f"translate(0 {bob:.2f}) rotate({rock:.1f} {pivot[0]} {pivot[1]}) "
@@ -418,14 +421,19 @@ def _duckling(C, bob=0.0, rock=0.0, stretch=0.0, open_=0.0, wag=0.0, ring=None, 
         d.add(poly([hinge, U(5.2, 0.9), D(4.8, 1.1)]), "#7A2A2A")
     d.add(_smooth([D(2.4, 0.8), D(4.8, 0.9), D(5.0, 1.4), D(3.0, 1.9)]), C["bill"])
     d.add(_smooth([U(2.2, -0.9), U(4.4, -0.3), U(5.9, 0.5), U(4.6, 1.2), U(2.4, 1.2)]), C["bill"])
-    # aileron (duvet un peu plus foncé)
-    d.add(_smooth([(16.6, 20.4), (13.8, 19.8), (11.2, 20.6), (12.6, 22.4), (15.8, 22.4)]), C["shade"], sil=False)
-    d.raw(line("M16.2,20.5 Q13.6,19.5 11.6,20.7", OUTLINE, 0.7))
+    # aileron (duvet un peu plus foncé) ; en vol, il bat, levé au-dessus du dos ou baissé
+    if air:
+        d.add(_smooth([(16.6, 20.4), (13.8, 19.8), (10.6, 20.4), (12.2, 22.2), (15.8, 22.4)])
+              .replace("/>", f' transform="rotate({wing:.1f} 16.2 20.6)"/>'), C["shade"])
+    else:
+        d.add(_smooth([(16.6, 20.4), (13.8, 19.8), (11.2, 20.6), (12.6, 22.4), (15.8, 22.4)]), C["shade"], sil=False)
+        d.raw(line("M16.2,20.5 Q13.6,19.5 11.6,20.7", OUTLINE, 0.7))
     # œil, joue rose
     _eye(d, *L(1.2, -0.5), 1.05)
     d.add(ellipse(*L(1.0, 1.6), 0.95, 0.6), C["blush"], sil=False, opacity=0.7)
-    span = _chord([_ellipse_pts(cx, cy, rx, ry)], tp)
-    _water(d, span, ring, 0.0, wake)
+    if not air:
+        span = _chord([_ellipse_pts(cx, cy, rx, ry)], tp)
+        _water(d, span, ring, 0.0, wake)
     return d
 
 
@@ -456,6 +464,8 @@ ANIMS = {   # espèce : {nom : (poses, fps, boucle)} ; chaque pose = dict(mode=.
     "duckling": {
         "swim": ([dict(mode="swim", **p) for p in _SWIM], 6, True),
         "quack": ([dict(mode="swim", **p) for p in _QUACK], 8, False),
+        "fly": ([dict(mode="swim", wing=-60, bob=-0.4), dict(mode="swim", wing=-15), dict(mode="swim", wing=25, bob=0.4),
+                 dict(mode="swim", wing=-15)], 14, True),
     },
 }
 
