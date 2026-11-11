@@ -6,13 +6,16 @@ python3 carte.py --verifier          # carte.json : correct, et au format de l'�
 python3 pack_web.py
 python3 tests/regen.py
 fail=0
-for t in sim immune threat read ring clues berger map hens traffic butterflies save balade pad glyphs effects farm cows villagers hud leon iris train piquette tunnel edge world music ducks rest options quests badges weather calm ending obstacles fence fence_scan placement editeur_sol; do
+for t in sim immune threat read ring clues berger map nettete hens traffic butterflies save balade pad glyphs effects farm cows villagers hud leon iris train piquette tunnel edge world music ducks rest options quests badges weather calm ending obstacles fence fence_scan placement editeur_sol; do
   echo "== $t"
   out=$(node tests/$t.js 2>&1) || fail=1
   echo "$out" | grep -E "ÉCHEC|^PB |problèmes [1-9]|Error" && fail=1 || true
   echo "$out" | grep -c "^ok" | sed 's/^/   ok : /'
 done
 python3 tests/edges.py | tail -3
+python3 tests/nettete.py || fail=1     # images x4 : mêmes places que les images x2
+out=$(python3 tests/heros.py) || fail=1       # Tecky et Alice (tecky2.py, alice2.py) : noms, pieds, cadres
+echo "$out" | grep -E "ÉCHEC|^héros"
 # répliques pour la synthèse vocale : la liste voix/repliques.csv est-elle à jour (et complète) ?
 out=$(node tools/export_voix.js --check 2>&1) || fail=1
 echo "$out"

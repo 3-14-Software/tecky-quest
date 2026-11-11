@@ -11,12 +11,14 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 
 import alice
+import alice2
 import farmer
 import items
 import npcs
 import port
 import herissons
 import tecky
+import tecky2
 from spritelib import Drawing, circle, ellipse, rect, poly, path, line, render_svg, OUTLINE
 
 FONT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts", "Fredoka.ttf")
@@ -121,20 +123,25 @@ def _crop_face(svg, cx, cy, half, scale, w=48, h=48):
 
 
 def tecky_portrait(scale):
-    states = [tecky.P(), tecky.P(blink=1), tecky.P(mouth=0.8), tecky.P(xeyes=True, ear=20)]
+    """0 : au calme ; 1 : clignement (ou aïe) ; 2 : il parle, il aboie ; 3 : KO ; puis 4 : inquiet ; 5 : surpris ;
+    6 : fier. Toute nouvelle image s'ajoute à la fin (les dialogues les désignent par leur numéro)."""
+    P = tecky2.pose
+    states = [P(), P(yeux="fermes"), P(gueule=0.9), P(yeux="croix", gueule=0.5, oreille=14, expr="inquiet"),
+              P(expr="inquiet", oreille=-3), P(expr="surpris", oreille=8), P(expr="fier", oreille=4)]
     out = []
     for p in states:
-        svg = tecky.down(p).svg()
-        out.append(_portrait(scale, _crop_face(svg, 24, 28, 12.5, scale), bg="#BFE3F5"))
+        svg = tecky2.portrait(p).svg(outline_w=tecky2.TRAIT * 0.75)
+        out.append(_portrait(scale, _crop_face(svg, 24, 22.6, 21.6, scale, 48, 48), bg="#BFE3F5"))
     return out
 
 
 def alice_portrait(scale):
-    states = [alice.A(), alice.A(blink=1), alice.A(happy=True)]
+    """0 : au calme ; 1 : clignement ; 2 : elle rit."""
+    P = alice2.pose
     out = []
-    for p in states:
-        svg = alice.front(p).svg()
-        out.append(_portrait(scale, _crop_face(svg, 24, 16.5, 12.5, scale), bg="#FAD4E3"))
+    for p in (P(), P(yeux="fermes"), P(yeux="rire", rire=True)):
+        svg = alice2.portrait(p).svg(outline_w=alice2.TRAIT * 0.75)
+        out.append(_portrait(scale, _crop_face(svg, 30, 21.6, 18.6, scale, 60, 76), bg="#FAD4E3"))
     return out
 
 
@@ -421,7 +428,7 @@ def arrow_icons(scale):
         cell = Image.new("RGBA", (m, m), (0, 0, 0, 0))
         cell.alpha_composite(im, ((m - im.width) // 2, (m - im.height) // 2))
         out.append(cell)
-    face = _crop_face(alice.front(alice.A()).svg(), 24, 16.5, 12, scale).resize((n, n), Image.LANCZOS)
+    face = _crop_face(alice2.portrait().svg(outline_w=alice2.TRAIT), 30, 20.4, 15.6, scale, 60, 76).resize((n, n), Image.LANCZOS)
     disc = Image.composite(face, Image.new("RGBA", (n, n), (0, 0, 0, 0)), Image.composite(face.getchannel("A"), mask, mask))
     cell = Image.new("RGBA", (m, m), (0, 0, 0, 0))
     cell.alpha_composite(disc, (scale, scale))

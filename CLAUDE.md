@@ -12,7 +12,8 @@ mi-longs avec frange, t-shirt jaune, jupe rose, pieds nus. Garder ces traits en 
 
 ```bash
 pip install -r requirements.txt           # cairosvg, pillow, numpy (+ Node 18+ pour les tests)
-python3 pack_web.py                       # web/index.html, web/tecky_quest_web/ (autonome), atlas, niveau
+python3 pack_web.py                       # web/index.html, web/tecky_quest_web/ (autonome), atlas, niveau, images x4
+python3 pack_web.py --sans-hd             # la même chose sans les images x4 (le jeu reste en x2)
 python3 editeur.py                        # éditeur de carte : http://127.0.0.1:8770/ (modifie carte.json)
 python3 build.py                          # kit GameMaker -> out/ (efface d'abord ses anciennes sorties)
 ./tests/run_all.sh                        # reconstruit puis lance tous les tests (doit finir avec exit=0)
@@ -29,7 +30,37 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 
 - `spritelib.py` : classe `Drawing` (parts SVG, silhouette dessinée en premier avec un trait épais = contour propre),
   `render_svg(svg, w, h, scale, pad)`, strips `_stripN`. Les vues gauches sont le miroir des vues droites.
-- `tecky.py`, `alice.py`, `enemies.py` (roquet, bouledogue, molosse/doberman, berger), `hens.py` (poules animées),
+- `tecky2.py` et `alice2.py` : **Tecky et Alice du jeu web** (v2, lot 3 de `PLAN_V2.md`). Dessinés plus grand que
+  les autres personnages puis réduits de `ECH` (Tecky 0,5, Alice 0,7) : traits plus fins, mêmes contours (`TRAIT`).
+  Tecky est **relevé sur la planche de Christophe** (`reference/v2/chat_gpt/`, « Planche d'expressions » : `_pl()`
+  convertit ses pixels) : gros crâne rond, museau court, grands yeux, oreilles immenses, corps en saucisse. Mes têtes
+  dessinées de mémoire ont été refusées deux fois (« vraiment moche ») : toute retouche repart de la planche. Sa
+  taille se juge à côté d'Alice et des chiens (à 0,8, 0,7 puis 0,58, Christophe l'a trouvé « énorme », « encore trop
+  gros ») : plus petit que tous les chiens (34 x 22 unités de profil ; l'ancien : 40 x 28), la tête sous la jupe
+  d'Alice. Trois vues (`profil`, `face`, `dos`), attitudes debout / assis / couché / sur le dos, un cadre par vue
+  (`CADRE` : 48 x 48, origine aux pieds), `pose()` (réglages d'une image), `EXPRESSIONS`, `ANIMS` et `REST_ANIMS`
+  aux mêmes noms qu'avant ; les formes passent par une fonction de placement (`_trace`, `_torse`, `_repere`) plutôt
+  que par des `transform` (cairosvg et les découpes). La mâchoire s'arrête à `MENTON`, en retrait de la truffe
+  (sinon la gueule pend sous le museau). Tête de profil = un seul œil. Marche (`_foulee()` : une patte posée recule,
+  elle se lève pour revenir vers l'avant) ; de face et de dos, il se dandine (`balance`, `incline`, oreilles, queue).
+  Planches : `python3 tecky2.py`, `python3 alice2.py` (`reference/v2/`, dont `tecky_v2_marche.gif`). Cadences propres : `MAP.teckyFps`, `MAP.aliceFps` (marche en 8 images).
+  Test : `tests/heros.py` (mêmes noms d'animations qu'avant, pieds sur l'origine, rien hors du cadre). Pour voir
+  le résultat dans le jeu : `python3 v2/capture.py sortie.png "x,y,mode" "js"` (1920 x 1080, images x4, le jeu
+  servi sur le port 8765).
+- `chiens2.py` : **les chiens du jeu web** (v2 : roquet, bouledogue, molosse / doberman, berger / border collie),
+  de la famille du Tecky de `tecky2.py` dont ils reprennent les outils et la tête : même crâne, même œil, même
+  gueule, le museau allongé, raccourci ou épaissi selon la race (`museau`, `_museau()`), des sourcils froncés, un
+  croc. Ce qui change d'un chien à l'autre est dans `CHIENS` (couleurs, corps, pattes, chaussettes `bas`, queue,
+  oreilles, taches, collier à clous ; mesures de la tête et du corps de face et de dos : `f_tete`, `f_corps`,
+  `d_tete`), écrit en pixels du jeu autour du milieu des pieds, puis réduit de `ECH` (0,47 : la taille des chiens
+  d'avant, que règlent les barres de vie, les cœurs et l'aboiement du doberman dans game.js). Mêmes animations et
+  mêmes nombres d'images qu'avant (le jeu attend la fin d'un aboiement, d'une morsure), sauf la marche en 8 images
+  (`MAP.dogFps`, `d.fps`). KO : une vraie attitude « dos », comme Tecky. Planche : `python3 chiens2.py`
+  (`reference/v2/chiens_v2.png`). Test : `tests/heros.py`.
+- `tecky.py`, `alice.py`, `enemies.py` : les dessins d'avant (Tecky, Alice, les chiens sur le squelette de
+  `tecky.py`). Ils ne servent plus qu'au kit GameMaker (`build.py`, `sample_map.py`) ; `carte.py` et
+  `tests/heros.py` lisent encore la liste des chiens dans `enemies.DOGS`. Le jeu web ne dessine plus rien avec eux.
+- `hens.py` (poules animées),
   `farmer.py` (le fermier Gaston, vu de face, 48x64, pieds en (24, 60) ; `FACE` pour son portrait),
   `ducks.py` (colvert, cane, caneton, de profil, 32x32, ligne d'eau en (16, 24)),
   `cows.py` (vaches pie noire et pie rouge, veau, de profil, tête tournée vers nous, 64x48, pieds en (32, 44) ;
@@ -76,6 +107,13 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   choisies d'après la position, `hash3` = celui de game.js, et texture d'une tuile composée d'après ses coins,
   `tiles.composite_seed()` : modifier un coin ne change rien ailleurs),
   `index.html` à partir de `web_src/index.template.html` + `game.js`, paquet autonome (manifest, service worker, icônes, `serve.sh`).
+  **Images nettes** (`HD`, `PAGE`, `collect(r)`, `pack_hd()`, `build_hd()`) : l'atlas et le tileset embarqués dans la
+  page sont en pixels x2 ; `web/atlas_x4_N.png` et `web/tiles_x4.png` sont les mêmes dessins rendus deux fois plus
+  fins, **aux mêmes places et dans les mêmes cadres** (`ATLAS` ne change pas), l'atlas découpé en pages de 4096 px :
+  `pack()` ne met jamais une image à cheval sur un multiple de `PAGE` (2048 px x2). Ils ne sont redessinés que si
+  un module de dessin a changé (`web/hd.json`), sont copiés à côté de la page autonome et publiés par
+  `publish_docs.sh` ; leur adresse porte une version (`?v=`) pour qu'une page n'aille jamais avec de vieilles images.
+  Tests : `nettete.js`, `nettete.py` (les images x4 réduites de moitié redonnent les images x2).
   Lance `web_src/check_placement.js` (`--json`, `--infos` pour l'éditeur) : rien dans l'eau ou un obstacle (canards : dans l'eau), chaque papillon a des fleurs, et tout (personnages,
   lettres, Pompon compris) atteignable **à pied depuis la niche**
   (parcours en largeur sur une grille de 16 px ; c'est lui qui garantit que le pont et les sentiers suffisent).
@@ -110,9 +148,19 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `EDGE.push` s, au plus une fois toutes les `EDGE.again` s ; axe par axe : au joystick, il glisse le long du bord ou de
   la butte, et ça compte ; près de la butte, `EDGE.tunnelY`, c'est le message du tunnel). Les bulles de mots restent dans l'écran. Test : `edge.js`.
 - `web_src/game.js` : tout le moteur. Monde en pixels x2 (tuile = 64), caméra 960x540, interface 1920x1080 (`GW`/`GH`).
-  Sol pré-rendu en blocs de 16 tuiles (`groundChunks`, 1024 px ; `buildChunk()`, `groundTile()`, plus des bandes
-  pour la marge de la lisière) : une seule image de la carte dépasserait la taille de canevas permise sur certains
-  téléphones. Décors `FLAT` (pont, bac à sable) dessinés sous les personnages.
+  Sol pré-rendu en blocs de 1024 px de canevas (`ground`, `groundChunk()`, `buildChunk()`, `groundTile()`, marge de
+  la lisière comprise) : une seule image de la carte dépasserait la taille de canevas permise sur certains
+  téléphones. Un bloc n'est peint que quand la caméra l'atteint, et seuls les `GROUND_MAX` derniers sont gardés.
+  Décors `FLAT` (pont, bac à sable) dessinés sous les personnages.
+  **Images nettes** (`HD`, `HD_SRC`, `wantHD()`, `loadHD()`, `setHD()`, `blit()`) : sur un grand écran (au moins
+  `HD_MIN` pixels de canevas par pixel de monde, pas un téléphone ni une tablette, pas une page ouverte depuis le
+  disque), le jeu charge les images x4 à côté de la page et lit l'atlas par `blit()` (même cadre, deux fois plus de
+  pixels, dans la bonne page) ; le sol passe à des blocs de 8 tuiles. Sinon, ou si le chargement échoue, tout reste
+  en x2. Tout dessin depuis l'atlas passe par `blit()` (sauf les panneaux 9-slice et la carte de la pause, en x2).
+  `HD.on` : vrai pour le monde ; pour l'interface, seulement si elle est agrandie (ses sprites x2 sont à leur
+  taille en 1080p). Pour comparer : la même adresse suivie de `?x2` reste en x2 ; l'écran titre affiche
+  « images x4 » à côté de la version quand elles sont chargées. `drawSpr()` pose l'origine sur la grille des pixels du canevas : un sprite immobile entre deux
+  pixels serait lissé.
   Décors animés (`decor.ANIMATED`, ex. la fontaine : la fonction reçoit la phase 0..1 ; fps dans `MAP.decorFps`).
   Eau animée : le tileset web a une eau unie (`tiles.tileset(S, water_marks=False)`) et `drawWater()` y sème des
   vaguelettes `fx/ripple` légères (une par tuile, un cycle sur deux, position tirée par `hash3`) et, en plus, des
@@ -315,10 +363,10 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - Petites bêtes (`critters`, `CRITTER`, `REFUGES`, `MAP.critters`) : écureuils et chats flânent ; Tecky trop près ou
   qui aboie les fait filer vers un refuge pas de son côté (arbre/sapin : l'écureuil grimpe et disparaît ; toit ou
   conteneur : le chat saute et feule), ils redescendent quand il est loin. Points la première fois (`scored`, sauvegardé).
-- Repos (`restPose()`, `REST`, `tecky.REST_ANIMS` → `MAP.rest`, ajoutés à `FPS` / `LOOP`) : sans geste du joueur, Tecky
+- Repos (`restPose()`, `REST`, `tecky2.REST_ANIMS` → `MAP.rest`, ajoutés à `FPS` / `LOOP`) : sans geste du joueur, Tecky
   s'assoit (6 s ; de dos, il se tourne vers nous), bâille et se gratte à tour de rôle, puis s'endort (24 s) avec des
   « z » (`fx/zzz`, effets à durée de vie : `life`, `vx`/`vy`, `grow`). Tout geste le réveille ; jamais si un chien menace.
-  `REST_ANIMS` est à part de `ANIMS` (les chiens ennemis réutilisent `ANIMS`). Badge « Roi de la sieste » : seulement
+  Badge « Roi de la sieste » : seulement
   ce sommeil-là (`napped`), pas celui de la scène de fin. Test : `rest.js`.
 - Canards (`ducks`, `DUCK`, `MAP.ducks` : [espèce, x, y, famille], `ducks.py`) : nagent près de leur place sans quitter
   l'eau (`duckWater()`, vérifié aussi par `check_placement.js`), cancanent, plongent. Tecky trop près ou qui aboie :
@@ -367,8 +415,14 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   (seul `hud/enemy_bar_fill` est volontairement concerné).
 - **Panneaux 9-slice** (`drawNine`) : assemblés une fois en canvas hors écran puis posés d'un bloc, sinon des jointures
   apparaissent sur fond translucide. Texte long : `para()` / `wrap()` (régler `ctx.font` avant de mesurer), jamais `text()` seul.
-- **KO des chiens/Tecky** : la vue « sur le dos » est un retournement vertical calculé (`enemies.py`) ; la queue de Tecky est
-  dessinée avant le corps pour que sa base soit cachée (sinon elle se détache).
+- **KO** : Tecky et les chiens ont une vraie attitude « dos » (`_torse` retourne le torse, la tête est posée à
+  l'envers, l'oreille reste au sol) ; une queue dressée doit se coucher (`queue_ko`), sinon elle passe sous le sol
+  (`tests/heros.py` le voit).
+- **Taille de Tecky** : son sprite de profil dépasse sa boîte de collision (pieds, demi-largeur 16 px) de 22 px vers
+  l'avant ; ce qui part de sa gueule (`MOUTH`, `doBark()`, `snooze()`) est réglé sur le dessin. Changer `ECH` :
+  revoir ces réglages, `CADRE`, et regarder Tecky à côté d'Alice et des chiens (`v2/capture.py`).
+- **Portraits** (`hud.tecky_portrait`, `FACE` dans game.js) : une réplique désigne le visage par son numéro ; en
+  ajouter à la fin. `tools/export_voix.js` en tire le ton (`TONE`).
 - **IA des chiens** : `steer()` contourne les obstacles en choisissant le côté le plus court (simulation avec `moveActor`) et
   garde ce côté tant que la route directe est barrée (grillages longs). Ne pas revenir à un détour de durée fixe : tremblement.
   Tests : `tests/obstacles.js`, `fence.js`, `fence_scan.js` (210 cas, 0 clignotement de direction).
@@ -386,6 +440,10 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   petit, `buildLight()`) ; canvas plafonné à `MAX_PIXELS` (1920 x 1080), le navigateur agrandit au-delà (sinon
   216 ms par image en 4K au coucher de soleil). Mesurer dans Firefox sans fenêtre : `firefox --headless` avec un
   profil où `browser.dom.window.dump.enabled` est vrai, la page mesure `render()` et écrit le résultat avec `dump()`.
+  Images nettes : sur un canevas de 1920 x 1080 (échelle 2), Firefox va plus vite avec les images x4 (copie à
+  l'identique : 6 à 12 ms par image) qu'en agrandissant les x2 (11 à 17 ms) ; à une échelle intermédiaire (1,33),
+  réduire les x4 coûtait jusqu'à 45 % de plus, d'où le seuil `HD_MIN` (1,5). La fenêtre sans tête n'est pas en
+  1080p : forcer dans la page `cv.width = 1920; cv.height = 1080; scale = 2` avant de mesurer.
 - **Listes de carte.json et sauvegarde** : la sauvegarde retient chiens (`d.id`), trésors, petites bêtes, canards,
   lettres, poules de quête, ballons, jouets et petits hérissons par leur rang (`carte.INDEXEES`) : en ajouter à la fin,
   et ne pas en retirer au milieu sans augmenter `SAVE_V` (l'éditeur prévient). Tailles fixes (`carte.TAILLES`) : 5
@@ -400,6 +458,12 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 
 ## Reste à faire
 
+- **V2 en cours** : le plan et son avancement sont dans `PLAN_V2.md` (graphismes d'abord, puis textes en données et
+  anglais, durée, voix, vitrine). Lots 2 (images nettes) et 3 (Tecky, Alice et les chiens : `tecky2.py`, `alice2.py`,
+  `chiens2.py`) faits ; reste le paysage (lot 4), puis la suite. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
+  témoin dans `reference/v2/`) : des images fixes, que ni `game.js` ni `pack_web.py` n'utilisent encore (le décor
+  de `v2/nature.py` est pour le lot 4). Les pistes générées par Christophe avec ChatGPT sont dans
+  `reference/v2/chat_gpt/`.
 - Kit GameMaker **en pause** (choix de Christophe : on avance sur la version web). `build.py` doit continuer à
   tourner, mais les nouveautés (fermier, petites bêtes, terriers, flair, carte, ambiances…) n'y sont pas documentées.
 - Piste en réflexion : dialogues lus à voix haute (pour qu'Alice joue sans savoir lire).

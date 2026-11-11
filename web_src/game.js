@@ -49,6 +49,46 @@ const tilesImg = new Image();
 atlas.src = ATLAS_SRC;
 tilesImg.src = TILES_SRC;
 
+/* Images nettes. L'atlas et le tileset embarqués dans la page sont en pixels x2 : la caméra voit 960 x 540 px de monde,
+   donc un écran 1080p les agrandit deux fois (quatre en 4K) et les sprites sont flous. Quand l'écran le demande, le jeu
+   charge à côté de la page les mêmes images deux fois plus fines (HD_SRC, écrit par pack_web.py : l'atlas en pages
+   de 4096 px, et le tileset). Mêmes cadres aux mêmes places : ATLAS ne change pas, seule l'échelle de lecture change
+   (HD.k, blit()). Sans ces fichiers, tout reste en x2 : page seule ouverte depuis le disque, téléphone ou tablette
+   (trop de mémoire pour trop peu de gain), chargement raté.
+   HD.on : lire les images nettes pour ce qu'on dessine en ce moment. Vrai pour le monde ; pour l'interface, seulement
+   si elle est agrandie (canevas de plus de 1920 px de large) : en 1080p, ses sprites x2 sont déjà à leur taille, et
+   les réduire de moitié à chaque image coûterait pour rien. */
+const HD = { k: 1, page: 0, pages: null, tiles: null, asked: false, on: false };
+const HD_MIN = 1.5;                     // à partir de 1,5 pixel de canevas par pixel de monde (canevas de 1440 px de large) :
+                                        // en dessous, réduire les images x4 coûte plus cher à Firefox qu'agrandir les x2
+function wantHD() {      // (« ?x2 » à la fin de l'adresse : rester en x2, pour comparer)
+  return typeof HD_SRC !== 'undefined' && !!HD_SRC && typeof location !== 'undefined' && location.protocol !== 'file:' &&
+    !/[?&]x2\b/.test(location.search || '') &&
+    scale >= HD_MIN && !(typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
+}
+function loadHD() {
+  if (HD.asked || !wantHD()) return;
+  HD.asked = true;
+  const imgs = HD_SRC.atlas.concat([HD_SRC.tiles]).map(src => { const im = new Image(); im.src = src; return im; });
+  Promise.all(imgs.map(whenLoaded)).then(() => setHD(HD_SRC.k, HD_SRC.page, imgs.slice(0, -1), imgs[imgs.length - 1]))
+    .catch(() => {});                   // fichiers absents : on reste en x2
+}
+function setHD(k, page, pages, tiles) {
+  Object.assign(HD, { k, page, pages, tiles, on: k > 1 });
+  resetGround();                        // le sol se repeint à la nouvelle échelle, bloc par bloc
+}
+addEventListener('resize', loadHD);     // (passage en plein écran, fenêtre agrandie)
+
+/* Copie une image de l'atlas (f : [sx, sy, sw, sh, …], en pixels x2) dans le rectangle (x, y, w, h) du canevas g :
+   depuis l'atlas x2 ou, quand elles sont chargées, depuis la page nette qui la contient. part : ne copier que les
+   `part` premiers pixels de sa largeur (jauge). */
+function blit(g, f, x, y, w, h, part) {
+  const sw = part === undefined ? f[2] : part;
+  if (!HD.on) { g.drawImage(atlas, f[0], f[1], sw, f[3], x, y, w, h); return; }
+  const k = HD.k, p = Math.floor(f[1] / HD.page);
+  g.drawImage(HD.pages[p], f[0] * k, (f[1] - p * HD.page) * k, sw * k, f[3] * k, x, y, w, h);
+}
+
 /* ------------------------------------------------------------------ utilitaires */
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
@@ -61,7 +101,8 @@ function dirFrom(dx, dy, fallback) {
   return dy > 0 ? 'down' : 'up';
 }
 
-/* Dessin d'une image de l'atlas, origine en (x, y). */
+/* Dessin d'une image de l'atlas, origine en (x, y). L'origine est posée sur la grille des pixels du canevas (à
+   1 / scale près) : un sprite immobile entre deux pixels serait lissé, donc flou, même avec les images nettes. */
 function drawSpr(key, i, x, y, opt) {
   const s = ATLAS[key];
   if (!s) return;
@@ -70,12 +111,12 @@ function drawSpr(key, i, x, y, opt) {
   const o = opt || {};
   ctx.save();
   if (o.alpha !== undefined) ctx.globalAlpha = o.alpha;
-  ctx.translate(x, y);
+  ctx.translate(Math.round(x * scale) / scale, Math.round(y * scale) / scale);
   if (o.angle) ctx.rotate(o.angle);
   if (o.flip) ctx.scale(-1, 1);
   if (o.sc) ctx.scale(o.sc, o.sc);
   if (o.sy) ctx.scale(1, o.sy);       // écrasement vertical autour des pieds (berger accroupi)
-  ctx.drawImage(atlas, f[0], f[1], f[2], f[3], f[4] - s.o[0], f[5] - s.o[1], f[2], f[3]);
+  blit(ctx, f, f[4] - s.o[0], f[5] - s.o[1], f[2], f[3]);
   ctx.restore();
 }
 
@@ -121,7 +162,7 @@ function drawDigits(text, x, y, sc, alpha, mono) {
     const ox = mono ? (cell - f[2]) / 2 : 0;
     ctx.save();
     if (alpha !== undefined) ctx.globalAlpha = alpha;
-    ctx.drawImage(atlas, f[0], f[1], f[2], f[3], cx + ox * sc, y + f[5] * sc, f[2] * sc, f[3] * sc);
+    blit(ctx, f, cx + ox * sc, y + f[5] * sc, f[2] * sc, f[3] * sc);
     ctx.restore();
     cx += adv * sc;
   }
@@ -652,52 +693,64 @@ const endStick = e => { if (e.pointerId === stick.id) { stick.id = null; stick.v
 cv.addEventListener('pointerup', endStick);
 cv.addEventListener('pointercancel', endStick);
 
-/* ------------------------------------------------------------------ sol (pré-rendu) */
-/* Le sol est pré-rendu en blocs de CHUNK tuiles (1024 px) : une seule image de toute la carte dépasserait
-   la taille de canevas permise sur certains téléphones. Chaque bloc déborde de CM px sur ses voisins
-   (mêmes pixels) pour qu'aucune jointure n'apparaisse à l'échelle d'affichage. Autour de la carte, la marge de la
-   lisière (MAP.edge.ring : MAP.edge.r tuiles qui prolongent le bord) a ses propres blocs, en bandes. */
-const CHUNK = 16, CM = 2;
-let groundChunks = [], ringTiles = null;
+/* ------------------------------------------------------------------ sol (pré-rendu, à la demande) */
+/* Le sol est pré-rendu en blocs de CHUNK_PX pixels de canevas (16 tuiles de côté en x2, 8 avec les images nettes) :
+   une seule image de toute la carte dépasserait la taille de canevas permise sur certains téléphones. Un bloc n'est
+   peint que lorsque la caméra l'atteint, et les GROUND_MAX derniers servis sont gardés (les plus anciens sont oubliés :
+   en x4, la carte entière pèserait plus de 400 Mo). Chaque bloc déborde de CM px de monde sur ses voisins (mêmes
+   pixels) pour qu'aucune jointure n'apparaisse à l'échelle d'affichage. Autour de la carte, la marge de la lisière
+   (MAP.edge.ring : MAP.edge.r tuiles qui prolongent le bord) est peinte par les mêmes blocs. */
+const CHUNK_PX = 1024, CM = 2, GROUND_MAX = 28;
+let ground = new Map(), ringTiles = null;
+const chunkTiles = () => CHUNK_PX / (TS * HD.k);      // tuiles par côté de bloc
 function groundTile(tx, ty) {              // [tuile, détail] du sol, dans la carte ou dans la marge (null au-delà)
   if (tx >= 0 && ty >= 0 && tx < MAP.w && ty < MAP.h) { const i = ty * MAP.w + tx; return [MAP.ground[i], MAP.over[i]]; }
   const idx = ringTiles.get(tx + ',' + ty);
   return idx === undefined ? null : [idx, 0];
 }
-function buildChunk(cx, cy, w, h) {
-  const c = document.createElement('canvas');
-  c.width = w * TS + 2 * CM; c.height = h * TS + 2 * CM;
+/* Peint le bloc de n x n tuiles dont le coin est la tuile (cx, cy), depuis le tileset img, à k pixels de canevas par
+   pixel de monde. Rend { c, x, y, w, h, k } : le canevas, sa place et sa taille dans le monde, son échelle. */
+function buildChunk(cx, cy, n, img, k) {
+  const c = document.createElement('canvas'), s = TS * k;
+  c.width = c.height = (n * TS + 2 * CM) * k;
   const g = c.getContext('2d');
-  const blit = (idx, tx, ty) => g.drawImage(tilesImg, (idx % 16) * TS, Math.floor(idx / 16) * TS, TS, TS,
-    (tx - cx) * TS + CM, (ty - cy) * TS + CM, TS, TS);
-  for (let ty = cy - 1; ty < cy + h + 1; ty++) for (let tx = cx - 1; tx < cx + w + 1; tx++) {
+  const put = (idx, tx, ty) => g.drawImage(img, (idx % 16) * s, Math.floor(idx / 16) * s, s, s,
+    ((tx - cx) * TS + CM) * k, ((ty - cy) * TS + CM) * k, s, s);
+  for (let ty = cy - 1; ty < cy + n + 1; ty++) for (let tx = cx - 1; tx < cx + n + 1; tx++) {
     const t = groundTile(tx, ty);
     if (!t) continue;
-    blit(t[0], tx, ty);
-    if (t[1]) blit(t[1], tx, ty);
+    put(t[0], tx, ty);
+    if (t[1]) put(t[1], tx, ty);
   }
-  groundChunks.push({ c, x: cx * TS - CM, y: cy * TS - CM, w: c.width, h: c.height });
+  return { c, x: cx * TS - CM, y: cy * TS - CM, w: n * TS + 2 * CM, h: n * TS + 2 * CM, k };
 }
+function groundChunk(ci, cj) {            // le bloc (ci, cj) de la grille : peint s'il manque, puis le dernier servi
+  const key = ci + ',' + cj;
+  let ch = ground.get(key);
+  if (ch) ground.delete(key);
+  else {
+    const n = chunkTiles();
+    ch = buildChunk(ci * n, cj * n, n, HD.k === 1 ? tilesImg : HD.tiles, HD.k);
+    if (ground.size >= GROUND_MAX) ground.delete(ground.keys().next().value);
+  }
+  ground.set(key, ch);
+  return ch;
+}
+function resetGround() { ground = new Map(); }
 function buildGround() {
-  groundChunks = [];
   ringTiles = new Map(MAP.edge.ring.map(([tx, ty, idx]) => [tx + ',' + ty, idx]));
-  for (let cy = 0; cy < MAP.h; cy += CHUNK) for (let cx = 0; cx < MAP.w; cx += CHUNK)
-    buildChunk(cx, cy, Math.min(CHUNK, MAP.w - cx), Math.min(CHUNK, MAP.h - cy));
-  const R = MAP.edge.r;                    // la marge : bandes nord et sud (coins compris), puis ouest et est
-  for (let cx = -R; cx < MAP.w + R; cx += CHUNK) {
-    const w = Math.min(CHUNK, MAP.w + R - cx);
-    buildChunk(cx, -R, w, R); buildChunk(cx, MAP.h, w, R);
-  }
-  for (let cy = 0; cy < MAP.h; cy += CHUNK) {
-    const h = Math.min(CHUNK, MAP.h - cy);
-    buildChunk(-R, cy, R, h); buildChunk(MAP.w, cy, R, h);
-  }
+  resetGround();
 }
 function drawGround(vx, vy) {
-  for (const k of groundChunks) {
+  const s = chunkTiles() * TS, R = MAP.edge.r * TS;        // seulement la carte et sa marge
+  const i0 = Math.floor((Math.max(vx, -R) - CM) / s), i1 = Math.floor((Math.min(vx + VW, MAP.w * TS + R) + CM - 1) / s);
+  const j0 = Math.floor((Math.max(vy, -R) - CM) / s), j1 = Math.floor((Math.min(vy + VH, MAP.h * TS + R) + CM - 1) / s);
+  for (let cj = j0; cj <= j1; cj++) for (let ci = i0; ci <= i1; ci++) {
+    const k = groundChunk(ci, cj);
     const x0 = Math.max(k.x, vx), y0 = Math.max(k.y, vy);
     const x1 = Math.min(k.x + k.w, vx + VW), y1 = Math.min(k.y + k.h, vy + VH);
-    if (x1 > x0 && y1 > y0) ctx.drawImage(k.c, x0 - k.x, y0 - k.y, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
+    if (x1 > x0 && y1 > y0)
+      ctx.drawImage(k.c, (x0 - k.x) * k.k, (y0 - k.y) * k.k, (x1 - x0) * k.k, (y1 - y0) * k.k, x0, y0, x1 - x0, y1 - y0);
   }
 }
 /* Eau animée : la texture de l'eau est unie dans la version web ; quelques vaguelettes (fx/ripple) y naissent,
@@ -744,8 +797,8 @@ function drawWater(vx, vy, time) {
 }
 
 function drawHole(x, y) {
-  const idx = MAP.hole;
-  ctx.drawImage(tilesImg, (idx % 16) * TS, Math.floor(idx / 16) * TS, TS, TS, x - TS / 2, y - TS / 2 - 6, TS, TS);
+  const idx = MAP.hole, k = HD.k, s = TS * k;
+  ctx.drawImage(k === 1 ? tilesImg : HD.tiles, (idx % 16) * s, Math.floor(idx / 16) * s, s, s, x - TS / 2, y - TS / 2 - 6, TS, TS);
 }
 
 /* ------------------------------------------------------------------ collisions */
@@ -1007,12 +1060,13 @@ function reset() {
   });
   solids.push(...EDGE_SOLIDS);                       // les buttes des tunnels, au bord de la carte
   P = new Actor('tecky', MAP.start[0], MAP.start[1]);
+  P.fps = Object.assign({}, FPS, MAP.teckyFps);      // ses cadences à lui (tecky2.py : la marche a 8 images)
   // 5 emplacements d'os (2 PV par os) ; Tecky démarre avec 3 os pleins
   const bones = facile() ? 5 : START_BONES;
   Object.assign(P, { hp: bones * 2, hpMax: bones * 2, boneFx: 0, inv: 0, bumpT: 0, cdBark: 0, cdBite: 0, cdSniff: 0,
     mode: 'free', kx: 0, ky: 0, hitDone: false, edgeT: 0, edgeAt: -99 });
   alice = new Actor('alice', MAP.alice[0], MAP.alice[1]);
-  alice.fps = Object.assign({}, FPS, { walk: 10 });
+  alice.fps = Object.assign({}, FPS, MAP.aliceFps);
   alice.found = false;
   alice.hidden = true;               // dans la cabane jusqu'aux trois indices
   dogs = MAP.enemies.map(([n, x, y], id) => {
@@ -1020,6 +1074,7 @@ function reset() {
     Object.assign(d, { id, T: DOGS[n], hp: DOGS[n].hp, mode: 'idle', timer: Math.random() * 2, hx: x, hy: y,
       vx: 0, vy: 0, kx: 0, ky: 0, cd: 0, barkCd: 2, chargeCd: 1.5, hitDone: false, fade: 0 });
     d.t = Math.random();
+    d.fps = Object.assign({}, FPS, MAP.dogFps);      // leurs cadences (chiens2.py : la marche a 8 images)
     return d;
   });
   if (facile()) dogs = dogs.filter(d => d.id % 3 !== 2);
@@ -1054,8 +1109,10 @@ function reset() {
 }
 
 /* ------------------------------------------------------------------ dialogues */
+// Visages du portrait de Tecky (hud.tecky_portrait) : le champ face d'une réplique
+const FACE = { calme: 0, clin: 1, parle: 2, ko: 3, inquiet: 4, surpris: 5, fier: 6 };
 const WHO = {
-  tecky: { name: 'Tecky', portrait: 'hud/portrait_tecky' },
+  tecky: { name: 'Tecky', portrait: 'hud/portrait_tecky' },      // ses visages : FACE
   alice: { name: 'Alice', portrait: 'hud/portrait_alice' },
   farmer: { name: 'Gaston', portrait: 'hud/portrait_farmer' },
   postman: { name: 'Marcel', portrait: 'hud/portrait_postman' },
@@ -1091,7 +1148,7 @@ function updateDialog(dt) {
 }
 function introLines() {
   return [
-    { who: 'tecky', face: 0, text: "Ouaf ! Alice est partie jouer… et elle n'est pas rentrée !" },
+    { who: 'tecky', face: FACE.inquiet, text: "Ouaf ! Alice est partie jouer… et elle n'est pas rentrée !" },
     { who: 'tecky', face: 2, text: "Elle a dû semer des affaires en chemin. En les retrouvant, je saurai où elle se cache !" },
     { who: 'tecky', face: 0, text: balade()
         ? "La flèche au bord de l'écran me guide. Et les chiens du coin ont l'air d'avoir envie de jouer !"
@@ -1172,7 +1229,7 @@ function doBark() {
   dropToy('Oups !');                   // on n'aboie pas la gueule pleine
   const [vx, vy] = DIRV[P.dir];
   barkAtTrain(vx, vy);
-  const mouth = { right: [40, -44], left: [-40, -44], up: [0, -86], down: [0, -26] }[P.dir];
+  const mouth = { right: [40, -26], left: [-40, -26], up: [0, -44], down: [0, -20] }[P.dir];     // devant sa truffe
   const ang = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 }[P.dir];
   addFx('fx/bark', P.x + mouth[0], P.y + mouth[1], { angle: ang, fps: 12 });
   addBarkRing(P.x, P.y, P.dir, BARK, '#FFF7E6');
@@ -1191,7 +1248,7 @@ function doBark() {
       d.barkCd = Math.min(d.barkCd, 0.4);
       if (!barkImmuneSeen) {
         barkImmuneSeen = true;
-        pendingSay = { t: 0.7, lines: [{ who: 'tecky', face: 0,
+        pendingSay = { t: 0.7, lines: [{ who: 'tecky', face: FACE.inquiet,
           text: "Grr… Ce doberman n'a pas peur de mes aboiements. Il va falloir le mordre !" }] };
       }
       continue;
@@ -1900,7 +1957,7 @@ function talkFarmer() {
   say([
     { who: 'farmer', face: 0, text: "Bonjour, petit teckel ! Une petite fille est passée par ici tout à l'heure… Mais pardon, mes poules se sont sauvées !" },
     { who: 'farmer', face: 0, text: "Tu voudrais bien les ramener dans l'enclos ? Aboie derrière elles pour les pousser vers la barrière ouverte, au sud." },
-    { who: 'tecky', face: 2, text: "Ouaf ! Je m'en occupe !" },
+    { who: 'tecky', face: FACE.fier, text: "Ouaf ! Je m'en occupe !" },
   ], saveGame);
 }
 function updateNpcAnim(n, dt) {       // parle, se réjouit, salue, s'inquiète ou attend
@@ -2106,7 +2163,7 @@ function talkNeighbor() {
   say([
     { who: 'neighbor', face: 3, text: "Bonjour, mon petit. Tu n'aurais pas vu mon chat, Pompon ? Il est tout blanc, avec un collier rose et un grelot." },
     { who: 'neighbor', face: 0, text: "Il s'est sauvé ce matin… Il adore se cacher près des entrepôts, de l'autre côté de la grande route." },
-    { who: 'tecky', face: 2, text: "Ouaf ! Je te le ramène !" },
+    { who: 'tecky', face: FACE.fier, text: "Ouaf ! Je te le ramène !" },
   ], saveGame);
 }
 
@@ -2252,7 +2309,7 @@ const IRIS_TIPS = [
 const IRIS = { reward: 150, perToy: 20, pick: 54, give: 110, markY: 90, home: [[-46, 10], [46, 12], [-22, 28]],
   regrab: 1.2 };     // regrab : un jouet lâché ne se reprend pas tout de suite (Tecky est juste à côté)
 const TOY_NAMES = ['Le canard d’Iris !', 'L’anneau d’Iris !', 'La corde d’Iris !'];
-const MOUTH = { right: [38, -40], left: [-38, -40], up: [0, -78], down: [0, -22] };   // gueule de Tecky (jouet porté)
+const MOUTH = { right: [30, -22], left: [-30, -22], up: [0, -34], down: [0, -21] };   // gueule de Tecky (jouet porté)
 let jouets = { state: 'new' }, iris = null, toys = [];
 const toysLeft = () => toys.filter(t => !t.home).length;
 const carried = () => toys.find(t => t.carried);
@@ -2340,7 +2397,7 @@ function talkIris() {
   jouets.state = 'asked';
   say([
     { who: 'iris', face: 2, text: "Tiens, mon petit Tecky ! Ça me fait plaisir de te voir. Alors, tu cherches ta petite Alice ?" },
-    { who: 'tecky', face: 0, text: "Ouaf ! Iris ! Elle joue à cache-cache, et je ne la trouve pas…" },
+    { who: 'tecky', face: FACE.inquiet, text: "Ouaf ! Iris ! Elle joue à cache-cache, et je ne la trouve pas…" },
     { who: 'iris', face: 0, text: "Un bon chien ne perd jamais une piste. Pour t'entraîner, j'ai caché mes trois jouets dans les prés de la ferme : mon canard, mon anneau et ma corde." },
     { who: 'iris', face: 0, text: "Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !" },
     { who: 'tecky', face: 2, text: "Ouaf ! « Va chercher », c'est mon jeu préféré !" },
@@ -2608,7 +2665,7 @@ function updateTunnel(dt) {
     addFx('fx/dirt', P.x, P.y + 4, { fps: 16 });
     if (!tunnelSeen) {
       tunnelSeen = true;
-      say([{ who: 'tecky', face: 2, text: "Un teckel, ça creuse des terriers : hop, sous le grillage ! Les autres chiens, eux, doivent faire le tour." }]);
+      say([{ who: 'tecky', face: FACE.fier, text: "Un teckel, ça creuse des terriers : hop, sous le grillage ! Les autres chiens, eux, doivent faire le tour." }]);
     }
   }
 }
@@ -2847,7 +2904,7 @@ function uncover(g) {
   SFX.treasure();
   shake = 0.15;
   rumble('treasure');
-  say([{ who: 'tecky', face: 2, text: "Wouf ! Un os doré était enterré ! (" + treasures + " / " + MAP.dig.length + ")" }], saveGame);
+  say([{ who: 'tecky', face: FACE.surpris, text: "Wouf ! Un os doré était enterré ! (" + treasures + " / " + MAP.dig.length + ")" }], saveGame);
 }
 
 // bite : une vraie morsure (badge « Sans une égratignure ») ; l'aboiement du doberman et la charge du chien de berger
@@ -2860,7 +2917,7 @@ function hurtPlayer(dmg, fromX, fromY, bite = true) {
   const l = Math.max(1, dist(P.x, P.y, fromX, fromY));
   P.kx = (P.x - fromX) / l * 420; P.ky = (P.y - fromY) / l * 420;
   P.inv = 1.2; shake = 0.25;
-  addFx('fx/hit', P.x, P.y - 44, { fps: 16 });
+  addFx('fx/hit', P.x, P.y - 32, { fps: 16 });
   SFX.hurt();
   rumble(P.hp <= 0 ? 'ko' : 'hurt');
   if (P.hp <= 0) {
@@ -3145,7 +3202,7 @@ function drawSkyWeather(cx, cy) {     // par-dessus le monde : gouttes, flocons
     const S = ATLAS['fx/snowflake'], count = Math.round(flakes.length * n);
     for (let i = 0; i < count; i++) {
       const fl = flakes[i], f = S.f[fl.f];
-      ctx.drawImage(atlas, f[0], f[1], f[2], f[3], cx + fl.x + f[4] - S.o[0], cy + fl.y + f[5] - S.o[1], f[2], f[3]);
+      blit(ctx, f, cx + fl.x + f[4] - S.o[0], cy + fl.y + f[5] - S.o[1], f[2], f[3]);
     }
   }
 }
@@ -3171,7 +3228,7 @@ function startShake() {               // Tecky s'ébroue (deux secousses) : des 
 function shakeDrops(turn) {
   for (let k = 0; k < 12; k++) {
     const a = (k + turn) / 12 * Math.PI * 2;
-    addFx('fx/drop', P.x + Math.cos(a) * 14, P.y - 36, { fps: 0, frame: 0, life: 0.45, vx: Math.cos(a) * 170, vy: Math.sin(a) * 110 - 40 });
+    addFx('fx/drop', P.x + Math.cos(a) * 12, P.y - 26, { fps: 0, frame: 0, life: 0.45, vx: Math.cos(a) * 170, vy: Math.sin(a) * 110 - 40 });
   }
 }
 function puddleSplash(dt) {           // Tecky marche dans une flaque : plouf
@@ -3239,7 +3296,10 @@ function buildMapImg() {
   c.width = Math.round(MAP.w * TS * k); c.height = Math.round(MAP.h * TS * k);
   const g = c.getContext('2d');
   g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
-  for (const ch of groundChunks) g.drawImage(ch.c, ch.x * k, ch.y * k, ch.w * k, ch.h * k);
+  for (let cy = 0; cy < MAP.h; cy += 16) for (let cx = 0; cx < MAP.w; cx += 16) {      // (au quart : le tileset x2 suffit)
+    const ch = buildChunk(cx, cy, 16, tilesImg, 1);
+    g.drawImage(ch.c, ch.x * k, ch.y * k, ch.w * k, ch.h * k);
+  }
   const sorted = decor.slice().sort((a, b) => (FLAT.has(b.n) - FLAT.has(a.n)) || a.y - b.y);
   for (const d of sorted) {
     const s = ATLAS[d.key];
@@ -3803,7 +3863,7 @@ function snooze(dt, quiet) {
   if ((P.zT -= dt) <= 0) {
     P.zT = REST.z;
     const side = P.dir === 'left' ? -1 : 1;
-    addFx('fx/zzz', P.x + side * (P.dir === 'down' ? 18 : 30), P.y - 52, { fps: 0, frame: 0, life: 2, vx: side * 12, vy: -34, grow: [0.55, 1.1] });
+    addFx('fx/zzz', P.x + side * (P.dir === 'down' ? 12 : 24), P.y - (P.dir === 'down' ? 30 : 28), { fps: 0, frame: 0, life: 2, vx: side * 12, vy: -34, grow: [0.55, 1.1] });
   }
   if ((P.snoreT -= dt) <= 0) { P.snoreT = REST.snore; if (!muted && !quiet) SFX.snore(); }
 }
@@ -3900,7 +3960,7 @@ function updatePlayer(dt) {
     // petits nuages de poussière derrière les pattes
     if ((P.dustT = (P.dustT || 0) - dt) <= 0 && Math.hypot(P.x - ox, P.y - oy) > spd * dt * 0.5) {
       P.dustT = DUST.every;
-      addDust(P.x - ix * 16 + (Math.random() - 0.5) * 10, P.y - 2, -ix * 30, -iy * 30 - 6, 5 + Math.random() * 3);
+      addDust(P.x - ix * 14 + (Math.random() - 0.5) * 10, P.y - 2, -ix * 30, -iy * 30 - 6, 5 + Math.random() * 3);
     }
   } else { P.edgeT = 0; restPose(dt); }
 
@@ -3934,7 +3994,7 @@ function updatePlayer(dt) {
   // devant la cachette trop tôt : Tecky la sent mais il lui manque des indices
   if (alice.hidden && !aliceSniffed && dist(P.x, P.y, alice.x, alice.y) < 170) {
     aliceSniffed = true;
-    say([{ who: 'tecky', face: 0, text: "Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !" }],
+    say([{ who: 'tecky', face: FACE.inquiet, text: "Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !" }],
       () => showArrow());
   }
 }
@@ -4048,7 +4108,7 @@ function updateDog(d, dt) {
       if (!d.hitDone && d.t > 0.2) {
         d.hitDone = true;
         const [vx, vy] = DIRV[d.dir];
-        const mouth = { right: [44, -54], left: [-44, -54], up: [0, -100], down: [0, -30] }[d.dir];
+        const mouth = { right: [46, -44], left: [-46, -44], up: [0, -78], down: [0, -38] }[d.dir];
         const ang = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 }[d.dir];
         addFx('fx/bark', d.x + mouth[0], d.y + mouth[1], { angle: ang, fps: 12 });
         addBarkRing(d.x, d.y, d.dir, DOG_BARK, '#D7332B');
@@ -4169,7 +4229,7 @@ function updateItems(dt) {
         SFX.treasure();
         const k = nextClue();
         if (k === 3) revealAlice();
-        say([{ who: 'tecky', face: 2, text: CLUE_FOUND[e.clue] }, { who: 'tecky', face: 0, text: CLUE_NEXT[k] }],
+        say([{ who: 'tecky', face: FACE.surpris, text: CLUE_FOUND[e.clue] }, { who: 'tecky', face: 0, text: CLUE_NEXT[k] }],
           () => { showArrow(); saveGame(); });
       } else if (e.heal) {
         if (P.hp >= P.hpMax) continue;   // vie pleine : on laisse l'os pour plus tard
@@ -4468,6 +4528,7 @@ function drawWorld() {
   const cx = camClampX(Math.round((camX + sx) * scale) / scale);
   const cy = camClampY(Math.round((camY + sy) * scale) / scale);
   ctx.setTransform(scale, 0, 0, scale, offX - cx * scale, offY - cy * scale);
+  HD.on = HD.k > 1;
   drawGround(cx, cy);
   drawWater(cx, cy, performance.now() / 1000);
   drawGroundWeather(cx, cy);
@@ -4555,7 +4616,7 @@ function drawWorld() {
     drawSpr('hud/enemy_bar_bg', 0, d.x - 30, d.y - top - 2);
     const fb = ATLAS['hud/enemy_bar_fill'].f[0];
     const w = fb[2] * d.hp / d.T.hp;
-    ctx.drawImage(atlas, fb[0], fb[1], w, fb[3], d.x - 24, d.y - top + 4, w, fb[3]);
+    blit(ctx, fb, d.x - 24, d.y - top + 4, w, fb[3], w);
   }
   // points gagnés
   for (const p of pops) {
@@ -4603,6 +4664,7 @@ function actionBubble(label, bx, by) {
 function guiTransform() {
   const gs = scale * VW / GW;
   ctx.setTransform(gs, 0, 0, gs, offX, offY);
+  HD.on = HD.k > 1 && gs > 1.05;        // (l'interface : images nettes seulement si elle est agrandie)
 }
 function text(str, x, y, size, color, align, weight) {
   ctx.font = `${weight || 600} ${size}px Fredoka, "Trebuchet MS", sans-serif`;
@@ -4675,7 +4737,7 @@ function richPart(p, x, y, size, draw) {
     alt.forEach(([s, i], k) => {
       const f = ATLAS[s].f[i];
       if (k) cx += size * ICON.gap;
-      if (draw) ctx.drawImage(atlas, f[0], f[1], f[2], f[3], cx, mid - f[3] * sc / 2, f[2] * sc, f[3] * sc);
+      if (draw) blit(ctx, f, cx, mid - f[3] * sc / 2, f[2] * sc, f[3] * sc);
       cx += f[2] * sc;
     });
   });
@@ -4894,7 +4956,8 @@ function drawTitle() {
   if (r) outlined(r, GW / 2, last.y + last.h + 46, 30, '#F2C14E');
   if (!touchMode) text('[updown] pour choisir, [ok] pour valider',
     GW / 2, GH - 28, 26, '#E9DCC8', 'center', 500);
-  text(VERSION, GW - 28, GH - 28, 20, 'rgba(233, 220, 200, 0.75)', 'right', 500);   // date de construction (pack_web)
+  // date de construction (pack_web), et « images x4 » quand le jeu lit les images nettes
+  text(VERSION + (HD.k > 1 ? ' · images x' + 2 * HD.k : ''), GW - 28, GH - 28, 20, 'rgba(233, 220, 200, 0.75)', 'right', 500);
 }
 /* entrées du menu : l'entrée choisie est claire, encadrée de deux os qui la montrent */
 function drawMenu(t) {
@@ -5009,6 +5072,7 @@ function start() {
     : Promise.resolve();
   Promise.all([whenLoaded(atlas), whenLoaded(tilesImg), fontReady]).then(() => {
     buildGround();
+    loadHD();
     buildClouds();
     loadBadges();
     if (essai) startEssai(); else toTitle();

@@ -53,7 +53,8 @@ const WHERE_POP = { doBark: 'Tecky aboie', updatePompon: 'Pompon', updateDog: 'L
   layTrail: 'Tecky flaire (pas de piste par ici)', updateItems: 'Tecky ramasse un objet', checkGoal: 'Un ballon entre dans le filet',
   cowMoo: 'Une vache meugle (Tecky est dans le pré)', scareCow: 'Tecky aboie vers une vache',
   edgeBump: 'Tecky pousse contre le bord de la carte' };
-const TONE = { 2: 'joyeux', 3: 'inquiet' };               // expression du portrait (face) : le ton à donner
+// expression du portrait (face) : le ton à donner. 4 à 6 : les visages de Tecky (FACE dans game.js)
+const TONE = { 2: 'joyeux', 3: 'inquiet', 4: 'inquiet', 5: 'surpris', 6: 'fier' };
 const AUDIO = /\.(mp3|ogg|wav)$/;
 
 function main() {
@@ -160,7 +161,8 @@ function main() {
     if (rec.some(r => r.who === m[1] && r.text === text)) continue;
     const before = src.slice(0, m.index), fn = [...before.matchAll(/(?:function (\w+)|const (\w+) = \(\) =>)/g)].pop();
     const name = fn ? fn[1] || fn[2] : '';
-    rec.push({ who: m[1], face: +m[2] || 0, text, ctx: WHERE[name] || (name ? 'dans ' + name + '()' : '') });
+    const face = /^FACE\.\w+$/.test(m[2] || '') ? run(m[2]) : +m[2] || 0;       // (un visage de Tecky, par son nom)
+    rec.push({ who: m[1], face, text, ctx: WHERE[name] || (name ? 'dans ' + name + '()' : '') });
   }
   const sites = (src.match(/who: '\w+'/g) || []).length - literal;
   // bulles écrites en dur : addWordPop('texte', x, y, 'qui') et npcShout(personnage, 'texte'), une alternative

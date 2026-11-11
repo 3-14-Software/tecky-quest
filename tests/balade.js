@@ -54,6 +54,9 @@ function main() {
   for (let i = 0; i < 60 * 3; i++) { step(1); run('nh = Math.max(nh, fxs.filter(f => f.key === "fx/heart").length)'); }
   ok(run('nh') > 0 && run('R.dir') === 'left', 'mais il lui fait la fête quand il passe');
   // rejouer avec un copain : pas de nouveaux points (canards et petites bêtes écartés : la 1re fois, ils en rapportent)
+  // (les autres chiens sont remis chez eux : en flânant, l'un d'eux arrivait parfois à portée, et un nouveau chien
+  // passe avant un copain : Tecky jouait alors avec lui)
+  run('dogs.forEach(d => { if (d !== R) { d.x = d.hx; d.y = d.hy; d.mode = "idle"; d.calm = 99; } });');
   run('ducks = []; critters = []; sc0 = score; P.mode = "free"; P.cdBite = 0; pressed.bite = true'); step(1);
   ok(run('R.mode') === 'play', 'on peut rejouer avec un copain');
   step(60 * 3);

@@ -47,6 +47,7 @@ Prérequis : Python 3 avec `cairosvg`, `Pillow`, `numpy` ; Node 18+ pour les tes
 pip install -r requirements.txt
 
 python3 pack_web.py      # version web  -> web/index.html (une seule page) + web/tecky_quest_web/ (autonome, PWA)
+                         # et les images x4 (atlas_x4_N.png, tiles_x4.png), chargées par le jeu sur grand écran
 python3 build.py         # kit GameMaker -> out/ (sprites, tileset, HUD, audio, aperçus)
 python3 music.py         # WAV de la musique et de la fanfare -> out/audio/
 ./publish_docs.sh        # copie la version autonome dans docs/ (servie par GitHub Pages)
@@ -89,6 +90,7 @@ os dorés, écureuils et chats, zones (bandeau, ambiance, timbre), transitions m
 | Fichier | Rôle |
 |---|---|
 | `spritelib.py` | boîte à outils de dessin SVG, rendu, strips, GIF |
+| `tecky2.py`, `alice2.py`, `chiens2.py` | Tecky, Alice et les chiens du jeu web (v2 : voir `PLAN_V2.md`) |
 | `tecky.py`, `alice.py`, `enemies.py`, `hens.py`, `farmer.py`, `npcs.py`, `critters.py`, `ducks.py`, `vehicles.py`, `butterflies.py`, `items.py`, `decor.py`, `tiles.py`, `hud.py` | dessin des personnages, poules, fermier, facteur et voisine, écureuils et chats, canards, véhicules, papillons, objets, décor, tileset, HUD |
 | `music.py` | partition chiptune (thème en boucle, fanfare de victoire, musique de défaite), export WAV |
 | `sample_map.py`, `hud_mockup.py` | carte d'exemple et maquette du HUD |

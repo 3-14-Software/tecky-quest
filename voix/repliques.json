@@ -92,7 +92,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "",
+      "ton": "inquiet",
       "texte": "Ouaf ! Alice est partie jouer… et elle n'est pas rentrée !",
       "affiche": "Ouaf ! Alice est partie jouer… et elle n'est pas rentrée !",
       "contexte": "Introduction (aventure) ; Introduction (aventure, au toucher) ; Introduction (balade) ; Introduction (balade, au toucher)"
@@ -246,7 +246,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "joyeux",
+      "ton": "surpris",
       "texte": "Wouf ! Un os doré était enterré ! 1 sur 12",
       "affiche": "Wouf ! Un os doré était enterré ! (1 / 12)",
       "contexte": "Os doré déterré"
@@ -257,7 +257,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "joyeux",
+      "ton": "surpris",
       "texte": "Wouf ! Un os doré était enterré ! 2 sur 12",
       "affiche": "Wouf ! Un os doré était enterré ! (2 / 12)",
       "contexte": "Os doré déterré"
@@ -268,7 +268,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "joyeux",
+      "ton": "surpris",
       "texte": "Wouf ! Un os doré était enterré ! 3 sur 12",
       "affiche": "Wouf ! Un os doré était enterré ! (3 / 12)",
       "contexte": "Os doré déterré"
@@ -279,7 +279,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "joyeux",
+      "ton": "surpris",
       "texte": "Wouf ! Un os doré était enterré ! 4 sur 12",
       "affiche": "Wouf ! Un os doré était enterré ! (4 / 12)",
       "contexte": "Os doré déterré"
@@ -290,7 +290,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "joyeux",
+      "ton": "surpris",
       "texte": "Wouf ! Un os doré était enterré ! 5 sur 12",
       "affiche": "Wouf ! Un os doré était enterré ! (5 / 12)",
       "contexte": "Os doré déterré"
@@ -301,7 +301,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "joyeux",
+      "ton": "surpris",
       "texte": "Wouf ! Un os doré était enterré ! 6 sur 12",
       "affiche": "Wouf ! Un os doré était enterré ! (6 / 12)",
       "contexte": "Os doré déterré"
@@ -312,7 +312,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "joyeux",
+      "ton": "surpris",
       "texte": "Wouf ! Un os doré était enterré ! 7 sur 12",
       "affiche": "Wouf ! Un os doré était enterré ! (7 / 12)",
       "contexte": "Os doré déterré"
@@ -323,7 +323,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "joyeux",
+      "ton": "surpris",
       "texte": "Wouf ! Un os doré était enterré ! 8 sur 12",
       "affiche": "Wouf ! Un os doré était enterré ! (8 / 12)",
       "contexte": "Os doré déterré"
@@ -334,7 +334,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "joyeux",
+      "ton": "surpris",
       "texte": "Wouf ! Un os doré était enterré ! 9 sur 12",
       "affiche": "Wouf ! Un os doré était enterré ! (9 / 12)",
       "contexte": "Os doré déterré"
@@ -345,7 +345,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "joyeux",
+      "ton": "surpris",
       "texte": "Wouf ! Un os doré était enterré ! 10 sur 12",
       "affiche": "Wouf ! Un os doré était enterré ! (10 / 12)",
       "contexte": "Os doré déterré"
@@ -356,7 +356,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "joyeux",
+      "ton": "surpris",
       "texte": "Wouf ! Un os doré était enterré ! 11 sur 12",
       "affiche": "Wouf ! Un os doré était enterré ! (11 / 12)",
       "contexte": "Os doré déterré"
@@ -367,7 +367,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "joyeux",
+      "ton": "surpris",
       "texte": "Wouf ! Un os doré était enterré ! 12 sur 12",
       "affiche": "Wouf ! Un os doré était enterré ! (12 / 12)",
       "contexte": "Os doré déterré"
@@ -378,7 +378,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "joyeux",
+      "ton": "fier",
       "texte": "Ouaf ! Je m'en occupe !",
       "affiche": "Ouaf ! Je m'en occupe !",
       "contexte": "Gaston : demande"
@@ -400,7 +400,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "joyeux",
+      "ton": "fier",
       "texte": "Ouaf ! Je te le ramène !",
       "affiche": "Ouaf ! Je te le ramène !",
       "contexte": "Mamie Rose : demande"
@@ -422,7 +422,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "",
+      "ton": "inquiet",
       "texte": "Ouaf ! Iris ! Elle joue à cache-cache, et je ne la trouve pas…",
       "affiche": "Ouaf ! Iris ! Elle joue à cache-cache, et je ne la trouve pas…",
       "contexte": "Iris : demande"
@@ -466,7 +466,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "",
+      "ton": "inquiet",
       "texte": "Grr… Ce doberman n'a pas peur de mes aboiements. Il va falloir le mordre !",
       "affiche": "Grr… Ce doberman n'a pas peur de mes aboiements. Il va falloir le mordre !",
       "contexte": "Premier aboiement sur le doberman"
@@ -488,7 +488,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "joyeux",
+      "ton": "fier",
       "texte": "Un teckel, ça creuse des terriers : hop, sous le grillage ! Les autres chiens, eux, doivent faire le tour.",
       "affiche": "Un teckel, ça creuse des terriers : hop, sous le grillage ! Les autres chiens, eux, doivent faire le tour.",
       "contexte": "Premier terrier"
@@ -499,7 +499,7 @@
       "personnage": "Tecky",
       "type": "dialogue",
       "appareil": "",
-      "ton": "",
+      "ton": "inquiet",
       "texte": "Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !",
       "affiche": "Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !",
       "contexte": "Devant la cachette d’Alice, avant les trois indices"

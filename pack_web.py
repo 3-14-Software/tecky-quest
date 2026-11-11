@@ -3,23 +3,28 @@
 Prépare la version web de Tecky Quest :
   web/atlas.png  + données de l'atlas (sprites x2, découpés au plus juste)
   web/tiles.png  tileset x2
+  web/atlas_x4_N.png, web/tiles_x4.png  les mêmes images deux fois plus fines, chargées par le jeu sur grand écran
   web/index.html page du jeu (web_src/index.template.html + game.js + données)
   web/map_preview.png  aperçu du niveau (contrôle)
 
-    python3 pack_web.py
+    python3 pack_web.py              # tout
+    python3 pack_web.py --sans-hd    # sans les images x4 (plus rapide ; le jeu reste en x2)
 """
+import hashlib
 import json
 import math
 import os
+import sys
 
 from PIL import Image
 
 import alice
+import alice2
 import butterflies
 import carte
 import cows
 import decor
-import enemies
+import chiens2
 import critters
 import ducks
 import npcs
@@ -31,6 +36,7 @@ import hud
 import items
 import lisiere
 import tecky
+import tecky2
 import vehicles
 import music
 import tiles
@@ -42,6 +48,9 @@ WEB = os.path.join(ROOT, "web")
 SRC = os.path.join(ROOT, "web_src")
 S = 2
 TS = 32 * S
+HD = 2                 # images nettes : rendues à S * HD (x4), mêmes cadres et mêmes places que l'atlas x2
+PAGE = 2048            # hauteur d'une page d'atlas, en pixels x2 : aucune image n'est à cheval sur deux pages, pour
+                       # que l'atlas x4 se découpe en pages de 4096 px (la plus grande texture de bien des cartes)
 
 # ====================================================================== NIVEAU
 # La carte est dans carte.json (carte.py ; on la modifie avec l'éditeur de carte : python3 editeur.py), en tuiles.
@@ -211,7 +220,10 @@ def build_map():
         "npcFps": dict({"farmer": {a: v[1] for a, v in farmer.ANIMS.items()}},
                        **{k: {a: v[1] for a, v in npcs.ANIMS[k].items()} for k in npcs.KINDS}),
         "critters": [[n, px(x), px(y)] for n, x, y in CRITTERS],
-        "rest": {a: [fps, loop] for a, (_, fps, _, loop) in tecky.REST_ANIMS.items()},
+        "rest": {a: [fps, loop] for a, (_, fps, _, loop) in tecky2.REST_ANIMS.items()},
+        "teckyFps": {a: fps for a, (_, fps, _) in tecky2.ANIMS.items()},     # cadences propres à Tecky (marche en 8 images)
+        "aliceFps": {a: fps for a, (_, fps) in alice2.ANIMS.items()},
+        "dogFps": {a: fps for a, (_, fps, _) in chiens2.ANIMS.items()},      # celles des chiens (chiens2.py)
         "badges": hud.BADGES,
         "keys": hud.KEYS, "pads": [k for k, _ in hud.PAD_BUTTONS],   # noms des images de hud/key et hud/pad
         "ducks": [[n, px(x), px(y), f] for n, x, y, f in DUCKS],
@@ -247,78 +259,82 @@ def build_map():
 
 
 # ====================================================================== ATLAS
-def collect():
-    """(clé, liste d'images, origine, découpe ?)"""
+def collect(r=1):
+    """(clé, liste d'images, origine, découpe ?). r : facteur de rendu (1 : pixels x2, ceux de l'atlas du jeu ;
+    HD : les mêmes dessins deux fois plus fins). Les origines restent en pixels x2."""
     out = []
+    R = S * r                        # échelle du rendu
     dirs = ("down", "up", "right")
     M = PAD * S                      # décalage d'origine dû à la marge
     CH_O = (48 + M, 88 + M)
-    char_anims = ("idle", "walk", "bark", "bite", "hurt", "dig")
 
-    def char(kind, fn):
-        for a in char_anims:
-            if a == "dig" and kind != "tecky":
-                continue
-            for v in dirs:
-                ims = [render_svg(s, 48, 48, S, PAD) for s in fn(a, v)]
+    def char(kind, fn):              # les chiens (chiens2.py), cadre de 48 x 48
+        for a, (_, _, vues) in chiens2.ANIMS.items():
+            for v in vues:
+                ims = [render_svg(s, 48, 48, R, PAD) for s in fn(a, v)]
                 if a == "hurt":
                     ims[0] = flash(ims[0])
                 out.append((f"{kind}/{a}/{v}", ims, CH_O, True))
-        out.append((f"{kind}/ko/right", [render_svg(s, 48, 48, S, PAD) for s in fn("ko", "right")], CH_O, True))
 
-    char("tecky", tecky.frames)
-    for a, (_, fps, views, loop) in tecky.REST_ANIMS.items():    # poses de repos (assis, bâille, se gratte, dort, s'ébroue)
-        for v in views:
-            out.append((f"tecky/{a}/{v}", [render_svg(sv, 48, 48, S, PAD) for sv in tecky.rest_frames(a, v)], CH_O, True))
-    for dog in enemies.DOGS:
-        char(dog, lambda a, v, dog=dog: enemies.frames(dog, a, v))
-    for a in alice.ANIMS:
+    # Tecky (tecky2.py) : un cadre par vue, plus large de profil ; puis ses poses de repos (assis, bâille, se
+    # gratte, dort, s'ébroue)
+    for a, fn in [(a, tecky2.frames) for a in tecky2.ANIMS] + [(a, tecky2.rest_frames) for a in tecky2.REST_ANIMS]:
+        for v in (tecky2.ANIMS.get(a) or tecky2.REST_ANIMS[a])[2]:
+            w, h, ox, oy = tecky2.CADRE[v]
+            ims = [render_svg(sv, w, h, R, PAD) for sv in fn(a, v)]
+            if a == "hurt":
+                ims[0] = flash(ims[0])
+            out.append((f"tecky/{a}/{v}", ims, (ox * S + M, oy * S + M), True))
+    for dog in chiens2.CHIENS:
+        char(dog, lambda a, v, dog=dog: chiens2.frames(dog, a, v))
+    w, h, ox, oy = alice2.CADRE                         # Alice (alice2.py)
+    for a in alice2.ANIMS:
         for v in dirs:
-            out.append((f"alice/{a}/{v}", [render_svg(s, 48, 48, S, PAD) for s in alice.frames(a, v)], CH_O, True))
+            out.append((f"alice/{a}/{v}", [render_svg(s, w, h, R, PAD) for s in alice2.frames(a, v)], (ox * S + M, oy * S + M), True))
     for a, (_, fps, _) in farmer.ANIMS.items():          # le fermier Gaston, vu de face, pieds en (24, 60)
-        out.append((f"farmer/{a}", [render_svg(sv, farmer.W, farmer.H, S, PAD) for sv in farmer.frames(a)], (24 * S + M, 60 * S + M), True))
+        out.append((f"farmer/{a}", [render_svg(sv, farmer.W, farmer.H, R, PAD) for sv in farmer.frames(a)], (24 * S + M, 60 * S + M), True))
     for kind in npcs.KINDS:                             # le facteur et la voisine, vus de face, pieds en (24, 60)
         for a in npcs.ANIMS[kind]:
-            out.append((f"{kind}/{a}", [render_svg(sv, npcs.W, npcs.H, S, PAD) for sv in npcs.frames(kind, a)], (24 * S + M, 60 * S + M), True))
+            out.append((f"{kind}/{a}", [render_svg(sv, npcs.W, npcs.H, R, PAD) for sv in npcs.frames(kind, a)], (24 * S + M, 60 * S + M), True))
     for kind in villageois.KINDS:                       # les villageois, vus de face, pieds en (24, 60)
         for a in villageois.ANIMS[kind]:
-            out.append((f"{kind}/{a}", [render_svg(sv, npcs.W, npcs.H, S, PAD) for sv in villageois.frames(kind, a)], (24 * S + M, 60 * S + M), True))
-    out.append(("item/letter", [render_svg(sv, 32, 32, S, PAD) for sv in npcs.letter_frames()], (32 + M, 32 + M), True))
-    out.append(("port/balloon", [render_svg(sv, 32, 32, S, PAD) for sv in port.balloon_frames()], (16 * S + M, 16 * S + M), True))
-    out.append(("port/toy", [render_svg(sv, 32, 32, S, PAD) for sv in port.toy_frames()], (16 * S + M, 16 * S + M), True))
+            out.append((f"{kind}/{a}", [render_svg(sv, npcs.W, npcs.H, R, PAD) for sv in villageois.frames(kind, a)], (24 * S + M, 60 * S + M), True))
+    out.append(("item/letter", [render_svg(sv, 32, 32, R, PAD) for sv in npcs.letter_frames()], (32 + M, 32 + M), True))
+    out.append(("port/balloon", [render_svg(sv, 32, 32, R, PAD) for sv in port.balloon_frames()], (16 * S + M, 16 * S + M), True))
+    out.append(("port/toy", [render_svg(sv, 32, 32, R, PAD) for sv in port.toy_frames()], (16 * S + M, 16 * S + M), True))
     for a in herissons.ANIMS:                           # les bébés hérissons, de profil, pieds en (16, 28)
-        out.append((f"hedgehog/{a}", [render_svg(sv, 32, 32, S, PAD) for sv in herissons.frames(a)], (16 * S + M, 28 * S + M), True))
+        out.append((f"hedgehog/{a}", [render_svg(sv, 32, 32, R, PAD) for sv in herissons.frames(a)], (16 * S + M, 28 * S + M), True))
     for kind in critters.KINDS:                         # écureuil, chats : de profil vers la droite, pieds en (16, 28)
         for a in critters.anims(kind):
-            out.append((f"{kind}/{a}", [render_svg(sv, 32, 32, S, PAD) for sv in critters.frames(kind, a)], (16 * S + M, 28 * S + M), True))
+            out.append((f"{kind}/{a}", [render_svg(sv, 32, 32, R, PAD) for sv in critters.frames(kind, a)], (16 * S + M, 28 * S + M), True))
     for kind in ducks.KINDS:                            # canards : de profil vers la droite, ligne d'eau en (16, 24)
         for a in ducks.anims(kind):
-            out.append((f"{kind}/{a}", [render_svg(sv, 32, 32, S, PAD) for sv in ducks.frames(kind, a)], (16 * S + M, 24 * S + M), True))
+            out.append((f"{kind}/{a}", [render_svg(sv, 32, 32, R, PAD) for sv in ducks.frames(kind, a)], (16 * S + M, 24 * S + M), True))
     for kind in cows.KINDS:                             # vaches : de profil vers la droite, pieds en (32, 44)
         for a in cows.anims(kind):
-            out.append((f"{kind}/{a}", [render_svg(sv, 64, 48, S, PAD) for sv in cows.frames(kind, a)], (32 * S + M, 44 * S + M), True))
+            out.append((f"{kind}/{a}", [render_svg(sv, 64, 48, R, PAD) for sv in cows.frames(kind, a)], (32 * S + M, 44 * S + M), True))
     for c in butterflies.COLORS:
-        out.append((f"butterfly/{c}", [render_svg(sv, 24, 24, S, PAD) for sv in butterflies.frames(c)], (12 * S + M, 12 * S + M), True))
+        out.append((f"butterfly/{c}", [render_svg(sv, 24, 24, R, PAD) for sv in butterflies.frames(c)], (12 * S + M, 12 * S + M), True))
     for n, (_, (w, h), (ox, oy)) in vehicles.VEHICLES.items():
-        out.append((f"vehicle/{n}", [render_svg(sv, w, h, S, PAD) for sv in vehicles.frames(n)], (ox * S + M, oy * S + M), True))
+        out.append((f"vehicle/{n}", [render_svg(sv, w, h, R, PAD) for sv in vehicles.frames(n)], (ox * S + M, oy * S + M), True))
     for kind in hens.COLORS:
         for anim in hens.ANIMS:
-            out.append((f"{kind}/{anim}/right", [render_svg(s, 32, 32, S, PAD) for s in hens.frames(kind, anim)],
+            out.append((f"{kind}/{anim}/right", [render_svg(s, 32, 32, R, PAD) for s in hens.frames(kind, anim)],
                         (16 * S + M, 28 * S + M), True))
     for n in items.ITEMS:
-        out.append((f"item/{n}", [render_svg(s, 32, 32, S, PAD) for s in items.item_frames(n)], (32 + M, 32 + M), True))
+        out.append((f"item/{n}", [render_svg(s, 32, 32, R, PAD) for s in items.item_frames(n)], (32 + M, 32 + M), True))
     for n, (fn, size, _) in items.EFFECTS.items():
         o = (12 + M, 48 + M) if n == "bark" else (size + M, size + M)
-        out.append((f"fx/{n}", [render_svg(s, size, size, S, PAD) for s in fn()], o, True))
+        out.append((f"fx/{n}", [render_svg(s, size, size, R, PAD) for s in fn()], o, True))
     for n, (fn, (w, h), (ox, oy)) in decor.DECOR.items():
-        out.append((f"decor/{n}", [render_svg(dr.svg(), w, h, S, PAD) for dr in decor.frames(n)], (ox * S + M, oy * S + M), True))
+        out.append((f"decor/{n}", [render_svg(dr.svg(), w, h, R, PAD) for dr in decor.frames(n)], (ox * S + M, oy * S + M), True))
     for n, (fn, (w, h), (ox, oy)) in lisiere.DECOR.items():        # la lisière, au bord de la carte
-        out.append((f"decor/{n}", [render_svg(fn().svg(), w, h, S, PAD)], (ox * S + M, oy * S + M), True))
-    for n, ims in hud.all_sprites(S).items():
+        out.append((f"decor/{n}", [render_svg(fn().svg(), w, h, R, PAD)], (ox * S + M, oy * S + M), True))
+    for n, ims in hud.all_sprites(R).items():
         key = "hud/" + n.replace("spr_hud_", "").replace("spr_", "")
         o = {"spr_hud_arrow": (40, 40), "spr_hud_arrow_icon": (22, 22)}.get(n, (0, 0))
         if n == "spr_title_logo":
-            o = (ims[0].width // 2, ims[0].height // 2)
+            o = (ims[0].width // 2 // r, ims[0].height // 2 // r)
         # rognées : chiffres ; touches et boutons (largeur exacte de chacun, pour les icônes dans les textes)
         out.append((key, ims, o, n in ("spr_hud_digits", "spr_hud_key", "spr_hud_pad")))
     return out
@@ -336,6 +352,8 @@ def version():
 
 
 def pack(entries, width=2048, pad=2):
+    """Range les images en étagères, de la plus haute à la plus basse. Aucune étagère ne franchit un multiple de PAGE
+    (sa hauteur est celle de sa première image)."""
     frames = []
     for key, ims, o, trim in entries:
         for i, im in enumerate(ims):
@@ -350,6 +368,8 @@ def pack(entries, width=2048, pad=2):
         im = frames[k][2]
         if x + im.width > width:
             x, y, shelf = 0, y + shelf + pad, 0
+        if x == 0 and y // PAGE != (y + im.height - 1) // PAGE:      # l'étagère déborderait de la page : page suivante
+            y = (y // PAGE + 1) * PAGE
         pos[k] = (x, y)
         x += im.width + pad
         shelf = max(shelf, im.height)
@@ -363,6 +383,51 @@ def pack(entries, width=2048, pad=2):
         atlas.paste(im, (px_, py_))
         meta[key]["f"][i] = [px_, py_, im.width, im.height, dx, dy]
     return atlas, meta
+
+
+def source_stamp():
+    """Empreinte de tout ce dont dépendent les images x4 : les modules de dessin, et les tuiles composées (la carte)."""
+    h = hashlib.sha1()
+    for fn in sorted(f for f in os.listdir(ROOT) if f.endswith(".py")):
+        h.update(open(os.path.join(ROOT, fn), "rb").read())
+    h.update(json.dumps(COMPOSITES).encode())
+    return h.hexdigest()[:10]
+
+
+def pack_hd(entries, meta, height):
+    """Atlas net : les images de collect(HD), chacune à la place et dans le cadre de sa jumelle de l'atlas x2 (la
+    méta ne change pas), puis l'ensemble découpé en pages de PAGE pixels x2 de haut."""
+    big = Image.new("RGBA", (2048 * HD, height * HD), (0, 0, 0, 0))
+    for key, ims, _, _ in entries:
+        for i, im in enumerate(ims):
+            x, y, w, h, dx, dy = meta[key]["f"][i]
+            big.paste(im.crop((dx * HD, dy * HD, (dx + w) * HD, (dy + h) * HD)), (x * HD, y * HD))
+    return [big.crop((0, p * PAGE * HD, big.width, min(big.height, (p + 1) * PAGE * HD)))
+            for p in range(-(-height // PAGE))]
+
+
+def build_hd(meta, height):
+    """Écrit web/atlas_x4_N.png et web/tiles_x4.png, et rend ce que le jeu doit en savoir (HD_SRC). Rien n'est
+    redessiné si les sources n'ont pas changé depuis la dernière fois (web/hd.json)."""
+    stamp = source_stamp()
+    info = os.path.join(WEB, "hd.json")
+    try:
+        old = json.load(open(info, encoding="utf-8"))
+    except (OSError, ValueError):
+        old = {}
+    names = [f"atlas_x{S * HD}_{p}.png" for p in range(-(-height // PAGE))] + [f"tiles_x{S * HD}.png"]
+    if not (old.get("stamp") == stamp and old.get("files") == names
+            and all(os.path.exists(os.path.join(WEB, n)) for n in names)):
+        pages = pack_hd(collect(HD), meta, height)
+        for n, im in zip(names, pages + [tiles.tileset(S * HD, water_marks=False, composites=COMPOSITES)]):
+            im.save(os.path.join(WEB, n), optimize=True)
+        json.dump({"stamp": stamp, "files": names}, open(info, "w", encoding="utf-8"))
+        print("images x%d :" % (S * HD), ", ".join(f"{n} {os.path.getsize(os.path.join(WEB, n)) // 1024} Ko" for n in names))
+    else:
+        print("images x%d : à jour" % (S * HD))
+    # ?v= : une page et ses images x4 vont ensemble (mêmes places dans l'atlas) ; jamais une vieille image en cache
+    return {"k": HD, "page": PAGE, "atlas": [n + "?v=" + stamp for n in names[:-1]], "tiles": names[-1] + "?v=" + stamp,
+            "files": names}
 
 
 def preview(m, atlas, meta, tileset):
@@ -402,6 +467,7 @@ def main():
     tileset = tiles.tileset(S, water_marks=False, composites=COMPOSITES)   # eau unie : le jeu anime ses vaguelettes
     tileset.save(os.path.join(WEB, "tiles.png"), optimize=True)
     preview(m, atlas, meta, tileset)
+    hd = None if "--sans-hd" in sys.argv else build_hd(meta, atlas.height)
     tpl = open(os.path.join(SRC, "index.template.html"), encoding="utf-8").read()
     game = open(os.path.join(SRC, "game.js"), encoding="utf-8").read()
     import base64
@@ -409,6 +475,8 @@ def main():
     data = ("const ATLAS_SRC = \"" + b64(os.path.join(WEB, "atlas.png")) + "\";\n"
             "const TILES_SRC = \"" + b64(os.path.join(WEB, "tiles.png")) + "\";\n"
             "const ATLAS = " + json.dumps(meta, separators=(",", ":")) + ";\n"
+            # images nettes, à côté de la page (game.js : loadHD) ; null : construit sans elles
+            "const HD_SRC = " + json.dumps(hd and {k: v for k, v in hd.items() if k != "files"}, separators=(",", ":")) + ";\n"
             "const SONGS = " + json.dumps({k: dict(zip(("total", "ev"), music.events(k)), bpm=st["bpm"], bar=music.STEPS_PER_BAR)
                                            for k, st in music.STYLES.items()}, separators=(",", ":")) + ";\n"
             "const WINSONG = " + json.dumps(dict(zip(("total", "ev"), music.fanfare_events()), bpm=music.FANFARE_BPM, bar=music.STEPS_PER_BAR), separators=(",", ":")) + ";\n"
@@ -418,7 +486,7 @@ def main():
     html = tpl.replace("/*__DATA__*/", data).replace("/*__GAME__*/", game)
     open(os.path.join(WEB, "index.html"), "w", encoding="utf-8").write(html)
     print("atlas", atlas.size, "| html", len(html) // 1024, "Ko")
-    build_standalone(data, game)
+    build_standalone(data, game, hd["files"] if hd else [])
     check_placement()
 
 
@@ -436,8 +504,9 @@ def check_placement():
         raise SystemExit("Corrige les placements signalés dans carte.json (éditeur de carte : python3 editeur.py)")
 
 
-def build_standalone(data, game):
-    """Version autonome à servir soi-même : plein écran, installable comme une app."""
+def build_standalone(data, game, hd_files=()):
+    """Version autonome à servir soi-même : plein écran, installable comme une app. hd_files : les images x4, copiées
+    à côté de la page."""
     import base64
     import shutil
     out = os.path.join(WEB, "tecky_quest_web")
@@ -465,6 +534,11 @@ def build_standalone(data, game):
     json.dump(manifest, open(os.path.join(out, "manifest.webmanifest"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
     for fn in ("sw.js", "serve.sh"):
         shutil.copy(os.path.join(SRC, fn), os.path.join(out, fn))
+    for fn in os.listdir(out):                         # images x4 d'une construction précédente
+        if "_x4" in fn and fn not in hd_files:
+            os.remove(os.path.join(out, fn))
+    for fn in hd_files:
+        shutil.copy(os.path.join(WEB, fn), os.path.join(out, fn))
     os.chmod(os.path.join(out, "serve.sh"), 0o755)
     shutil.copy(os.path.join(SRC, "LISEZMOI.txt"), os.path.join(out, "LISEZMOI.txt"))
     print("version autonome ->", out)

@@ -4,8 +4,10 @@ eval(base + `setTimeout(() => {
   run('audioOn(); pressed.ok = true'); step(1); advanceDialog();
   run('dogs = []; P.inv = 99;');
   ok(run('MAP.w') === 96 && run('MAP.h') === 64, 'carte de 96 x 64 tuiles');
-  ok(run('groundChunks.length') === 24 + 22 && run('groundChunks.every(k => k.w <= 1024 + 2 * CM && k.h <= 1024 + 2 * CM)'),
-     'sol pré-rendu en 24 blocs de 1024 px au plus (et 22 pour la marge de la lisière)');
+  ok(run('ground.size') >= 1 && run('ground.size') <= 4 && run('[...ground.values()].every(k => k.c.width === 1024 + 2 * CM && k.c.height === 1024 + 2 * CM)'),
+     'sol pré-rendu à la demande : ' + run('ground.size') + ' blocs de 1024 px pour l\\'écran du début');
+  run('for (let y = -128; y < MAP.h * 64; y += 300) for (let x = -128; x < MAP.w * 64; x += 500) drawGround(x, y);');
+  ok(run('ground.size') === run('GROUND_MAX'), 'toute la carte parcourue : jamais plus de ' + run('GROUND_MAX') + ' blocs gardés');
   const walkDown = (x, n) => { run('P.x = ' + x + '; P.y = 40.4*64; P.mode = "free";'); step(n, 'held.down = true'); run('held.down = false'); return run('P.y') / 64; };
   ok(walkDown('80*64', 200) > 47, 'on traverse la rivière par le pont');
   ok(walkDown('76*64', 200) < 42.2, 'ailleurs, la rivière bloque');

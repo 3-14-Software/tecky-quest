@@ -1,5 +1,5 @@
 fichier;personnage;type;appareil;ton;texte à dire;contexte
-tecky-88f6c3c3;Tecky;dialogue;;;Ouaf ! Alice est partie jouer… et elle n'est pas rentrée !;"Introduction (aventure) ; Introduction (aventure, au toucher) ; Introduction (balade) ; Introduction (balade, au toucher)"
+tecky-88f6c3c3;Tecky;dialogue;;inquiet;Ouaf ! Alice est partie jouer… et elle n'est pas rentrée !;"Introduction (aventure) ; Introduction (aventure, au toucher) ; Introduction (balade) ; Introduction (balade, au toucher)"
 tecky-3022d70d;Tecky;dialogue;;joyeux;Elle a dû semer des affaires en chemin. En les retrouvant, je saurai où elle se cache !;"Introduction (aventure) ; Introduction (aventure, au toucher) ; Introduction (balade) ; Introduction (balade, au toucher)"
 tecky-cbedf579;Tecky;dialogue;;;La flèche au bord de l'écran me guide. Gare aux chiens du coin, ils ne sont pas commodes.;"Introduction (aventure) ; Introduction (aventure, au toucher)"
 tecky-584a69b7;Tecky;dialogue;;;La flèche au bord de l'écran me guide. Et les chiens du coin ont l'air d'avoir envie de jouer !;"Introduction (balade) ; Introduction (balade, au toucher)"
@@ -13,30 +13,30 @@ tecky-6c94ced6;Tecky;dialogue;;;Le doudou d'Alice ! Elle ne doit plus être bien
 tecky-05ff58c5;Tecky;dialogue;;;Ses traces partent vers le pont, au sud de la ferme… Elle est allée dans la forêt !;Où chercher ensuite
 tecky-c8b5e50c;Tecky;dialogue;;;Elle a continué à travers la forêt, vers l'ouest. Ça sent le parc, par là !;Où chercher ensuite
 tecky-f99865c0;Tecky;dialogue;;;Et maintenant, je sens son odeur ! Elle se cache au parc, du côté de la cabane.;Où chercher ensuite
-tecky-d12f8cf7;Tecky;dialogue;;joyeux;Wouf ! Un os doré était enterré ! 1 sur 12;Os doré déterré
-tecky-e28649f8;Tecky;dialogue;;joyeux;Wouf ! Un os doré était enterré ! 2 sur 12;Os doré déterré
-tecky-4b9657a9;Tecky;dialogue;;joyeux;Wouf ! Un os doré était enterré ! 3 sur 12;Os doré déterré
-tecky-9c50c09a;Tecky;dialogue;;joyeux;Wouf ! Un os doré était enterré ! 4 sur 12;Os doré déterré
-tecky-2b47a06b;Tecky;dialogue;;joyeux;Wouf ! Un os doré était enterré ! 5 sur 12;Os doré déterré
-tecky-d11a4e3c;Tecky;dialogue;;joyeux;Wouf ! Un os doré était enterré ! 6 sur 12;Os doré déterré
-tecky-b415371d;Tecky;dialogue;;joyeux;Wouf ! Un os doré était enterré ! 7 sur 12;Os doré déterré
-tecky-4689b3be;Tecky;dialogue;;joyeux;Wouf ! Un os doré était enterré ! 8 sur 12;Os doré déterré
-tecky-c4335d8f;Tecky;dialogue;;joyeux;Wouf ! Un os doré était enterré ! 9 sur 12;Os doré déterré
-tecky-2e44a8fb;Tecky;dialogue;;joyeux;Wouf ! Un os doré était enterré ! 10 sur 12;Os doré déterré
-tecky-4b38b1aa;Tecky;dialogue;;joyeux;Wouf ! Un os doré était enterré ! 11 sur 12;Os doré déterré
-tecky-d21bf16d;Tecky;dialogue;;joyeux;Wouf ! Un os doré était enterré ! 12 sur 12;Os doré déterré
-tecky-0dd8f6c5;Tecky;dialogue;;joyeux;Ouaf ! Je m'en occupe !;Gaston : demande
+tecky-d12f8cf7;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 1 sur 12;Os doré déterré
+tecky-e28649f8;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 2 sur 12;Os doré déterré
+tecky-4b9657a9;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 3 sur 12;Os doré déterré
+tecky-9c50c09a;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 4 sur 12;Os doré déterré
+tecky-2b47a06b;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 5 sur 12;Os doré déterré
+tecky-d11a4e3c;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 6 sur 12;Os doré déterré
+tecky-b415371d;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 7 sur 12;Os doré déterré
+tecky-4689b3be;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 8 sur 12;Os doré déterré
+tecky-c4335d8f;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 9 sur 12;Os doré déterré
+tecky-2e44a8fb;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 10 sur 12;Os doré déterré
+tecky-4b38b1aa;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 11 sur 12;Os doré déterré
+tecky-d21bf16d;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 12 sur 12;Os doré déterré
+tecky-0dd8f6c5;Tecky;dialogue;;fier;Ouaf ! Je m'en occupe !;Gaston : demande
 tecky-4a58d3aa;Tecky;dialogue;;joyeux;Ouaf ! Je vais les chercher !;Marcel : demande
-tecky-5ce738ae;Tecky;dialogue;;joyeux;Ouaf ! Je te le ramène !;Mamie Rose : demande
+tecky-5ce738ae;Tecky;dialogue;;fier;Ouaf ! Je te le ramène !;Mamie Rose : demande
 tecky-b1b309e5;Tecky;dialogue;;joyeux;Ouaf ! Je vais marquer des buts !;Léon : demande
-tecky-ff4938ca;Tecky;dialogue;;;Ouaf ! Iris ! Elle joue à cache-cache, et je ne la trouve pas…;Iris : demande
+tecky-ff4938ca;Tecky;dialogue;;inquiet;Ouaf ! Iris ! Elle joue à cache-cache, et je ne la trouve pas…;Iris : demande
 tecky-f769abf8;Tecky;dialogue;;joyeux;Ouaf ! « Va chercher », c'est mon jeu préféré !;Iris : demande
 tecky-348e99e9;Tecky;dialogue;;joyeux;Ouaf ! Moi aussi, je cherche quelqu'un qui joue à cache-cache !;Maman Piquette : demande
 tecky-9232cc10;Tecky;dialogue;;joyeux;Ouaf ! Ouaf ouaf !;Retrouvailles avec Alice
-tecky-e08772a9;Tecky;dialogue;;;Grr… Ce doberman n'a pas peur de mes aboiements. Il va falloir le mordre !;Premier aboiement sur le doberman
+tecky-e08772a9;Tecky;dialogue;;inquiet;Grr… Ce doberman n'a pas peur de mes aboiements. Il va falloir le mordre !;Premier aboiement sur le doberman
 tecky-48c853ee;Tecky;dialogue;;joyeux;Te voilà, Pompon ! Viens, on rentre chez Mamie Rose.;Tecky retrouve Pompon
-tecky-72e5a7c8;Tecky;dialogue;;joyeux;Un teckel, ça creuse des terriers : hop, sous le grillage ! Les autres chiens, eux, doivent faire le tour.;Premier terrier
-tecky-5dfd1ea4;Tecky;dialogue;;;Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !;Devant la cachette d’Alice, avant les trois indices
+tecky-72e5a7c8;Tecky;dialogue;;fier;Un teckel, ça creuse des terriers : hop, sous le grillage ! Les autres chiens, eux, doivent faire le tour.;Premier terrier
+tecky-5dfd1ea4;Tecky;dialogue;;inquiet;Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !;Devant la cachette d’Alice, avant les trois indices
 tecky-779c33b0;Tecky;bulle;;;Une lettre ?;Tecky ramasse une lettre
 tecky-122c4680;Tecky;bulle;;;Un jouet ?;Tecky prend un jouet d’Iris
 tecky-552e60bc;Tecky;bulle;;;Une lettre ! 1 sur 5;Tecky ramasse une lettre
