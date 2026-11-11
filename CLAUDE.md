@@ -6,7 +6,10 @@ une **version web** (Canvas, une seule page HTML, PWA) et un **kit d'assets Game
 Langue : tout en français (interface du jeu, commentaires, README, messages de commit). Style visuel : aplats de couleurs,
 contour brun `#3A1E12`, lignes simples, ambiance mignonne. Référence des personnages : `reference/alice_tecky.png`
 (illustrations générées par IA, fournies par Christophe). Tecky : teckel roux, harnais rouge en vrai ; Alice : cheveux châtains
-mi-longs avec frange, t-shirt jaune, jupe rose, pieds nus. Garder ces traits en cas de retouche des sprites.
+mi-longs avec frange, t-shirt jaune, jupe rose, et dans le jeu de petites chaussures rouges à bride avec des socquettes
+blanches (elle est pieds nus sur l'illustration : Christophe a préféré la chausser). Elle perd une chaussure dans la
+forêt (l'indice) : tant que Tecky ne la lui a pas rapportée, elle a un pied nu (sprites `alice1/*`, `alice2.frames(…, nu=True)` ;
+`endingHome()` lui rend sa chaussure, au noir). Garder ces traits en cas de retouche des sprites.
 
 ## Commandes
 
@@ -31,7 +34,8 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - `spritelib.py` : classe `Drawing` (parts SVG, silhouette dessinée en premier avec un trait épais = contour propre),
   `render_svg(svg, w, h, scale, pad)`, strips `_stripN`. Les vues gauches sont le miroir des vues droites.
 - `tecky2.py` et `alice2.py` : **Tecky et Alice du jeu web** (v2, lot 3 de `PLAN_V2.md`). Dessinés plus grand que
-  les autres personnages puis réduits de `ECH` (Tecky 0,5, Alice 0,7) : traits plus fins, mêmes contours (`TRAIT`).
+  les autres personnages puis réduits de `ECH` (Tecky 0,5, Alice 0,59 : 41 unités de haut,
+  elle a 5 ans ; les adultes en font 55 à 60, le petit Lucas 45) : traits plus fins, mêmes contours (`TRAIT`).
   Tecky est **relevé sur la planche de Christophe** (`reference/v2/chat_gpt/`, « Planche d'expressions » : `_pl()`
   convertit ses pixels) : gros crâne rond, museau court, grands yeux, oreilles immenses, corps en saucisse. Mes têtes
   dessinées de mémoire ont été refusées deux fois (« vraiment moche ») : toute retouche repart de la planche. Sa
@@ -60,14 +64,22 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - `tecky.py`, `alice.py`, `enemies.py` : les dessins d'avant (Tecky, Alice, les chiens sur le squelette de
   `tecky.py`). Ils ne servent plus qu'au kit GameMaker (`build.py`, `sample_map.py`) ; `carte.py` et
   `tests/heros.py` lisent encore la liste des chiens dans `enemies.DOGS`. Le jeu web ne dessine plus rien avec eux.
-- `hens.py` (poules animées),
-  `farmer.py` (le fermier Gaston, vu de face, 48x64, pieds en (24, 60) ; `FACE` pour son portrait),
-  `ducks.py` (colvert, cane, caneton, de profil, 32x32, ligne d'eau en (16, 24)),
-  `cows.py` (vaches pie noire et pie rouge, veau, de profil, tête tournée vers nous, 64x48, pieds en (32, 44) ;
-  les pattes pivotent autour de la hanche, cachée dans le ventre),
+- `hens.py` (poules animées, redessinées pour la v2 et réduites autour de leurs pieds : plus petites que Tecky),
+  `farmer.py` (le fermier Gaston, vu de face, 48x64, pieds en (24, 60) ; `FACE` pour son portrait ; le visage des
+  humains est commun : `npcs._eyes()`, grands yeux à deux reflets comme ceux d'Alice, et `npcs._nez()`, petit nez sans
+  contour — choisis par Christophe sur `reference/v2/humains_temoin.png` ; leurs épaules sont une pente douce,
+  `npcs._epaule()`, et un bras croisé devant le buste ne trace son contour que sous l'épaule),
+  `ducks.py` (colvert, cane, caneton, de profil, 32x32, ligne d'eau en (16, 24) ; réduits de `SCALE` autour de la
+  ligne d'eau, ronds et éclaboussures compris),
+  `cows.py` (vaches pie noire et pie rouge, veau, de profil, 64x48, pieds en (32, 44) ; redessinées pour la v2 dans
+  la famille de Tecky, dessin réduit de `ECH` ; le veau est la même vache réduite de `VEAU`),
   `villageois.py` (villageois sans quête, vus de face comme ceux de npcs.py, dont il réutilise les outils),
-  `npcs.py` (le facteur Marcel et la voisine Mamie Rose, comme `farmer.py` ; `letter_frames()` : la lettre),
-  `critters.py` (écureuil, chats roux et noir, de profil, 32x32), `vehicles.py` (voitures, camionnette, bus),
+  `npcs.py` (le facteur Marcel et la voisine Mamie Rose, comme `farmer.py` ; `letter_frames()` : la lettre ; Iris et
+  Maman Piquette y sont réduits autour de leurs pieds, `SCALE`, pas dans leur portrait ; `CONTOUR` : ceux dont le
+  contour est compensé), `herissons.py` (les petits hérissons, réduits de `SCALE`),
+  `critters.py` (écureuil, chats roux et noir, de profil, 32x32, réduits de `SCALE` : un chat est un peu plus petit que
+  Tecky, un écureuil bien plus petit qu'un chat ; leurs cuisses, `_cuisse()`, sont fondues dans le corps avec un pli,
+  comme celles de Tecky), `vehicles.py` (voitures, camionnette, bus),
   `butterflies.py` (papillons, vus de dessus), `lisiere.py` (le bord de la carte : fourrés, tunnel de la route, et
   `decor()`, le placement de la lisière), `items.py`, `decor.py`, `tiles.py`, `hud.py` :
   dessins et animations. `tiles.py` : tileset Wang/marching squares de 16 tuiles par transition (bits NO=1, NE=2, SO=4, SE=8),
@@ -351,7 +363,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - Terriers (`MAP.tunnels`, décor `burrow` à plat, `TUNNEL`) : près d'un bout, C fait « Passer » (`startTunnel()`,
   `updateTunnel()` : gratte, disparaît, ressort de l'autre côté ; `afterTunnel()` fait passer les copains). Les chiens
   font le tour. Priorité de C : menace > jouer > parler > trésor > terrier > panneau. Test : `tunnel.js`.
-- Flair (R, Y à la manette, bouton à truffe au toucher ; `SNIFF`) : piste de pieds nus (`fx/footprint`) vers
+- Flair (R, Y à la manette, bouton à truffe au toucher ; `SNIFF`) : piste des empreintes d'Alice (`fx/footprint` : une chaussure, un pied nu) vers
   `arrowTarget()`, le long d'un vrai chemin à pied (`buildWalkGrid()` : grille de 16 px rasterisée une fois,
   `fieldTo()` : distances par parcours en largeur, `scentPath()`). Les trésors proches scintillent. Test : `tunnel.js`.
 - Os dorés : le trésor sous les traces de pattes (`item/goldbone`, `treasures` = os dorés trouvés, HUD et victoire).
@@ -421,6 +433,10 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - **Taille de Tecky** : son sprite de profil dépasse sa boîte de collision (pieds, demi-largeur 16 px) de 22 px vers
   l'avant ; ce qui part de sa gueule (`MOUTH`, `doBark()`, `snooze()`) est réglé sur le dessin. Changer `ECH` :
   revoir ces réglages, `CADRE`, et regarder Tecky à côté d'Alice et des chiens (`v2/capture.py`).
+- **Ronds cernés** : Christophe ne veut plus de formes rondes posées sur un corps avec leur contour complet (les
+  cuisses en cercle des chats, les épaules en boule des humains : « des cercles moches »). Une articulation se fond
+  dans la silhouette, avec au plus un pli du côté visible. De même, Alice de face a un cou (`alice2.COU`) : sans
+  lui, ses cheveux de derrière faisaient une barre sous le menton.
 - **Portraits** (`hud.tecky_portrait`, `FACE` dans game.js) : une réplique désigne le visage par son numéro ; en
   ajouter à la fin. `tools/export_voix.js` en tire le ton (`TONE`).
 - **IA des chiens** : `steer()` contourne les obstacles en choisissant le côté le plus court (simulation avec `moveActor`) et

@@ -30,9 +30,10 @@ KINDS = {   # couleurs par espèce / variante
                       patch="#9D9BA8", patch_dk="#7D7B88", collar="#F2729E", bell="#F2C14E"),
 }
 SPECIES = {"squirrel": "squirrel", "cat": "cat", "cat_black": "cat", "cat_white": "cat"}   # les chats partagent les poses
-# l'écureuil est dessiné un peu grand puis réduit autour de l'origine (16, 28) : plus petit qu'une poule,
-# le contour garde la même épaisseur que les autres sprites
-SCALE = {"squirrel": 0.85, "cat": 1.0}
+# Ils sont dessinés grands puis réduits autour de l'origine (16, 28) ; le contour garde la même épaisseur que les
+# autres sprites. Leur taille se juge à côté de Tecky (34 x 22 unités depuis la v2) : un chat est un peu plus petit
+# que lui, un écureuil bien plus petit qu'un chat. À 1 et 0,85, ils le dépassaient (Christophe : « étrange »).
+SCALE = {"squirrel": 0.55, "cat": 0.74}
 
 
 # ================================================================== outils
@@ -125,12 +126,27 @@ def _limb(d, hx, hy, fx, fy, w, col, paw=1.0):
     d.add(ellipse(fx + 0.5 * paw, fy - 0.1, w * 0.62 * paw + 0.25, w * 0.42 + 0.2), col)
 
 
-def _thigh(d, col, hx, hy, fx, fy, a=3.4, b=2.6):
-    """Cuisse arrière : ovale orienté de la hanche vers le pied, contour fin sur le corps."""
+def _cuisse(d, C, cx, cy, a, b, ang=0.0, avant=70, haut=95):
+    """Une cuisse : un ovale de la couleur du pelage, fondu dans le corps, et un pli du côté de l'avant — comme
+    celles de Tecky et des chiens — au lieu d'un rond cerné posé sur le flanc. avant, haut : l'étendue du pli, en
+    degrés, de part et d'autre du point le plus en avant de l'ovale (vers le bas, vers le haut)."""
+    d.add(ellipse(cx, cy, a, b, f"rotate({ang:.1f} {cx:.2f} {cy:.2f})"), C["fur"])
+    ca, sa = math.cos(math.radians(ang)), math.sin(math.radians(ang))
+    t0 = math.atan2(-b * sa, a * ca)                    # le point de l'ovale le plus à droite
+    pts = []
+    for i in range(13):
+        t = t0 - math.radians(haut) + math.radians(haut + avant) * i / 12
+        u, v = a * math.cos(t), b * math.sin(t)
+        pts.append(f"{cx + u * ca - v * sa:.2f},{cy + u * sa + v * ca:.2f}")
+    d.raw(line("M" + " L".join(pts), C["dark"], 0.75))
+
+
+def _thigh(d, C, hx, hy, fx, fy, a=3.4, b=2.6):
+    """Cuisse arrière d'une bête qui marche ou court : orientée de la hanche vers le pied."""
     ang = math.degrees(math.atan2(fy - hy, fx - hx))
     c = math.cos(math.radians(ang))
     s = math.sin(math.radians(ang))
-    d.add(ellipse(hx + c * 1.0, hy + s * 1.0, a, b, f"rotate({ang:.1f} {hx + c:.2f} {hy + s:.2f})"), col, edge=True)
+    _cuisse(d, C, hx + c * 1.0, hy + s * 1.0, a, b, ang)
 
 
 def _tuft(bx0, by0, bx1, by1, tx, ty, lean=-0.6, tr=""):
@@ -224,7 +240,7 @@ def _sq_sit(C, nib=0.0, wag=0.0, chew=0.0):
     d.add(ellipse(19.5, 21.6, 2.3, 4.8, btr), C["belly"], sil=False, clip="sqbody")
     # grand pied à plat et cuisse
     d.add(ellipse(18.9, 27.35, 3.2, 1.1), C["fur"])
-    d.add(ellipse(15.0, 24.5, 4.3, 3.1, "rotate(-28 15.0 24.5)"), C["fur"], edge=True)
+    _cuisse(d, C, 15.0, 24.5, 4.3, 3.1, -28)
     # tête : s'incline vers la noisette quand il grignote
     _sq_head(d, C, 19.6, 12.8, f"rotate({nib * 7:.1f} 17.6 16.5)", chew=chew)
     # pattes avant qui tiennent la noisette
@@ -262,7 +278,7 @@ def _sq_run(C, cx=15.5, cy=21.6, tilt=0.0, rx=6.4, ry=3.8, ff=(23, G), hf=(8, G,
     # patte arrière proche : pied allongé + cuisse
     d.add(ellipse(hf[0], hf[1] - 0.95, 2.7, 1.05, f"rotate({hf[2]:.1f} {hf[0]:.2f} {hf[1] - 0.95:.2f})"), C["fur"])
     d.add(leg(hx, hy, hf[0] - 1.2, hf[1] - 1.0, 2.0), C["fur"])
-    _thigh(d, C["fur"], hx, hy, hf[0] - 1.2, hf[1] - 1.0, 3.2, 2.6)
+    _thigh(d, C, hx, hy, hf[0] - 1.2, hf[1] - 1.0, 3.2, 2.6)
     # patte avant proche
     _limb(d, sx, sy, ff[0], ff[1], 1.8, C["fur"], 0.9)
     # tête
@@ -440,7 +456,7 @@ def _cat_sit(C, sweep=0.0, blink=False):
     _spot(d, C, "catspot", [rump, chest], ellipse(13.6, 19.0, 3.4, 2.4, "rotate(-38 13.6 19.0)"))
     # cuisse et pied arrière
     d.add(ellipse(16.0, 27.3, 2.6, 1.05), C["fur"])
-    d.add(ellipse(12.8, 24.2, 3.9, 3.3), C["fur"], edge=True)
+    _cuisse(d, C, 12.8, 24.2, 3.9, 3.3)
     if C["stripe"]:
         d.raw(line("M10.4,22.0 Q11.6,23.2 11.2,24.8 M12.6,21.2 Q13.8,22.6 13.6,24.0", C["stripe"], 1.0))
     # patte avant proche
@@ -483,7 +499,7 @@ def _cat_stand(C, cx=14.6, cy=20.8, rx=7.4, ry=4.0, tilt=0.0, hop=0.0, legs=None
     _spot(d, C, "catspot", [body], ellipse(cx - 0.6, cy - ry * 0.85, 3.4, 2.1, btr))
     # pattes proches : arrière (cuisse orientée vers le pied) puis avant
     _limb(d, hx, hy, h2[0], h2[1], 2.3, C["fur"])
-    _thigh(d, C["fur"], hx, hy, h2[0], h2[1], 3.3, 2.7)
+    _thigh(d, C, hx, hy, h2[0], h2[1], 3.3, 2.7)
     _limb(d, sx, sy, f2[0], f2[1], 2.2, C["fur"])
     # tête
     hx_, hy_ = R(cx + rx + 0.2, cy - 5.0)

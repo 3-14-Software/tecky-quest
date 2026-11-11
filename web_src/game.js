@@ -1065,7 +1065,7 @@ function reset() {
   const bones = facile() ? 5 : START_BONES;
   Object.assign(P, { hp: bones * 2, hpMax: bones * 2, boneFx: 0, inv: 0, bumpT: 0, cdBark: 0, cdBite: 0, cdSniff: 0,
     mode: 'free', kx: 0, ky: 0, hitDone: false, edgeT: 0, edgeAt: -99 });
-  alice = new Actor('alice', MAP.alice[0], MAP.alice[1]);
+  alice = new Actor('alice1', MAP.alice[0], MAP.alice[1]);      // un pied nu : elle a perdu une chaussure en chemin
   alice.fps = Object.assign({}, FPS, MAP.aliceFps);
   alice.found = false;
   alice.hidden = true;               // dans la cabane jusqu'aux trois indices
@@ -1285,7 +1285,7 @@ function doBark() {
   }
   {                                    // Pompon n'aime pas qu'on lui aboie dessus
     const dx = pompon.x - P.x, dy = pompon.y - P.y, l = Math.hypot(dx, dy);
-    if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) { pompon.hissT = 0.8; addWordPop('Pfff !', pompon.x, pompon.y - 70, 'cat'); }
+    if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) { pompon.hissT = 0.8; addWordPop('Pfff !', pompon.x, pompon.y - 58, 'cat'); }
   }
 }
 
@@ -1475,7 +1475,7 @@ function updateHen(h, dt) {
    (« Meuh ! »). Un aboiement les fait meugler et s'éloigner au petit trot (le veau suit sa mère). Ce sont des obstacles :
    une boîte de `solids` (box) déplacée avec elles, vidée le temps de leur propre pas (cowStep) ; elles ne marchent
    jamais sur Tecky. Rien n'est sauvegardé. */
-const COW = { roam: 150, spd: 38, trot: 130, trotT: 1.5, look: 200, moo: [9, 20], hear: 520, half: 44, calfHalf: 30, depth: 16 };
+const COW = { roam: 150, spd: 38, trot: 130, trotT: 1.5, look: 200, moo: [9, 20], hear: 520, half: 48, calfHalf: 32, depth: 16 };
 let cows = [];
 function newCow([kind, x, y], i) {
   const c = { kind, i, x, y, hx: x, hy: y, anim: 'graze', mode: 'graze', t: Math.random() * 3, timer: 2 + Math.random() * 4,
@@ -1639,9 +1639,9 @@ function updateCritter(c, dt) {
         critAnim(c, species(c.kind) === 'cat' ? 'jump' : 'climb');
         if (!c.scored) {
           c.scored = true; score += CRITTER.pts;
-          addPop('+' + CRITTER.pts, c.x - 20, c.y - 60);
+          addPop('+' + CRITTER.pts, c.x - 20, c.y - 48);
         }
-        addWordPop(c.kind === 'squirrel' ? 'Tchic tchic !' : 'Pfff !', c.x, c.y - 90, c.kind === 'squirrel' ? 'squirrel' : 'cat');
+        addWordPop(c.kind === 'squirrel' ? 'Tchic tchic !' : 'Pfff !', c.x, c.y - 72, c.kind === 'squirrel' ? 'squirrel' : 'cat');
         return;
       }
       c.x += dx / l * Math.min(l, CRITTER.run * dt); c.y += dy / l * Math.min(l, CRITTER.run * dt);
@@ -1700,7 +1700,7 @@ function drawCritter(c) {
    (pickLanding), et s'y posent. Une cane suivie de
    canetons (même famille) ne s'envole pas : elle s'éloigne vite à la nage, ses petits en file derrière elle. Points la
    première fois que chacun s'enfuit (scored, sauvegardé). */
-const DUCK = { scare: 190, swim: 24, roam: 110, flee: 100, gap: 30, flyH: 90, fly: 230, rise: 0.7, away: 1.2,
+const DUCK = { scare: 190, swim: 24, roam: 110, flee: 100, gap: 23, flyH: 90, fly: 230, rise: 0.7, away: 1.2,
   land: [300, 900], safe: 420, calm: 2.5, quack: [5, 14], dive: [10, 24], pts: 30,
   cornered: 0.6, stuckMove: 24, familyFar: 1600 };    // cane coincée (bouge de moins de stuckMove px en cornered s) : la famille s'envole
 let ducks = [];
@@ -1741,8 +1741,8 @@ function scareDuck(d) {
     duckAnim(d, 'fly');
     if (onScreen(d.x, d.y)) SFX.flap();
   }
-  if (!d.scored) { d.scored = true; score += DUCK.pts; addPop('+' + DUCK.pts, d.x - 20, d.y - 60); }
-  addWordPop('Coin coin !', d.x, d.y - 80, 'duck');
+  if (!d.scored) { d.scored = true; score += DUCK.pts; addPop('+' + DUCK.pts, d.x - 20, d.y - 44); }
+  addWordPop('Coin coin !', d.x, d.y - 58, 'duck');
   if (onScreen(d.x, d.y)) SFX.quack(d.kind === 'duck' ? 0.95 : 1.1);
 }
 function swimTo(d, tx, ty, sp, dt) {  // avance vers (tx, ty) sans quitter l'eau ; faux si la rive barre le chemin
@@ -1843,7 +1843,7 @@ function updateDuck(d, dt) {
         if (p) {
           d.mode = 'fly'; d.timer = 0; [d.tx, d.ty] = p; d.fleeDa = 0; duckAnim(d, 'fly');
           for (const k of ducks) if (k.lead && k.fam === d.fam) { k.mode = 'fly'; k.h = 1; duckAnim(k, 'fly'); }
-          addWordPop('Coin coin !', d.x, d.y - 80, 'duck');
+          addWordPop('Coin coin !', d.x, d.y - 58, 'duck');
           if (onScreen(d.x, d.y)) SFX.flap();
           return;
         }
@@ -1905,8 +1905,8 @@ function keepHen(h) {
   if (h.x > R[0] && h.x < R[2] && h.y > R[1] && h.y < R[3]) {
     h.penned = true; h.hx = h.x; h.hy = h.y;
     score += FARM.perHen;
-    addPop('+' + FARM.perHen, h.x - 20, h.y - 70);
-    addWordPop(hensLeft() ? 'Rentrée !' : 'Toutes rentrées !', h.x, h.y - 100, 'info');
+    addPop('+' + FARM.perHen, h.x - 20, h.y - 50);
+    addWordPop(hensLeft() ? 'Rentrée !' : 'Toutes rentrées !', h.x, h.y - 74, 'info');
     SFX.cluck();
     if (!hensLeft()) { farmer.waveT = 2.5; npcShout(farmer, farm.state === 'asked' ? 'Bravo ! Viens me voir !' : 'Oh ! Mes poules !'); }
   }
@@ -2106,8 +2106,8 @@ function updatePompon(dt) {
       if (dP < 300) c.dir = P.x < c.x ? 'left' : 'right';
       if (dP < CAT.find && rose.state === 'asked') {
         if (c.mode === 'lost') say([{ who: 'tecky', face: 2, text: "Te voilà, Pompon ! Viens, on rentre chez Mamie Rose." }]);
-        c.mode = 'follow'; addWordPop('Miaou !', c.x, c.y - 70, 'cat');
-      } else if (dP < 260 && (c.meowT -= dt) <= 0) { c.meowT = rnd(CAT.meow); addWordPop(c.mode === 'lost' ? 'Miaou ?' : 'Miaou !', c.x, c.y - 70, 'cat'); }
+        c.mode = 'follow'; addWordPop('Miaou !', c.x, c.y - 58, 'cat');
+      } else if (dP < 260 && (c.meowT -= dt) <= 0) { c.meowT = rnd(CAT.meow); addWordPop(c.mode === 'lost' ? 'Miaou ?' : 'Miaou !', c.x, c.y - 58, 'cat'); }
       return;
     case 'follow': {
       const [tx, ty] = crumbAt(CAT.gap);
@@ -2116,7 +2116,7 @@ function updatePompon(dt) {
         c.mode = 'home'; neighbor.cheerT = 3;
         npcShout(neighbor, 'Pompon ! Viens me voir, Tecky !');
         saveGame();
-      } else if (dP > CAT.lost) { c.mode = 'wait'; addWordPop('Miaou !', c.x, c.y - 70, 'cat'); }
+      } else if (dP > CAT.lost) { c.mode = 'wait'; addWordPop('Miaou !', c.x, c.y - 58, 'cat'); }
       return;
     }
     case 'home':                       // près de Mamie Rose, à côté de ses chaussons
@@ -2448,8 +2448,8 @@ function drawVillager(v) {
    ont été trouvés, après Pompon s'il suit aussi : crumbAt), attend s'il va trop vite (BABY.lost) et reste près de sa
    maman en arrivant (babyHome, BABY.home). Un aboiement le fait se rouler en boule un instant. Caché, il pousse un
    petit « Couic ? » quand Tecky passe près. Elle remercie : un os et des points. Sauvegardé (piq, babies). */
-const BABY = { find: 110, gap: 60, lost: 650, home: 170, walk: 110, run: 300, ball: 1.4, squeak: [2.5, 5], markY: 100, call: 0.7,
-  slots: [[-46, 16], [46, 18], [-14, 34]] };
+const BABY = { find: 110, gap: 42, lost: 650, home: 170, walk: 110, run: 300, ball: 1.4, squeak: [2.5, 5], markY: 74, call: 0.7,
+  slots: [[-34, 14], [34, 16], [-10, 28]] };
 let piq = { state: 'new' }, piquette = null, babies = [], babySeq = 0;
 const babiesLeft = () => babies.filter(b => b.mode !== 'home').length;
 function newBaby([x, y], i) {
@@ -2485,9 +2485,9 @@ function updateBaby(b, dt) {
       babyAnim(b, 'idle');
       if (dP < 300) b.dir = P.x < b.x ? 'left' : 'right';
       if (dP < BABY.find && piq.state === 'asked' && P.alpha !== 0) {
-        b.mode = 'follow'; b.seq = ++babySeq; addWordPop('Couic !', b.x, b.y - 50, 'hedgehog');
+        b.mode = 'follow'; b.seq = ++babySeq; addWordPop('Couic !', b.x, b.y - 34, 'hedgehog');
       } else if (dP < 240 && (b.squeakT -= dt) <= 0) {
-        b.squeakT = rnd(BABY.squeak); addWordPop(b.mode === 'hidden' ? 'Couic ?' : 'Couic !', b.x, b.y - 50, 'hedgehog');
+        b.squeakT = rnd(BABY.squeak); addWordPop(b.mode === 'hidden' ? 'Couic ?' : 'Couic !', b.x, b.y - 34, 'hedgehog');
       }
       return;
     case 'follow': {          // en file indienne, derrière Pompon et les petits trouvés avant lui
@@ -2495,7 +2495,7 @@ function updateBaby(b, dt) {
       const [tx, ty] = crumbAt(BABY.gap * (rank + 1) + (pompon.mode === 'follow' ? CAT.gap : 0));
       babyMove(b, tx, ty, dt);
       if (dist(b.x, b.y, piquette.x, piquette.y) < BABY.home) babyHome(b);
-      else if (dP > BABY.lost) { b.mode = 'wait'; addWordPop('Couic !', b.x, b.y - 50, 'hedgehog'); }
+      else if (dP > BABY.lost) { b.mode = 'wait'; addWordPop('Couic !', b.x, b.y - 34, 'hedgehog'); }
       return;
     }
     case 'home': {            // blotti contre sa maman, tourné vers elle
@@ -4309,6 +4309,7 @@ function endingHome() {
   // (cadrage fixe, dans la carte : la lisière n'y entre pas) ; ils arrivent d'un peu plus bas que l'écran (from)
   camX = clamp(E.alice[0] - VW / 2, 0, MAP.w * TS - VW); camY = clamp(E.alice[1] - 40 - VH / 2, 0, MAP.h * TS - VH);
   const y0 = camY + VH + E.from;
+  alice.kind = 'alice';                // au noir, elle a remis la chaussure que Tecky lui a rapportée
   alice.x = E.alice[0]; alice.y = y0; alice.dir = 'up'; alice.setAnim('walk');
   P.x = E.tecky[0]; P.y = y0 + 30; P.dir = 'up'; P.mode = 'free'; P.setAnim('walk');
   fxs = []; pops = []; rings = []; dusts = []; leaves = []; butterflies = []; drops = []; flakes = [];
@@ -4806,12 +4807,12 @@ function counterBox(i) {
 function hudCounters() {
   const c = [];
   if (treasures > 0) c.push(['item/goldbone', 42, 28, 0.8, treasures, MAP.dig.length]);
-  if (farm.state === 'asked') c.push(['hen/idle/right', 46, 58, 0.9, questHens().length - hensLeft(), questHens().length]);
+  if (farm.state === 'asked') c.push(['hen/idle/right', 46, 58, 1.3, questHens().length - hensLeft(), questHens().length]);
   if (post.state === 'asked') c.push(['item/letter', 50, 36, 0.8, letters.length - lettersLeft(), letters.length]);
-  if (rose.state === 'asked') c.push(['cat_white/idle', 46, 58, 0.9, pompon.mode === 'lost' ? 0 : 1, 1]);
+  if (rose.state === 'asked') c.push(['cat_white/idle', 46, 58, 1.2, pompon.mode === 'lost' ? 0 : 1, 1]);
   if (fete.state === 'asked') c.push(['port/balloon', 42, 35, 0.8, balls.length - ballsLeft(), balls.length]);
   if (jouets.state === 'asked') c.push(['port/toy', 42, 35, 0.8, toys.length - toysLeft(), toys.length]);
-  if (piq.state === 'asked') c.push(['hedgehog/idle', 44, 58, 1.1, babies.length - babiesLeft(), babies.length]);
+  if (piq.state === 'asked') c.push(['hedgehog/idle', 44, 58, 2.6, babies.length - babiesLeft(), babies.length]);
   return c;
 }
 function drawHUD() {

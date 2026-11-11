@@ -34,7 +34,7 @@ Animations (ANIMS[kind][nom] = (poses, fps, boucle), toutes en boucle, 4 images)
 """
 import math
 
-from spritelib import Drawing, circle, ellipse, rect, path, poly, leg, line, OUTLINE
+from spritelib import Drawing, circle, ellipse, rect, path, poly, leg, line, OUTLINE, OUTLINE_W
 
 W, H = 48, 64
 G = 60.0                      # ligne des pieds
@@ -45,7 +45,7 @@ FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-
     "neighbor": (24, 21.5, 15.5),     # chignon, lunettes, menton (elle est plus petite : tout est 3 unités plus bas)
     "leon": (24, 18.0, 15.5),         # casque, visage, barbe
     "iris": (24, 34.0, 13.6),         # le vieux Jack Russell : tête, oreilles, sourcils blancs
-    "piquette": (24, 31.0, 13.0),     # la maman hérisson : piquants, fleur, museau
+    "piquette": (24, 30.6, 14.0),     # la maman hérisson : piquants, fleur, museau
 }
 PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6", "leon": "#FDE3C2", "iris": "#DDE9F6", "piquette": "#F6E3EC"}   # fond du médaillon (Gaston : "#CFE8B0")
 
@@ -75,9 +75,10 @@ PAL = {
                  shirt="#3B6FB6", shirt_dk="#2B5290",
                  pants="#4A4F57", pants_dk="#363A40", shoe="#2B2B33", shoe_lt="#5C6168", toe="#F2C14E",
                  eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#9ED8F5"),
-    "piquette": dict(spike="#7C5536", spike_lt="#A57A50", face="#F3DFC0", face_dk="#DCC19A", paw="#5A3C24",
+    "piquette": dict(spike="#7C5536", spike_lt="#A57A50", face="#F6E3C6", face_dk="#DDBE94",
+                     paw="#C9A77C", paw_dk="#A88458", snout="#FDF1DD",
                      apron="#F28CB8", apron_dk="#D86A9A", dot="#FFFFFF", flower="#F7D154", petal="#FFFFFF",
-                     nose="#2A1E1A", eye="#2A1E1A", blush="#F2A0A0", mouth="#B8505A", tongue="#E9858B",
+                     nose="#2A1611", eye="#3E1B0F", blush="#F2A0A0", mouth="#B8505A", tongue="#E9858B",
                      sweat="#9ED8F5"),
     "iris": dict(white="#FFFDF7", white_dk="#D9CFC0", tan="#D99A52", tan_dk="#B47838", gray="#E3DED5", brow="#FBF8F2",
                  nose="#2A1E1A", eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B"),
@@ -166,6 +167,16 @@ def _palm(d, c, hx, hy, ux, uy, s, sticker=None):
     return f'<g transform="{tr}">' + line("M-0.9,-2.6 L-0.9,-1.2 M0.6,-2.7 L0.6,-1.3", c["skin_dk"], 0.6) + "</g>"
 
 
+EP = 1.6      # le bras part un peu sous l'épaule (sx, sy)
+
+
+def _epaule(sx, sy, s):
+    """L'épaule : une pente douce qui descend du cou vers le bras (s : -1 à gauche de l'image, 1 à droite), au
+    lieu d'une boule posée au coin du buste (Christophe : « des cercles moches »)."""
+    return path(f"M{sx - s * 2.6:.2f},{sy - 2.3:.2f} C{sx + s * 0.4:.2f},{sy - 2.4:.2f} {sx + s * 2.4:.2f},{sy - 0.8:.2f} "
+                f"{sx + s * 2.4:.2f},{sy + 2.4:.2f} L{sx + s * 2.3:.2f},{sy + 3.6:.2f} L{sx - s * 2.6:.2f},{sy + 3.6:.2f} Z")
+
+
 def _arm(d, c, s, sx, sy, ex, ey, hx, hy, hand="fist", front=False, band=None):
     """Bras à manche longue : épaule (sx, sy) -> coude (ex, ey) -> centre de la main (hx, hy).
     hand : 'fist' (main ronde) ou 'palm' (main ouverte) ; front : avant-bras et main devant le corps (contour
@@ -173,7 +184,8 @@ def _arm(d, c, s, sx, sy, ex, ey, hx, hy, hand="fist", front=False, band=None):
     ux, uy = _unit(hx - ex, hy - ey)
     wx, wy = hx - ux * 1.9, hy - uy * 1.9                     # poignet
     rot = math.degrees(math.atan2(uy, ux)) - 90
-    upper = [(_seg(sx, sy, ex, ey, 4.6), c["sleeve"]), (circle(sx, sy, 2.5), c["sleeve"])]   # manche, épaule
+    upper = [(_seg(sx, sy + EP, ex, ey, 4.6), c["sleeve"]), (circle(sx, sy + EP, 2.3), c["sleeve"]),
+             (_epaule(sx, sy, s), c["sleeve"])]                                               # manche, épaule
     fore = [(circle(ex, ey, 2.1), c["sleeve"]), (_seg(ex, ey, wx, wy, 4.0), c["sleeve"])]
     details = []
     for sh, col in upper:
@@ -184,7 +196,10 @@ def _arm(d, c, s, sx, sy, ex, ey, hx, hy, hand="fist", front=False, band=None):
             details.append(_palm(d, c, hx, hy, ux, uy, s, st))
         else:
             st.append((circle(hx, hy, 2.15), c["skin"]))
-        _sticker(d, st + [(_seg(sx, sy + 1.2, ex, ey, 4.6), c["sleeve"])] + fore)
+        # le contour du bras ne commence qu'un peu sous l'épaule, où il se fond : pas de trait en travers
+        k = lambda t: (sx + (ex - sx) * t, sy + EP + (ey - sy - EP) * t)
+        _sticker(d, st + [(_seg(*k(0.3), ex, ey, 4.6), c["sleeve"])] + fore)
+        d.add(_seg(sx, sy + EP, *k(0.5), 4.4), c["sleeve"], sil=False)
     else:
         if hand == "palm":
             details.append(_palm(d, c, hx, hy, ux, uy, s))
@@ -236,6 +251,14 @@ def _arms(d, c, p, sxL, sxR, sy, rest, head=None, band=None):
 
 
 # ------------------------------------------------------------------ visage
+# Le visage des humains, depuis la v2 (choix de Christophe sur reference/v2/humains_temoin.png) : de grands yeux à
+# deux reflets, comme ceux d'Alice, et un petit nez sans contour, au lieu des petits yeux en points et du nez rond cerné.
+def _nez(d, c, X, V, y, rx, ry, reflet=0.42):
+    """Le nez : une petite touche rose, sans contour (rx, ry : la taille du nez rond d'avant, dont il garde l'échelle)."""
+    d.add(ellipse(24, V(y + 0.1), rx * 0.78 * HK, ry * 0.74 * HK), c["nose"], sil=False)
+    d.add(circle(X(23.6), V(y - 0.2), reflet * 0.6 * HK), "#FFFFFF", sil=False, opacity=0.6)
+
+
 def _eyes(d, c, p, X, V, rx=1.25, ry=1.55):
     if p["happy"]:
         d.raw(line(f"M{X(18.9):.2f},{V(1.3):.2f} Q{X(20.3):.2f},{V(-0.4):.2f} {X(21.7):.2f},{V(1.3):.2f} "
@@ -244,10 +267,11 @@ def _eyes(d, c, p, X, V, rx=1.25, ry=1.55):
         d.raw(line(f"M{X(19.1):.2f},{V(0.7):.2f} Q{X(20.3):.2f},{V(1.5):.2f} {X(21.5):.2f},{V(0.7):.2f} "
                    f"M{X(26.5):.2f},{V(0.7):.2f} Q{X(27.7):.2f},{V(1.5):.2f} {X(28.9):.2f},{V(0.7):.2f}", c["eye"], 0.9))
     else:
-        lk = p["look"] * 0.55
+        lk = p.get("look", 0.0) * 0.55
         for x in (20.3, 27.7):
-            d.add(ellipse(X(x + lk), V(0.6), rx * HK, ry * HK), c["eye"], sil=False)
-            d.add(circle(X(x + lk + 0.4), V(0.0), 0.45 * HK), "#FFFFFF", sil=False)
+            d.add(ellipse(X(x + lk), V(0.5), rx * 1.32 * HK, ry * 1.36 * HK), c["eye"], sil=False)
+            d.add(circle(X(x + lk + 0.5), V(-0.35), 0.62 * HK), "#FFFFFF", sil=False)
+            d.add(circle(X(x + lk - 0.5), V(1.45), 0.27 * HK), "#FFFFFF", sil=False, opacity=0.85)
 
 
 def _brows(d, p, X, V, col, w=1.2):
@@ -391,8 +415,7 @@ def _postman(p):
                f"Q{X(26.2):.2f},{V(3.1):.2f} 24,{V(4.0):.2f} Z"), c["hair"], sil=False, edge=True)
     d.raw(line(f"M{X(20.4):.2f},{V(5.2):.2f} Q{X(21.7):.2f},{V(4.6):.2f} {X(22.9):.2f},{V(4.9):.2f} "
                f"M{X(25.1):.2f},{V(4.9):.2f} Q{X(26.3):.2f},{V(4.6):.2f} {X(27.6):.2f},{V(5.2):.2f}", c["hair_dk"], 0.5))
-    d.add(ellipse(24, V(2.7), 1.6 * k, 1.3 * k), c["nose"], sil=False, edge=True)
-    d.add(circle(X(23.5), V(2.3), 0.42 * k), "#FFFFFF", sil=False, opacity=0.7)
+    _nez(d, c, X, V, 2.7, 1.6, 1.3)
     if p["sweat"]:
         _sweat(d, c, X, V)
     return d
@@ -470,8 +493,7 @@ def _leon(p):
     _brows(d, p, X, V, c["hair_dk"], 1.3)
     _blush(d, c, X, V)
     _mouth(d, c, p, X, V, 5.6)
-    d.add(ellipse(24, V(2.7), 1.6 * k, 1.3 * k), c["nose"], sil=False, edge=True)
-    d.add(circle(X(23.5), V(2.3), 0.42 * k), "#FFFFFF", sil=False, opacity=0.7)
+    _nez(d, c, X, V, 2.7, 1.6, 1.3)
     if p["sweat"]:
         _sweat(d, c, X, V)
     return d
@@ -566,81 +588,117 @@ def _spiky(cx, cy, rx, ry, a0, a1, n, out=1.3):
 
 
 def _piquette(p):
-    """Maman Piquette, la maman hérisson de la forêt : debout, de face, piquants bruns tout autour, frimousse et ventre
-    crème, museau pointu, tablier rose à pois, fleur jaune à l'oreille. Mêmes poses que les autres personnages (bras
-    courts : salut, joie, mains sur les joues, geste qui accompagne la parole)."""
+    """Maman Piquette, la maman hérisson de la forêt : debout, de face, un manteau de piquants bruns tout autour,
+    frimousse et ventre crème, grands yeux, truffe ronde au bout d'un petit museau, tablier rose à pois et à
+    bretelles, fleur à l'oreille. Mêmes poses que les autres personnages (bras courts : salut, joie, mains sur les
+    joues, geste qui accompagne la parole). Dessinée à la taille des gens (pour son portrait), elle est réduite dans
+    le jeu (SCALE) : un peu plus haute que Tecky, bien plus petite qu'Alice.
+    Ses bras sortent de derrière le corps, sans rond cerné à l'épaule ; seules les mains posées sur les joues
+    passent devant, avec leur contour."""
     c = PAL["piquette"]
     d = Drawing(W, H)
     L = p["lift"]
     Y = lambda v: v + p["bob"] - L
     T = lambda v: v - L
-    k = max(0.6, 1 - L / 10)
-    d.under.append(f'<ellipse cx="24" cy="{G + 0.2}" rx="{12 * k:.2f}" ry="{2.4 * k:.2f}" fill="#000" opacity="0.2"/>')
-    # piquants, derrière tout le corps
-    d.add(path(_spiky(24, Y(42), 13.5, 15.5, 160, 380, 11)), c["spike"])
-    d.add(ellipse(24, Y(39), 10.5, 11.5), c["spike_lt"], sil=False, opacity=0.6)
+    k = max(0.6, 1 - L / 10) * SCALE.get("piquette", 1)       # l'ombre, hors du dessin réduit : à la taille du jeu
+    d.under.append(f'<ellipse cx="24" cy="{G + 0.2}" rx="{13.5 * k:.2f}" ry="{2.8 * k:.2f}" fill="#000" opacity="0.2"/>')
+    # le manteau de piquants, derrière tout le corps : de grosses dents régulières, plus clair au milieu
+    d.add(path(_spiky(24, Y(41), 14.2, 16.0, 150, 390, 10, 1.24)), c["spike"])
+    d.add(ellipse(24, Y(38.5), 11.2, 12.2), c["spike_lt"], sil=False, opacity=0.6)
+
+    # les bras, courts : ils sortent de derrière le corps (épaule cachée), la main ronde au bout
+    hy = Y(31.5) + p["nod"] * 0.6
+    devant = []
+    for s in (-1, 1):
+        sx, sy = 24 + s * 8.4, Y(43.0)
+        if p["cheer"] > 0:
+            hx, hy_ = 24 + s * 14.2, Y(34.0 + (1 - p["cheer"]) * 5)
+        elif p["cheeks"]:
+            devant.append((s, 24 + s * 9.6, Y(45.0), 24 + s * 7.6, hy + 4.2))
+            continue
+        elif s == -1 and p["wave"] > 0:
+            hx, hy_ = 9.6 + math.sin(math.radians(p["wave_a"])) * 2.4, Y(35.0)
+        elif s == 1 and p["gesture"] > 0:
+            hx, hy_ = 36.6 + p["gesture"] * 1.4, Y(44.5 - p["gesture"] * 3.4)
+        else:
+            hx, hy_ = 24 + s * 11.6, Y(48.0)
+        d.add(_seg(sx, sy, hx, hy_, 3.8), c["face_dk"])
+        d.add(circle(hx, hy_, 2.5), c["face_dk"])
+
     # pieds, ventre, tablier
-    for x in (19.6, 28.4):
-        d.add(ellipse(x, T(G - 1.2), 3.2, 1.8), c["paw"])
+    for x in (19.2, 28.8):
+        d.add(ellipse(x, T(G - 1.3), 3.6, 2.1), c["paw"])
+        d.raw(line(f"M{x - 1.0:.2f},{T(G - 1.9):.2f} L{x - 1.0:.2f},{T(G - 0.3):.2f} M{x + 1.0:.2f},{T(G - 1.9):.2f} L{x + 1.0:.2f},{T(G - 0.3):.2f}",
+                   c["paw_dk"], 0.7))
     d.add(ellipse(24, Y(47.5), 10.2 + p["breath"], 11.2), c["face"])
-    apron = path(f"M16.6,{Y(43)} L31.4,{Y(43)} Q33.6,{Y(52)} 31.6,{Y(57.4)} Q24,{Y(59.4)} 16.4,{Y(57.4)} Q14.4,{Y(52)} 16.6,{Y(43)} Z")
+    for s in (-1, 1):                                    # les bretelles du tablier, qui passent derrière la tête
+        d.add(poly([(24 + s * 6.9, Y(43.6)), (24 + s * 4.5, Y(43.6)), (24 + s * 1.9, Y(38.0)), (24 + s * 4.3, Y(38.0))]),
+              c["apron"], sil=False, edge=True)
+    apron = path(f"M17.0,{Y(43)} L31.0,{Y(43)} Q33.6,{Y(52)} 31.6,{Y(57.4)} Q24,{Y(59.4)} 16.4,{Y(57.4)} Q14.4,{Y(52)} 17.0,{Y(43)} Z")
     d.add(apron, c["apron"], edge=True)
     d.clip("apron", [apron])
     for x, y in ((19, 47), (25, 46), (29.6, 50), (21, 53), (27, 55.4), (17.6, 56)):
         d.add(circle(x, Y(y), 0.9), c["dot"], sil=False, clip="apron")
     d.add(rect(20.6, Y(49.6), 6.8, 4.6, 1.2), c["apron_dk"], sil=False, edge=True)      # poche
-    d.raw(line(f"M16.4,{Y(43.4)} Q24,{Y(41.2)} 31.6,{Y(43.4)}", c["apron_dk"], 1.2))    # cordon
-    # bras courts
-    def paw(x, y):
-        d.add(ellipse(x, y, 2.4, 2.6), c["face_dk"], edge=True)
-    for s, sx in ((-1, 14.6), (1, 33.4)):
-        if p["cheer"] > 0:
-            paw(24 + s * 13.2, Y(33.5))
-        elif p["cheeks"]:
-            paw(24 + s * 6.8, Y(34.5))
-        elif s == -1 and p["wave"] > 0:
-            paw(10.6 + math.sin(math.radians(p["wave_a"])) * 2, Y(35))
-        elif s == 1 and p["gesture"] > 0:
-            paw(35 + p["gesture"] * 1.4, Y(43.5 - p["gesture"] * 3))
-        else:
-            paw(sx, Y(46.5))
-    # tête : frimousse crème, oreilles, fleur
-    hy = Y(31.5) + p["nod"] * 0.6
+    d.add(rect(14, Y(42.6), 20, 1.9), c["apron_dk"], sil=False, clip="apron")           # ourlet du haut
+
+    # tête : oreilles rondes, frimousse crème plus large aux joues, bord de piquants sur le front
     for s in (-1, 1):
-        d.add(circle(24 + s * 7.0, hy - 6.2, 2.1), c["face_dk"])
-    d.add(ellipse(24, hy, 8.2, 7.4), c["face"])
-    d.add(ellipse(24, hy + 3.0, 3.4, 2.8), "#FBEBD3", sil=False)                         # museau
-    d.add(ellipse(24, hy + 2.6, 1.7, 1.3), c["nose"], sil=False)
-    d.add(circle(23.5, hy + 2.2, 0.4), "#FFFFFF", sil=False, opacity=0.8)
+        d.add(circle(24 + s * 6.9, hy - 5.9, 2.5), c["face_dk"])
+        d.add(circle(24 + s * 6.9, hy - 5.7, 1.2), c["blush"], sil=False, opacity=0.8)
+    tete = path(f"M24,{hy - 7.6:.2f} C28.8,{hy - 7.6:.2f} 32.7,{hy - 4.4:.2f} 32.7,{hy:.2f} C32.7,{hy + 3.4:.2f} 31.9,{hy + 5.6:.2f} "
+                f"30.4,{hy + 6.7:.2f} C28.6,{hy + 7.7:.2f} 26.4,{hy + 7.9:.2f} 24,{hy + 7.9:.2f} C21.6,{hy + 7.9:.2f} 19.4,{hy + 7.7:.2f} "
+                f"17.6,{hy + 6.7:.2f} C16.1,{hy + 5.6:.2f} 15.3,{hy + 3.4:.2f} 15.3,{hy:.2f} C15.3,{hy - 4.4:.2f} 19.2,{hy - 7.6:.2f} 24,{hy - 7.6:.2f} Z")
+    d.add(tete, c["face"])
+    d.clip("pqtete", [tete])
+    d.add(poly([(14, hy - 9), (34, hy - 9), (34, hy - 4.6), (31.2, hy - 6.2), (28.8, hy - 4.6), (26.4, hy - 6.4), (24, hy - 4.8),
+                (21.6, hy - 6.4), (19.2, hy - 4.6), (16.8, hy - 6.2), (14, hy - 4.6)]), c["spike"], sil=False, clip="pqtete")
+    # le menton : un trait, pour détacher la tête du ventre de la même couleur
+    d.raw(line(f"M17.3,{hy + 6.5:.2f} C19.4,{hy + 7.8:.2f} 21.6,{hy + 7.9:.2f} 24,{hy + 7.9:.2f} C26.4,{hy + 7.9:.2f} 28.6,{hy + 7.8:.2f} "
+               f"30.7,{hy + 6.5:.2f}", OUTLINE, 1.1))
+    d.add(ellipse(24, hy + 3.6, 3.7, 3.0), c["snout"], sil=False)                        # museau
     for a in range(5):                                                                  # fleur à l'oreille droite
         r = math.radians(a * 72 - 90)
-        d.add(circle(31.4 + 1.6 * math.cos(r), hy - 7.6 + 1.6 * math.sin(r), 1.3), c["petal"], sil=False, edge=True)
-    d.add(circle(31.4, hy - 7.6, 1.0), c["flower"], sil=False, edge=True)
-    # yeux, joues, bouche
+        d.add(circle(31.2 + 1.7 * math.cos(r), hy - 7.5 + 1.7 * math.sin(r), 1.4), c["petal"], sil=False, edge=True)
+    d.add(circle(31.2, hy - 7.5, 1.1), c["flower"], sil=False, edge=True)
+
+    # yeux (blanc, gros iris sombre, deux reflets), joues, truffe, bouche
     q = p["worry"]
     for s in (-1, 1):
-        x, y = 24 + s * 3.4, hy - 1.2
+        x, y = 24 + s * 3.9, hy - 0.5
         if p["happy"]:
-            d.raw(line(f"M{x - 1.3:.2f},{y + 0.5:.2f} Q{x:.2f},{y - 1.0:.2f} {x + 1.3:.2f},{y + 0.5:.2f}", c["eye"], 1.0))
+            d.raw(line(f"M{x - 1.9:.2f},{y + 0.7:.2f} Q{x:.2f},{y - 1.9:.2f} {x + 1.9:.2f},{y + 0.7:.2f}", c["eye"], 1.1))
         elif p["blink"] > 0.5:
-            d.raw(line(f"M{x - 1.2:.2f},{y:.2f} Q{x:.2f},{y + 0.9:.2f} {x + 1.2:.2f},{y:.2f}", c["eye"], 0.9))
+            d.raw(line(f"M{x - 1.8:.2f},{y:.2f} Q{x:.2f},{y + 1.5:.2f} {x + 1.8:.2f},{y:.2f}", c["eye"], 1.0))
         else:
-            lk = p["look"] * 0.5
-            d.add(ellipse(x + lk, y, 1.2, 1.5), c["eye"], sil=False)
-            d.add(circle(x + lk + 0.4, y - 0.5, 0.42), "#FFFFFF", sil=False)
+            lk = p["look"] * 0.45
+            d.add(ellipse(x, y, 2.15, 2.6), "#FFFFFF", sil=False)
+            d.raw(f'<ellipse cx="{x:.2f}" cy="{y:.2f}" rx="2.15" ry="2.6" fill="none" stroke="{OUTLINE}" stroke-width="0.8"/>')
+            ix = x - s * 0.2 + lk
+            d.add(ellipse(ix, y + 0.3, 1.5, 1.9), c["eye"], sil=False)
+            d.add(circle(ix + 0.4, y - 0.5, 0.6), "#FFFFFF", sil=False)
+            d.add(circle(ix - 0.5, y + 1.1, 0.25), "#FFFFFF", sil=False, opacity=0.85)
         if q:      # sourcils inquiets : le bout intérieur remonte
-            d.raw(line(f"M{x - s * 1.4:.2f},{y - 3.0 - q * 0.7:.2f} L{x + s * 1.4:.2f},{y - 2.2:.2f}", c["eye"], 0.8))
-        d.add(ellipse(24 + s * 5.6, hy + 2.6, 1.7, 1.0), c["blush"], sil=False, opacity=0.7)
+            d.raw(line(f"M{x - s * 1.5:.2f},{y - 3.9 - q * 0.5:.2f} L{x + s * 1.6:.2f},{y - 3.2:.2f}", c["eye"], 0.9))
+        d.add(ellipse(24 + s * 6.3, hy + 3.3, 1.8, 1.1), c["blush"], sil=False, opacity=0.7)
+    d.add(ellipse(24, hy + 2.3, 2.0, 1.5), c["nose"], sil=False)
+    d.add(ellipse(23.3, hy + 1.8, 0.65, 0.35), "#FFFFFF", sil=False, opacity=0.85)
     m = p["mouth"]
     if p["happy"] or m > 0.05:
-        mm = max(m, 0.45 if p["happy"] else 0)
-        d.add(ellipse(24, hy + 5.6 + mm * 0.4, 1.3 + mm * 0.4, 0.4 + mm * 1.0), c["mouth"], sil=False, edge=True)
+        mm = max(m, 0.5 if p["happy"] else 0)
+        d.add(ellipse(24, hy + 5.4 + mm * 0.4, 1.4 + mm * 0.4, 0.45 + mm * 1.0), c["mouth"], sil=False, edge=True)
+        if mm > 0.5:
+            d.add(ellipse(24, hy + 5.9 + mm * 0.5, 0.9, 0.4), c["tongue"], sil=False)
     elif q > 0.3:
-        d.raw(line(f"M22.6,{hy + 6.0:.2f} Q24,{hy + 5.2:.2f} 25.4,{hy + 6.0:.2f}", c["eye"], 0.7))
-    else:
-        d.raw(line(f"M22.6,{hy + 5.0:.2f} Q24,{hy + 6.0:.2f} 25.4,{hy + 5.0:.2f}", c["eye"], 0.7))
+        d.raw(line(f"M24,{hy + 3.8:.2f} L24,{hy + 4.8:.2f} M22.4,{hy + 5.9:.2f} Q24,{hy + 4.6:.2f} 25.6,{hy + 5.9:.2f}", c["eye"], 0.8))
+    else:          # le sourire, en deux petites vagues sous la truffe
+        d.raw(line(f"M24,{hy + 3.8:.2f} L24,{hy + 4.9:.2f} M21.6,{hy + 4.6:.2f} Q22.8,{hy + 6.0:.2f} 24,{hy + 4.9:.2f} "
+                   f"Q25.2,{hy + 6.0:.2f} 26.4,{hy + 4.6:.2f}", c["eye"], 0.8))
+    for s, sx, sy, hx, hy_ in devant:                    # mains sur les joues : devant le visage, avec leur contour
+        _sticker(d, [(circle(sx, sy, 1.5), c["face_dk"]), (_seg(sx, sy, hx, hy_, 3.0), c["face_dk"]),
+                     (ellipse(hx, hy_, 2.5, 2.8), c["face_dk"])], 1.1)
     if p["sweat"]:
-        x, y = 31.2, hy - 2.6
+        x, y = 31.6, hy - 2.4
         d.add(path(f"M{x},{y - 1.8} Q{x + 1.4},{y + 0.4} {x},{y + 1.1} Q{x - 1.4},{y + 0.4} {x},{y - 1.8} Z"),
               c["sweat"], sil=False, edge=True)
     return d
@@ -729,7 +787,7 @@ def _neighbor(p):
     _eyes(d, c, p, X, V, 1.1, 1.4)
     _blush(d, c, X, V, 3.6)
     _mouth(d, c, p, X, V, 5.6, 0.85)
-    d.add(ellipse(24, V(2.9), 1.15 * k, 0.95 * k), c["nose"], sil=False, edge=True)
+    _nez(d, c, X, V, 2.9, 1.15, 0.95, 0)
     for x in (20.3, 27.7):
         d.raw(f'<circle cx="{X(x):.2f}" cy="{V(0.6):.2f}" r="{2.55 * k:.2f}" fill="{c["lens"]}" fill-opacity="0.18" '
               f'stroke="{OUTLINE}" stroke-width="0.7"/>')
@@ -817,14 +875,19 @@ def portrait_states(kind):
     return [P(), P(blink=1), P(happy=True), P(worry=1, sweat=kind == "neighbor")]
 
 
-SCALE = {"iris": 0.84}             # Iris, un petit chien : réduit autour de ses pieds (pas son portrait)
+# Iris, un petit chien, et Maman Piquette, un hérisson (un peu plus haute que Tecky, bien plus petite qu'Alice : à la
+# taille des gens, elle faisait celle d'Alice) : réduits autour de leurs pieds, pas dans leur portrait.
+SCALE = {"iris": 0.84, "piquette": 0.62}
+CONTOUR = {"piquette"}             # ceux dont le contour est épaissi d'autant, pour garder celui des autres sprites
+                                   # (Iris, peu réduit, garde le sien)
 
 
 def frames(kind, anim):
     """SVG des images d'une animation (vue de face)."""
     k = SCALE.get(kind, 1)
     tr = f"translate(24 {G}) scale({k}) translate(-24 {-G})" if k != 1 else ""
-    return [front(kind, p).svg(transform=tr) for p in ANIMS[kind][anim][0]]
+    w = OUTLINE_W / k if kind in CONTOUR else OUTLINE_W
+    return [front(kind, p).svg(transform=tr, outline_w=w) for p in ANIMS[kind][anim][0]]
 
 
 # ================================================================== la lettre perdue

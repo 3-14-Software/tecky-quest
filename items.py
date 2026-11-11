@@ -90,14 +90,14 @@ def hairclip(d):
 
 
 def shoe(d):
-    """Petite chaussure rose à bride (Alice finit pieds nus…)."""
+    """Petite chaussure rouge à bride : celle qu'Alice porte (alice2.py), perdue dans la forêt."""
     d.add(path("M6,24 Q5,16.5 10.5,15.8 L14.5,15.8 Q16.5,19.5 21,18.8 Q27.5,18 28,22.4 Q28.2,25 26,25 L8,25 Q6,25 6,24 Z"),
-          "#F4A7C3")
-    d.add(rect(5.4, 24.2, 23.4, 2.6, 1.3), "#DE85A8")
-    d.add(ellipse(12.4, 17.2, 3.4, 1.4), "#B8505A", sil=False)
-    d.raw(line("M10.6,18.4 Q15.6,13.4 20,18.2", "#C9658E", 1.8))
+          "#DB352C")
+    d.add(rect(5.4, 24.2, 23.4, 2.6, 1.3), "#B02620")
+    d.add(ellipse(12.4, 17.2, 3.4, 1.4), "#7C1F1F", sil=False)
+    d.raw(line("M10.6,18.4 Q15.6,13.4 20,18.2", "#B02620", 1.8))
     d.add(circle(20, 18.2, 1.2), "#FBE36A", sil=False, edge=True)
-    d.add(ellipse(23.5, 20.4, 2.2, 0.9, "rotate(-15 23.5 20.4)"), "#F9C6D9", sil=False)
+    d.add(ellipse(23.5, 20.4, 2.2, 0.9, "rotate(-15 23.5 20.4)"), "#F2847C", sil=False)
 
 
 def plush(d):
@@ -326,17 +326,23 @@ def fx_heart():
 
 
 def fx_footprint():
-    """Empreinte de pied nu d'Alice (16x16, orteils vers le haut ; le jeu la tourne dans le sens de la piste).
-    2 images : pied gauche, pied droit. Piste d'odeur que Tecky fait apparaître en flairant."""
+    """Empreintes d'Alice (16x16, la pointe vers le haut ; le jeu les tourne dans le sens de la piste). Elle a perdu
+    une chaussure : 2 images, le pied gauche chaussé (la semelle et, détaché, le petit talon) et le pied droit nu
+    (la plante et les cinq orteils), comme sur ses sprites « alice1 ». Piste d'odeur que Tecky fait apparaître en
+    flairant."""
     out = []
-    for flip in (1, -1):
-        d = Drawing(16, 16)
-        tr = f"translate(8 0) scale({flip} 1) translate(-8 0)"
-        d.add(path("M6.2,14.6 C4.4,14.4 4.2,11.6 4.8,9.4 C5.4,7.2 6.4,6 8.2,6 C10,6 10.8,7.6 10.4,9.8 "
-                   "C10,12 9.2,13.4 8.6,14 C8,14.6 7.2,14.7 6.2,14.6 Z", tr), "#FFE9A8")
-        for x, y, r in ((4.6, 4.6, 1.15), (6.4, 3.4, 1.05), (8.1, 3.1, 0.95), (9.6, 3.6, 0.85), (10.8, 4.6, 0.75)):
-            d.add(circle(x, y, r, tr), "#FFE9A8")
-        out.append(d.svg())
+    d = Drawing(16, 16)                                  # la chaussure
+    d.add(path("M7.6,10.2 C5.6,10.2 4.6,8.2 4.8,6.0 C5.0,3.6 6.2,2.2 7.9,2.2 C9.8,2.2 10.8,3.8 10.8,6.0 "
+               "C10.8,8.2 9.6,10.2 7.6,10.2 Z"), "#FFE9A8")
+    d.add(path("M6.0,11.6 L9.6,11.6 C9.9,13.2 9.3,14.6 7.8,14.6 C6.3,14.6 5.7,13.2 6.0,11.6 Z"), "#FFE9A8")
+    out.append(d.svg())
+    d = Drawing(16, 16)                                  # le pied nu
+    tr = "translate(8 0) scale(-1 1) translate(-8 0)"
+    d.add(path("M6.2,14.6 C4.4,14.4 4.2,11.6 4.8,9.4 C5.4,7.2 6.4,6 8.2,6 C10,6 10.8,7.6 10.4,9.8 "
+               "C10,12 9.2,13.4 8.6,14 C8,14.6 7.2,14.7 6.2,14.6 Z", tr), "#FFE9A8")
+    for x, y, r in ((4.6, 4.6, 1.15), (6.4, 3.4, 1.05), (8.1, 3.1, 0.95), (9.6, 3.6, 0.85), (10.8, 4.6, 0.75)):
+        d.add(circle(x, y, r, tr), "#FFE9A8")
+    out.append(d.svg())
     return out
 
 

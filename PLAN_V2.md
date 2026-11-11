@@ -182,8 +182,27 @@ Test : `tests/heros.py` (mêmes noms d'animations qu'avant, pieds sur l'origine,
 
 Reste à faire :
 
-- **Les personnages secondaires** (villageois, fermier, facteur, Mamie Rose, Léon, Iris, animaux) gardent leur
-  dessin d'avant : à reprendre dans le même style, sans doute avec le lot 4.
+- **Les personnages secondaires** : passe du 11 novembre 2026, après que Christophe a joué (« c'est ok ») :
+  - les chats (roux, noir, Pompon) et l'écureuil dépassaient le nouveau Tecky : réduits (`critters.SCALE`), un chat
+    est maintenant un peu plus petit que lui ;
+  - Alice : petites chaussures rouges à bride et socquettes (choisies parmi trois sur
+    `reference/v2/humains_temoin.png`), et rapetissée (`alice2.ECH` 0,59 : 41 unités, une enfant de 5 ans à côté
+    des adultes) ; la chaussure qu'elle perd dans la forêt est du même rouge ; elle a donc un pied nu quand Tecky la
+    retrouve (sprites `alice1`), et la piste du flair alterne une empreinte de chaussure et une de pied nu ; elle
+    remet sa chaussure pour la scène de fin ;
+  - les autres humains (fermier, facteur, Mamie Rose, Léon, villageois) : grands yeux à deux reflets, comme ceux
+    d'Alice, et petit nez sans contour ; épaules en pente douce au lieu de boules ; tabliers de la fleuriste et de
+    la marchande refaits (bretelles, bavette) ;
+  - après ses remarques sur les captures : les cuisses des chats et de l'écureuil ne sont plus des ronds cernés
+    (fondues dans le corps, un pli, comme Tecky) ; Alice a un cou, et ses cheveux de derrière, assombris, ne font
+    plus une barre sous son menton.
+  - les animaux (le même jour, trois sous-agents en parallèle, un par module, relus puis intégrés) : vaches et veau
+    redessinés (`cows.py` : vraies proportions, tête de profil, grands yeux, pis, cloche) ; poules redessinées et
+    réduites, canards réduits et retouchés (`hens.py`, `ducks.py`) ; Maman Piquette redessinée et ramenée à 26
+    unités de haut, ses petits à 14 x 9 (`npcs.py`, `herissons.py`) ; bulles, compteurs du HUD, file des petits et
+    boîtes des vaches réglés dans `game.js`.
+  Restent dans leur dessin d'avant : Iris (le vieux Jack Russell), les papillons, les véhicules. À côté du nouveau
+  Tecky, Alice paraît maintenant petite : il lui arrive à la taille.
 - **Le museau dans les murs** : de profil, Tecky dépasse sa boîte de collision de 22 px (20 avant). Collé à un mur
   ou à un tronc, son museau passe dessus, un peu plus qu'avant. À revoir avec les obstacles du lot 4.
 - Vu par Christophe sur des captures en 1920 x 1080 et sur les GIF (`reference/v2/tecky_v2_marche.gif`,

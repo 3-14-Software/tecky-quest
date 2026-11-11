@@ -4,7 +4,7 @@ Canards de la rivière (cellule 32x32, de profil tournés vers la droite ; la vu
 - "duck" : colvert mâle (tête vert bouteille, fin collier blanc, poitrine brun-roux, corps gris clair,
   croupion noir avec sa petite boucle, bec jaune, pattes orange en vol).
 - "duck_f" : cane (brune mouchetée, sourcil et calotte foncés, bec orange-brun, petit miroir bleu sur l'aile).
-- "duckling" : caneton (duvet jaune, environ 57 % de la longueur d'un adulte, bec orange).
+- "duckling" : caneton (duvet jaune, environ la moitié de la longueur d'un adulte, bec orange).
 
 Sur l'eau, la ligne de flottaison est à y = 24 (G) : origine conseillée (16, 24), point que le jeu pose sur l'eau.
 Tout ce qui est sous la ligne est coupé (on ne voit pas les pattes) ; un liseré d'écume clair cache la coupe,
@@ -41,7 +41,10 @@ KINDS = {   # couleurs par espèce
     "duckling": dict(down="#F8D84E", shade="#E8B62E", light="#FFF1A6", bill="#F39A3A", blush="#F28CB8"),
 }
 ADULTS = ("duck", "duck_f")
-DUCKLING_SCALE = 0.92   # caneton : environ 56 % de la longueur d'un adulte (bec à queue)
+# Ils sont dessinés grands puis réduits autour du point posé sur l'eau (16, G), le contour compensé, comme les bêtes
+# de critters.py. Leur taille se juge à côté de Tecky (34 x 22 unités depuis la v2) : un colvert sur l'eau fait
+# environ 20 x 14 (28 x 19 avant, presque sa longueur), un caneton la moitié d'un adulte.
+SCALE = {"adult": 0.69, "duckling": 0.56}
 
 
 # ================================================================== outils
@@ -49,15 +52,21 @@ class _Duck(Drawing):
     """Dessin d'un canard : l'oiseau est un groupe (transformé : roulis, plongeon) coupé à la ligne d'eau ;
     `under` (ombre, ronds) et `over` (écume, éclaboussures) restent fixes, sous et sur l'oiseau."""
 
-    def __init__(self, water=True):
+    def __init__(self, water=True, k=1.0):
         super().__init__(W, H)
         self.water = water
         self.over = []
-        self.tr = ""
-        self.ow = OUTLINE_W   # épaisseur du contour (compensée si le groupe est réduit : caneton)
+        self.tr = ""            # roulis, plongeon : dans le repère du dessin, avant la réduction
+        self.k = k              # réduction autour de (16, G) ; under et over sont déjà à l'échelle de l'écran
+        self.ow = OUTLINE_W / k   # épaisseur du contour, compensée
+
+    def ecran(self, x, y):
+        """Point du dessin (après roulis) -> écran."""
+        return 16 + (x - 16) * self.k, G + (y - G) * self.k
 
     def svg(self, transform=None, outline=OUTLINE, outline_w=None):
         tr = self.tr if transform is None else transform
+        tr = f"translate(16 {G}) scale({self.k}) translate(-16 -{G}) {tr}".strip()
         s = super().svg(tr, outline, self.ow if outline_w is None else outline_w)
         if self.water:
             s = s.replace("<defs>", f'<defs><clipPath id="above"><rect x="-8" y="-8" width="{W + 16}" '
@@ -94,15 +103,6 @@ def _smooth(pts):
     return path(d + "Z")
 
 
-def _sticker(d, shapes, fill, w=OUTLINE_W):
-    """Formes posées PAR-DESSUS ce qui précède, avec leur propre contour (aile proche en vol)."""
-    for s in shapes:
-        d.raw(s.replace('fill="%F%"', f'fill="{OUTLINE}" stroke="{OUTLINE}" stroke-width="{w:.2f}" '
-                                      f'stroke-linejoin="round"'))
-    for s in shapes:
-        d.raw(s.replace('fill="%F%"', f'fill="{fill}"'))
-
-
 def _eye(d, x, y, r=1.2):
     """Œil rond tout noir avec reflet (comme les poules)."""
     d.add(circle(x, y, r), OUTLINE, sil=False)
@@ -131,12 +131,13 @@ def _water(d, span, ring=None, splash=0.0, wake=0.0):
     des petites vagues aux deux bouts de l'écume."""
     x0, x1 = max(span[0], 4.5), min(span[1], 27.5)   # les vaguelettes et gouttes restent dans le cadre
     cx, hw = (x0 + x1) / 2, (x1 - x0) / 2
-    d.under.append(f'<ellipse cx="{cx:.2f}" cy="{G + 1.1:.2f}" rx="{hw + 0.6:.2f}" ry="1.7" fill="{DEEP}" '
+    kd = 0.45 + 0.55 * d.k                            # le décor rétrécit avec l'oiseau, un peu moins que lui
+    d.under.append(f'<ellipse cx="{cx:.2f}" cy="{G + 1.1 * kd:.2f}" rx="{hw + 0.6:.2f}" ry="{1.7 * kd:.2f}" fill="{DEEP}" '
                    f'opacity="0.35"/>')
     if ring is not None:                              # deux ronds décalés d'une demi-phase : boucle continue
         for j in (0.0, 0.5):
             u = (ring + j) % 1.0
-            rx, ry = min(hw + 2.2 + 4.2 * u, cx - 1.5, 30.5 - cx), 1.5 + 0.9 * u
+            rx, ry = min(hw + (2.2 + 4.2 * u) * kd, cx - 1.5, 30.5 - cx), (1.5 + 0.9 * u) * kd
             d.under.append(f'<ellipse cx="{cx:.2f}" cy="{G + 0.3:.2f}" rx="{rx:.2f}" ry="{ry:.2f}" fill="none" '
                            f'stroke="{FOAM}" stroke-width="0.8" opacity="{0.75 * (1 - u):.2f}"/>')
     # écume : un fuseau clair qui cache la coupe, et deux petites vagues qui ondulent aux bouts
@@ -151,9 +152,9 @@ def _water(d, span, ring=None, splash=0.0, wake=0.0):
     if splash > 0:                                    # gouttes qui jaillissent des deux côtés
         for k, (dx, h, r) in enumerate(((-1.0, 4.2, 0.75), (-0.6, 6.0, 0.6), (-0.2, 3.4, 0.55),
                                          (0.35, 5.2, 0.7), (0.8, 3.0, 0.6), (1.1, 4.6, 0.5))):
-            x = min(max(cx + dx * (hw + 1.2 + 1.6 * splash), 2.0), 30.0)
-            y = G - 0.6 - h * splash
-            d.over.append(f'<circle cx="{x:.2f}" cy="{y:.2f}" r="{r * (0.6 + 0.6 * splash):.2f}" fill="#FFFFFF" '
+            x = min(max(cx + dx * (hw + (1.2 + 1.6 * splash) * kd), 2.0), 30.0)
+            y = G - 0.6 - h * splash * kd
+            d.over.append(f'<circle cx="{x:.2f}" cy="{y:.2f}" r="{r * (0.6 + 0.6 * splash) * kd:.2f}" fill="#FFFFFF" '
                           f'stroke="{FOAM}" stroke-width="0.4" opacity="{0.6 + 0.35 * splash:.2f}"/>')
 
 
@@ -207,7 +208,7 @@ def _head(d, C, hx, hy, r=HEAD_R, ang=0.0, open_=0.0):
         d.raw(line(f"M{hx - r + 0.6:.2f},{hy + 0.4:.2f} Q{hx:.2f},{hy - 0.4:.2f} {hx + r - 0.4:.2f},{hy - 0.5:.2f}",
                    C["crown"], 0.9))
     _bill(d, C, L, r, open_)
-    _eye(d, *L(1.3, -0.6), 1.2)
+    _eye(d, *L(1.2, -0.7), 1.5)
     return head
 
 
@@ -260,10 +261,12 @@ def _body_marks(d, C, cid, cx, cy, rx, ry):
 
 
 def _folded_wing(d, C):
-    """Aile repliée sur le haut du flanc : pointe foncée vers l'arrière, petit miroir bleu bordé de blanc."""
+    """Aile repliée sur le haut du flanc : pointe foncée vers l'arrière, petit miroir bleu bordé de blanc. Elle se
+    fond dans le corps : pas de contour, un pli le long de son bord du bas."""
     wing = _smooth([(20.2, 17.8), (15.2, 15.8), (9.0, 17.2), (7.4, 18.4), (11.8, 20.0), (17.0, 20.0)])
     d.clip("dwing", [wing])
-    d.add(wing, C["wing"], sil=False, edge=True)
+    d.add(wing, C["wing"], sil=False)
+    d.raw(line("M19.6,18.5 Q17.4,20.2 13.8,20.1 Q10.4,20.0 7.9,18.7", C["tip"], 0.9))
     d.add(_smooth([(11.6, 16.4), (7.0, 17.0), (6.6, 19.4), (10.4, 19.8), (12.0, 18.6)]), C["tip"], sil=False,
           clip="dwing")
     d.add(poly([(12.0, 18.8), (15.0, 19.0), (14.8, 19.9), (12.0, 19.7)]), C["spec"], sil=False)
@@ -294,11 +297,11 @@ def _adult(C, tilt=0.0, bob=0.0, rock=0.0, stretch=0.0, nod=0.0, dip=0.0, tuck=0
     rock : roulis (degrés) ; stretch : cou tendu (cancan) ; nod : tête baissée ; dip : tête qui plonge
     (degrés, autour de la base du cou) ; tuck : cou rentré (0..1) ; open_ : bec ouvert ;
     wag : frétillement de la queue (degrés) ; paddle : phase des pattes qui pagaient en l'air (tête sous l'eau)."""
-    d = _Duck(water=True)
+    d = _Duck(water=True, k=SCALE["adult"])
     pivot = (15.0, 22.6)
     a = tilt + rock
     d.tr = f"translate(0 {bob:.2f}) rotate({a:.1f} {pivot[0]} {pivot[1]})"
-    tp = lambda x, y: (lambda p: (p[0], p[1] + bob))(_rot(x, y, *pivot, a))
+    tp = lambda x, y: (lambda p: d.ecran(p[0], p[1] + bob))(_rot(x, y, *pivot, a))
     cx, cy, rx, ry = BODY
     k = 1 - 0.45 * tuck
     hx, hy = HEAD[0] + 1.0 * stretch, HEAD[1] - 0.5 * stretch + 1.0 * nod
@@ -347,7 +350,7 @@ def _flap_wing(theta, span, root, far=False, chord=1.0):
 def _flying(C, theta=-100.0, span=11.0, chord=1.0, bob=0.0):
     """Adulte en vol (pas d'eau) : corps centré vers (14, 18), oiseau entier (queue à bec) centré sur x = 16 ;
     cou tendu, pattes repliées, ailes qui battent (theta, span, chord : voir _flap_wing)."""
-    d = _Duck(water=False)
+    d = _Duck(water=False, k=SCALE["adult"])
     d.tr = f"translate(0 {bob:.2f})"
     cx, cy, rx, ry = 14.0, 18.4, 8.0, 3.9
     root = (16.4, 16.8)
@@ -371,9 +374,10 @@ def _flying(C, theta=-100.0, span=11.0, chord=1.0, bob=0.0):
     hx, hy = 22.6, 14.6
     _neck(d, C, (19.6, 16.8), (hx, hy), wb=2.6, wh=2.0)
     _head(d, C, hx, hy, r=3.7, ang=6)
-    # aile proche, par-dessus, avec son propre contour ; pointe foncée et miroir bleu près de l'attache
+    # aile proche, par-dessus : dans la silhouette là où elle dépasse, un trait fin là où elle passe devant le corps
+    # (pas un contour épais posé sur lui) ; pointe foncée et miroir bleu près de l'attache
     near, Wp = _flap_wing(theta, span, root, chord=chord)
-    _sticker(d, [near], C["wing"])
+    d.add(near, C["wing"], edge=True)
     d.clip("fwing", [near])
     tip = _smooth([Wp(u, v) for u, v in ((0.62, -3.6), (1.4, -1.0), (1.2, 3.0), (0.62, 4.6))])
     d.raw('<g clip-path="url(#fwing)">' + tip.replace('fill="%F%"', f'fill="{C["tip"]}"') + "</g>")
@@ -387,17 +391,14 @@ def _flying(C, theta=-100.0, span=11.0, chord=1.0, bob=0.0):
 
 # ================================================================== CANETON
 def _duckling(C, bob=0.0, rock=0.0, stretch=0.0, open_=0.0, wag=0.0, ring=None, wake=0.0, wing=None):
-    """Caneton sur l'eau : gros duvet rond, grosse tête, petit bec. Dessiné à l'échelle des adultes puis réduit
-    de DUCKLING_SCALE autour de (16, G), contour compensé (même épaisseur que les autres sprites).
+    """Caneton sur l'eau : gros duvet rond, grosse tête, petit bec. Dessiné grand puis réduit de SCALE["duckling"]
+    autour de (16, G), contour compensé (même épaisseur que les autres sprites).
     wing : en vol (il suit sa mère quand elle s'envole), angle (°) de son petit aileron qui bat ; pas d'eau."""
     air = wing is not None
-    d = _Duck(water=not air)
+    d = _Duck(water=not air, k=SCALE["duckling"])
     pivot = (15.0, 23.0)
-    k = DUCKLING_SCALE
-    d.tr = (f"translate(0 {bob:.2f}) rotate({rock:.1f} {pivot[0]} {pivot[1]}) "
-            f"translate(16 {G}) scale({k}) translate(-16 -{G})")
-    d.ow = OUTLINE_W / k
-    tp = lambda x, y: (lambda p: (p[0], p[1] + bob))(_rot(16 + (x - 16) * k, G + (y - G) * k, *pivot, rock))
+    d.tr = f"translate(0 {bob:.2f}) rotate({rock:.1f} {pivot[0]} {pivot[1]})"
+    tp = lambda x, y: (lambda p: d.ecran(p[0], p[1] + bob))(_rot(x, y, *pivot, rock))
     cx, cy, rx, ry = 14.6, 22.2, 5.0, 3.5
     # petite queue en pointe (duvet)
     d.add(_smooth([(10.6, 20.2), (8.6, 18.8), (8.0, 19.8), (9.6, 21.6)]).replace(
@@ -429,7 +430,7 @@ def _duckling(C, bob=0.0, rock=0.0, stretch=0.0, open_=0.0, wag=0.0, ring=None, 
         d.add(_smooth([(16.6, 20.4), (13.8, 19.8), (11.2, 20.6), (12.6, 22.4), (15.8, 22.4)]), C["shade"], sil=False)
         d.raw(line("M16.2,20.5 Q13.6,19.5 11.6,20.7", OUTLINE, 0.7))
     # œil, joue rose
-    _eye(d, *L(1.2, -0.5), 1.05)
+    _eye(d, *L(1.1, -0.5), 1.4)
     d.add(ellipse(*L(1.0, 1.6), 0.95, 0.6), C["blush"], sil=False, opacity=0.7)
     if not air:
         span = _chord([_ellipse_pts(cx, cy, rx, ry)], tp)

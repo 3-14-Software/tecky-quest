@@ -291,6 +291,8 @@ def collect(r=1):
     for a in alice2.ANIMS:
         for v in dirs:
             out.append((f"alice/{a}/{v}", [render_svg(s, w, h, R, PAD) for s in alice2.frames(a, v)], (ox * S + M, oy * S + M), True))
+            # « alice1 » : un pied nu, tant que Tecky ne lui a pas rapporté sa chaussure (les retrouvailles)
+            out.append((f"alice1/{a}/{v}", [render_svg(s, w, h, R, PAD) for s in alice2.frames(a, v, True)], (ox * S + M, oy * S + M), True))
     for a, (_, fps, _) in farmer.ANIMS.items():          # le fermier Gaston, vu de face, pieds en (24, 60)
         out.append((f"farmer/{a}", [render_svg(sv, farmer.W, farmer.H, R, PAD) for sv in farmer.frames(a)], (24 * S + M, 60 * S + M), True))
     for kind in npcs.KINDS:                             # le facteur et la voisine, vus de face, pieds en (24, 60)

@@ -2,6 +2,16 @@
 Les bébés hérissons de Maman Piquette (quête de la forêt) : de profil, tournés vers la droite (la vue gauche est le
 miroir, faite par le jeu). Cellule 32 x 32, pieds à y = 28 : origine conseillée (16, 28), comme critters.py.
 
+Ils sont dessinés grands, à la mesure de la cellule (c'est ce dessin-là que prend l'icône de leur badge, hud.py :
+draw_baby()), puis réduits de SCALE autour de l'origine par frames(), comme les bêtes de critters.py : le contour
+garde l'épaisseur de celui des autres sprites. Leur taille se juge à côté de Tecky (34 x 22 unités depuis la v2) et
+d'un chat (21 x 19) : un petit hérisson fait 13 x 9, il tient sous le museau de Tecky. À l'échelle 1, il était
+presque aussi long que lui.
+
+Le dessin suit celui de Tecky et des chiens v2 : formes rondes, grosse tête, grand œil sombre à reflet, truffe ronde
+au bout d'un petit museau pointu, piquants en grosses dents régulières, ventre et visage clairs. Pas de rond cerné
+posé sur le corps : l'oreille et les pattes font partie de la silhouette.
+
 Animations (ANIMS[nom] = (poses, fps, boucle)) : idle (il renifle, petit museau qui monte et descend, un
 clignement), walk (petites pattes qui trottinent, le corps balance), ball (roulé en boule, piquants dehors : un
 aboiement lui a fait peur).
@@ -9,17 +19,18 @@ Maman Piquette, elle, est un personnage vu de face (npcs.py, « piquette »).
 """
 import math
 
-from spritelib import Drawing, circle, ellipse, path, line, OUTLINE
+from spritelib import Drawing, circle, ellipse, path, line, OUTLINE, OUTLINE_W
 
 W = H = 32
 G = 28
-C = dict(spike="#7C5536", spike_lt="#A57A50", face="#F3DFC0", face_dk="#DCC19A", leg="#5A3C24", nose="#2A1E1A",
-         blush="#F2A0A0")
+SCALE = 0.40             # réduction dans le jeu, autour de l'origine (16, G)
+C = dict(spike="#7C5536", spike_lt="#A57A50", face="#F6E3C6", face_dk="#DDBE94", leg="#C9A77C", leg_dk="#A88458",
+         nose="#2A1611", eye="#3E1B0F", blush="#F2A0A0")
 
 
-def _spiky(cx, cy, rx, ry, a0, a1, n, out=1.32):
-    """Contour hérissé : n pointes le long de l'ellipse (cx, cy, rx, ry) entre les angles a0 et a1 (degrés, sens de
-    l'écran), refermé par le centre."""
+def _spiky(cx, cy, rx, ry, a0, a1, n, out=1.3):
+    """Contour hérissé : n grosses dents le long de l'ellipse (cx, cy, rx, ry) entre les angles a0 et a1 (degrés,
+    sens de l'écran), refermé par le centre."""
     pts = []
     for k in range(2 * n + 1):
         a = math.radians(a0 + (a1 - a0) * k / (2 * n))
@@ -36,48 +47,70 @@ def baby(p):
 
 
 def draw_baby(d, p):
-    """Dessine le bébé hérisson dans d (aussi l'icône de son badge)."""
-    d.under.append(f'<ellipse cx="16" cy="{G + 0.3}" rx="8.5" ry="1.7" fill="#000" opacity="0.2"/>')
-    if p.get("ball"):
-        wob = p.get("wob", 0)
-        d.add(path(_spiky(16 + wob, 21.4, 7.2, 6.6, 0, 360, 11, 1.28)), C["spike"])
-        d.add(circle(16 + wob, 21.4, 5.2), C["spike_lt"], sil=False)
-        for a in (200, 250, 300, 340):
+    """Dessine le bébé hérisson dans d, à la mesure de la cellule (aussi l'icône de son badge)."""
+    d.under.append(f'<ellipse cx="16" cy="{G + 0.3}" rx="10" ry="1.9" fill="#000" opacity="0.2"/>')
+    if p.get("ball"):                # roulé en boule : des piquants tout autour, le bout du nez qui dépasse
+        x, y = 16 + p.get("wob", 0), 20.4
+        d.add(path(_spiky(x, y, 7.6, 7.2, 0, 360, 8, 1.36)), C["spike"])
+        d.add(circle(x, y, 5.4), C["spike_lt"], sil=False)
+        for a in (205, 255, 305, 350, 40):               # quelques piquants sur le dessus de la boule
             r = math.radians(a)
-            d.raw(line(f"M{16 + wob + 2 * math.cos(r):.2f},{21.4 + 2 * math.sin(r):.2f} "
-                       f"L{16 + wob + 5 * math.cos(r):.2f},{21.4 + 5 * math.sin(r):.2f}", C["spike"], 0.8))
-        d.add(circle(21.6 + wob, 24.6, 0.9), C["nose"], sil=False)          # le bout du museau qui dépasse
+            d.raw(line(f"M{x + 2.2 * math.cos(r):.2f},{y + 2.2 * math.sin(r):.2f} "
+                       f"L{x + 4.6 * math.cos(r):.2f},{y + 4.6 * math.sin(r):.2f}", C["spike"], 1.1))
+        d.add(ellipse(x + 5.4, y + 3.4, 2.5, 2.0, f"rotate(30 {x + 5.4:.2f} {y + 3.4:.2f})"), C["face"], sil=False)
+        d.add(circle(x + 6.9, y + 4.3, 1.25), C["nose"], sil=False)
         return
-    b, st = p.get("bob", 0), p.get("step", 0)
-    for x, k in ((10.5, 1), (13.5, -1), (18.5, -1), (21.5, 1)):            # pattes
-        lift = max(0, st * k) * 1.4
-        d.add(ellipse(x + st * k * 0.6, G - 0.9 - lift, 1.5, 1.2), C["leg"])
-    d.add(path(_spiky(14.5, 22.2 + b, 9.2, 6.6, 180, 355, 7)), C["spike"])   # dos hérissé
-    d.add(ellipse(14.2, 21.0 + b, 6.4, 3.6), C["spike_lt"], sil=False, opacity=0.8)
-    for x in (9.5, 13, 16.5):
-        d.raw(line(f"M{x},{18.6 + b} L{x - 1.4},{16.4 + b}", C["spike"], 0.8))
-    d.add(ellipse(15.5, 24.8 + b, 7.6, 2.6), C["face"])                      # ventre
-    s = p.get("sniff", 0)
-    d.add(ellipse(22.4, 22.6 + b, 4.6, 3.6), C["face"])                      # tête
-    d.add(path(f"M24.6,{20.6 + b - s * 0.6} Q29.6,{21.4 + b - s * 1.2} 29.2,{23.0 + b - s * 1.0} "
-               f"Q27.2,{25.2 + b - s * 0.4} 23.8,{25.0 + b} Z"), C["face"])  # museau pointu
-    d.add(circle(29.0, 22.4 + b - s * 1.1, 1.15), C["nose"], sil=False)
-    d.add(circle(20.6, 19.4 + b, 1.35), C["face_dk"], sil=False, edge=True)  # oreille
+    b, st, s = p.get("bob", 0), p.get("step", 0), p.get("sniff", 0)
+    Y = lambda v: v + b
+
+    # pattes : celles du fond, plus sombres, puis celles de notre côté ; elles trottinent deux à deux
+    for x, k, col in ((10.6, -1, C["leg_dk"]), (19.4, 1, C["leg_dk"])):
+        d.add(ellipse(x + st * k * 0.9, G - 1.1 - max(0, st * k) * 1.5, 2.0, 1.5), col)
+    # le dos : un dôme de piquants, plus clair au milieu
+    d.add(path(_spiky(13.4, Y(21.4), 8.6, 8.0, 166, 360, 6, 1.38)), C["spike"])
+    d.add(ellipse(13.0, Y(19.6), 6.0, 4.6), C["spike_lt"], sil=False, opacity=0.85)
+    for x in (8.8, 12.6, 16.2):                          # trois piquants dessinés sur le dos
+        d.raw(line(f"M{x:.2f},{Y(18.6):.2f} L{x - 1.5:.2f},{Y(15.8):.2f}", C["spike"], 1.1))
+    # ventre clair, sous le dôme
+    d.add(ellipse(14.6, Y(24.6), 8.4, 2.8), C["face"])
+    for x, k, col in ((8.2, 1, C["leg"]), (17.0, -1, C["leg"])):
+        d.add(ellipse(x + st * k * 0.9, G - 1.0 - max(0, st * k) * 1.5, 2.1, 1.6), col)
+
+    # la tête : grosse, ronde, le museau pointu qui se relève quand il renifle
+    hy = Y(21.4) - s * 0.5
+    tete = path(f"M16.8,{hy - 0.4:.2f} C16.8,{hy - 4.6:.2f} 20.4,{hy - 5.6:.2f} 23.4,{hy - 4.4:.2f} "
+                f"C26.2,{hy - 3.4:.2f} 29.0,{hy - 1.4 - s * 0.9:.2f} 30.6,{hy + 0.4 - s * 1.2:.2f} "
+                f"C31.2,{hy + 1.4 - s * 1.2:.2f} 30.6,{hy + 2.4 - s * 1.0:.2f} 29.4,{hy + 2.8 - s * 0.8:.2f} "
+                f"C27.0,{hy + 4.4:.2f} 23.6,{hy + 5.2:.2f} 20.6,{hy + 4.8:.2f} C18.2,{hy + 4.4:.2f} 16.8,{hy + 2.6:.2f} 16.8,{hy - 0.4:.2f} Z")
+    d.add(circle(18.6, hy - 4.6, 2.2), C["face_dk"])                 # l'oreille, au bord des piquants
+    d.add(tete, C["face"])
+    d.add(circle(18.9, hy - 4.3, 1.1), C["blush"], sil=False, opacity=0.75)
+    d.add(circle(30.2, hy + 0.9 - s * 1.2, 1.6), C["nose"])           # la truffe, ronde, au bout du museau
+    d.add(ellipse(29.8, hy + 0.3 - s * 1.2, 0.55, 0.32), "#FFFFFF", sil=False, opacity=0.85)
+    d.raw(line(f"M27.2,{hy + 3.4 - s * 0.5:.2f} Q25.6,{hy + 4.0:.2f} 24.4,{hy + 3.2:.2f}", OUTLINE, 0.9))      # le sourire
+    ex, ey = 23.4, hy - 0.9
     if p.get("blink"):
-        d.raw(line(f"M22.6,{21.6 + b} Q23.5,{22.4 + b} 24.4,{21.6 + b}", C["nose"], 0.7))
-    else:
-        d.add(circle(23.5, 21.6 + b, 0.95), C["nose"], sil=False)
-        d.add(circle(23.8, 21.3 + b, 0.32), "#FFFFFF", sil=False)
-    d.add(ellipse(24.2, 23.6 + b, 1.1, 0.65), C["blush"], sil=False, opacity=0.7)
+        d.raw(line(f"M{ex - 1.6:.2f},{ey:.2f} Q{ex:.2f},{ey + 1.5:.2f} {ex + 1.6:.2f},{ey:.2f}", OUTLINE, 1.0))
+    else:                            # un grand œil sombre, deux reflets
+        d.add(ellipse(ex, ey, 1.75, 2.1), C["eye"], sil=False)
+        d.add(circle(ex + 0.55, ey - 0.75, 0.68), "#FFFFFF", sil=False)
+        d.add(circle(ex - 0.5, ey + 0.95, 0.3), "#FFFFFF", sil=False, opacity=0.85)
+    d.add(ellipse(21.0, hy + 2.5, 1.6, 0.95), C["blush"], sil=False, opacity=0.7)
 
 
 ANIMS = {
     "idle": ([dict(), dict(sniff=0.6), dict(sniff=1.0, bob=0.2), dict(sniff=0.3, blink=1)], 5, True),
-    "walk": ([dict(step=1, bob=-0.3), dict(step=0), dict(step=-1, bob=-0.3), dict(step=0)], 10, True),
-    "ball": ([dict(ball=1, wob=-0.4), dict(ball=1, wob=0.4)], 8, True),
+    "walk": ([dict(step=1, bob=-0.4), dict(step=0), dict(step=-1, bob=-0.4), dict(step=0)], 10, True),
+    "ball": ([dict(ball=1, wob=-0.5), dict(ball=1, wob=0.5)], 8, True),
 }
 
 
 def frames(anim):
-    """SVG des images d'une animation du bébé hérisson."""
-    return [baby(p).svg() for p in ANIMS[anim][0]]
+    """SVG des images d'une animation du bébé hérisson, réduit de SCALE autour de l'origine (16, G)."""
+    tr = f"translate(16 {G}) scale({SCALE}) translate(-16 -{G})"
+    out = []
+    for p in ANIMS[anim][0]:
+        d = baby(p)
+        d.under = [f'<g transform="{tr}">{u}</g>' for u in d.under]
+        out.append(d.svg(tr, outline_w=OUTLINE_W / SCALE))
+    return out

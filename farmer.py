@@ -21,6 +21,8 @@ c'est sa main droite, donc à gauche de l'image).
 """
 import math
 
+import npcs
+
 from spritelib import Drawing, circle, ellipse, rect, path, poly, leg, line, OUTLINE
 
 W, H = 48, 64
@@ -86,11 +88,12 @@ def _arm(d, sx, sy, ex, ey, hx, hy, cid, palm=False, ang=0.0):
                                               c["skin_dk"], 0.6) + "</g>")
     else:
         d.add(circle(hx, hy, 2.2), c["skin"])
-    sleeve = _seg(sx, sy, ex, ey, 4.6)
-    puff = circle(sx, sy, 2.5)
-    d.add(sleeve, c["shirt"])
-    d.add(puff, c["shirt"])
-    _plaid(d, cid, [sleeve, puff], min(sx, ex) - 4, min(sy, ey) - 4, max(sx, ex) + 4, max(sy, ey) + 4)
+    s = -1 if cid == "armL" else 1
+    sleeve = _seg(sx, sy + npcs.EP, ex, ey, 4.6)
+    formes = [sleeve, circle(sx, sy + npcs.EP, 2.3), npcs._epaule(sx, sy, s)]     # l'épaule : une pente, pas une boule
+    for f in formes:
+        d.add(f, c["shirt"])
+    _plaid(d, cid, formes, min(sx, ex) - 4, min(sy, ey) - 4, max(sx, ex) + 4, max(sy, ey) + 4)
     rot = math.degrees(math.atan2(ey - sy, ex - sx)) - 90
     d.add(rect(ex - 2.55, ey - 0.95, 5.1, 1.9, 0.9, f"rotate({rot:.1f} {ex:.2f} {ey:.2f})"),
           c["shirt_lt"], edge=True)                                    # revers de la manche retroussée
@@ -183,9 +186,7 @@ def front(p):
         d.raw(line(f"M{X(19.1):.2f},{V(0.7):.2f} Q{X(20.3):.2f},{V(1.5):.2f} {X(21.5):.2f},{V(0.7):.2f} "
                    f"M{X(26.5):.2f},{V(0.7):.2f} Q{X(27.7):.2f},{V(1.5):.2f} {X(28.9):.2f},{V(0.7):.2f}", c["eye"], 0.9))
     else:
-        for x in (20.3, 27.7):
-            d.add(ellipse(X(x), V(0.6), 1.25 * k, 1.55 * k), c["eye"], sil=False)
-            d.add(circle(X(x + 0.4), V(0.0), 0.45 * k), "#FFFFFF", sil=False)
+        npcs._eyes(d, c, p, X, V)
     d.raw(line(f"M{X(18.7):.2f},{V(-2.2):.2f} Q{X(20.3):.2f},{V(-3.1):.2f} {X(21.9):.2f},{V(-2.3):.2f} "
                f"M{X(26.1):.2f},{V(-2.3):.2f} Q{X(27.7):.2f},{V(-3.1):.2f} {X(29.3):.2f},{V(-2.2):.2f}",
                c["hair_dk"], 1.2))                                           # sourcils gris
@@ -209,8 +210,7 @@ def front(p):
                f"Q{X(26.6):.2f},{V(3.0):.2f} 24,{V(3.9):.2f} Z"), c["hair"], sil=False, edge=True)
     d.raw(line(f"M{X(20.6):.2f},{V(5.0):.2f} Q{X(21.8):.2f},{V(4.5):.2f} {X(22.9):.2f},{V(4.8):.2f} "
                f"M{X(25.1):.2f},{V(4.8):.2f} Q{X(26.2):.2f},{V(4.5):.2f} {X(27.4):.2f},{V(5.0):.2f}", c["hair_dk"], 0.5))
-    d.add(ellipse(24, V(2.7), 1.9 * k, 1.5 * k), c["nose"], sil=False, edge=True)
-    d.add(circle(X(23.4), V(2.2), 0.5 * k), "#FFFFFF", sil=False, opacity=0.7)
+    npcs._nez(d, c, X, V, 2.7, 1.9, 1.5, 0.5)
     return d
 
 

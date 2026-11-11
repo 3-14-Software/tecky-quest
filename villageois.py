@@ -16,7 +16,7 @@ Animations (ANIMS[kind][nom] = (poses, fps, boucle)) : idle, wave (il salue Teck
 sautille de joie, à la place de wave).
 """
 from spritelib import Drawing, circle, ellipse, rect, path, poly, leg, line, OUTLINE
-from npcs import P, G, HK, W, H, _shadow, _arms, _ik, _head_frame, _eyes, _brows, _blush, _mouth, _IDLE, _WAVE
+from npcs import P, G, HK, W, H, _shadow, _arms, _ik, _head_frame, _eyes, _nez, _brows, _blush, _mouth, _IDLE, _WAVE
 
 KINDS = ("baker", "vendor", "florist", "kid")
 KID = 0.78                       # le petit garçon : réduit autour de ses pieds
@@ -56,8 +56,23 @@ def _features(d, c, p, X, V, brow, mouth_y=5.6, nose=True):
     _blush(d, c, X, V)
     _mouth(d, c, p, X, V, mouth_y)
     if nose:
-        d.add(ellipse(24, V(2.7), 1.5 * k, 1.2 * k), c["nose"], sil=False, edge=True)
-        d.add(circle(X(23.5), V(2.3), 0.4 * k), "#FFFFFF", sil=False, opacity=0.7)
+        _nez(d, c, X, V, 2.7, 1.5, 1.2, 0.4)
+
+
+def _tablier(d, c, Y, haut, bas, large=7.4):
+    """Un tablier à bavette : deux bretelles qui montent vers le cou, une bavette étroite aux coins arrondis, puis
+    le tablier qui s'élargit à la taille. haut : le bord de la bavette ; bas : l'ourlet ; large : la demi-largeur en bas.
+    (Sans bretelles, avec un bord droit de toute la largeur du buste, il semblait découpé en carrés aux épaules.)"""
+    for s in (-1, 1):
+        d.add(poly([(24 + s * 4.6, Y(haut + 0.6)), (24 + s * 2.9, Y(haut + 0.6)), (24 + s * 4.2, Y(haut - 4.4)),
+                    (24 + s * 5.9, Y(haut - 4.0))]), c["apron"], sil=False, edge=True)
+    t = haut + 5.6                    # la taille
+    d.add(path(f"M{24 - 4.9:.2f},{Y(haut + 1.2):.2f} Q{24 - 4.9:.2f},{Y(haut):.2f} {24 - 3.7:.2f},{Y(haut):.2f} "
+               f"L{24 + 3.7:.2f},{Y(haut):.2f} Q{24 + 4.9:.2f},{Y(haut):.2f} {24 + 4.9:.2f},{Y(haut + 1.2):.2f} "
+               f"L{24 + 5.3:.2f},{Y(t - 1.6):.2f} Q{24 + large - 0.4:.2f},{Y(t - 0.6):.2f} {24 + large - 0.2:.2f},{Y(t + 1.6):.2f} "
+               f"L{24 + large + 0.6:.2f},{Y(bas):.2f} Q24,{Y(bas + 1.3):.2f} {24 - large - 0.6:.2f},{Y(bas):.2f} "
+               f"L{24 - large + 0.2:.2f},{Y(t + 1.6):.2f} Q{24 - large + 0.4:.2f},{Y(t - 0.6):.2f} {24 - 5.3:.2f},{Y(t - 1.6):.2f} Z"),
+          c["apron"], sil=False, edge=True)
 
 
 def _hands_joined(Y):
@@ -136,8 +151,7 @@ def _vendor(p):
     d.raw(line(f"M20.6,{Y(46):.2f} L19.6,{T(57):.2f} M27.4,{Y(46):.2f} L28.4,{T(57):.2f}", c["skirt_dk"], 0.7))
     d.add(rect(14.4, Y(28.6), 19.2, 12.0, 4.6), c["blouse"])
     d.add(ellipse(24, Y(38.6), 10.2 + p["breath"], 6.8), c["blouse"])
-    d.add(path(f"M17.4,{Y(33.4):.2f} L30.6,{Y(33.4):.2f} L32.4,{Y(51.0):.2f} Q24,{Y(52.4):.2f} 15.6,{Y(51.0):.2f} Z"),
-          c["apron"], sil=False, edge=True)                                                             # tablier vert
+    _tablier(d, c, Y, 32.4, 51.0, 7.8)                                                                  # tablier vert
     d.add(rect(19.6, Y(42.6), 8.8, 4.4, 1), c["apron_dk"], sil=False, edge=True)                       # poche
     hy, X, V = _head_frame(Y, p)
     _arms(d, c, p, 15.2, 32.8, Y(31.4), _hands_joined(Y))
@@ -176,8 +190,7 @@ def _florist(p):
         d.add(leg(x, Y(44), x, T(57.2), 4.6), c["jeans"])
     d.raw(line(f"M24,{Y(45):.2f} L24,{Y(47.5):.2f}", c["jeans_dk"], 0.6))
     d.add(rect(15.0, Y(28.6), 18.0, 16.6, 4.4), c["top"])
-    d.add(path(f"M17.2,{Y(32.0):.2f} L30.8,{Y(32.0):.2f} L31.8,{Y(49.4):.2f} Q24,{Y(50.6):.2f} 16.2,{Y(49.4):.2f} Z"),
-          c["apron"], sil=False, edge=True)                                                             # tablier rose
+    _tablier(d, c, Y, 31.4, 49.4, 7.2)                                                                  # tablier rose
     d.add(circle(24, Y(42.8), 1.6), c["flower"], sil=False, edge=True)                                 # fleur brodée
     hy, X, V = _head_frame(Y, p)
     _arms(d, c, p, 15.6, 32.4, Y(31.4), _hands_joined(Y))
@@ -249,7 +262,7 @@ def _kid(p):
                f"Q{X(12.4):.2f},{V(-3.6):.2f} {X(12.4):.2f},{V(-5.6):.2f} Z"), c["cap_dk"], edge=True)
     d.add(circle(24, V(-14.0), 1.0 * k), c["cap_dk"], sil=False, edge=True)
     _features(d, c, p, X, V, c["hair_dk"], nose=False)
-    d.add(ellipse(24, V(2.7), 1.1 * k, 0.9 * k), c["nose"], sil=False, edge=True)
+    _nez(d, c, X, V, 2.7, 1.1, 0.9, 0)
     for x, y in ((18.6, 3.6), (19.8, 4.4), (29.4, 3.6), (28.2, 4.4)):                                  # taches de rousseur
         d.add(circle(X(x), V(y), 0.35), "#C9875A", sil=False)
     return d

@@ -95,6 +95,11 @@ for nom in alice2.ANIMS:
             bas = pieds(rendus[0])
             ok(pose_au_sol(bas, oy), f"Alice debout ({v}) : le bas des pieds {bas - oy:.1f} sous l'origine")
 ok(True, f"Alice : {images} images, toutes dans leur cadre")
+nus = [alpha(s, w, h) for nom in alice2.ANIMS for v in ("down", "up", "right") for s in alice2.frames(nom, v, True)]
+ok(len(nus) == images and all(dans_le_cadre(a) for a in nus), f"Alice à un pied nu (alice1) : {len(nus)} images, dans leur cadre")
+diff = sum(int((alpha(a, w, h) != alpha(b, w, h)).any())
+           for v in ("down", "up", "right") for a, b in zip(alice2.frames("idle", v), alice2.frames("idle", v, True)))
+ok(diff == 12, "son pied nu se voit dans les trois vues")
 haut = [pieds(alpha(s, w, h)) for s in alice2.frames("happy", "down")]
 ok(min(haut) < oy - 2.5, f"saut de joie : elle décolle ({oy - min(haut):.1f} unités)")
 
