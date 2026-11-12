@@ -11,7 +11,7 @@ function main() {
   ok(run('weather.kind') === 'rain' && run('weather.k') === 1, 'Pluie : l’averse arrive');
   ok(run('weatherTint()[0]') < 230, 'le temps se couvre (teinte ' + run('JSON.stringify(weatherTint().map(Math.round))') + ')');
   ok(run('fxs.some(f => f.key === "fx/splash")'), 'des gouttes éclaboussent le sol');
-  ok(run('Ambience.rainLevel') > 0.03, 'on entend la pluie');
+  ok(run('Ambience.rainLevel') > run('AMB.rain') * 0.4, 'on entend la pluie');
   step(60 * 20);
   ok(run('weather.wet') > 0.6, 'les flaques se remplissent (' + run('weather.wet').toFixed(2) + ')');
   run('buildPuddles(); var pd = puddles.find(p => Math.abs(p.x - 12 * 64) < 900 && Math.abs(p.y - 8 * 64) < 500) || puddles[0]; P.x = pd.x - 40; P.y = pd.y; camX = P.x - VW / 2; camY = P.y - VH / 2;');

@@ -676,7 +676,7 @@ def toboggan():
     d.raw(line("M" + " L".join(f"{x + fx * 0.5:.2f},{y + fy * 0.5:.2f}" for x, y in courbe[2:-2]), "#FFFFFF", 0.7).replace("/>", ' opacity="0.6"/>'))
     for x in (17, 25.4):                                  # poteaux de devant
         d.add(rect(x - 1.1, yp, 2.2, 34, 0.8), bleu)
-    d.add(rect(46.4, py - 8.6, 2.2, 8.6, 0.8), bleu)                                        # le pied de la glissière
+    d.add(rect(46.4, py - 8.6, 2.2, 8.6 + fy / 2, 0.8), bleu)       # le pied de la glissière, à mi-profondeur comme elle
     _boite(d, "pl", 15.4, 27, yp + 1.2, 2.6, P, bleu, bleu_o, "#6B9BE6")                    # la plate-forme
     d.add(_pts(courbe + [(x, y - 3.6) for x, y in courbe[::-1]]), rouge)                    # rebord de devant
     d.raw(line("M" + " L".join(f"{x:.2f},{y - 2.9:.2f}" for x, y in courbe[1:-1]), "#F0786E", 0.6))
@@ -851,7 +851,6 @@ def cone_de_chantier():
     for y, e in ((13, 3.6), (19.6, 3.2)):
         d.add(rect(10, y, 14, e), "#FFFFFF", sil=False, clip="cone")
         d.add(rect(17.6, y, 6, e), "#D5D9E0", sil=False, clip="cone")
-    d.add(rect(14.5, 8, 0.9, 18), "#FBA468", sil=False, clip="cone", opacity=0.85)
     return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), _sol_boite(8.5, 21.5, py, 6))
 
 

@@ -60,7 +60,7 @@ function main() {
   run('P.x = 80.5 * 64; P.y = 43.6 * 64;'); step(30);
   const lv = run('Ambience.level');
   run('P.x = 46 * 64; P.y = 26 * 64;'); step(30);
-  ok(lv > 0.02 && run('Ambience.level') < lv / 3, 'clapotis sur le pont (' + lv.toFixed(3) + '), presque rien dans la zone industrielle');
+  ok(lv > run('AMB.water') * 0.2 && run('Ambience.level') < lv / 3, 'clapotis sur le pont (' + lv.toFixed(3) + '), presque rien dans la zone industrielle');
   run('pressed.pause = true'); step(1); run('var pl = Ambience.played;'); step(60 * 3);
   ok(run('Ambience.played') === run('pl') && run('Ambience.level') === 0, 'en pause : silence');
   // ---- carte de la pause

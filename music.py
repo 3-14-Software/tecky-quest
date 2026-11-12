@@ -122,6 +122,8 @@ class Morceau:
     def __init__(self, nom, tempo, ton, bar=16, beat=4, inst=None, echo=None, boucle=True):
         self.nom, self.tempo, self.bar, self.beat = nom, tempo, bar, beat
         self.gamme = gamme(ton)
+        r, reste = _fond(ton)
+        self.ton = (r + 3) % 12 if reste.startswith("m") else r    # un ton mineur : son relatif majeur
         self.inst = {c: dict(INST[c], **(inst or {}).get(c, {})) for c in INST}
         self.echo, self.boucle, self.parties = echo, boucle, []
 
@@ -234,7 +236,7 @@ class Morceau:
         joues = {e[1] for e in ev}
         return dict(total=s0, bar=bar, bpm=self.tempo, spb=round(60 / (self.tempo * self.beat), 5),
                     loop=n_intro * bar if self.boucle else None, entries=entrees or [n_intro * bar],
-                    inst={c: self.inst[c] for c in INST if c in joues}, echo=self.echo, ev=ev)
+                    inst={c: self.inst[c] for c in INST if c in joues}, echo=self.echo, key=self.ton, ev=ev)
 
 
 # ------------------------------------------------------------------ « Promenade de Tecky » : la niche, l'écran titre

@@ -14,7 +14,7 @@ let now = 0;
 class FakeAC { constructor() { this.sampleRate = 44100; this.state = 'running'; this.destination = deep(); }
   get currentTime() { return now; }
   createBuffer(c, l) { return { getChannelData: () => new Float32Array(l) }; }
-  createOscillator() { nodes++; return deep(); } createGain() { return deep(); } createBiquadFilter() { return deep(); } createDelay() { return deep(); }
+  createOscillator() { nodes++; return deep(); } createGain() { return deep(); } createBiquadFilter() { return deep(); } createDelay() { return deep(); } createStereoPanner() { return deep(); }
   createBufferSource() { nodes++; return deep(); } createPeriodicWave() { return {}; } resume() {} suspend() {} }
 let intervals = [];
 const g = {

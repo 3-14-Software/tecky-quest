@@ -425,7 +425,7 @@
       if (k) {
         const [a, b] = E(sx, sy);
         ctx.save(); ctx.setTransform(devicePixelRatio * V.z, 0, 0, devicePixelRatio * V.z, a * devicePixelRatio, b * devicePixelRatio);
-        V.spr(k, f, 0, 0, false, 0.6); ctx.restore();
+        V.spr(ED.cle(k, sx, sy), f, 0, 0, false, 0.6); ctx.restore();
       } else { ctx.fillStyle = '#FFD84D'; carre(sx, sy); }
     }
   };

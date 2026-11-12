@@ -127,7 +127,7 @@
     if (o.forme === 'rect') return [o.rect[0] * TS, o.rect[1] * TS, o.rect[2] * TS, o.rect[3] * TS];
     if (o.texte !== undefined) { const w = (o.texte.length * 9 + 20) / V.z, h = 16 / V.z; return [X - w / 2, Y - h, X + w / 2, Y + h]; }
     if (o.camera) { const k = 14 / V.z; return [X - k, Y - k, X + k, Y + k]; }
-    const m = ED.meta[o.spr];
+    const m = ED.meta[ED.cle(o.spr, o.x, o.y)];
     if (!m) return [X - 16, Y - 24, X + 16, Y];
     const f = m.f[(o.frame || 0) % m.f.length];
     const x0 = o.flip ? X + m.o[0] - f[4] - f[2] : X - m.o[0] + f[4], y0 = Y - m.o[1] + f[5];
@@ -222,7 +222,8 @@
       ((ED.I.jeu && ED.I.jeu.flat || []).includes(n) ? plats : debout).push(o);
     }
     debout.sort((a, b) => a.y - b.y);
-    for (const o of plats.concat(debout)) spr(o.spr, o.frame, o.x * TS, o.y * TS, o.flip, o.alpha);
+    for (const o of plats.concat(debout))       // (un décor redessiné : le modèle que le jeu tire de sa position, jamais en miroir)
+      spr(ED.cle(o.spr, o.x, o.y), o.frame, o.x * TS, o.y * TS, o.flip && ED.cle(o.spr) === o.spr, o.alpha);
     if (V.collisions && ED.I.jeu) dessinerCollisions(c);
     // en coordonnées d'écran : traits fins, étiquettes, poignées
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);

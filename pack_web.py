@@ -409,7 +409,7 @@ def collect(r=1):
         out.append((f"decor/{n}", [nature.image(n, R)], (ox * S + M, oy * S + M), True))
     for n in decor.DECOR:
         if n in nature.VARIANTES:                                   # redessiné (nature, bâtiments, mobilier) : l'ancien
-            continue                                                # dessin ne sert plus qu'à l'éditeur de carte
+            continue                                                # dessin ne sert plus (l'éditeur montre le nouveau)
         w, h, ox, oy = decor.cadre(n)
         out.append((f"decor/{n}", [render_svg(sv, w, h, R, PAD) for sv in decor.svgs(n)], (ox * S + M, oy * S + M), True))
     for n in batiments.ECLAIRES:                                    # les fenêtres des bâtiments, allumées le soir
@@ -561,12 +561,15 @@ def preview(m, atlas, meta, tileset):
 def ecoute(game):
     """web/musique.html, la salle d'écoute : les morceaux de music.py joués par le séquenceur de game.js (sa
     section « musique chiptune »), pour les écouter un par un, essayer le passage d'une zone à l'autre et
-    mesurer leurs niveaux. À ouvrir depuis le disque ; elle n'est pas publiée."""
+    mesurer leurs niveaux ; et les bruitages (sa section « bruitages »), à comparer avec ceux d'avant la v2.
+    À ouvrir depuis le disque ; elle n'est pas publiée."""
     a = game.index("/* ------------------------------------------------------------------ musique chiptune */")
     b = game.index("/* ------------------------------------------------------------------ ambiance sonore des zones */")
     tpl = open(os.path.join(SRC, "musique.template.html"), encoding="utf-8").read()
     page = tpl.replace("/*__SONGS__*/", "const SONGS = " + json.dumps(music.songs(), separators=(",", ":")) + ";")
-    open(os.path.join(WEB, "musique.html"), "w", encoding="utf-8").write(page.replace("/*__MUSIC__*/", game[a:b]))
+    c = game.index("/* ------------------------------------------------------------------ bruitages */")
+    page = page.replace("/*__SFX__*/", game[c:a]).replace("/*__MUSIC__*/", game[a:b])
+    open(os.path.join(WEB, "musique.html"), "w", encoding="utf-8").write(page)
 
 
 def main():

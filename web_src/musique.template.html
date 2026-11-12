@@ -22,12 +22,19 @@
   #barre b { position: absolute; top: 0; bottom: 0; left: 0; background: #E8503A; }
   pre { background: #FFF; border: 2px solid #3A1E12; border-radius: 8px; padding: 8px; overflow-x: auto; font-size: 13px; }
   label { margin-right: 14px; }
+  .bruits { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bruits span { display: inline-flex; }
+  .bruits button { padding: 5px 10px; border-radius: 12px 0 0 12px; }
+  .bruits button.seul { border-radius: 12px; }
+  .bruits button.avant { border-left: 0; border-radius: 0 12px 12px 0; background: #EADFC8; font-size: 13px; }
+  .bruits button.neuf { background: #CDEBB0; }
+  h3 { font-size: 16px; margin: 14px 0 6px; }
 </style>
 </head>
 <body>
 <h1>Tecky Quest — salle d'écoute</h1>
-<p>Les morceaux du jeu, joués par le séquenceur du jeu lui-même (page écrite par <code>pack_web.py</code> à partir de
-<code>music.py</code> et de <code>game.js</code>). Un clic sur une zone y « emmène Tecky » : le morceau en cours s'éteint,
+<p>Les morceaux et les bruitages du jeu, joués par le code du jeu lui-même (page écrite par <code>pack_web.py</code> à
+partir de <code>music.py</code> et de <code>game.js</code>). Un clic sur une zone y « emmène Tecky » : le morceau en cours s'éteint,
 un court silence, puis celui de la zone commence, comme dans le jeu.</p>
 <h2>Les zones</h2>
 <div class="grille" id="zones"></div>
@@ -42,10 +49,24 @@ un court silence, puis celui de la zone commence, comme dans le jeu.</p>
   <button id="mesure">Mesurer les niveaux</button>
 </p>
 <pre id="niveaux" hidden></pre>
+<h2>Les bruitages</h2>
+<p>En vert : les bruitages nouveaux. « avant » rejoue l'ancien, pour comparer. Les petits airs (objet ramassé, trésor,
+badge, but, menus) se jouent dans le ton du morceau en cours : lancer une zone au-dessus, puis cliquer.</p>
+<p class="outils">D'où vient le son :
+  <label><input type="radio" name="ou" value="" checked> de Tecky</label>
+  <label><input type="radio" name="ou" value="g"> à gauche de l'écran</label>
+  <label><input type="radio" name="ou" value="d"> à droite</label>
+  <label><input type="radio" name="ou" value="l"> au loin</label>
+  <button id="mesureb">Mesurer les bruitages</button>
+</p>
+<div id="bruits"></div>
+<pre id="niveauxb" hidden></pre>
 <script>
 /*__SONGS__*/
 let AC = null, muted = false, state = 'play', optReturn = 'title';
-const OPT_DEF = { music: 7 }, opts = { music: 7 };
+const OPT_DEF = { music: 7, sfx: 8 }, opts = { music: 7, sfx: 8 };
+const VW = 960, VH = 540, camX = 0, camY = 0, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+/*__SFX__*/
 /*__MUSIC__*/
 const NOMS = {
   niche: ['La niche, l\'écran titre', '« Promenade de Tecky », le thème'],
@@ -133,6 +154,163 @@ $('mesure').onclick = async () => {
   pre.textContent = 'morceau      crête  moyen |   lead   harm    arp   bass    pad  drums   (dB)\n' + Object.keys(m).map(id =>
     id.padEnd(10) + col(m[id].tout.peak, 8) + col(m[id].tout.rms, 7) + ' |' +
     ['lead', 'harm', 'arp', 'bass', 'pad', 'drums'].map(c => col(m[id][c], 7)).join('')).join('\n');
+};
+
+/* ---------------------------------------------------------------- bruitages */
+/* Les bruitages d'avant la v2, gardés ici pour comparer (ils ne sont plus dans le jeu). */
+function tone1(freq, dur, type, vol, slide, delay) {
+  const t0 = AC.currentTime + (delay || 0), o = AC.createOscillator(), g = AC.createGain();
+  o.type = type || 'square';
+  o.frequency.setValueAtTime(freq, t0);
+  if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), t0 + dur);
+  g.gain.setValueAtTime((vol || 0.08) * sfxGain(), t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(AC.destination);
+  o.start(t0); o.stop(t0 + dur + 0.02);
+}
+function noise1(dur, vol, freq, delay) {
+  const t0 = AC.currentTime + (delay || 0), len = Math.floor(AC.sampleRate * dur);
+  const buf = AC.createBuffer(1, len, AC.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const src = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+  src.buffer = buf; f.type = 'bandpass'; f.frequency.value = freq || 1000; f.Q.value = 1.2;
+  g.gain.value = (vol || 0.1) * sfxGain();
+  src.connect(f); f.connect(g); g.connect(AC.destination);
+  src.start(t0);
+}
+const AVANT = ((tone, noise) => ({
+  bark(p) { const k = p || 1; tone(520 * k, 0.09, 'sawtooth', 0.16, -260 * k); noise(0.08, 0.14, 1400 * k); tone(470 * k, 0.11, 'sawtooth', 0.14, -240 * k, 0.12); noise(0.09, 0.12, 1200 * k, 0.12); },
+  bite() { noise(0.05, 0.18, 2600); tone(180, 0.06, 'square', 0.06, -80); },
+  pick() { tone(880, 0.07, 'triangle', 0.08); tone(1320, 0.1, 'triangle', 0.08, 0, 0.07); },
+  treasure() { [660, 880, 990, 1320].forEach((f, i) => tone(f, 0.12, 'triangle', 0.08, 0, i * 0.08)); },
+  heal() { tone(520, 0.08, 'sine', 0.1, 200); tone(780, 0.12, 'sine', 0.1, 200, 0.08); },
+  hurt() { tone(240, 0.18, 'square', 0.08, -150); noise(0.1, 0.08, 500); },
+  hit() { noise(0.06, 0.12, 900); tone(140, 0.08, 'square', 0.05, -60); },
+  flee() { tone(700, 0.25, 'sine', 0.06, 500); },
+  scratch() { noise(0.07, 0.09, 700 + Math.random() * 500); },
+  blip() { tone(1200, 0.02, 'square', 0.02); },
+  honk(p) { const k = p || 1; tone(415 * k, 0.13, 'square', 0.06); tone(330 * k, 0.13, 'square', 0.05);
+    tone(415 * k, 0.2, 'square', 0.06, 0, 0.18); tone(330 * k, 0.2, 'square', 0.05, 0, 0.18); },
+  sniff() { for (let i = 0; i < 3; i++) noise(0.06, 0.07, 1900 + i * 150, i * 0.13); },
+  yip(p) { const k = p || 1; tone(820 * k, 0.07, 'square', 0.045, 420 * k); tone(980 * k, 0.09, 'square', 0.045, 380 * k, 0.11); },
+  quack(p) { const k = p || 1; tone(640 * k, 0.08, 'square', 0.035, -260 * k); tone(560 * k, 0.1, 'square', 0.035, -280 * k, 0.11); },
+  flap() { for (let i = 0; i < 4; i++) noise(0.05, 0.05, 700 + i * 60, i * 0.08); },
+  yawn() { tone(420, 0.55, 'triangle', 0.035, -200); tone(630, 0.4, 'sine', 0.015, -260, 0.05); },
+  snore() { noise(0.5, 0.025, 260); },
+  badge() { [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.14, 'triangle', 0.07, 0, i * 0.09)); },
+  plop() { tone(380 + Math.random() * 120, 0.08, 'sine', 0.05, -200); noise(0.06, 0.04, 1600); },
+  shake() { for (let i = 0; i < 11; i++) noise(0.05, 0.05, 1200 + (i % 5) * 200, i * 0.065); },
+  hey(p) { const k = p || 1; tone(560 * k, 0.08, 'triangle', 0.08, 160 * k); tone(760 * k, 0.13, 'triangle', 0.08, -120 * k, 0.09); },
+  cluck() { tone(950, 0.05, 'square', 0.05, 250); tone(1150, 0.05, 'square', 0.05, 200, 0.08); tone(1400, 0.12, 'square', 0.05, -600, 0.17); },
+  boing() { tone(260 + Math.random() * 60, 0.13, 'sine', 0.07, 280); tone(520, 0.08, 'sine', 0.03, -200, 0.06); },
+  goal() { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.11, 'square', 0.04, 0, i * 0.07)); noise(0.3, 0.03, 3200, 0.12); },
+  whistle() { tone(880, 0.22, 'triangle', 0.07, -30); tone(988, 0.22, 'triangle', 0.05, -30); noise(0.3, 0.03, 2600);
+    tone(880, 0.32, 'triangle', 0.07, -60, 0.3); tone(988, 0.32, 'triangle', 0.05, -60, 0.3); noise(0.4, 0.03, 2600, 0.3); },
+  bell() { tone(1320, 0.12, 'sine', 0.06); tone(1320, 0.14, 'sine', 0.06, 0, 0.18); },
+  moo(p) { const k = p || 1; tone(130 * k, 0.75, 'sawtooth', 0.04, 45 * k); tone(260 * k, 0.6, 'triangle', 0.035, -70 * k, 0.2);
+    tone(1700, 0.08, 'sine', 0.02, 0, 0.05); },
+  // l'ambiance d'avant (volume 0,55)
+  tweet() {
+    const base = 2600 + Math.random() * 1600, n = 2 + Math.floor(Math.random() * 4), up = Math.random() < 0.5;
+    let t = 0;
+    for (let i = 0; i < n; i++) {
+      tone(base * (1 + (up ? i : -i) * 0.06), 0.06 + Math.random() * 0.04, 'sine', 0.0121, (Math.random() < 0.5 ? 1 : -1) * (400 + Math.random() * 900), t);
+      t += 0.09 + Math.random() * 0.05;
+    }
+  },
+  bike() { tone(2350, 0.35, 'sine', 0.011); tone(2350, 0.4, 'sine', 0.011, 0, 0.16); tone(4700, 0.2, 'sine', 0.0033); },
+  clank() { noise(0.05, 0.0275, 3200); tone(1500 + Math.random() * 600, 0.3, 'triangle', 0.0066, -300); },
+  coo() { tone(800, 0.05, 'square', 0.0066, 200); tone(950, 0.06, 'square', 0.0066, 150, 0.09); },
+  rooster() {
+    let t = 0;
+    for (const [f, d, sl] of [[620, 0.11, 260], [700, 0.11, 300], [800, 0.13, 380], [1150, 0.42, -420]]) { tone(f, d, 'square', 0.0077, sl, t); t += d + 0.02; }
+  },
+}))(tone1, noise1);
+
+// [bruitage, nom, variantes [nom, hauteur]] ; « dire » : une phrase de babil
+const VOIX = [['Tecky', 1.15, 1], ['Alice', 1.7], ['Gaston', 0.8], ['Marcel', 1.05], ['Mamie Rose', 1.35], ['Léon', 0.95], ['Iris', 0.8, 1], ['Maman Piquette', 1.5]];
+const BRUITS = [
+  ['Tecky et les chiens', [
+    ['bark', 'Aboiement', [['Tecky', 1], ['roquet', 1.35], ['berger', 1.1], ['bouledogue', 0.8], ['doberman', 0.65]]],
+    ['yip', 'Jappement', [['roquet', 1.35], ['Iris', 0.8]]], ['growl', 'Grrr…', [['roquet', 1.35], ['doberman', 0.65]]],
+    ['flee', 'Chien vaincu', [['roquet', 1.35], ['doberman', 0.65]]], ['hit', 'Coup porté'], ['bite', 'Morsure'], ['hurt', 'Tecky a mal'],
+    ['alert', 'Le berger va charger'], ['dash', 'Il charge'], ['scratch', 'Gratter'], ['sniff', 'Flair'], ['yawn', 'Bâillement'],
+    ['snore', 'Ronflement'], ['shake', 'Il s’ébroue'], ['tunnel', 'Dans le terrier'], ['pop', 'Il en ressort'], ['bump', 'Bousculé par une voiture']]],
+  ['Objets et récompenses', [
+    ['pick', 'Objet ramassé'], ['treasure', 'Trésor, indice'], ['heal', 'Os mangé'], ['badge', 'Badge'], ['goal', 'But !'],
+    ['paper', 'Lettre'], ['pouic', 'Jouet pouic-pouic', [['le poulet d’Iris', 1], ['le canard', 1.15]]]]],
+  ['Menus et dialogues', [
+    ['blip', 'Déplacement'], ['ok', 'Valider'], ['back', 'Retour'], ['pause', 'Pause'], ['erase', 'Progression effacée'],
+    ['dire', 'Babil', VOIX]]],
+  ['Les gens, la route, le port', [
+    ['hey', 'Hé-ho !', [['Gaston', 0.8], ['Marcel', 1.05], ['Mamie Rose', 1.35], ['Lucas', 1.7]]],
+    ['honk', 'Klaxon', [['voiture', 1.15], ['camionnette', 1], ['bus', 0.75]]], ['boing', 'Ballon'],
+    ['whistle', 'Titine siffle'], ['bell', 'Titine s’arrête'], ['puff', 'Vapeur'], ['horn', 'Péniche'], ['clank', 'Ferraille'], ['bike', 'Sonnette de vélo']]],
+  ['Les bêtes', [
+    ['quack', 'Coin coin', [['cane', 1.1], ['colvert', 0.95], ['caneton', 1.5]]], ['flap', 'Envol'], ['splash', 'Plouf du canard'], ['plop', 'Flaque'],
+    ['cluck', 'Cot cot'], ['coo', 'Poules au loin'], ['rooster', 'Cocorico'], ['moo', 'Meuh', [['vache', 1], ['veau', 1.6]]],
+    ['meow', 'Miaou', [['Pompon', 1], ['perdu', 0.9]]], ['hiss', 'Pfff !'], ['chitter', 'Écureuil'], ['squeak', 'Petit hérisson']]],
+  ['L’ambiance', [
+    ['tweet', 'Gazouillis'], ['trill', 'Trille'], ['titu', 'Mésange'], ['cuckoo', 'Coucou'], ['owl', 'Chouette'], ['cricket', 'Grillon'], ['frog', 'Grenouille']]],
+];
+const ou = () => {
+  const v = document.querySelector('input[name=ou]:checked').value;
+  return v ? { x: v === 'g' ? 40 : v === 'd' ? VW - 40 : VW / 2, y: VH / 2 + (v === 'l' ? 760 : 0) } : undefined;
+};
+function dire(k, chien, n) {            // une phrase de babil, au rythme des dialogues du jeu (48 caractères par seconde)
+  for (let i = 0; i < (n || 14); i++) setTimeout(() => { if (i % 5 !== 4) (chien ? SFX.wuf : SFX.talk)(k); }, i * 1000 * SOUND.talk / 48);
+}
+function bruit(nom, p, avant, chien) {
+  audio();
+  if (nom === 'dire') dire(p, chien);
+  else if (avant) AVANT[nom](p);
+  else SFX[nom](p, ou());
+}
+for (const [titre, liste] of BRUITS) {
+  const h = document.createElement('h3'), div = document.createElement('div');
+  h.textContent = titre; div.className = 'bruits';
+  for (const [nom, label, vars] of liste) for (const [vn, p, chien] of vars || [[null, 1]]) {
+    const sp = document.createElement('span'), b = document.createElement('button'), vieux = AVANT[nom];
+    b.textContent = label + (vn ? ' : ' + vn : '');
+    b.className = (vieux ? '' : 'neuf seul');
+    b.onclick = () => bruit(nom, p, false, chien);
+    sp.appendChild(b);
+    if (vieux) { const a = document.createElement('button'); a.textContent = 'avant'; a.className = 'avant'; a.onclick = () => bruit(nom, p, true); sp.appendChild(a); }
+    div.appendChild(sp);
+  }
+  $('bruits').append(h, div);
+}
+/* Niveaux des bruitages : chacun rendu hors ligne, le nouveau puis l'ancien (crête, et niveau moyen sur sa durée). */
+async function rendreBruit(jouer) {
+  const live = AC;
+  AC = new OfflineAudioContext(1, 44100 * 2, 44100);
+  jouer();
+  const d = (await AC.startRendering()).getChannelData(0);
+  AC = live;
+  let peak = 0, sq = 0, a = -1, b = 0;
+  for (let i = 0; i < d.length; i++) { const v = Math.abs(d[i]); if (v > peak) peak = v; if (v > 0.0005) { if (a < 0) a = i; b = i; } }
+  for (let i = Math.max(a, 0); i <= b; i++) sq += d[i] * d[i];
+  const db = v => Math.round(200 * Math.log10(Math.max(v, 1e-6))) / 10;
+  return { peak: db(peak), rms: db(Math.sqrt(sq / Math.max(1, b - a + 1))), dur: Math.round((b - a) / 441) / 100 };
+}
+async function mesurerBruits() {
+  const out = [];
+  for (const [, liste] of BRUITS) for (const [nom, , vars] of liste) {
+    if (nom === 'dire') continue;
+    const p = vars ? vars[0][1] : 1, m = { nom, v2: await rendreBruit(() => SFX[nom](p)) };
+    if (AVANT[nom]) m.v1 = await rendreBruit(() => AVANT[nom](p));
+    out.push(m);
+  }
+  for (const [nom, k, chien] of [['talk', 1, 0], ['wuf', 1.15, 1]]) out.push({ nom, v2: await rendreBruit(() => SFX[nom](k)) });
+  return out;
+}
+$('mesureb').onclick = async () => {
+  const pre = $('niveauxb'), col = (s, n) => String(s === undefined ? '' : s).padStart(n);
+  pre.hidden = false; pre.textContent = 'Calcul…';
+  const m = await mesurerBruits();
+  pre.textContent = 'bruitage      crête  moyen  durée |  avant : crête  moyen  durée   (dB, s)\n' + m.map(r =>
+    r.nom.padEnd(10) + col(r.v2.peak, 9) + col(r.v2.rms, 7) + col(r.v2.dur, 7) + ' |' +
+    (r.v1 ? col(r.v1.peak, 15) + col(r.v1.rms, 7) + col(r.v1.dur, 7) : '')).join('\n');
 };
 </script>
 </body>

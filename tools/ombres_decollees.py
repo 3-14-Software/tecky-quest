@@ -49,7 +49,12 @@ def jour(alpha, ox, oy, sol):
             continue
         sous = np.where(ombre[bas + 1:, c])[0]
         if len(sous) and sous[0] >= 1:
-            pire, n = max(pire, int(sous[0])), n + (sous[0] >= 2)
+            # l'ombre part vers la droite : sous un pied mince, à la verticale, le sol est éclairé sans que rien
+            # soit décollé ; on mesure donc aussi le jour le long de l'ombre, et on garde le plus petit des deux
+            biais = next((k for k in range(1, int(sous[0]) + 1)
+                          if ombre[min(ombre.shape[0] - 1, bas + k), min(ombre.shape[1] - 1, c + int(round(k * SX / SY))) ]), int(sous[0]))
+            g = min(int(sous[0]), biais)
+            pire, n = max(pire, g), n + (g >= 2)
     return pire, n
 
 

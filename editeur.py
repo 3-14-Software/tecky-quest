@@ -102,6 +102,8 @@ def infos():
         "grassVariants": pack_web.GRASS_VARIANTS, "ts": pack_web.TS, "lisiere": pack_web.lisiere.RING,
         "genres": carte.genres(), "sprites": carte.SPRITES, "tailles": carte.TAILLES, "indexees": carte.INDEXEES,
         "indices": carte.INDICES, "musiques": carte.MUSIQUES, "decorsDeduits": carte.DECORS_DEDUITS,
+        # décors redessinés (nature, bâtiments, mobilier) : nom du décor -> ses modèles et leur tirage (MAP.variants)
+        "variants": {n: [noms, tirage] for n, (noms, tirage) in pack_web.nature.VARIANTES.items()},
     }
 
 

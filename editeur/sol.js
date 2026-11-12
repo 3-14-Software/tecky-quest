@@ -86,6 +86,18 @@
     return { ground, over, ring, composites: comp };
   }
 
+  /* Le sprite d'un élément. Un décor redessiné pour la v2 (arbre, maison, banc…) n'a plus de sprite à son nom : le
+     jeu tire un de ses modèles de sa position (decorLook() de game.js, en pixels du jeu ; I.variants = MAP.variants).
+     Sans position (palette), le premier modèle. Les autres clés sont rendues telles quelles. */
+  function cle(key, x, y, I) {
+    const v = key && key.startsWith('decor/') && (I || ED.I).variants[key.slice(6)];
+    if (!v) return key;
+    if (x === undefined) return 'decor/' + v[0][v[1][0]];
+    const ts = (I || ED.I).ts, px = t => Math.round(Math.round(t * ts * 10) / 10);
+    return 'decor/' + v[0][v[1][Math.floor(hash3(px(x), px(y), 7) * v[1].length)]];
+  }
+
+  ED.cle = cle;
   ED.hash3 = hash3;
   ED.resolve = resolve;
   ED.needsComposite = needsComposite;

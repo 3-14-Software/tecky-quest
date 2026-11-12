@@ -132,6 +132,10 @@ eval(base + `setTimeout(() => {
      'Tecky et une voiture ont leur ombre portée, dessinée avant les sprites (' + run('portees.length') + ' ombres à l\\'écran)');
   ok(run('portees.every(p => MAP.cast.includes(p[0].split("/")[0]))') && run('!MAP.cast.includes("decor") && !MAP.cast.includes("duck") && !MAP.cast.includes("fx")'),
      'seulement les personnages, les bêtes, les véhicules et les objets posés au sol (pas les décors, les canards ni les effets)');
+  // un gros ballon de Léon a son ovale dessous, pas d'ombre couchée en plus (un jouet d'Iris, de la même famille, si)
+  run('portees = []; balls[0].x = P.x + 80; balls[0].y = P.y + 40; balls[0].rot = 0; balls[0].z = 0; toys[0].x = P.x - 80; toys[0].y = P.y + 40; toys[0].carried = false; drawWorld();');
+  ok(run('!portees.some(p => p[0] === "port/balloon")') && run('portees.some(p => p[0] === "port/toy")'),
+     'un ballon de Léon, même sans avoir roulé, n\\'a que l\\'ombre qui est dessous ; un jouet d\\'Iris a son ombre portée');
   // bords naturels froissés : variantes tirées de la position, mêmes coins (tileLook) ; la voirie reste droite
   run('var vus = new Set(), memes = true, eau = MAP.shore; for (let tx = 0; tx < 40; tx++) { const v = tileLook(eau + 12, tx, 41); vus.add(v >> 4); memes = memes && (v & 15) === 12 && v === tileLook(eau + 12, tx, 41); }');
   ok(run('vus.size') === 3 && run('memes') && run('tileLook(MAP.shore + 15, 3, 3) === MAP.shore + 15') && run('tileLook(1, 3, 3) === 1')

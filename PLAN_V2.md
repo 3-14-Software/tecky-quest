@@ -357,9 +357,19 @@ Fait le 12 novembre 2026, dans le jeu :
   image. Aller plus loin : des blocs quatre fois plus petits, à ne faire que si l'à-coup se voit dans un vrai
   Firefox.
 
-Reste, avant de clore le lot 4 : le regarder dans le jeu en mouvement, dans un vrai Firefox (les mesures sont
-celles d'un Firefox sans fenêtre, les images vérifiées sont des captures fixes) ; les huit filets d'ombre
-que liste `tools/ombres_decollees.py` ; l'éditeur de carte, qui montre encore les anciens arbres et bâtiments.
+Relu par Christophe dans un vrai Firefox, en mouvement (12 novembre) : « ok, fluide ». Les blocs quatre fois plus
+petits ne sont donc pas à faire.
+
+- **Filets d'ombre** : sur les huit que listait `tools/ombres_decollees.py`, un seul était un défaut, le pied de
+  la glissière du toboggan, dessiné à la profondeur des poteaux de devant alors que la glissière est à
+  mi-profondeur (raccourci). Les autres venaient de la mesure : l'ombre part vers la droite, donc sous un pied
+  mince le sol est éclairé à la verticale sans que rien soit décollé. L'outil mesure maintenant aussi le long de
+  l'ombre ; au seuil de 5 px il ne reste que deux colonnes de la table de terrasse.
+- **Éditeur de carte** : depuis que les anciens dessins ne sont plus dans l'atlas, il montrait un point rouge à
+  la place des arbres, des maisons et du mobilier. Il choisit maintenant le même modèle que le jeu d'après la
+  position (`ED.cle()`, test `editeur_sol.js` : les 431 décors de la carte), palette « Poser » comprise.
+
+**Lot 4 terminé** (12 novembre 2026).
 
 ### 5. Textes et anglais
 

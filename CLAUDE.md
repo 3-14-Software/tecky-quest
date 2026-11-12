@@ -110,7 +110,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `carte.json` (Christophe : « n'hésite pas à adapter le positionnement sur la carte ») : le doberman de
   l'entrepôt, l'os derrière l'étal de légumes, la maison haute (sa cheminée sortait de l'écran) l'ont été.
   Les étals du marché (`etal()`) et le poulailler sur pieds (`poulailler()`) y sont aussi, sans fenêtres
-  (`ECLAIRES` = ceux qui en ont). `decor.py` garde les anciens dessins, que seul l'éditeur de carte montre encore.
+  (`ECLAIRES` = ceux qui en ont). `decor.py` garde les anciens dessins, qui ne servent plus : l'éditeur de carte montre ceux du jeu (`ED.cle()`).
   `mobilier.py` (**le mobilier du jeu web**, v2, inscrit dans `nature.CATALOGUE` / `VARIANTES` comme les
   bâtiments) : conteneurs, caisses, palettes, tonneaux, bottes de foin (carrée ou ronde), cagette, banc, boîte
   aux lettres, haie, cône, heurtoir, de trois quarts comme les étals (`_boite()`, `_boite_p()` : flanc, face,
@@ -188,7 +188,30 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   chiptune », copiée telle quelle), le passage d'une zone à l'autre comme dans le jeu, et « Mesurer les niveaux »
   (rendu hors ligne : crête et niveau moyen par morceau et par canal ; lent, une minute par morceau). Je ne peux
   pas écouter : c'est Christophe qui juge à l'oreille, les niveaux et le contrôle des partitions sont mes seuls
-  garde-fous.
+  garde-fous. `key` : le ton du morceau (0 = do ; un ton mineur donne son relatif majeur), pour les bruitages.
+- **Bruitages** (v2 ; `game.js`, section « bruitages », avant la musique) : chaque son est une recette de `SOUNDS`,
+  des sons superposés faits avec `tone()` (une onde dont la hauteur suit une courbe : `[f0, f1, …]` ; options
+  `at`, `a` attaque, `h` tenue, `lp` passe-bas, `vib`, `trem`), `noise()` (un souffle filtré, tampon de bruit
+  partagé) et `cry()` (une voix : dents de scie dans des formants `[fréquence, étroitesse, force]`, pour « ouaf »,
+  « meuh », « coin », « miaou », « hé-ho » ; voyelles `VOWEL`) ; `chime()` (carillon), `ding()` (cloche). On joue
+  par `SFX.nom(p, d'où)` : `p` = hauteur (`T.pitch` d'un chien, `VEHICLE.pitch`, `n.pitch`), `d'où` = ce qui fait
+  le bruit (`{ x, y }` du monde) : `sfxPlace()` le sort de son côté de l'écran (`SOUND.pan`) et l'affaiblit avec
+  la distance au milieu de l'écran (`SOUND.near` / `far` ; trop loin : rien n'est créé). Sans `d'où` : au centre
+  (Tecky, menus). La hauteur change un peu à chaque fois (`SOUND.vary`), sauf les petits airs (`TUNED` : objet
+  ramassé, trésor, os, badge, but, menus), écrits en do et joués dans le ton du morceau en cours (`sfxKey()`,
+  `SONGS[…].key`). `SFX.nom()` vérifie déjà `AC` et `muted` : ne plus écrire `if (!muted)` devant. **Babil des
+  dialogues** (`talkSound()`, `VOICE` : une hauteur par personnage, `SOUND.talk`) : une syllabe `talk` tous les 4
+  caractères, des « wouf » `wuf` pour Tecky et Iris, « tic » `blip` pour une information, rien sur un espace ou
+  la ponctuation ; à retirer quand les vraies voix (lot 7) arriveront. Menus : `blip` (déplacement), `ok`,
+  `back`, `pause`, `erase`. Bêtes et gens qui n'avaient qu'une bulle ont leur son (`meow`, `hiss`, `chitter`,
+  `squeak`, `growl`, `alert`, `dash`, `pouic` du poulet et du canard, `paper` des lettres, `tunnel` / `pop`,
+  `bump`, `splash`, `puff` de Titine). Un nouveau bruitage : sa recette dans `SOUNDS`, son bouton dans `BRUITS`
+  de `web_src/musique.template.html` ; `tests/sfx.js` refuse un `SFX.x` sans recette et une recette jamais jouée.
+  **Salle d'écoute** : `web/musique.html` a une partie « Les bruitages » (la section du jeu, copiée telle
+  quelle) : chaque son, ses variantes de hauteur, sa place (gauche, droite, au loin), le babil de chaque
+  personnage ; « avant » rejoue le bruitage d'avant la v2 (`AVANT`, gardé dans la page seulement) ; « Mesurer les
+  bruitages » : crête et niveau moyen du nouveau et de l'ancien. Les niveaux ont été calés sur les anciens (0 à
+  + 4 dB, les sons d'ambiance bien plus bas) ; comme pour la musique, je ne peux pas écouter.
 - **Objets à ramasser** (`items.py` ; lettres de Marcel `npcs.letter_frames()` ; jouets d'Iris `port.toy_frames()`) :
   ils détonnaient dans le décor de la v2 (à plat, flottants au-dessus d'un ovale). Choix de Christophe sur
   `reference/v2/objets_options.png` : **posés au sol, avec leur ombre portée**, réduits à **50 %** (`POSED.sc` ;
@@ -212,7 +235,9 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   éclairé à droite. Ce qui tient sur des pieds à des profondeurs différentes (banc, chevalets du portique et de
   la balançoire, toboggan, heurtoir) a une ligne en marches d'escalier (`mobilier._marches()`).
   `python3 tools/ombres_decollees.py [seuil]` couche chaque ombre comme le jeu et liste celles qui se décollent
-  (au seuil de 5 px il ne reste que des filets d'une ou deux colonnes au bord des marches) : à relancer après
+  (le jour se mesure à la verticale et le long de l'ombre, on garde le plus petit : sous un pied mince, le sol
+  est éclairé à la verticale sans que rien soit décollé ; au seuil de 5 px il ne reste que deux colonnes de la
+  table de terrasse, à 3 px le liseré connu le long du mur qui fuit des maisons) : à relancer après
   tout nouveau décor.
 - **La carte est une donnée** : `carte.json` (en tuiles ; `carte.py` : `charger()`, `valider()`, `enregistrer()`, format
   stable, une entrée par ligne ; `python3 carte.py --verifier` dans `run_all.sh`). Terrain = 65 lignes de 97 coins (une
@@ -227,7 +252,9 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `carte.json`, `carte.py` (`ORDRE`, `valider()`), `pack_web.py`, et l'éditeur (`editeur/etat.js` : `objets()`).
 - Éditeur de carte (`editeur.py` : serveur local 127.0.0.1:8770, atlas et tileset dessinés au démarrage, tuiles
   composées à la demande `/tuile`, `PUT /carte.json` refusé si le fichier a changé entre-temps (ETag) ; page
-  `editeur/` : `sol.js` = le sol calculé comme `build_map()` (test `editeur_sol.js`), `etat.js` (carte, historique,
+  `editeur/` : `sol.js` = le sol calculé comme `build_map()`, et `ED.cle(clé, x, y)` = le sprite d'un décor
+  redessiné, le modèle que le jeu tire de sa position (`decorLook()`, `infos.variants` = `MAP.variants` ; sans
+  position, pour la palette : le premier modèle) — test `editeur_sol.js` —, `etat.js` (carte, historique,
   objets), `vue.js` (dessin), `outils.js` (souris, clavier), `panneaux.js` (interface)). Terrain au pinceau sur les
   coins, détails, décors et éléments à la souris, zones et rectangles à poignées. « Vérifier » : `pack_web.py`, puis
   `check_placement.js --json` (problèmes avec leur position, grille du parcours à pied) et `export_voix.js --check`.
@@ -414,7 +441,9 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - Aboiement : touche dans un cône devant soi, jusqu'à `BARK` (Tecky, 300 px) ou `DOG_BARK` (doberman, 320 px).
   Une onde au sol (`addBarkRing` / `drawRings`, crème ou rouge) montre exactement cette zone : toujours passer par ces
   constantes pour changer une portée. Test : `tests/ring.js`.
-- Son : musique des zones à 0,35 (`Music.level()`), fanfare de victoire et musique de défaite à 0,55 (jouées une seule fois) ;
+- Son : musique des zones à 0,15 (`MUSIC_VOL`, `Music.level()` ; à 0,35, Christophe l'a trouvée « bien trop forte » : elle
+  couvrait les bruitages), fanfare de victoire et musique de défaite à 0,3 (jouées une seule fois) ; sons continus de
+  l'ambiance (`AMB` : pluie, clapotis, fontaine) très en dessous, eux aussi baissés à sa demande ;
   bruitages multipliés par `SFX_VOL` (1,4). KO de Tecky → `Music.start('lose')` ; rejouer relance le thème.
 - Trésors (médaille 100, jouet pouic-pouic 50, balle 20) : jamais dans l'eau — `check_placement.js` le vérifie.
 - Indices (`CLUES` : barrette à la ferme, chaussure dans la forêt, doudou au parc) : chacun dit où chercher ensuite
@@ -561,7 +590,11 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - Zones (`ZONES` = `MAP.zones` : rectangles en tuiles, la première zone dont un rectangle contient le point, un bord
   posé sur le bord de la carte sans limite, la dernière couvre tout ; `zoneAt()`, `updateZone()` ; huit, dont « Le verger » au sud de la route, qui reprend la musique de
   la ferme : champ `music` d'une zone) : bandeau à l'arrivée (`banner`), étiquettes de la carte, ambiance sonore
-  (`Ambience`, `AMB_EVENTS`, `ambSound()` : oiseaux, coq, sonnette, cliquetis ; clapotis selon l'eau autour) et
+  (`Ambience`, `AMB_EVENTS` : [son, intervalle min, max, 'jour' ou 'soir'], `ambSound()` : oiseaux (gazouillis,
+  trille, mésange, coucou), coq, sonnette, ferraille, corne de péniche ; le soir, `lampsOn()`, les oiseaux se
+  taisent : grillons, chouette, grenouilles près de l'eau, `AMB_NIGHT` ; chacun sort d'un côté tiré au hasard ;
+  sons continus `Ambience.set()` / `start()` : clapotis selon l'eau autour, pluie, glouglou de la fontaine quand
+  Tecky s'en approche, `AMB.fountainR`) et
   musique (le morceau de la zone, `SONGS`, `Music.zone`). **Changement de morceau** (`MUSIC_ZONE`) : Tecky doit
   rester `settle` (1,5 s) dans la zone (`tuneT` ; un passage éclair ne change rien), puis `Music.setZone()` : le
   morceau en cours **s'éteint** (`ramp()`, fondu vers le silence de `out` s ; `Music.want`, `Music.swap`), et après
@@ -627,7 +660,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - Le service worker de `docs/` est réseau d'abord avec repli cache : pas de version à incrémenter à chaque livraison.
 - Canvas simulé des tests (`sim.js`, `check_placement.js`) : il doit renvoyer un objet pour `createRadialGradient` /
   `createLinearGradient` (nuages, lumière) ; tout nouvel appel de canvas qui renvoie un objet doit y être ajouté.
-  De même pour le son : `FakeAC` de `sim.js` (`createDelay` pour l'écho) ; tout nouveau nœud audio doit y être ajouté.
+  De même pour le son : `FakeAC` de `sim.js` (`createDelay` pour l'écho, `createStereoPanner` pour les bruitages) ; tout nouveau nœud audio doit y être ajouté.
 - **Performances (Firefox)** : Firefox dessine souvent le canvas avec le processeur. Rien de plein écran recalculé à
   chaque image : pas de dégradé ni de mode de fusion autre qu'un remplissage uni (la lumière pré-rend ses dégradés en
   petit, `buildLight()`) ; canvas plafonné à `MAX_PIXELS` (1920 x 1080), le navigateur agrandit au-delà (sinon
@@ -663,8 +696,10 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   véhicules) allongées le soir et fusionnées, sous-bois et champ, mobilier (`mobilier.py` : du pot de fleurs au
   portique du port), véhicules, objets à ramasser posés au sol, mares en haricot faits ; rives et
   bords de chemin froissés, ombre de ce qui vole (`flyShadow()` : canards en vol, papillons), objets réduits à
-  50 %, jouets d'Iris refaits, coût mesuré dans Firefox sans fenêtre faits. Le lot 4 est
-  à relire dans le jeu en mouvement, dans un vrai Firefox, avant de passer au lot 5. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
+  50 %, jouets d'Iris refaits, coût mesuré dans Firefox sans fenêtre faits ; Christophe l'a relu en mouvement
+  dans un vrai Firefox (« ok, fluide »). Depuis : les filets d'ombre revus (le pied de la glissière du toboggan était à la mauvaise profondeur ; les
+  autres étaient des artefacts de la mesure) et l'éditeur de carte montre les décors de la v2 : **le lot 4 est fini**, le suivant est
+  le lot 5 (textes en données et anglais). Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
   témoin dans `reference/v2/`) : des images fixes, que ni `game.js` ni `pack_web.py` n'utilisent encore (le décor
   de `nature.py` est dans le jeu depuis le lot 4). Les pistes générées par Christophe avec ChatGPT sont dans
   `reference/v2/chat_gpt/`.

@@ -76,7 +76,7 @@ function main() {
   ok(run('state') === 'pause' && ids() === 'unpause,options,quit', 'pause : Reprendre, Options, Menu principal');
   run('pressed.right = true'); step(1); run('pressed.ok = true'); step(1);
   ok(run('state') === 'options' && run('optReturn') === 'pause', 'Options depuis la pause');
-  ok(run('Music.level()') < 0.2, 'musique toujours discrète');
+  ok(run('Music.level()') < run('MUSIC_VOL.zone') * 0.5, 'musique toujours discrète');
   run('pressed.bark = true'); step(1);
   ok(run('state') === 'pause' && run('menu.sel') === 1, 'B : retour à la pause');
   run('pressed.pause = true'); step(1);

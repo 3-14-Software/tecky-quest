@@ -13,6 +13,14 @@ ok(diff(s.ground, MAP.ground) === 0, 'sol : les ' + MAP.ground.length + ' tuiles
 ok(diff(s.over, MAP.over) === 0, 'détails au sol et traces de pattes (' + diff(s.over, MAP.over) + ' différences)');
 ok(JSON.stringify(s.ring) === JSON.stringify(MAP.edge.ring), 'sol de la lisière (' + s.ring.length + ' tuiles)');
 ok(s.composites.length > 0 && s.ground.some(i => i >= I.compositeBase), s.composites.length + ' tuiles composées, mêmes index');
+// décors redessinés : l'éditeur montre, pour chaque décor de la carte, le modèle que le jeu tire de sa position
+const jeu = (n, x, y) => { const v = MAP.variants[n]; return 'decor/' + (v ? v[0][v[1][Math.floor(ED.hash3(Math.round(x), Math.round(y), 7) * v[1].length)]] : n); };
+const ecarts = c.decor.filter(([n, x, y], i) => ED.cle('decor/' + n, x, y, I) !== jeu(n, MAP.decor[i][1], MAP.decor[i][2]));
+ok(c.decor.every(([n], i) => MAP.decor[i][0] === n) && ecarts.length === 0,
+   'décors : pour les ' + c.decor.length + ' de la carte, le même modèle que dans le jeu (' + ecarts.length + ' écarts)');
+const ATLAS = JSON.parse(html.match(/const ATLAS = (.*);\n/)[1]);
+const sans = [...new Set(c.decor.map(([n, x, y]) => ED.cle('decor/' + n, x, y, I)).concat(Object.keys(I.variants).map(n => ED.cle('decor/' + n, undefined, undefined, I))))].filter(k => !ATLAS[k]);
+ok(sans.length === 0 && ED.cle('item/bone', 1, 2, I) === 'item/bone', 'chacun a son dessin dans l\'atlas, palette comprise (' + (sans.join(', ') || 'aucun manquant') + ')');
 // un coin de plus : seules ses quatre tuiles changent (les variantes ne dépendent que de la position)
 const c2 = JSON.parse(JSON.stringify(c)), y = 30, x = 2, row = c2.terrain[y];
 c2.terrain[y] = row.slice(0, x) + (row[x] === 't' ? '.' : 't') + row.slice(x + 1);
