@@ -30,8 +30,9 @@ function main() {
     if (out === null && under !== null && run('P.alpha') === 1 && run('P.mode') === 'tunnel') out = drawnAlpha();
   }
   run('drawSpr = dsA; P.inv = 999');
-  ok(under && under.length === 1 && under[0] === 0, 'sous le grillage, Tecky n’est pas dessiné (opacité ' + JSON.stringify(under) + ')');
-  ok(out && out.length === 1 && out[0] === 1, 'en ressortant, il est dessiné en entier (opacité ' + JSON.stringify(out) + ')');
+  ok(under && under.length === 2 && under.every(a => a === 0),       // (deux fois : la passe des ombres portées, puis le sprite)
+     'sous le grillage, Tecky n’est pas dessiné (opacité ' + JSON.stringify(under) + ')');
+  ok(out && out.length === 2 && out.every(a => a === 1), 'en ressortant, il est dessiné en entier (opacité ' + JSON.stringify(out) + ')');
   ok(Math.abs(run('P.x') - run('TN[2]')) < 1 && run('P.mode') === 'free', 'il est bien passé de l’autre côté');
   run('P.x = TN[2]; P.y = TN[3]; P.cdBite = 0; pressed.bite = true'); step(80);
   ok(Math.abs(run('P.x') - run('TN[0]')) < 1 && run('state') === 'play', 'retour par le même terrier, sans nouvelle explication');

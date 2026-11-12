@@ -90,10 +90,24 @@ eval(base + `setTimeout(() => {
   run('nuit = []; sun = 3.2; drawWorld();');
   ok(run('nuit.length') >= 1 && run('nuit.some(n => n[0] === "nuit/boulangerie")') && run('ctx === mainCtx'), 'au coucher du soleil, lampadaires allumés : ' + run('nuit.length') + ' bâtiments aux fenêtres allumées à l\\'écran');
   run('var traits = 0, drawP = P.draw; P.draw = function () { traits++; return drawP.apply(this, arguments); }; nuit = []; drawWorld();');
-  ok(run('traits') === 1, 'Tecky loin de la boulangerie : dessiné une fois');
+  ok(run('traits') === 2, 'Tecky loin de la boulangerie : dessiné une fois (plus la passe des ombres portées)');
   run('traits = 0; nuit = []; P.x = B.x; P.y = B.y + 20; drawWorld();');
-  ok(run('nuit.some(n => n[0] === "nuit/boulangerie")') && run('traits') >= 2 && run('ctx === mainCtx'),
+  ok(run('nuit.some(n => n[0] === "nuit/boulangerie")') && run('traits') >= 3 && run('ctx === mainCtx'),
      'Tecky devant la boulangerie : redessiné en gomme sur les fenêtres des bâtiments derrière lui (il reste devant elles)');
   run('P.draw = drawP;');
   run('drawSpr = drawSpr2; sun = 0;');
+  // --- ombres portées des personnages, des bêtes et des véhicules : leur silhouette couchée, sous tous les sprites
+  run('var portees = [], ordre = [], cast0 = castShadow, spr0 = drawSpr; castShadow = function (g, s, f, x, y, o) { portees.push([Object.keys(ATLAS).find(k => ATLAS[k] === s), o.alpha, o.lift || 0, g === mainCtx]); ordre.push("ombre"); return cast0.apply(this, arguments); };'
+    + ' drawSpr = function (k) { if (!shadowCtx && k.startsWith("tecky/")) ordre.push("tecky"); return spr0.apply(this, arguments); };');
+  run('sun = 0; P.x = 20 * 64; P.y = 27 * 64; P.alpha = 1; P.hop = 0; P.inv = 0; camX = P.x - 480; camY = P.y - 270; cars = [newVehicle(["car_red", 0, P.x + 200])]; drawWorld();');
+  ok(run('portees.some(p => p[0].startsWith("tecky/") && p[3])') && run('portees.some(p => p[0] === "vehicle/car_red")')
+     && run('ordre.indexOf("tecky") > ordre.lastIndexOf("ombre")') && run('ctx === mainCtx'),
+     'Tecky et une voiture ont leur ombre portée, dessinée avant les sprites (' + run('portees.length') + ' ombres à l\\'écran)');
+  ok(run('portees.every(p => MAP.cast.includes(p[0].split("/")[0]))') && run('!MAP.cast.includes("decor") && !MAP.cast.includes("item") && !MAP.cast.includes("duck")'),
+     'seulement les personnages, les bêtes et les véhicules (pas les décors, les objets ni les canards)');
+  run('portees = []; P.hop = 20; drawWorld(); P.hop = 0;');
+  ok(run('portees.find(p => p[0].startsWith("tecky/"))[2]') === 20, 'un saut : l\\'ombre reste au sol (la hauteur du saut lui est passée)');
+  run('portees = []; P.alpha = 0; drawWorld(); P.alpha = 1;');
+  ok(run('portees.find(p => p[0].startsWith("tecky/"))[1]') === 0, 'Tecky sous un grillage (invisible) : son ombre aussi');
+  run('castShadow = cast0; drawSpr = spr0; cars = [];');
 }, 50);`);

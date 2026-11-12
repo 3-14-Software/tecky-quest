@@ -13,6 +13,7 @@ Prépare la version web de Tecky Quest :
 import hashlib
 import json
 import math
+import re
 import os
 import sys
 
@@ -265,6 +266,7 @@ def build_map():
         "variants": {n: [noms, tirage] for n, (noms, tirage) in nature.VARIANTES.items()},
         # ombres portées : le décalage d'un point par unité de hauteur, et la ligne de contact de chaque sprite
         "shadow": list(nature.OMBRE), "sols": sols(),
+        "cast": portees(),                            # familles de sprites à ombre portée (personnages, bêtes, véhicules)
         "perches": batiments.perchoirs(S),            # où un chat se réfugie sur le toit de chaque bâtiment
         # décors agrandis (bâtiments, camion, tracteur, chariot) : leur obstacle (FOOT) grandit d'autant
         "grow": {**batiments.agrandis(), **decor.ECH},
@@ -280,6 +282,18 @@ def build_map():
 
 
 # ====================================================================== ATLAS
+def sans_ovale(svg):
+    """Le même dessin sans ce qui est posé dessous (Drawing.under : l'ovale d'ombre des personnages et des bêtes).
+    Le jeu leur donne une ombre portée, la silhouette couchée sur le sol (game.js : castShadow())."""
+    return re.sub(r"</defs>.*?<g transform=", "</defs><g transform=", svg, count=1, flags=re.S)
+
+
+def portees():
+    """Familles de sprites qui ont une ombre portée dans le jeu (le début de leur clé dans l'atlas)."""
+    return (["tecky", "alice", "alice1", "farmer", "hedgehog", "vehicle"] + list(chiens2.CHIENS) + list(npcs.KINDS)
+            + list(villageois.KINDS) + list(critters.KINDS) + list(cows.KINDS) + list(hens.COLORS))
+
+
 def collect(r=1):
     """(clé, liste d'images, origine, découpe ?). r : facteur de rendu (1 : pixels x2, ceux de l'atlas du jeu ;
     HD : les mêmes dessins deux fois plus fins). Les origines restent en pixels x2."""
@@ -292,7 +306,7 @@ def collect(r=1):
     def char(kind, fn):              # les chiens (chiens2.py), cadre de 48 x 48
         for a, (_, _, vues) in chiens2.ANIMS.items():
             for v in vues:
-                ims = [render_svg(s, 48, 48, R, PAD) for s in fn(a, v)]
+                ims = [render_svg(sans_ovale(s), 48, 48, R, PAD) for s in fn(a, v)]
                 if a == "hurt":
                     ims[0] = flash(ims[0])
                 out.append((f"{kind}/{a}/{v}", ims, CH_O, True))
@@ -302,7 +316,7 @@ def collect(r=1):
     for a, fn in [(a, tecky2.frames) for a in tecky2.ANIMS] + [(a, tecky2.rest_frames) for a in tecky2.REST_ANIMS]:
         for v in (tecky2.ANIMS.get(a) or tecky2.REST_ANIMS[a])[2]:
             w, h, ox, oy = tecky2.CADRE[v]
-            ims = [render_svg(sv, w, h, R, PAD) for sv in fn(a, v)]
+            ims = [render_svg(sans_ovale(sv), w, h, R, PAD) for sv in fn(a, v)]
             if a == "hurt":
                 ims[0] = flash(ims[0])
             out.append((f"tecky/{a}/{v}", ims, (ox * S + M, oy * S + M), True))
@@ -311,31 +325,31 @@ def collect(r=1):
     w, h, ox, oy = alice2.CADRE                         # Alice (alice2.py)
     for a in alice2.ANIMS:
         for v in dirs:
-            out.append((f"alice/{a}/{v}", [render_svg(s, w, h, R, PAD) for s in alice2.frames(a, v)], (ox * S + M, oy * S + M), True))
+            out.append((f"alice/{a}/{v}", [render_svg(sans_ovale(s), w, h, R, PAD) for s in alice2.frames(a, v)], (ox * S + M, oy * S + M), True))
             # « alice1 » : un pied nu, tant que Tecky ne lui a pas rapporté sa chaussure (les retrouvailles)
-            out.append((f"alice1/{a}/{v}", [render_svg(s, w, h, R, PAD) for s in alice2.frames(a, v, True)], (ox * S + M, oy * S + M), True))
+            out.append((f"alice1/{a}/{v}", [render_svg(sans_ovale(s), w, h, R, PAD) for s in alice2.frames(a, v, True)], (ox * S + M, oy * S + M), True))
     for a, (_, fps, _) in farmer.ANIMS.items():          # le fermier Gaston, vu de face, pieds en (24, 60)
-        out.append((f"farmer/{a}", [render_svg(sv, farmer.W, farmer.H, R, PAD) for sv in farmer.frames(a)], (24 * S + M, 60 * S + M), True))
+        out.append((f"farmer/{a}", [render_svg(sans_ovale(sv), farmer.W, farmer.H, R, PAD) for sv in farmer.frames(a)], (24 * S + M, 60 * S + M), True))
     for kind in npcs.KINDS:                             # le facteur et la voisine, vus de face, pieds en (24, 60)
         for a in npcs.ANIMS[kind]:
-            out.append((f"{kind}/{a}", [render_svg(sv, npcs.W, npcs.H, R, PAD) for sv in npcs.frames(kind, a)], (24 * S + M, 60 * S + M), True))
+            out.append((f"{kind}/{a}", [render_svg(sans_ovale(sv), npcs.W, npcs.H, R, PAD) for sv in npcs.frames(kind, a)], (24 * S + M, 60 * S + M), True))
     for kind in villageois.KINDS:                       # les villageois, vus de face, pieds en (24, 60)
         for a in villageois.ANIMS[kind]:
-            out.append((f"{kind}/{a}", [render_svg(sv, npcs.W, npcs.H, R, PAD) for sv in villageois.frames(kind, a)], (24 * S + M, 60 * S + M), True))
+            out.append((f"{kind}/{a}", [render_svg(sans_ovale(sv), npcs.W, npcs.H, R, PAD) for sv in villageois.frames(kind, a)], (24 * S + M, 60 * S + M), True))
     out.append(("item/letter", [render_svg(sv, 32, 32, R, PAD) for sv in npcs.letter_frames()], (32 + M, 32 + M), True))
     out.append(("port/balloon", [render_svg(sv, 32, 32, R, PAD) for sv in port.balloon_frames()], (16 * S + M, 16 * S + M), True))
     out.append(("port/toy", [render_svg(sv, 32, 32, R, PAD) for sv in port.toy_frames()], (16 * S + M, 16 * S + M), True))
     for a in herissons.ANIMS:                           # les bébés hérissons, de profil, pieds en (16, 28)
-        out.append((f"hedgehog/{a}", [render_svg(sv, 32, 32, R, PAD) for sv in herissons.frames(a)], (16 * S + M, 28 * S + M), True))
+        out.append((f"hedgehog/{a}", [render_svg(sans_ovale(sv), 32, 32, R, PAD) for sv in herissons.frames(a)], (16 * S + M, 28 * S + M), True))
     for kind in critters.KINDS:                         # écureuil, chats : de profil vers la droite, pieds en (16, 28)
         for a in critters.anims(kind):
-            out.append((f"{kind}/{a}", [render_svg(sv, 32, 32, R, PAD) for sv in critters.frames(kind, a)], (16 * S + M, 28 * S + M), True))
+            out.append((f"{kind}/{a}", [render_svg(sans_ovale(sv), 32, 32, R, PAD) for sv in critters.frames(kind, a)], (16 * S + M, 28 * S + M), True))
     for kind in ducks.KINDS:                            # canards : de profil vers la droite, ligne d'eau en (16, 24)
         for a in ducks.anims(kind):
             out.append((f"{kind}/{a}", [render_svg(sv, 32, 32, R, PAD) for sv in ducks.frames(kind, a)], (16 * S + M, 24 * S + M), True))
     for kind in cows.KINDS:                             # vaches : de profil vers la droite, pieds en (32, 44)
         for a in cows.anims(kind):
-            out.append((f"{kind}/{a}", [render_svg(sv, 64, 48, R, PAD) for sv in cows.frames(kind, a)], (32 * S + M, 44 * S + M), True))
+            out.append((f"{kind}/{a}", [render_svg(sans_ovale(sv), 64, 48, R, PAD) for sv in cows.frames(kind, a)], (32 * S + M, 44 * S + M), True))
     for c in butterflies.COLORS:
         out.append((f"butterfly/{c}", [render_svg(sv, 24, 24, R, PAD) for sv in butterflies.frames(c)], (12 * S + M, 12 * S + M), True))
     for n in vehicles.VEHICLES:
@@ -343,7 +357,7 @@ def collect(r=1):
         out.append((f"vehicle/{n}", [render_svg(sv, w, h, R, PAD) for sv in vehicles.frames(n)], (ox * S + M, oy * S + M), True))
     for kind in hens.COLORS:
         for anim in hens.ANIMS:
-            out.append((f"{kind}/{anim}/right", [render_svg(s, 32, 32, R, PAD) for s in hens.frames(kind, anim)],
+            out.append((f"{kind}/{anim}/right", [render_svg(sans_ovale(s), 32, 32, R, PAD) for s in hens.frames(kind, anim)],
                         (16 * S + M, 28 * S + M), True))
     for n in items.ITEMS:
         out.append((f"item/{n}", [render_svg(s, 32, 32, R, PAD) for s in items.item_frames(n)], (32 + M, 32 + M), True))

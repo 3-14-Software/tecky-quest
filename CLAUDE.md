@@ -221,7 +221,15 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   plus dessiné. Elles s'allongent le soir : `shadowLen()` suit `sun` (`SHADOW.len`, par paliers de `step`), et
   les blocs de sol périmés sont repeints un par image (`groundRepaint`), sans à-coup. Pièges rencontrés : des
   bandes sans recouvrement laissent des liserés ; une ligne de contact qui suit le bas d'une silhouette arrondie
-  effiloche l'ombre. Les personnages et les bêtes gardent leur ovale.
+  effiloche l'ombre. **Personnages, bêtes et véhicules** (`MAP.cast` = `pack_web.portees()`, le début de leur clé
+  dans l'atlas) : leur ovale est retiré à la construction (`pack_web.sans_ovale()` enlève `Drawing.under` ;
+  `vehicles.frames()` aussi) et le jeu couche leur silhouette à chaque image (`castShadow()`, depuis
+  `shadowAtlas`, une copie sombre de l'atlas x2 faite une fois). `drawCastShadows(list)` rejoue la liste triée de
+  `drawWorld()` avec `ctx` remplacé par `NULL_CTX` (qui ne dessine rien) : seuls les `drawSpr()` des familles à
+  ombre posent leur silhouette, sous tous les sprites. Donc : une fonction de dessin de la liste est appelée deux
+  fois par image (trois devant un bâtiment le soir), elle ne doit rien modifier ; `opt.lift` = hauteur d'un saut
+  ou d'une grimpette (l'ombre reste au sol). Les canards (sur l'eau), les objets et les papillons gardent leur
+  dessin. Une ombre qui passe sur celle d'un arbre l'assombrit un peu plus (elles ne sont pas fusionnées).
   Test : `map.js`.
   **Images nettes** (`HD`, `HD_SRC`, `wantHD()`, `loadHD()`, `setHD()`, `blit()`) : sur un grand écran (au moins
   `HD_MIN` pixels de canevas par pixel de monde, pas un téléphone ni une tablette, pas une page ouverte depuis le
@@ -545,8 +553,8 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - **V2 en cours** : le plan et son avancement sont dans `PLAN_V2.md` (graphismes d'abord, puis textes en données et
   anglais, durée, voix, vitrine). Lots 2 (images nettes) et 3 (Tecky, Alice et les chiens : `tecky2.py`, `alice2.py`,
   `chiens2.py`) faits ; lot 4 (paysage) en cours : nature, ombres portées, herbe, eau, lisière, bords
-  arrondis, bâtiments (étals et poulailler compris), ombres de tous les décors et ombres du soir faits ; restent
-  les ombres des personnages (encore un ovale), le sous-bois et le champ, le petit mobilier (tables de
+  arrondis, bâtiments (étals et poulailler compris), ombres portées de tout (décors, personnages, bêtes,
+  véhicules) allongées le soir faits ; restent le sous-bois et le champ, le petit mobilier (tables de
   terrasse…), l'habillage des zones. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
   témoin dans `reference/v2/`) : des images fixes, que ni `game.js` ni `pack_web.py` n'utilisent encore (le décor
   de `nature.py` est dans le jeu depuis le lot 4). Les pistes générées par Christophe avec ChatGPT sont dans

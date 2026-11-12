@@ -184,15 +184,13 @@ def cadre(name):
 
 
 def frames(name):
-    """Les images d'un véhicule (les enjoliveurs tournent), en SVG, à sa taille du jeu (contour compensé)."""
+    """Les images d'un véhicule (les enjoliveurs tournent), en SVG, à sa taille du jeu (contour compensé), sans la
+    bande sombre dessinée dessous : le jeu lui donne une ombre portée (game.js : castShadow())."""
     fn, k = VEHICLES[name][0], echelle(name)
-    if k == 1:
-        return [fn(s).svg() for s in SPINS]
     w, h, _, _ = cadre(name)
     out = []
     for s in SPINS:
         d = fn(s)
-        d.parts[0:0] = [(u, None, False, "") for u in d.under]        # l'ombre grandit avec le dessin
         d.under, d.w, d.h = [], w, h
-        out.append(d.svg(f"scale({k})", outline_w=OUTLINE_W / k))
+        out.append(d.svg(f"scale({k})", outline_w=OUTLINE_W / k) if k != 1 else d.svg())
     return out

@@ -109,6 +109,10 @@ function drawSpr(key, i, x, y, opt) {
   const n = s.f.length;
   const f = s.f[((i % n) + n) % n];
   const o = opt || {};
+  if (shadowCtx) {                      // passe des ombres portées (drawCastShadows) : la silhouette, rien d'autre
+    if (CAST.has(key.slice(0, key.indexOf('/'))) && !o.angle) castShadow(shadowCtx, s, f, x, y, o);
+    return;
+  }
   ctx.save();
   if (o.alpha !== undefined) ctx.globalAlpha = o.alpha;
   ctx.translate(Math.round(x * scale) / scale, Math.round(y * scale) / scale);
@@ -118,6 +122,46 @@ function drawSpr(key, i, x, y, opt) {
   if (o.sy) ctx.scale(1, o.sy);       // écrasement vertical autour des pieds (berger accroupi)
   blit(ctx, f, f[4] - s.o[0], f[5] - s.o[1], f[2], f[3]);
   ctx.restore();
+}
+
+/* Ombre portée des personnages, des bêtes et des véhicules (MAP.cast : le début de leur clé dans l'atlas) : leur
+   silhouette couchée sur le sol du côté opposé au soleil, comme celle des décors (groundShadows(), SHADOW), mais
+   dessinée à chaque image puisqu'ils bougent. La silhouette vient d'une copie sombre de l'atlas x2 (shadowAtlas,
+   faite une fois). drawCastShadows(list) rejoue la liste triée de drawWorld avec `ctx` remplacé par un contexte
+   qui ne dessine rien : seuls les drawSpr() des familles à ombre posent leur silhouette sur le vrai canevas, sous
+   tous les sprites. opt.lift : la hauteur d'un saut ; l'ombre reste au sol et s'éloigne. */
+const CAST = new Set(MAP.cast);
+const NULL_CTX = new Proxy({}, { get: (t, k) => k === 'measureText' ? () => ({ width: 0 })
+  : typeof k === 'string' && k.startsWith('create') ? () => ({ addColorStop() {} }) : () => {}, set: () => true });
+let shadowCtx = null, shadowAtlas = null;
+function buildShadowAtlas() {
+  shadowAtlas = document.createElement('canvas');
+  shadowAtlas.width = atlas.naturalWidth; shadowAtlas.height = atlas.naturalHeight;
+  const g = shadowAtlas.getContext('2d');
+  g.drawImage(atlas, 0, 0);
+  g.globalCompositeOperation = 'source-in';
+  g.fillStyle = SHADOW.color;
+  g.fillRect(0, 0, shadowAtlas.width, shadowAtlas.height);
+}
+function castShadow(g, s, f, x, y, o) {
+  const a = SHADOW.alpha * (o.alpha === undefined ? 1 : o.alpha);
+  if (a <= 0.01) return;
+  const len = sunAt(SHADOW.len, clamp(sun, 0, 4)), lift = o.lift || 0;
+  g.save();
+  g.globalAlpha = a;
+  g.translate(Math.round(x * scale) / scale, Math.round((y + lift) * scale) / scale);
+  g.transform(1, 0, -SHADOW.sx * len, -SHADOW.sy * len, 0, 0);       // la hauteur, couchée vers la droite et vers le bas
+  if (o.flip) g.scale(-1, 1);
+  if (o.sc) g.scale(o.sc, o.sc);
+  if (o.sy) g.scale(1, o.sy);
+  g.drawImage(shadowAtlas, f[0], f[1], f[2], f[3], f[4] - s.o[0], f[5] - s.o[1] - lift, f[2], f[3]);
+  g.restore();
+}
+function drawCastShadows(list) {
+  if (!shadowAtlas) { if (!atlas.complete) return; buildShadowAtlas(); }
+  const main = ctx;
+  shadowCtx = main; ctx = NULL_CTX;
+  try { for (const o of list) o.draw(); } finally { ctx = main; shadowCtx = null; }
 }
 
 /* 9-slice : bords de b px */
@@ -1175,7 +1219,7 @@ class Actor {
   done() { return this.t * (this.fps || FPS)[this.anim] >= this.frames(); }
   draw(alpha) {
     drawSpr(this.key(), this.frame(), this.x + (this.shake || 0), this.y - (this.hop || 0), { flip: this.dir === 'left',
-      alpha: alpha === undefined ? this.alpha : alpha, sy: this.mode === 'crouch' ? 0.84 : this.sy });
+      alpha: alpha === undefined ? this.alpha : alpha, sy: this.mode === 'crouch' ? 0.84 : this.sy, lift: this.hop || 0 });
   }
 }
 
@@ -1883,7 +1927,7 @@ function drawCritter(c) {
   const loop = c.anim !== 'jump';
   const n = (ATLAS[c.kind + '/' + c.anim] || { f: [0] }).f.length;
   const i = Math.floor(c.t * fps);
-  drawSpr(c.kind + '/' + c.anim, loop ? i : Math.min(i, n - 1), c.x, c.y - c.h, { flip: c.dir === 'left' });
+  drawSpr(c.kind + '/' + c.anim, loop ? i : Math.min(i, n - 1), c.x, c.y - c.h, { flip: c.dir === 'left', lift: c.h });
 }
 
 /* ------------------------------------------------------------------ canards */
@@ -4825,6 +4869,7 @@ function drawWorld() {
   const blink = P.inv > 0 && P.mode !== 'ko' && Math.floor(P.inv * 12) % 2 === 0;
   list.push({ y: P.y, draw: () => P.draw((blink ? 0.35 : 1) * P.alpha) });   // P.alpha : 0 sous le grillage
   list.sort((a, b) => a.y - b.y);
+  drawCastShadows(list);                  // les ombres portées de ce qui bouge, sous tous les sprites
   for (const o of list) o.draw();
 
   // papillons : au-dessus de tout, tournés dans le sens du vol

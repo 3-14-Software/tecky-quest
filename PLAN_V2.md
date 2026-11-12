@@ -282,7 +282,11 @@ Fait le 12 novembre 2026, dans le jeu :
   les allonger quand le soleil baisse (`SHADOW.len` : 1 en plein jour, 1,5 au coucher du soleil, 1,85 ensuite).
   Les blocs de sol sont alors repeints un par image. Captures : `lot4_ombres.png`, `lot4_ombres_soir.png`.
 
-Reste : les ombres des personnages et des bêtes (encore un ovale) ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; le sous-bois et le
+- **Ombres des personnages, des bêtes et des véhicules** : leur ovale est retiré des dessins, le jeu couche leur
+  silhouette sous eux à chaque image, dans le même sens et de la même longueur que celle des décors
+  (`castShadow()`). Un saut laisse l'ombre au sol. Captures : `lot4_ombres_personnages.png`, `lot4_ombres_route.png`.
+
+Reste : les objets (os, lettres, ballons), les canards et les papillons, qui gardent leur petit ovale ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; le sous-bois et le
 champ ; les tables de terrasse et le petit mobilier, encore dans leur dessin de la v1 ; l'habillage des zones (dont : la forme des mares, encore rectangulaire ; un cerisier en
 fleurs au milieu des sapins de la forêt). L'éditeur de carte montre encore les anciens arbres (il lit
 `decor/tree`…), pas les variantes.
