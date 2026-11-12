@@ -53,10 +53,22 @@
   ED.majEtat = () => { if (ED.panneaux) ED.panneaux.majEtat(); };
 
   /* ------------------------------------------------------------------ chargement, enregistrement */
+  /* La carte ouverte : « monde » (carte.json) ou une carte annexe (cartes/<nom>.json), choisie par ?carte=nom. Une
+     carte annexe n'a que ce qu'elle déclare : ses listes absentes sont ouvertes vides (pour pouvoir y poser quelque
+     chose) et ne sont écrites que si elles ne le sont plus ; ses personnages, son enclos, sa voie absents ne se
+     voient pas. */
+  ED.nom = new URLSearchParams(location.search).get('carte') || 'monde';
+  ED.fichier = () => 'carte.json?carte=' + encodeURIComponent(ED.nom);
+  const LISTES_VIDES = ['details', 'decor', 'items', 'dig', 'enemies', 'signs', 'tunnels', 'hens', 'ducks', 'cows', 'critters',
+    'butterflies', 'villagers', 'letters', 'balls', 'toys', 'babies', 'roadTunnels', 'calm', 'landmarks'];
+  let ouvertes = [];
+  const aEcrire = c => { const d = Object.assign({}, c); for (const k of ouvertes) if (!d[k].length) delete d[k]; return d; };
   ED.charger = async () => {
-    const r = await fetch('carte.json', { cache: 'no-store' });
+    const r = await fetch(ED.fichier(), { cache: 'no-store' });
     ED.etag = r.headers.get('ETag');
     ED.c = await r.json();
+    ouvertes = ED.c.annexe ? LISTES_VIDES.filter(k => !(k in ED.c)) : [];
+    for (const k of ouvertes) ED.c[k] = [];
     sauve = JSON.stringify(ED.c);
     hist.length = futur.length = 0;
     ED.modifie = false;
@@ -65,8 +77,8 @@
   ED.enregistrer = async () => {
     ED.fin();
     const corps = JSON.stringify(ED.c);
-    const r = await fetch('carte.json', { method: 'PUT', headers: { 'If-Match': ED.etag || '', 'Content-Type': 'application/json' },
-      body: corps });
+    const r = await fetch(ED.fichier(), { method: 'PUT', headers: { 'If-Match': ED.etag || '', 'Content-Type': 'application/json' },
+      body: JSON.stringify(aEcrire(ED.c)) });
     const j = await r.json().catch(() => ({}));
     if (r.ok) {
       ED.etag = r.headers.get('ETag');
@@ -125,6 +137,7 @@
     });
     const point = (type, calque, get, opts = {}) => {
       const p = get(c);
+      if (!p) return;                    // (carte annexe : elle n'a pas ce personnage, ce repère)
       const [key, frame] = 'spr' in opts ? [opts.spr, 0] : ED.sprite(type, null, 0);
       out.push(Object.assign({ id: type, type, calque, x: p[0], y: p[1], spr: key, frame,
         set: (x, y) => { const v = get(ED.c); v[0] = r4(x); v[1] = r4(y); } }, opts));
@@ -153,17 +166,17 @@
     point('goal', 'quetes', c => c.goal);
     point('start', 'reperes', c => c.start);
     point('alice', 'reperes', c => c.alice);
-    point('endingAlice', 'reperes', c => c.ending.alice, { spr: 'alice/idle/down', alpha: 0.55, fin: true });
-    point('endingTecky', 'reperes', c => c.ending.tecky, { spr: 'tecky/idle/down', alpha: 0.55, fin: true });
+    point('endingAlice', 'reperes', c => c.ending && c.ending.alice, { spr: 'alice/idle/down', alpha: 0.55, fin: true });
+    point('endingTecky', 'reperes', c => c.ending && c.ending.tecky, { spr: 'tecky/idle/down', alpha: 0.55, fin: true });
     point('title', 'reperes', c => c.title, { spr: null, camera: true });
     (c.roadTunnels || []).forEach((t, i) => out.push({ id: 'roadTunnels/' + i, type: 'roadTunnels', i, calque: 'route',
       x: t[0], y: t[1], spr: 'decor/tunnel', frame: 0, flip: t[2],
       set: (x, y) => { const v = ED.c.roadTunnels[i]; v[0] = r4(x); v[1] = r4(y); } }));
-    const road = c.traffic.y, lanes = [road + 0.95, road + 2.95];
-    c.traffic.vehicles.forEach((v, i) => out.push({ id: 'vehicles/' + i, type: 'vehicles', i, calque: 'route', genre: v[0],
+    const road = c.traffic ? c.traffic.y : 0, lanes = [road + 0.95, road + 2.95];
+    (c.traffic ? c.traffic.vehicles : []).forEach((v, i) => out.push({ id: 'vehicles/' + i, type: 'vehicles', i, calque: 'route', genre: v[0],
       x: v[2], y: lanes[v[1]], spr: 'vehicle/' + v[0], frame: 0, flip: v[1] === 0,
       set: (x, y) => { const e = ED.c.traffic.vehicles[i]; e[2] = r4(x); e[1] = Math.abs(y - lanes[0]) < Math.abs(y - lanes[1]) ? 0 : 1; } }));
-    c.traffic.crossings.forEach((x, i) => out.push({ id: 'crossings/' + i, type: 'crossings', i, calque: 'route', forme: 'rect',
+    (c.traffic ? c.traffic.crossings : []).forEach((x, i) => out.push({ id: 'crossings/' + i, type: 'crossings', i, calque: 'route', forme: 'rect',
       rect: [x, road, x + 2, road + 3], fixe: 'h', set: (nx) => { ED.c.traffic.crossings[i] = Math.round(nx); } }));
     // rectangles
     const rect = (id, type, calque, get, opts = {}) => {
@@ -179,13 +192,13 @@
     });
     c.landmarks.forEach((l, i) => out.push({ id: 'landmarks/' + i, type: 'landmarks', i, calque: 'zones', x: l.at[0], y: l.at[1],
       texte: l.label, set: (x, y) => { const v = ED.c.landmarks[i].at; v[0] = r4(x); v[1] = r4(y); } }));
-    rect('pen', 'pen', 'quetes', c => c.pen, { contrainte: 'xentier' });
-    rect('ballBox', 'ballBox', 'quetes', c => c.ballBox);
-    const [g0, g1] = c.penGate;
-    out.push({ id: 'penGate', type: 'penGate', calque: 'quetes', forme: 'rect', rect: [g0, c.pen[3] - 0.15, g1, c.pen[3] + 0.15],
+    if (c.ballBox) rect('ballBox', 'ballBox', 'quetes', c => c.ballBox);
+    if (c.pen) rect('pen', 'pen', 'quetes', c => c.pen, { contrainte: 'xentier' });
+    const [g0, g1] = c.penGate || [0, 1];
+    if (c.pen && c.penGate) out.push({ id: 'penGate', type: 'penGate', calque: 'quetes', forme: 'rect', rect: [g0, c.pen[3] - 0.15, g1, c.pen[3] + 0.15],
       fixe: 'h', set: null, setRect: q => { ED.c.penGate = [Math.round(q[0]), Math.max(Math.round(q[0]) + 1, Math.round(q[2]))]; } });
-    const [t0, t1, ty] = c.track;
-    out.push({ id: 'track', type: 'track', calque: 'quetes', forme: 'rect', rect: [t0, ty - 0.35, t1, ty + 0.15],
+    const [t0, t1, ty] = c.track || [0, 1, 0];
+    if (c.track) out.push({ id: 'track', type: 'track', calque: 'quetes', forme: 'rect', rect: [t0, ty - 0.35, t1, ty + 0.15],
       setRect: q => { ED.c.track = [r4(q[0]), r4(q[2]), r4(q[3] - 0.15)]; } });
     return out;
   }
@@ -193,9 +206,13 @@
   /* ------------------------------------------------------------------ décors déduits (dessinés, pas modifiables) */
   // comme pack_web.derived_decor : clôtures de l'enclos, rails et heurtoirs (poteaux, terriers, filet : leurs objets)
   ED.deduits = c => {
-    const out = [], [x0, x1, y] = c.track;
-    out.push(['buffer_stop', x0, y + 0.1], ['buffer_stop', x1, y + 0.1]);
-    for (let x = Math.floor(x0); x < Math.ceil(x1); x++) out.push(['rail', x, y]);
+    const out = [];
+    if (c.track) {
+      const [x0, x1, y] = c.track;
+      out.push(['buffer_stop', x0, y + 0.1], ['buffer_stop', x1, y + 0.1]);
+      for (let x = Math.floor(x0); x < Math.ceil(x1); x++) out.push(['rail', x, y]);
+    }
+    if (!c.pen || !c.penGate) return out;
     const [px0, py0, px1, py1] = c.pen;
     for (let x = px0; x < px1; x++) {
       out.push(['fence_wood_h', x, py0]);

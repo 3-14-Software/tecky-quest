@@ -7,6 +7,14 @@
 
 const VW = 960, VH = 540;               // caméra, en px de monde
 const GW = 1920, GH = 1080;             // repère de l'interface
+/* Les cartes. Le jeu en a plusieurs (CARTES, écrites par pack_web.py : celle du monde, « monde », et des cartes
+   annexes où l'on passe par un tunnel de la grande route). MAP est la carte courante : ses données (sol, décors,
+   placements) par-dessus celles du jeu (JEU : dessins, ombres, cadences), dont elle hérite — MAP.w comme MAP.ts.
+   useMap(id), plus bas, en change. Ce qu'une carte annexe n'a pas (MAP.absents : Alice, un personnage, l'enclos, la
+   voie…) est posé loin hors de la carte : rien ne s'en approche jamais. */
+const carteOf = id => Object.assign(Object.create(JEU), CARTES[id]);
+let MAP = carteOf('monde');
+const ici = k => !MAP.absents.includes(k);          // la carte courante a-t-elle ce personnage, l'enclos, la voie… ?
 const TS = MAP.ts;
 
 /* Réglages du joueur (écran d'options, plus bas) : lus ici, avant le premier resize(). */
@@ -1632,12 +1640,14 @@ function decorLook(n, x, y) {
   const nom = v[0][v[1][Math.floor(hash3(Math.round(x), Math.round(y), 7) * v[1].length)]];
   return { key: 'decor/' + nom, look: nom, night: ATLAS['nuit/' + nom] ? 'nuit/' + nom : undefined };
 }
-const EDGE_DECOR = MAP.edge.decor.map(([n, x, y, flip]) => Object.assign({ n, x, y, flip: flip && !MAP.variants[n] },
+// (propres à la carte courante : useMap() les recalcule)
+const edgeDecor = () => MAP.edge.decor.map(([n, x, y, flip]) => Object.assign({ n, x, y, flip: flip && !MAP.variants[n] },
   n === 'tunnel' ? { key: flip ? 'decor/tunnel_est' : 'decor/tunnel' } : decorLook(n, x, y)));    // (tunnel de l'est : dessiné éclairé de la droite, puis en miroir)
-const EDGE_SOLIDS = EDGE_DECOR.filter(d => FOOT[d.n]).map(({ n, x, y, flip }) => {   // (ajoutés à solids par reset)
+const edgeSolids = () => EDGE_DECOR.filter(d => FOOT[d.n]).map(({ n, x, y, flip }) => {   // (ajoutés à solids par reset)
   const [a, b, c, e] = FOOT[n];
   return flip ? [x - c, y + b, x - a, y + e] : [x + a, y + b, x + c, y + e];
 });
+let EDGE_DECOR = edgeDecor(), EDGE_SOLIDS = edgeSolids();
 const camClampX = x => clamp(x, -EDGE.cam, MAP.w * TS - VW + EDGE.cam);
 const camClampY = y => clamp(y, -EDGE.cam, MAP.h * TS - VH + EDGE.cam);
 function edgeBump(dt, ix, iy, ox, oy) {
@@ -1649,10 +1659,13 @@ function edgeBump(dt, ix, iy, ox, oy) {
   const outX = Math.abs(ix) > 0.3 && Math.abs(P.x - ox) < 1 && outAt(P.x + Math.sign(ix) * EDGE.near, P.y);
   const outY = Math.abs(iy) > 0.3 && Math.abs(P.y - oy) < 1 && outAt(P.x, P.y + Math.sign(iy) * EDGE.near);
   P.edgeT = outX || outY ? P.edgeT + dt : 0;
-  if (P.edgeT < EDGE.push || timePlayed - P.edgeAt < EDGE.again) return;
-  P.edgeT = 0; P.edgeAt = timePlayed;
+  if (P.edgeT < EDGE.push) return;
   // au bout de la grande route (ou juste à côté de la butte du tunnel)
   const [r0, r1] = MAP.traffic.road, tunnel = outX && P.y > r0 - EDGE.tunnelY && P.y < r1 + EDGE.tunnelY;
+  const pass = tunnel && state === 'play' && P.mode === 'free' && passageHere();
+  if (pass) { travel(pass[1], pass[2]); return; }    // ce tunnel mène à une autre carte
+  if (timePlayed - P.edgeAt < EDGE.again) return;
+  P.edgeT = 0; P.edgeAt = timePlayed;
   addWordPop(tunnel ? txt('bord.tunnel') : txt('bord.carte'), P.x, P.y - 120, 'tecky');
 }
 
@@ -1782,8 +1795,11 @@ let arrowT = 0, stuckT = 0;
 function showArrow(t) { arrowT = Math.max(arrowT, t || ARROW.show); stuckT = 0; }
 function arrowTarget() {
   const k = nextClue();
-  if (k === 3) return alice;
-  return items.find(it => it.n === CLUES[k]) || alice;
+  const it = k < 3 && items.find(it => it.n === CLUES[k]);
+  if (it) return it;
+  if (ici('alice')) return alice;
+  const [x, y] = arrivalAt(MAP.passages[0][0]);      // (carte annexe : ni indice ni Alice ici, on repasse le tunnel)
+  return { x, y };
 }
 
 let state = 'loading';          // loading | title | play | dialog | pause | options | badges | over | ending | win
@@ -1793,19 +1809,42 @@ let dusts = [], leaves = [], leafTrees = null, clouds = [], sun = 0, saveT = 0;
 let score = 0, timePlayed = 0, fled = 0, treasures = 0, dialog = null, dialogReturn = 'play', aliceSniffed = false;
 let hintText = null, digHint = null, playHint = null, tunnelHint = null, talkHint = null, overT = 0, titleT = 0;
 
+/* Change de carte courante (CARTES[id]) : ce qui se calcule une fois par carte est refait (lisière, zones, lieux),
+   ce qui se construit à la demande est oublié (sol, eau, carte de la pause, grille du parcours à pied, flaques,
+   arbres qui perdent leurs feuilles). Les habitants de la carte sont l'affaire de reset() ou de resetWorld(). */
+function useMap(id) {
+  MAP = carteOf(id);
+  EDGE_DECOR = edgeDecor(); EDGE_SOLIDS = edgeSolids();
+  ZONES = zonesOf(); LANDMARKS = MAP.landmarks;
+  buildGround();
+  waterTiles = null; mapImg = null; walkGrid = null; distField = null; puddles = null; leafTrees = null; zone = null;
+}
+/* Nouvelle partie : Tecky, l'état des quêtes, les compteurs ; puis les habitants de la carte courante (resetWorld,
+   qui sert aussi à chaque changement de carte : travel()). */
 function reset() {
-  solids = [];
-  decor = MAP.decor.map(([n, x, y]) => {
-    for (const f of [FOOT[n], ...(RAILS[n] || [])]) if (f) solids.push([x + f[0], y + f[1], x + f[2], y + f[3]]);
-    return Object.assign({ x, y, n }, decorLook(n, x, y));
-  });
-  solids.push(...EDGE_SOLIDS);                       // les buttes des tunnels, au bord de la carte
   P = new Actor('tecky', MAP.start[0], MAP.start[1]);
   P.fps = Object.assign({}, FPS, MAP.teckyFps);      // ses cadences à lui (tecky2.py : la marche a 8 images)
   // 5 emplacements d'os (2 PV par os) ; Tecky démarre avec 3 os pleins
   const bones = facile() ? 5 : START_BONES;
   Object.assign(P, { hp: bones * 2, hpMax: bones * 2, boneFx: 0, inv: 0, bumpT: 0, cdBark: 0, cdBite: 0, cdSniff: 0,
     mode: 'free', kx: 0, ky: 0, hitDone: false, edgeT: 0, edgeAt: -99 });
+  farm = { state: 'new' }; post = { state: 'new' }; rose = { state: 'new' }; fete = { state: 'new' };
+  jouets = { state: 'new' }; piq = { state: 'new' };
+  bitten = false; newBadges = []; toasts = []; napped = false;
+  resetWeather(); graceT = 0; tunnelSeen = false; elsewhere = {}; iris = null;
+  score = 0; timePlayed = 0; fled = 0; treasures = 0; shake = 0; barkImmuneSeen = false; pendingSay = null;
+  clues = [false, false, false]; aliceSniffed = false; arrowT = 0; stuckT = 0; sun = 0; hug = 0; saveT = 0;
+  resetWorld();
+  camX = camClampX(P.x - VW / 2);
+  camY = camClampY(P.y - VH / 2);
+}
+function resetWorld() {
+  solids = [];
+  decor = MAP.decor.map(([n, x, y]) => {
+    for (const f of [FOOT[n], ...(RAILS[n] || [])]) if (f) solids.push([x + f[0], y + f[1], x + f[2], y + f[3]]);
+    return Object.assign({ x, y, n }, decorLook(n, x, y));
+  });
+  solids.push(...EDGE_SOLIDS);                       // les buttes des tunnels, au bord de la carte
   alice = new Actor('alice1', MAP.alice[0], MAP.alice[1]);      // un pied nu : elle a perdu une chaussure en chemin
   alice.fps = Object.assign({}, FPS, MAP.aliceFps);
   alice.found = false;
@@ -1821,32 +1860,54 @@ function reset() {
   if (facile()) dogs = dogs.filter(d => d.id % 3 !== 2);
   hens = MAP.hens.map(newHen);
   cows = MAP.cows.map(newCow);
-  farmer = newFarmer(); farm = { state: 'new' };
-  postman = newNpc('postman', MAP.postman, 1.05); post = { state: 'new' };
+  farmer = newFarmer();
+  postman = newNpc('postman', MAP.postman, 1.05);
   letters = MAP.letters.map(([x, y]) => ({ x, y, t: Math.random() * 2, got: false }));
-  neighbor = newNpc('neighbor', MAP.neighbor, 1.35); rose = { state: 'new' }; pompon = newPompon();
-  leon = newNpc('leon', MAP.leon, 0.95); fete = { state: 'new' }; balls = MAP.balls.map(newBall);
-  iris = Object.assign(newNpc('iris', MAP.iris, 0.8), { markY: IRIS.markY, woof: true, tip: 0 }); jouets = { state: 'new' };
+  neighbor = newNpc('neighbor', MAP.neighbor, 1.35); pompon = newPompon();
+  leon = newNpc('leon', MAP.leon, 0.95); balls = MAP.balls.map(newBall);
+  iris = Object.assign(newNpc('iris', MAP.iris, 0.8), { markY: IRIS.markY, woof: true, tip: iris ? iris.tip : 0 });
   toys = MAP.toys.map(newToy);
   villagers = MAP.villagers.map(newVillager);
   train = newTrain();
-  piquette = Object.assign(newNpc('piquette', MAP.piquette, 1.3), { markY: BABY.markY }); piq = { state: 'new' };
+  piquette = Object.assign(newNpc('piquette', MAP.piquette, 1.3), { markY: BABY.markY });
   babies = MAP.babies.map(newBaby); babySeq = 0;
   critters = MAP.critters.map(newCritter);
   ducks = MAP.ducks.map(newDuck); linkDucks();
-  bitten = false; newBadges = []; toasts = []; napped = false;
-  resetWeather(); puddles = null; graceT = 0;
-  walkGrid = null; distField = null; trail = []; tunnelSeen = false; crumbs = []; followN = 0;
+  puddles = null; walkGrid = null; distField = null; trail = []; crumbs = []; followN = 0;
   seenCells = new Uint8Array(cellsW() * cellsH()); zone = null; zoneT = 0; banner = null; tuneT = 0;
   cars = MAP.traffic.vehicles.map(newVehicle);
   butterflies = MAP.butterflies.map(newButterfly);
   items = MAP.items.map(([n, x, y]) => ({ n, x, y, t: Math.random() * 3 }));
   digs = MAP.dig.map(([x, y]) => ({ x, y, dug: false, t: Math.random() * 2 }));
   fxs = []; pops = []; rings = []; dusts = []; leaves = []; leafTrees = null;
-  score = 0; timePlayed = 0; fled = 0; treasures = 0; shake = 0; barkImmuneSeen = false; pendingSay = null;
-  clues = [false, false, false]; aliceSniffed = false; arrowT = 0; stuckT = 0; sun = 0; hug = 0; saveT = 0;
-  camX = camClampX(P.x - VW / 2);
-  camY = camClampY(P.y - VH / 2);
+}
+/* Passer d'une carte à l'autre, par un tunnel de la grande route (MAP.passages : [n° du tunnel, carte, n° du tunnel
+   d'arrivée] ; MAP.roadTunnels : [x, y du pied, miroir]). Tecky pousse contre le tunnel (edgeBump) : fondu, la carte
+   quittée garde son état (elsewhere : objets, chiens, poules, lettres… comme dans une sauvegarde), celle où il
+   arrive retrouve le sien ou naît, et il ressort sur le bas-côté, dos au tunnel. Ce qui le suivait (Pompon, les
+   petits hérissons, un copain) l'attend là où il était ; un jouet d'Iris porté reste au pied du tunnel. */
+const PASSAGE = { out: 110, down: 16 };
+let elsewhere = {};                     // l'état des cartes où Tecky n'est pas : { id: mapState() }
+function arrivalAt(i) {                 // où Tecky ressort du tunnel n° i de la carte courante : [x, y, direction]
+  const [tx, ty, flip] = MAP.roadTunnels[i];
+  return [tx + (flip ? -1 : 1) * PASSAGE.out, ty + PASSAGE.down, flip ? 'left' : 'right'];
+}
+function passageHere() {                // le passage du tunnel contre lequel Tecky pousse, s'il y en a un
+  const i = MAP.roadTunnels.findIndex(t => t[2] === (P.x > MAP.w * TS / 2));
+  return MAP.passages.find(q => q[0] === i) || null;
+}
+function travel(vers, arrivee) {
+  transition();
+  elsewhere[MAP.id] = mapState();
+  useMap(vers);
+  resetWorld();
+  if (elsewhere[vers]) { applyMapState(elsewhere[vers]); delete elsewhere[vers]; }
+  if (ici('alice') && nextClue() === 3) revealAlice();
+  const [x, y, dir] = arrivalAt(arrivee);
+  Object.assign(P, { x, y, dir, mode: 'free', kx: 0, ky: 0, edgeT: 0 });
+  P.setAnim('idle');
+  camX = camClampX(P.x - VW / 2); camY = camClampY(P.y - VH / 2);
+  saveGame();
 }
 
 /* ------------------------------------------------------------------ dialogues */
@@ -2640,7 +2701,7 @@ function drawDuck(d) {
    elle y reste (keepHen). Le fermier ne parle que si Tecky vient le voir (C, « Parler », voir « personnages ») : il
    lui demande son aide, puis le remercie une fois toutes les poules rentrées (saucisse et points). Tout cela marche
    aussi en balade. */
-const FARM = { reward: 200, perHen: 20, funnel: 190, roadY: MAP.farmRoadY };   // roadY : la grande route, en dessous
+const FARM = { reward: 200, perHen: 20, funnel: 190, get roadY() { return MAP.farmRoadY; } };   // roadY : la grande route, en dessous
 let farm = { state: 'new' };          // new (pas encore parlé) | asked | done
 let farmer = null;
 // intérieur de l'enclos (pieds des poules) : [x0, y0, x1, y1]
@@ -2743,7 +2804,7 @@ function drawNpc(n) {
    saluent d'une petite exclamation (bulle de mots, sans bloquer le jeu). NPC_DO : par personnage, bulle (0 « ! »,
    1 « ? », -1 aucune), salut et conversation. */
 const NPC = { talk: 150, markY: 150 };
-const npcList = () => [farmer, postman, neighbor, leon, iris, piquette];
+const npcList = () => [farmer, postman, neighbor, leon, iris, piquette].filter(n => ici(n.kind));   // ceux de la carte courante
 const NPC_DO = {
   farmer: { mark: farmerMark, greet: farmerGreet, talk: talkFarmer },
   postman: { mark: postmanMark, greet: postmanGreet, talk: talkPostman },
@@ -2930,7 +2991,7 @@ function talkNeighbor() {
    autres personnages, Léon ne parle que si Tecky vient le voir : il demande, rappelle, remercie (un os et des points).
    Tout marche aussi avant de lui avoir parlé, et en balade. Sauvegardé (fete, balls). */
 const BALL = { r: 26, touch: 44, kick: 330, bark: 470, fric: 1.6, bounce: 0.55, hop: 150, g: 1200, cd: 0.2, funnel: 240,
-  box: MAP.ballBox };            // box : la zone industrielle, en tuiles (jamais hors du grillage du dépôt ; carte.json)
+  get box() { return MAP.ballBox; } };            // box : la zone industrielle, en tuiles (jamais hors du grillage du dépôt ; carte.json)
 const GOAL_IN = [50, -46, -8];                 // intérieur du filet (pied du ballon) : |dx| < 50, -46 < dy < -8
 const LEON = { reward: 150, perBall: 20 };
 let fete = { state: 'new' }, leon = null, balls = [];
@@ -3345,6 +3406,7 @@ function trainPuff(n) {
   if (state === 'play') SFX.puff(1, { x: train.x, y: trainY() });
 }
 function updateTrain(dt) {
+  if (!ici('track')) return;           // pas de voie sur cette carte
   const T = train;
   T.t += dt; T.whistleT = Math.max(0, T.whistleT - dt);
   if (T.mode === 'wait') {                          // pause au bout de la voie, puis on repart dans l'autre sens
@@ -4037,13 +4099,14 @@ function puddleSplash(dt) {           // Tecky marche dans une flaque : plouf
    milieu, sinon la musique changerait en la longeant ou en passant le pont. Un bord de rectangle posé sur le bord de la
    carte n'a pas de limite (la caméra et la lisière vont au-delà) ; la dernière zone couvre toute la carte. */
 // name : bandeau à l'arrivée ; label : étiquette de la carte, posée en at (tuiles)
-const ZONES = MAP.zones.map(z => {
+const zonesOf = () => MAP.zones.map(z => {
   const lim = z.rects.map(([x0, y0, x1, y1]) => [x0 <= 0 ? -Infinity : x0, y0 <= 0 ? -Infinity : y0,
     x1 >= MAP.w ? Infinity : x1, y1 >= MAP.h ? Infinity : y1]);
   return { ...z, has: (x, y) => lim.some(([x0, y0, x1, y1]) => x >= x0 && x < x1 && y >= y0 && y < y1) };
 });
+let ZONES = zonesOf();                // (celles de la carte courante : useMap())
 const zoneAt = (x, y) => ZONES.find(z => z.has(x / TS, y / TS)) || ZONES[ZONES.length - 1];
-const LANDMARKS = MAP.landmarks;      // autres étiquettes de la carte de la pause (la rivière)
+let LANDMARKS = MAP.landmarks;        // autres étiquettes de la carte de la pause (la rivière)
 const BANNER = { settle: 0.8, life: 3 };
 let zone = null, zoneT = 0, banner = null, tuneT = 0;
 function updateZone(dt) {
@@ -4123,9 +4186,9 @@ function drawPauseMap() {
     const it = MAP.items.find(e => e[0] === n);
     if (clues[i] && it) drawSpr('hud/arrow_icon', i, mx(it[1]), my(it[2]), { sc: 1.1 });
   });
-  if (!alice.hidden) drawSpr('hud/arrow_icon', 3, mx(alice.x), my(alice.y) - 10, { sc: 1.2 });
-  if (farm.state === 'asked') drawSpr('hen/idle/right', 0, mx((MAP.pen[0] + MAP.pen[2]) / 2), my(MAP.pen[3]) + 6, { sc: 0.7 });
-  if (fete.state === 'asked') drawSpr('port/balloon', 0, mx(MAP.goal[0]), my(MAP.goal[1]) - 10, { sc: 0.55 });
+  if (!alice.hidden && ici('alice')) drawSpr('hud/arrow_icon', 3, mx(alice.x), my(alice.y) - 10, { sc: 1.2 });
+  if (farm.state === 'asked' && ici('pen')) drawSpr('hen/idle/right', 0, mx((MAP.pen[0] + MAP.pen[2]) / 2), my(MAP.pen[3]) + 6, { sc: 0.7 });
+  if (fete.state === 'asked' && ici('goal')) drawSpr('port/balloon', 0, mx(MAP.goal[0]), my(MAP.goal[1]) - 10, { sc: 0.55 });
   // personnages déjà vus qui ont quelque chose à dire : leur « ! » (demande, remerciements) ou « ? » (quête en cours)
   const bob = Math.sin(performance.now() / 260) * 3;
   for (const n of npcList()) {
@@ -4156,29 +4219,56 @@ const STORE = {
   del(k) { delete this.mem[k]; try { localStorage.removeItem(k); } catch (e) { /* idem */ } },
 };
 // v : version de la sauvegarde ; v2 = la carte agrandie (96 x 64) : une partie de l'ancienne carte ne se reprend pas
-const SAVE_V = 2;
-function loadSave() { const s = !essai && STORE.get(SAVE_KEY); return s && s.v === SAVE_V ? s : null; }
+const SAVE_V = 3;
+// (une sauvegarde v2, d'avant les cartes multiples, a les mêmes champs : elle est dans le monde, sans « ailleurs »)
+function loadSave() { const s = !essai && STORE.get(SAVE_KEY); return s && (s.v === SAVE_V || s.v === 2) ? s : null; }
 const r1 = v => Math.round(v * 10) / 10;
-function saveGame() {
-  if (essai || !P || P.mode === 'ko' || P.hp <= 0 || alice.found) return;
-  STORE.set(SAVE_KEY, {
-    v: SAVE_V, mode: gameMode, diff: gameDiff, at: Date.now(), x: r1(P.x), y: r1(P.y), dir: P.dir, hp: P.hp, hpMax: P.hpMax,
-    score, time: r1(timePlayed), fled, treasures, clues: clues.slice(), sniffed: aliceSniffed, immune: barkImmuneSeen,
+/* L'état de la carte courante : ce qu'une sauvegarde retient de ses habitants (objets au sol, trésors déterrés,
+   chiens restants, poules, lettres, Pompon, ballons, jouets, petits hérissons, cases vues). travel() le range dans
+   `elsewhere` en quittant une carte et le rend en y revenant ; saveGame() l'écrit à plat pour la carte courante
+   (les mêmes champs que la sauvegarde v2) et sous « ailleurs » pour les autres. */
+function mapState() {
+  return {
     dug: digs.map(g => g.dug ? 1 : 0),
     items: items.map(it => [it.n, r1(it.x), r1(it.y)]),
     dogs: dogs.filter(d => d.mode !== 'ko').map(d => d.id),
     friends: dogs.filter(d => d.friend).map(d => d.id),        // balade : chiens devenus copains
-    farm: farm.state, hens: questHens().map(h => [r1(h.hx), r1(h.hy), h.penned ? 1 : 0]),
+    hens: questHens().map(h => [r1(h.hx), r1(h.hy), h.penned ? 1 : 0]),
     seen: Array.from(seenCells).join(''),
     critters: critters.map(c => c.scored ? 1 : 0).join(''),
     ducks: ducks.map(d => d.scored ? 1 : 0).join(''),
-    post: post.state, letters: letters.map(l => l.got ? 1 : 0).join(''),
-    rose: rose.state, cat: [r1(pompon.x), r1(pompon.y), pompon.mode], bitten,
-    fete: fete.state, balls: balls.map(b => [r1(b.x), r1(b.y), b.inNet ? 1 : 0]),
-    jouets: jouets.state, toys: toys.map(t => t.carried ? [r1(P.x), r1(P.y), 0] : [r1(t.x), r1(t.y), t.home ? 1 : 0]),
+    letters: letters.map(l => l.got ? 1 : 0).join(''),
+    cat: [r1(pompon.x), r1(pompon.y), pompon.mode],
+    balls: balls.map(b => [r1(b.x), r1(b.y), b.inNet ? 1 : 0]),
+    toys: toys.map(t => t.carried ? [r1(P.x), r1(P.y), 0] : [r1(t.x), r1(t.y), t.home ? 1 : 0]),
     train: train.scored ? 1 : 0,
-    piq: piq.state, babies: babies.map(b => [r1(b.x), r1(b.y), b.mode === 'follow' ? 'wait' : b.mode, b.slot]),
-  });
+    babies: babies.map(b => [r1(b.x), r1(b.y), b.mode === 'follow' ? 'wait' : b.mode, b.slot]),
+  };
+}
+function applyMapState(s) {
+  digs.forEach((g, i) => { g.dug = !!(s.dug || [])[i]; });
+  if (s.items) items = s.items.map(([n, x, y]) => ({ n, x, y, t: Math.random() * 3 }));
+  if (s.dogs) dogs = dogs.filter(d => s.dogs.includes(d.id));
+  for (const d of dogs) d.friend = (s.friends || []).includes(d.id);
+  if (s.seen) for (let i = 0; i < seenCells.length; i++) seenCells[i] = s.seen[i] === '1' ? 1 : 0;
+  critters.forEach((c, i) => { c.scored = (s.critters || '')[i] === '1'; });
+  ducks.forEach((d, i) => { d.scored = (s.ducks || '')[i] === '1'; });
+  letters.forEach((l, i) => { l.got = (s.letters || '')[i] === '1'; });
+  (s.balls || []).forEach((q, i) => { const b = balls[i]; if (b && q) { b.x = q[0]; b.y = q[1]; b.inNet = !!q[2]; } });
+  train.scored = !!s.train;
+  (s.babies || []).forEach((q, i) => { const b = babies[i]; if (b && q) { b.x = q[0]; b.y = q[1]; b.mode = q[2]; b.slot = q[3] || 0; } });
+  (s.toys || []).forEach((q, i) => { const t = toys[i]; if (t && q) { t.x = q[0]; t.y = q[1]; t.home = !!q[2]; } });
+  if (s.cat) { pompon.x = s.cat[0]; pompon.y = s.cat[1]; pompon.mode = s.cat[2] === 'follow' ? 'wait' : s.cat[2]; }
+  questHens().forEach((h, i) => { const q = (s.hens || [])[i]; if (q) { h.x = h.hx = q[0]; h.y = h.hy = q[1]; h.penned = !!q[2]; } });
+}
+function saveGame() {
+  if (essai || !P || P.mode === 'ko' || P.hp <= 0 || alice.found) return;
+  STORE.set(SAVE_KEY, Object.assign({
+    v: SAVE_V, carte: MAP.id, ailleurs: Object.assign({}, elsewhere),
+    mode: gameMode, diff: gameDiff, at: Date.now(), x: r1(P.x), y: r1(P.y), dir: P.dir, hp: P.hp, hpMax: P.hpMax,
+    score, time: r1(timePlayed), fled, treasures, clues: clues.slice(), sniffed: aliceSniffed, immune: barkImmuneSeen,
+    farm: farm.state, post: post.state, rose: rose.state, fete: fete.state, jouets: jouets.state, piq: piq.state, bitten,
+  }, mapState()));
 }
 // pas de sauvegarde automatique en plein combat : on reprendrait au milieu des crocs
 const safeToSave = () => P.mode !== 'ko' && (balade() || !dogs.some(d => ENGAGED.has(d.mode) && dist(P.x, P.y, d.x, d.y) < 600));
@@ -4190,33 +4280,18 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) { sav
 function loadGame(s, rested) {
   transition();
   gameDiff = s.diff === 'facile' ? 'facile' : 'normal';
+  useMap(CARTES[s.carte] ? s.carte : 'monde');       // la carte où la partie a été enregistrée
   reset();
+  elsewhere = Object.assign({}, s.ailleurs);
   gameMode = s.mode === 'balade' ? 'balade' : 'aventure';
   Object.assign(P, { x: s.x, y: s.y, dir: s.dir || 'down', hpMax: s.hpMax, hp: rested ? s.hpMax : Math.max(1, s.hp) });
   score = s.score; timePlayed = s.time; fled = s.fled; treasures = s.treasures;
   clues = [0, 1, 2].map(i => !!s.clues[i]); aliceSniffed = !!s.sniffed; barkImmuneSeen = !!s.immune;
-  digs.forEach((g, i) => { g.dug = !!s.dug[i]; });
-  items = s.items.map(([n, x, y]) => ({ n, x, y, t: Math.random() * 3 }));
-  dogs = dogs.filter(d => s.dogs.includes(d.id));
-  for (const d of dogs) d.friend = (s.friends || []).includes(d.id);
-  farm.state = s.farm || 'new';
-  if (s.seen) for (let i = 0; i < seenCells.length; i++) seenCells[i] = s.seen[i] === '1' ? 1 : 0;
-  critters.forEach((c, i) => { c.scored = (s.critters || '')[i] === '1'; });
-  ducks.forEach((d, i) => { d.scored = (s.ducks || '')[i] === '1'; });
-  post.state = s.post || 'new';
-  letters.forEach((l, i) => { l.got = (s.letters || '')[i] === '1'; });
-  rose.state = s.rose || 'new';
-  fete.state = s.fete || 'new';
-  (s.balls || []).forEach((q, i) => { const b = balls[i]; if (b && q) { b.x = q[0]; b.y = q[1]; b.inNet = !!q[2]; } });
-  jouets.state = s.jouets || 'new';
-  train.scored = !!s.train;
-  piq.state = s.piq || 'new';
-  (s.babies || []).forEach((q, i) => { const b = babies[i]; if (b && q) { b.x = q[0]; b.y = q[1]; b.mode = q[2]; b.slot = q[3] || 0; } });
-  (s.toys || []).forEach((q, i) => { const t = toys[i]; if (t && q) { t.x = q[0]; t.y = q[1]; t.home = !!q[2]; } });
+  farm.state = s.farm || 'new'; post.state = s.post || 'new'; rose.state = s.rose || 'new';
+  fete.state = s.fete || 'new'; jouets.state = s.jouets || 'new'; piq.state = s.piq || 'new';
   bitten = !!s.bitten || rested;
-  if (s.cat) { pompon.x = s.cat[0]; pompon.y = s.cat[1]; pompon.mode = s.cat[2] === 'follow' ? 'wait' : s.cat[2]; }
-  questHens().forEach((h, i) => { const q = (s.hens || [])[i]; if (q) { h.x = h.hx = q[0]; h.y = h.hy = q[1]; h.penned = !!q[2]; } });
-  if (nextClue() === 3) revealAlice();
+  applyMapState(s);
+  if (ici('alice') && nextClue() === 3) revealAlice();
   sun = sunGoal();
   camX = camClampX(P.x - VW / 2);
   camY = camClampY(P.y - 40 - VH / 2);
@@ -4229,6 +4304,7 @@ function newGame(mode, again) {
   transition();
   const cx = camX, cy = camY;
   gameDiff = opts.diff;
+  if (MAP.id !== 'monde') useMap('monde');           // une partie commence toujours à la niche
   reset();
   gameMode = mode;
   if (!again) { camX = cx; camY = cy; }          // depuis l'écran titre, la caméra glisse du village jusqu'à la niche
@@ -4329,6 +4405,7 @@ function chooseMenu(id) {
 const essai = typeof ESSAI !== 'undefined' ? ESSAI : null;
 function startEssai() {
   gameDiff = opts.diff;
+  if (essai[3] && CARTES[essai[3]] && essai[3] !== MAP.id) useMap(essai[3]);       // (une carte annexe, depuis l'éditeur)
   reset();
   gameMode = essai[2] === 'balade' ? 'balade' : 'aventure';
   Object.assign(P, { x: essai[0] * TS, y: essai[1] * TS });
@@ -4340,6 +4417,7 @@ function startEssai() {
 const TITLE_MUSIC = 'niche';
 function toTitle() {
   transition();
+  if (MAP.id !== 'monde') useMap('monde');           // l'écran titre : la place du village
   reset();
   gameMode = 'aventure';
   camX = camClampX(MAP.title[0] - VW / 2);   // caméra de l'écran titre : la place du village
@@ -4391,8 +4469,9 @@ function unlockBadge(id) {
   SFX.badge();
 }
 function checkBadges() {
-  if (balade() && dogs.length && dogs.every(d => d.friend)) unlockBadge('copains');
-  if (treasures >= MAP.dig.length) unlockBadge('os_dores');
+  const monde = MAP.id === 'monde';     // (une carte annexe sans bêtes ni trésors les donnerait tous d'un coup)
+  if (monde && balade() && dogs.length && dogs.every(d => d.friend)) unlockBadge('copains');
+  if (monde && treasures >= MAP.dig.length) unlockBadge('os_dores');
   if (farm.state === 'done') unlockBadge('poules');
   if (post.state === 'done') unlockBadge('facteur');
   if (rose.state === 'done') unlockBadge('chat');
@@ -4400,9 +4479,9 @@ function checkBadges() {
   if (jouets.state === 'done') unlockBadge('iris');
   if (train.scored) unlockBadge('train');
   if (piq.state === 'done') unlockBadge('herissons');
-  if (critters.every(c => c.scored)) unlockBadge('betes');
-  if (ducks.filter(d => !d.lead).every(d => d.scored)) unlockBadge('canards');
-  if (seenCells.reduce((a, v) => a + v, 0) >= seenCells.length * 0.95) unlockBadge('explorateur');
+  if (monde && critters.every(c => c.scored)) unlockBadge('betes');
+  if (monde && ducks.filter(d => !d.lead).every(d => d.scored)) unlockBadge('canards');
+  if (monde && seenCells.reduce((a, v) => a + v, 0) >= seenCells.length * 0.95) unlockBadge('explorateur');
   if (napped) unlockBadge('sieste');
 }
 /* Complétion de la partie (écran de victoire), en % : moyenne de catégories qui comptent toutes autant — os dorés, quêtes,
@@ -5071,7 +5150,7 @@ function finale() {
    de victoire. La berceuse (variation lente du thème) joue jusqu'au retour au menu. Après `skip` s, un bouton passe
    directement à la victoire. Positions en pixels du monde (MAP.ending : Alice devant la niche, Tecky à ses pieds) ;
    `from` : ils partent de ce nombre de pixels sous le bas de l'écran. */
-const ENDING = { fade: 1, from: 60, alice: MAP.ending.alice, tecky: MAP.ending.tecky, spd: 105, happy: 1.6, sit: 1.4, yawn: 1.4,
+const ENDING = { fade: 1, from: 60, get alice() { return MAP.ending.alice; }, get tecky() { return MAP.ending.tecky; }, spd: 105, happy: 1.6, sit: 1.4, yawn: 1.4,
   iris: 9, irisDur: 1.6, irisR: 170, hold: 1.2, close: 0.5, fin: 2.4, skip: 1, flies: 12 };
 let ending = null;
 function startEnding() {

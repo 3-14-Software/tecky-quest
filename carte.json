@@ -804,6 +804,9 @@
     [0, 22, false],
     [96, 22, true]
   ],
+  "passages": [
+    [1, "pre", 0]
+  ],
   "traffic": {
     "y": 18,
     "crossings": [10, 50, 71, 79],

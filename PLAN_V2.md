@@ -399,15 +399,40 @@ Décidé le 12 novembre 2026 : **quatre épisodes, un par saison**, dans un mond
 grand ou les intérieurs d'abord). Et, avant d'écrire du contenu, **les textes passent en données** (le mécanisme du
 lot 5 : `textes/fr.json`, `t()`, sans traduire), pour que les nouveaux épisodes s'écrivent déjà hors de `game.js`.
 
-Ordre proposé :
+Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes multiples) :
 
-1. Textes en données (mécanisme du lot 5).
-2. La notion d'épisode sur la carte actuelle : une saison = une palette, des variantes de décor et une météo ; ses
-   placements, ses indices et ses quêtes ; sauvegarde v3. Aucune carte nouvelle n'est nécessaire pour cela.
-3. Un premier nouvel épisode, pour mesurer ce qu'il coûte et ce qu'il dure (l'automne ou l'hiver : ni l'un ni
-   l'autre ne demande de lieu nouveau).
-4. Le moteur à plusieurs cartes, pour les lieux nouveaux (le lac ou la plage de l'été) et les intérieurs.
-5. Rejouer : cachettes tirées au sort, album d'autocollants.
+1. Textes en données (mécanisme du lot 5) : fait.
+2. **Jalon « deux cartes »**, avant tout contenu. Fini quand Tecky prend le tunnel de la route, arrive sur une
+   deuxième carte, y marche, revient, et qu'une partie sauvegardée là-bas reprend là-bas. Ce que cela demande :
+   - les données du jeu (dessins, ombres, cadences : la moitié de `MAP`) séparées de celles d'une carte ;
+     `pack_web.py` construit chaque carte de `cartes/` ; le moteur change de carte courante (`useMap()`) ;
+   - un passage (tunnel de la route, plus tard une porte) avec son fondu ;
+   - sauvegarde v3 : la carte courante et l'état de chaque carte ; une sauvegarde v2 est reprise ;
+   - l'éditeur ouvre la carte choisie ; `check_placement.js` vérifie chaque carte ;
+   - un test qui fait l'aller-retour et la reprise ; toute la batterie reste verte.
+   La deuxième carte est petite et vide : elle ne sert qu'à prouver le moteur.
+   **Atteint le 12 novembre 2026** : `cartes/pre.json` (40 x 24), reliée au tunnel de l'est du monde ;
+   `tests/cartes.js` fait l'aller-retour, vérifie que chaque carte garde son état, qu'une partie enregistrée
+   là-bas reprend là-bas et qu'une sauvegarde v2 se reprend dans le monde ; batterie complète verte ; vu dans le
+   jeu (`reference/v2/lot6_deux_cartes.png`) et dans l'éditeur (`?carte=pre`). Restent pour plus tard : des
+   portes (intérieurs), les passages modifiables dans l'éditeur, et faire suivre Pompon ou un copain d'une carte
+   à l'autre.
+3. La notion d'épisode : une saison = ses cartes (mêmes terrains, autres placements, indices et quêtes), une
+   palette, une météo. Elle repose sur le jalon : changer d'épisode, c'est changer de carte.
+4. Un premier nouvel épisode, pour mesurer ce qu'il coûte et ce qu'il dure (l'automne ou l'hiver).
+5. Lieux nouveaux (le lac ou la plage de l'été) et intérieurs.
+6. Rejouer : cachettes tirées au sort, album d'autocollants.
+
+**Pas d'éclatement de la carte actuelle** (question de Christophe, 12 novembre 2026 : « n'aurait-on pas plus vite
+fait d'éclater la carte actuelle en plusieurs ? »). Le travail de moteur est le même que la deuxième carte soit
+un morceau de l'ancienne ou une carte neuve ; éclater y ajoute tout ce qui traverse les zones aujourd'hui
+(Pompon qui suit Tecky par-dessus la grande route, les lettres semées du village aux entrepôts, la piste du
+flair, la circulation d'un bord à l'autre, les canards qui volent d'une mare à l'autre, la carte de la pause, la
+marche de la scène de fin) et les 30 fichiers de tests sur 44 qui placent leurs scènes dans cette carte, pour
+aucune minute de jeu en plus. Mesure faite dans `game.js` : sur 215 lectures de `MAP`, une dizaine seulement
+sont des constantes calculées au chargement à partir d'une vraie donnée de carte (lisière, zones, lieux, scène
+de fin, route de la ferme) ; le reste se lit en cours de partie. Le moteur à plusieurs cartes est donc moins
+loin que ne le disait la première version de ce plan.
 
 - **Moteur** : plusieurs cartes (`MAP` est aujourd'hui une constante unique, 135 références), passages d'une carte à
   l'autre (les tunnels de la route, des portes), sauvegarde v3 (épisode, carte, progression de chaque épisode),

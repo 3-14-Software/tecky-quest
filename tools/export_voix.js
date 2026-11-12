@@ -75,7 +75,7 @@ function main() {
   ask('Indice trouvé', '[0, 1, 2].forEach(i => say([{ who: "tecky", text: clueFound(i) }]));');
   ask('Où chercher ensuite', '[0, 1, 2, 3].forEach(i => say([{ who: "tecky", text: clueNext(i) }]));');
   ask('Os doré déterré', 'treasures = 0; digs.forEach(g => uncover(g));');
-  ask('Panneau', 'MAP.signs.forEach(s => say([{ who: "info", text: s[2] }]));');
+  ask('Panneau', 'Object.values(CARTES).forEach(c => c.signs.forEach(s => say([{ who: "info", text: s[2] }])));');     // (de toutes les cartes)
   // quêtes : première demande, rappels (chaque compte), remerciements, après coup
   ask('Gaston : demande', 'farm.state = "new"; talkFarmer();');
   for (let n = 5; n >= 1; n--)

@@ -1,4 +1,6 @@
-// Usage : node web_src/check_placement.js web/index.html [--json | --infos]
+// Usage : node web_src/check_placement.js web/index.html [--json | --infos] [--carte nom]
+// --carte : la carte à vérifier (« monde » sans cela) ; sur une carte annexe, Tecky part du tunnel par où il arrive,
+// et ce qu'elle n'a pas (Alice, personnages, enclos, filet…) n'est pas vérifié.
 // Vérifie que rien n'est posé dans l'eau ou dans un obstacle, que tout (objets, indices, trésors, panneaux,
 // Alice) est atteignable à pied depuis la niche de Tecky, que deux actions différentes ne se recouvrent pas (règle
 // d'espacement), que les personnages vivent en zone calme, sans chien, et que chaque papillon a des fleurs.
@@ -7,6 +9,7 @@
 // --infos : collisions des décors (FOOT, RAILS), décors plats, portées des actions, taille de la caméra.
 const vm = require('vm'), fs = require('fs');
 const MODE = process.argv.includes('--json') ? 'json' : process.argv.includes('--infos') ? 'infos' : 'texte';
+const CARTE = process.argv.includes('--carte') ? process.argv[process.argv.indexOf('--carte') + 1] : 'monde';
 const html = fs.readFileSync(process.argv[2], 'utf8');
 const code = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'));
 const noop = () => {};
@@ -26,6 +29,10 @@ setTimeout(() => {
       portees: { parler: NPC.talk, panneau: REACH.sign, tresor: REACH.dig, objet: REACH.item, terrier: TUNNEL.reach,
         lettre: POST.pick, pompon: CAT.find, jouet: IRIS.pick, herisson: BABY.find, aboiement: BARK.range } })`));
     return;
+  }
+  if (CARTE !== 'monde') {              // carte annexe : on y arrive par son premier passage
+    if (!r(`!!CARTES[${JSON.stringify(CARTE)}]`)) { console.log('PROBLÈMES :\n  carte inconnue : ' + CARTE); process.exitCode = 1; return; }
+    r(`useMap(${JSON.stringify(CARTE)}); resetWorld(); { const [x, y, dir] = arrivalAt(MAP.passages[0][0]); Object.assign(P, { x, y, dir }); }`);
   }
   const res = JSON.parse(r(`JSON.stringify((() => {
     const out = [];
@@ -59,27 +66,29 @@ setTimeout(() => {
     for (const c of critters) if (!standable(c.x, c.y) || !reachable(c.x, c.y, 120)) out.push(c.kind + ' ' + tile(c.x, c.y));
     for (const d of ducks) if (!duckWater(d, d.x, d.y)) out.push(d.kind + ' hors de l’eau ' + tile(d.x, d.y));
     if (!standable(P.x, P.y)) out.push('départ de Tecky ' + tile(P.x, P.y));
+    // passages vers une autre carte : on ressort de chaque tunnel sur un sol praticable, relié au reste de la carte
+    for (const [t] of MAP.passages) { const [x, y] = arrivalAt(t); if (!standable(x, y) || !reachable(x, y, 40)) out.push('sortie du tunnel ' + tile(x, y)); }
     for (const [x, y] of MAP.signs) if (!reachable(x, y + 30, 95)) out.push('panneau ' + tile(x, y));
-    if (!reachable(alice.x, alice.y, 120)) out.push('Alice ' + tile(alice.x, alice.y));
-    if (!reachable(farmer.x, farmer.y, 150)) out.push('fermier ' + tile(farmer.x, farmer.y));
-    if (!reachable(postman.x, postman.y, 150)) out.push('facteur ' + tile(postman.x, postman.y));
-    if (!reachable(neighbor.x, neighbor.y, 150)) out.push('voisine ' + tile(neighbor.x, neighbor.y));
-    if (!reachable(leon.x, leon.y, 150)) out.push('Léon ' + tile(leon.x, leon.y));
+    if (ici('alice') && !reachable(alice.x, alice.y, 120)) out.push('Alice ' + tile(alice.x, alice.y));
+    if (ici('farmer') && !reachable(farmer.x, farmer.y, 150)) out.push('fermier ' + tile(farmer.x, farmer.y));
+    if (ici('postman') && !reachable(postman.x, postman.y, 150)) out.push('facteur ' + tile(postman.x, postman.y));
+    if (ici('neighbor') && !reachable(neighbor.x, neighbor.y, 150)) out.push('voisine ' + tile(neighbor.x, neighbor.y));
+    if (ici('leon') && !reachable(leon.x, leon.y, 150)) out.push('Léon ' + tile(leon.x, leon.y));
     // ballons de Léon : posés sur un sol praticable, atteignables, hors du filet ; l'ouverture du filet est atteignable
     for (const b of balls) if (!standable(b.x, b.y) || !reachable(b.x, b.y, 80) || ballBlocked(b, b.x, b.y)) out.push('ballon ' + tile(b.x, b.y));
     for (const b of balls) { checkGoal(b); if (b.inNet) out.push('ballon déjà dans le filet ' + tile(b.x, b.y)); }
-    if (!reachable(MAP.goal[0], MAP.goal[1] + 60, 60)) out.push('ouverture du filet ' + tile(MAP.goal[0], MAP.goal[1]));
-    if (!reachable(iris.x, iris.y, 150)) out.push('Iris ' + tile(iris.x, iris.y));
+    if (ici('goal') && !reachable(MAP.goal[0], MAP.goal[1] + 60, 60)) out.push('ouverture du filet ' + tile(MAP.goal[0], MAP.goal[1]));
+    if (ici('iris') && !reachable(iris.x, iris.y, 150)) out.push('Iris ' + tile(iris.x, iris.y));
     for (const t of toys) if (waterAt(t.x, t.y) || !reachable(t.x, t.y, IRIS.pick)) out.push('jouet ' + tile(t.x, t.y));
-    if (!reachable(piquette.x, piquette.y, 150)) out.push('Maman Piquette ' + tile(piquette.x, piquette.y));
+    if (ici('piquette') && !reachable(piquette.x, piquette.y, 150)) out.push('Maman Piquette ' + tile(piquette.x, piquette.y));
     for (const b of babies) if (!standable(b.x, b.y) || !reachable(b.x, b.y, BABY.find)) out.push('bébé hérisson ' + tile(b.x, b.y));
     for (const l of letters) if (waterAt(l.x, l.y + 20) || !reachable(l.x, l.y + 20, 52)) out.push('lettre ' + tile(l.x, l.y));
-    if (!standable(pompon.x, pompon.y) || !reachable(pompon.x, pompon.y, 120)) out.push('Pompon ' + tile(pompon.x, pompon.y));
+    if (ici('pompon') && (!standable(pompon.x, pompon.y) || !reachable(pompon.x, pompon.y, 120))) out.push('Pompon ' + tile(pompon.x, pompon.y));
     // terriers : les deux bouts praticables et atteignables à pied (le terrier est un raccourci, pas un passage obligé)
     for (const [ax, ay, bx, by] of MAP.tunnels)
       for (const [x, y] of [[ax, ay], [bx, by]]) if (!standable(x, y) || !reachable(x, y, 40)) out.push('terrier ' + tile(x, y));
     // quête des poules : la barrière de l'enclos est atteignable, et les poules de la quête démarrent dehors
-    { const [gx, gy] = gatePoint(); if (!reachable(gx, gy + 40, 60)) out.push('barrière de l’enclos ' + tile(gx, gy)); }
+    if (ici('pen')) { const [gx, gy] = gatePoint(); if (!reachable(gx, gy + 40, 60)) out.push('barrière de l’enclos ' + tile(gx, gy)); }
     for (const h of hens) if (h.quest && h.x > penRect()[0] && h.x < penRect()[2] && h.y > penRect()[1] && h.y < penRect()[3]) out.push('poule déjà dans l’enclos ' + tile(h.x, h.y));
     // règle d'espacement : deux actions différentes ne se recouvrent jamais (avec une marge), sinon le joueur en déclenche
     // une en voulant l'autre (ramasser un indice en parlant à quelqu'un, déterrer un os en passant sous un grillage…)
@@ -90,7 +99,7 @@ setTimeout(() => {
     MAP.tunnels.forEach(([ax, ay, bx, by]) => { A.push(['terrier', 'terrier', ax, ay, TUNNEL.reach]); A.push(['terrier', 'terrier', bx, by, TUNNEL.reach]); });
     for (const it of items) if (CLUES.includes(it.n)) A.push(['indice', it.n, it.x, it.y + 32, REACH.item]);
     for (const l of letters) A.push(['lettre', 'lettre', l.x, l.y + 20, POST.pick]);
-    A.push(['chat', 'Pompon', pompon.x, pompon.y, CAT.find]);
+    if (ici('pompon')) A.push(['chat', 'Pompon', pompon.x, pompon.y, CAT.find]);
     for (const t of toys) A.push(['jouet', 'jouet', t.x, t.y, IRIS.pick]);
     for (const b of babies) A.push(['hérisson', 'hérisson', b.x, b.y, BABY.find]);
     for (let i = 0; i < A.length; i++) for (let j = i + 1; j < A.length; j++) {
@@ -122,5 +131,6 @@ setTimeout(() => {
     return;
   }
   if (bad.length) { console.log('PROBLÈMES :\n  ' + bad.join('\n  ')); process.exitCode = 1; }
+  else if (CARTE !== 'monde') console.log('placements ok (carte « ' + CARTE + ' ») :', r('decor.length'), 'décors,', r('MAP.signs.length'), 'panneaux,', r('MAP.passages.length'), 'passage(s)');
   else console.log('placements ok :', r('items.length'), 'objets,', r('digs.length'), 'trésors,', r('dogs.length'), 'chiens,', r('hens.length'), 'poules,', r('ducks.length'), 'canards,', r('letters.length'), 'lettres, départ, panneaux, terriers, personnages, Pompon et Alice');
 }, 20);

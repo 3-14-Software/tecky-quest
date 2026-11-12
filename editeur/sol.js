@@ -68,8 +68,9 @@
     const ground = new Array(W * H);
     for (let ty = 0; ty < H; ty++) for (let tx = 0; tx < W; tx++)
       ground[ty * W + tx] = pick([g[ty][tx], g[ty][tx + 1], g[ty + 1][tx], g[ty + 1][tx + 1]], tx, ty);
-    const road = c.traffic.y, full = tileIndex('road', 15, 'grass', I), mark = tx => (tx % 2 === 0 ? 5 : full);
-    for (let tx = 0; tx < W; tx++) ground[(road + 1) * W + tx] = mark(tx);
+    // (une carte annexe peut ne pas avoir de grande route : road = -9, aucune rangée)
+    const road = c.traffic ? c.traffic.y : -9, full = tileIndex('road', 15, 'grass', I), mark = tx => (tx % 2 === 0 ? 5 : full);
+    if (c.traffic) for (let tx = 0; tx < W; tx++) ground[(road + 1) * W + tx] = mark(tx);
     // lisière : I.lisiere tuiles autour de la carte, coins ramenés sur le bord
     const R = I.lisiere, ring = [];
     const at = (x, y) => g[Math.min(Math.max(y, 0), H)][Math.min(Math.max(x, 0), W)];
@@ -78,11 +79,11 @@
       const idx = pick([at(tx, ty), at(tx + 1, ty), at(tx, ty + 1), at(tx + 1, ty + 1)], tx, ty);
       ring.push([tx, ty, ty === road + 1 ? mark(tx) : idx]);
     }
-    for (const tx of c.traffic.crossings) for (const ty of [road, road + 1, road + 2]) ground[ty * W + tx] = ground[ty * W + tx + 1] = 7;
+    for (const tx of (c.traffic ? c.traffic.crossings : [])) for (const ty of [road, road + 1, road + 2]) ground[ty * W + tx] = ground[ty * W + tx + 1] = 7;
     const over = new Array(W * H).fill(0), ov = I.overlayRow * I.cols;
     const OV = Object.fromEntries(I.overlays.map((n, i) => [n, i]));
-    for (const [n, tx, ty] of c.details) if (n in OV) over[ty * W + tx] = ov + OV[n];
-    for (const [x, y] of c.dig) over[Math.floor(y) * W + Math.floor(x)] = ov + OV['traces de pattes'];
+    for (const [n, tx, ty] of (c.details || [])) if (n in OV) over[ty * W + tx] = ov + OV[n];
+    for (const [x, y] of (c.dig || [])) over[Math.floor(y) * W + Math.floor(x)] = ov + OV['traces de pattes'];
     return { ground, over, ring, composites: comp };
   }
 

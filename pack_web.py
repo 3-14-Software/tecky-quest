@@ -62,8 +62,7 @@ PAGE = 2048            # hauteur d'une page d'atlas, en pixels x2 : aucune image
 # la carte (un seul pont, côté ferme) ; au-delà, le parc au sud-ouest, où Alice se cache, et la forêt au sud-est.
 # Ici : les listes de la carte (en tuiles), et ce qui s'en déduit (poteaux des panneaux, terriers, clôtures de l'enclos,
 # filet de Léon, rails et heurtoirs de la voie, coins du pont, lisière).
-CARTE = carte.charger()
-MW, MH = CARTE["w"], CARTE["h"]
+# (ces variables sont celles de la carte courante : charger_carte(nom), plus bas, les pose ; le jeu a plusieurs cartes)
 _T = lambda cle: [tuple(e) for e in CARTE[cle]]
 _P = lambda cle: tuple(CARTE[cle])
 
@@ -73,45 +72,28 @@ def corner_grid():
     return carte.terrain_grid(CARTE)
 
 
-ITEMS, ENEMIES, DIG, SIGNS = _T("items"), _T("enemies"), _T("dig"), _T("signs")
-HENS, DUCKS, COWS, CRITTERS, BUTTERFLIES, VILLAGERS = (_T(k) for k in ("hens", "ducks", "cows", "critters", "butterflies", "villagers"))
-LETTERS, BALLS, TOYS, BABIES = _T("letters"), _T("balls"), _T("toys"), _T("babies")
-TUNNELS = [((ax, ay), (bx, by)) for ax, ay, bx, by in CARTE["tunnels"]]
-START, ALICE, TITLE = _P("start"), _P("alice"), _P("title")
-FARMER, POSTMAN, NEIGHBOR, POMPON = _P("farmer"), _P("postman"), _P("neighbor"), _P("pompon")
-LEON, GOAL, IRIS, PIQUETTE = _P("leon"), _P("goal"), _P("iris"), _P("piquette")
-PEN, PEN_GATE, TRACK = _P("pen"), _P("penGate"), _P("track")
-CALM = _T("calm")
-ROAD_TUNNELS = _T("roadTunnels")      # tunnels aux deux bouts de la grande route (lisiere.py) : x, y du pied, miroir
-ROAD = CARTE["traffic"]["y"]          # première rangée de la grande route (4 rangées ; marquage sur la 2e)
-CROSSINGS = tuple(CARTE["traffic"]["crossings"])          # passages piétons : première des deux tuiles
-TRAFFIC = [tuple(v) for v in CARTE["traffic"]["vehicles"]]   # véhicules : voie 0 (en haut, vers l'ouest) ou 1, x de départ
-DETAILS = _T("details")
-FLOWER_BEDS = [(tx, ty) for n, tx, ty in DETAILS if n == "fleurs"]      # massifs de fleurs : perchoirs des papillons
-
-
 def derived_decor():
     """Décors qui se déduisent de la carte : poteau de chaque panneau, filet de Léon, heurtoirs et rails de la voie de
     Titine, clôture de l'enclos (barrière ouverte en bas), les deux bouts de chaque terrier."""
-    out = [("signpost", x, y) for x, y, _ in SIGNS] + [("goal_net", *GOAL)]
-    x0, x1, y = TRACK
-    out += [("buffer_stop", x0, y + 0.1), ("buffer_stop", x1, y + 0.1)]
-    out += [("rail", x, y) for x in range(math.floor(x0), math.ceil(x1))]
-    px0, py0, px1, py1 = PEN
-    for x in range(px0, px1):
-        out.append(("fence_wood_h", x, py0))
-        if not PEN_GATE[0] <= x < PEN_GATE[1]:
-            out.append(("fence_wood_h", x, py1))
-    ys = [py0 + k for k in range(1, math.ceil(py1 - py0)) if py0 + k < py1] + [py1]
-    for y in ys:
-        out += [("fence_wood_v", px0, y), ("fence_wood_v", px1, y)]
+    la = lambda cle: cle not in CARTE["absents"]              # (une carte annexe n'a pas forcément filet, voie, enclos)
+    out = [("signpost", x, y) for x, y, _ in SIGNS] + ([("goal_net", *GOAL)] if la("goal") else [])
+    if TRACK:
+        x0, x1, y = TRACK
+        out += [("buffer_stop", x0, y + 0.1), ("buffer_stop", x1, y + 0.1)]
+        out += [("rail", x, y) for x in range(math.floor(x0), math.ceil(x1))]
+    if la("pen"):
+        px0, py0, px1, py1 = PEN
+        for x in range(px0, px1):
+            out.append(("fence_wood_h", x, py0))
+            if not PEN_GATE[0] <= x < PEN_GATE[1]:
+                out.append(("fence_wood_h", x, py1))
+        ys = [py0 + k for k in range(1, math.ceil(py1 - py0)) if py0 + k < py1] + [py1]
+        for y in ys:
+            out += [("fence_wood_v", px0, y), ("fence_wood_v", px1, y)]
     out += [("burrow", x, y) for a, b in TUNNELS for x, y in (a, b)]
     return out
 
 
-DECOR = _T("decor") + derived_decor()
-# pont : coins (x0, y0, x1, y1) qui ne sont plus de l'eau, sous le tablier de chaque décor « bridge » (5 tuiles de haut)
-BRIDGES = [(round(x) - 1, round(y) - 5, round(x) + 1, round(y)) for n, x, y in DECOR if n == "bridge"]
 
 
 def sols():
@@ -142,7 +124,40 @@ def edge_decor(g, keep):
     return lisiere.decor(g, MW, MH, keep, forest, ROAD_TUNNELS)
 
 
-EDGE = edge_decor(corner_grid(), edge_keep())
+def charger_carte(nom=carte.MONDE):
+    """Fait de la carte `nom` la carte courante : ses listes (en tuiles) et ce qui s'en déduit (décors, pont, lisière).
+    Une carte annexe (cartes/<nom>.json) n'a que ce qu'elle déclare : carte.completer() met le reste hors de la carte."""
+    global NOM, CARTE, MW, MH, ITEMS, ENEMIES, DIG, SIGNS, HENS, DUCKS, COWS, CRITTERS, BUTTERFLIES, VILLAGERS
+    global LETTERS, BALLS, TOYS, BABIES, TUNNELS, START, ALICE, TITLE, FARMER, POSTMAN, NEIGHBOR, POMPON
+    global LEON, GOAL, IRIS, PIQUETTE, PEN, PEN_GATE, TRACK, CALM, ROAD_TUNNELS, ROAD, CROSSINGS, TRAFFIC
+    global DETAILS, FLOWER_BEDS, DECOR, BRIDGES, EDGE
+    NOM = nom
+    CARTE = carte.completer(carte.charger(carte.chemin(nom)))
+    MW, MH = CARTE["w"], CARTE["h"]
+    ITEMS, ENEMIES, DIG, SIGNS = _T("items"), _T("enemies"), _T("dig"), _T("signs")
+    HENS, DUCKS, COWS, CRITTERS, BUTTERFLIES, VILLAGERS = (_T(k) for k in ("hens", "ducks", "cows", "critters", "butterflies", "villagers"))
+    LETTERS, BALLS, TOYS, BABIES = _T("letters"), _T("balls"), _T("toys"), _T("babies")
+    TUNNELS = [((ax, ay), (bx, by)) for ax, ay, bx, by in CARTE["tunnels"]]
+    START, ALICE, TITLE = _P("start"), _P("alice"), _P("title")
+    FARMER, POSTMAN, NEIGHBOR, POMPON = _P("farmer"), _P("postman"), _P("neighbor"), _P("pompon")
+    LEON, GOAL, IRIS, PIQUETTE = _P("leon"), _P("goal"), _P("iris"), _P("piquette")
+    PEN, PEN_GATE = _P("pen"), _P("penGate")
+    TRACK = _P("track") if CARTE["track"] else None           # (None : pas de voie ferrée sur cette carte)
+    CALM = _T("calm")
+    ROAD_TUNNELS = _T("roadTunnels")      # tunnels aux deux bouts de la grande route (lisiere.py) : x, y du pied, miroir
+    route = CARTE["traffic"] or {"y": None, "crossings": [], "vehicles": []}      # (pas de grande route : y = None)
+    ROAD = route["y"]                     # première rangée de la grande route (4 rangées ; marquage sur la 2e)
+    CROSSINGS = tuple(route["crossings"])                     # passages piétons : première des deux tuiles
+    TRAFFIC = [tuple(v) for v in route["vehicles"]]           # véhicules : voie 0 (en haut, vers l'ouest) ou 1, x de départ
+    DETAILS = _T("details")
+    FLOWER_BEDS = [(tx, ty) for n, tx, ty in DETAILS if n == "fleurs"]      # massifs de fleurs : perchoirs des papillons
+    DECOR = _T("decor") + derived_decor()
+    # pont : coins (x0, y0, x1, y1) qui ne sont plus de l'eau, sous le tablier de chaque décor « bridge » (5 tuiles de haut)
+    BRIDGES = [(round(x) - 1, round(y) - 5, round(x) + 1, round(y)) for n, x, y in DECOR if n == "bridge"]
+    EDGE = edge_decor(corner_grid(), edge_keep())
+
+
+charger_carte()
 # variantes des tuiles : terrains pleins (35 % des tuiles), choisies d'après la
 # position de la tuile (hash3) : modifier un coin de la carte ne change rien ailleurs, et l'éditeur fait le même choix
 GRASS_VARIANTS = [1]        # herbe unie : brins et fleurs sont semés par le jeu (game.js : groundDetails())
@@ -162,9 +177,10 @@ COMPOSITES = []       # tuiles composées (trois terrains : bout de chemin sur l
 
 
 def build_map():
+    """Les données de la carte courante (charger_carte), pour le jeu : CARTES[nom]. Les tuiles composées qu'elle
+    demande s'ajoutent à COMPOSITES, commun à toutes les cartes : le vider avant de les construire toutes."""
     g = corner_grid()
     ground = []
-    COMPOSITES.clear()
 
     def pick(cs, tx, ty):                             # tuile (tx, ty) d'après ses quatre coins (NO, NE, SO, SE)
         up, lo, bits = tiles.resolve(cs)
@@ -183,7 +199,7 @@ def build_map():
         for tx in range(MW):
             ground.append(pick([g[ty][tx], g[ty][tx + 1], g[ty + 1][tx], g[ty + 1][tx + 1]], tx, ty))
     # marquages de la route (sur sa deuxième rangée)
-    for tx in range(MW):
+    for tx in range(MW if ROAD is not None else 0):
         ground[(ROAD + 1) * MW + tx] = 5 if tx % 2 == 0 else tiles.tile_index("road", 15)
     # sol de la lisière : lisiere.RING tuiles autour de la carte, qui prolongent celles du bord (coins ramenés sur le
     # bord : la route, ses marquages, la rivière et le ruisseau continuent tout droit)
@@ -193,7 +209,7 @@ def build_map():
         for tx in range(-R, MW + R):
             if not (0 <= tx < MW and 0 <= ty < MH):
                 idx = pick([at(tx, ty), at(tx + 1, ty), at(tx, ty + 1), at(tx + 1, ty + 1)], tx, ty)
-                ring.append([tx, ty, (5 if tx % 2 == 0 else tiles.tile_index("road", 15)) if ty == ROAD + 1 else idx])
+                ring.append([tx, ty, (5 if tx % 2 == 0 else tiles.tile_index("road", 15)) if ROAD is not None and ty == ROAD + 1 else idx])
     for tx in CROSSINGS:                              # passages piétons (dont chemin de la ferme et du pont)
         for ty in (ROAD, ROAD + 1, ROAD + 2):
             ground[ty * MW + tx] = ground[ty * MW + tx + 1] = 7
@@ -214,16 +230,9 @@ def build_map():
                 g[y][x] = "bridge"           # n'est plus de l'eau pour les collisions (le sol a déjà été choisi)
     water = [1 if g[y][x] == "water" else 0 for y in range(MH + 1) for x in range(MW + 1)]
     px = lambda v: round(v * TS, 1)
-    return {
-        "w": MW, "h": MH, "ts": TS, "ground": ground, "over": over, "water": water,
-        "hole": ovrow + OV["trou creusé (trésor)"],
-        "shore": tiles.tile_index("water", 0),        # la rangée des tuiles eau / herbe (la 16e : l'eau pleine)
-        "tileAlt": tiles.alternees(),                 # bords naturels : rangée du tileset -> rangées de ses variantes
-        "wood": tiles.tile_index("forest", 15),       # le sous-bois plein (game.js : woodDetails())
-        "fieldRow": tiles.tile_index("field", 0),     # la rangée des tuiles champ / herbe (fieldDetails())
-        "furrows": [y * TS // tiles.T for y in tiles.SILLONS],          # les crêtes des buttes, en px dans la tuile
-        "wild": {n: list(v) for n, v in nature.SOUS_BOIS.items()},      # détail du sous-bois -> [première image, nombre]
-        "crops": len(nature.CULTURES),
+    hors = px(carte.HORS)
+    m = {
+        "w": MW, "h": MH, "ground": ground, "over": over, "water": water,
         "decor": [[n, px(x), px(y)] for n, x, y in DECOR],
         # lisière (lisiere.py) : sol de la marge autour de la carte (tx, ty, tuile) et ses décors (nom, x, y, miroir)
         "edge": {"r": R, "ring": ring, "decor": [[n, px(x), px(y), f] for n, x, y, f in EDGE]},
@@ -237,39 +246,69 @@ def build_map():
         "pompon": [px(POMPON[0]), px(POMPON[1])], "letters": [[px(x), px(y)] for x, y in LETTERS],
         "leon": [px(LEON[0]), px(LEON[1])], "goal": [px(GOAL[0]), px(GOAL[1])], "balls": [[px(x), px(y)] for x, y in BALLS],
         "iris": [px(IRIS[0]), px(IRIS[1])], "toys": [[px(x), px(y)] for x, y in TOYS],
-        "track": [px(TRACK[0]), px(TRACK[1]), px(TRACK[2])],
+        "track": [px(v) for v in TRACK] if TRACK else [hors, hors + 1, hors],
         "piquette": [px(PIQUETTE[0]), px(PIQUETTE[1])], "babies": [[px(x), px(y)] for x, y in BABIES],
-        "babyFps": {a: fps for a, (_, fps, _) in herissons.ANIMS.items()},
-        "npcFps": dict({"farmer": {a: v[1] for a, v in farmer.ANIMS.items()}},
-                       **{k: {a: v[1] for a, v in npcs.ANIMS[k].items()} for k in npcs.KINDS}),
         "critters": [[n, px(x), px(y)] for n, x, y in CRITTERS],
-        "rest": {a: [fps, loop] for a, (_, fps, _, loop) in tecky2.REST_ANIMS.items()},
-        "teckyFps": {a: fps for a, (_, fps, _) in tecky2.ANIMS.items()},     # cadences propres à Tecky (marche en 8 images)
-        "aliceFps": {a: fps for a, (_, fps) in alice2.ANIMS.items()},
-        "dogFps": {a: fps for a, (_, fps, _) in chiens2.ANIMS.items()},      # celles des chiens (chiens2.py)
-        "badges": hud.BADGES,
-        "keys": hud.KEYS, "pads": [k for k, _ in hud.PAD_BUTTONS],   # noms des images de hud/key et hud/pad
         "ducks": [[n, px(x), px(y), f] for n, x, y, f in DUCKS],
         "cows": [[n, px(x), px(y)] for n, x, y in COWS],
         "villagers": [[n, px(x), px(y)] for n, x, y in VILLAGERS],
-        "villagerFps": {k: {a: v[1] for a, v in villageois.ANIMS[k].items()} for k in villageois.KINDS},
-        "cowFps": {k: {a: fps for a, (_, fps, _) in cows.anims(k).items()} for k in cows.KINDS},
-        "duckFps": {k: {a: fps for a, (_, fps, _) in ducks.anims(k).items()} for k in ducks.KINDS},
-        "duckLoop": {k: {a: loop for a, (_, _, loop) in ducks.anims(k).items()} for k in ducks.KINDS},
-        "critterFps": {k: {a: fps for a, (_, fps, _) in critters.anims(k).items()} for k in critters.KINDS},
         "tunnels": [[px(a[0]), px(a[1]), px(b[0]), px(b[1])] for a, b in TUNNELS],
         "butterflies": [[c, px(x), px(y)] for c, x, y in BUTTERFLIES],
         # où les papillons se posent : (x, y au sol, hauteur) — sur les pots de fleurs, ou sur les massifs
         "flowers": [[px(x), px(y) + 2, 44] for n, x, y in DECOR if n == "flower_pot"]
                    + [[px(tx + 0.5), px(ty + 0.5), 4] for tx, ty in FLOWER_BEDS],
         # la grande route : voies 0 et 1, bords de la chaussée (pour les chiens, Tecky, les poules)
+        # (pas de grande route sur cette carte : rien n'y roule, personne ne la touche)
         "traffic": {"lanes": [px(ROAD + 0.95), px(ROAD + 2.95)], "road": [px(ROAD - 0.5), px(ROAD + 3.5)],
                     "crossings": [[px(tx), px(tx + 2)] for tx in CROSSINGS],
-                    "vehicles": [[n, lane, px(x)] for n, lane, x in TRAFFIC]},
+                    "vehicles": [[n, lane, px(x)] for n, lane, x in TRAFFIC]} if ROAD is not None
+        else {"lanes": [hors, hors], "road": [hors, hors], "crossings": [], "vehicles": []},
         "dig": [[px(x), px(y)] for x, y in DIG],
         "start": [px(START[0]), px(START[1])],
         "alice": [px(ALICE[0]), px(ALICE[1])],
         "title": [px(TITLE[0]), px(TITLE[1])],
+        "signs": [[px(x), px(y), t] for x, y, t in SIGNS],
+        "farmRoadY": px(ROAD - 0.7) if ROAD is not None else hors,     # les poules ne descendent jamais plus bas (la grande route)
+        "ballBox": CARTE["ballBox"],                  # en tuiles : là où roulent les ballons de Léon
+        # zones (en tuiles) : la première dont un rectangle contient le point ; un bord de rectangle posé sur le bord
+        # de la carte n'a pas de limite (game.js : zoneAt) ; music : variation du thème, sinon celle de son id
+        "zones": CARTE["zones"], "landmarks": CARTE["landmarks"],
+        "ending": {k: [px(v[0]), px(v[1])] for k, v in CARTE["ending"].items()},   # scène de fin : Alice, Tecky
+    }
+    # ce que la carte n'a pas (carte annexe), ses tunnels de route et où ils mènent : [n° du tunnel, carte, n° d'arrivée]
+    m.update(id=NOM, absents=CARTE["absents"], passages=CARTE["passages"],
+             roadTunnels=[[px(x), px(y), f] for x, y, f in ROAD_TUNNELS])
+    return m
+
+
+def build_jeu():
+    """Les données du jeu qui ne dépendent d'aucune carte (dessins, ombres, cadences) : JEU dans game.js, dont hérite
+    la carte courante (MAP)."""
+    ovrow = tiles.OVERLAY_ROW * tiles.COLS
+    return {
+        "ts": TS,
+        "hole": ovrow + OV["trou creusé (trésor)"],
+        "shore": tiles.tile_index("water", 0),        # la rangée des tuiles eau / herbe (la 16e : l'eau pleine)
+        "tileAlt": tiles.alternees(),                 # bords naturels : rangée du tileset -> rangées de ses variantes
+        "wood": tiles.tile_index("forest", 15),       # le sous-bois plein (game.js : woodDetails())
+        "fieldRow": tiles.tile_index("field", 0),     # la rangée des tuiles champ / herbe (fieldDetails())
+        "furrows": [y * TS // tiles.T for y in tiles.SILLONS],          # les crêtes des buttes, en px dans la tuile
+        "wild": {n: list(v) for n, v in nature.SOUS_BOIS.items()},      # détail du sous-bois -> [première image, nombre]
+        "crops": len(nature.CULTURES),
+        "babyFps": {a: fps for a, (_, fps, _) in herissons.ANIMS.items()},
+        "npcFps": dict({"farmer": {a: v[1] for a, v in farmer.ANIMS.items()}},
+                       **{k: {a: v[1] for a, v in npcs.ANIMS[k].items()} for k in npcs.KINDS}),
+        "rest": {a: [fps, loop] for a, (_, fps, _, loop) in tecky2.REST_ANIMS.items()},
+        "teckyFps": {a: fps for a, (_, fps, _) in tecky2.ANIMS.items()},     # cadences propres à Tecky (marche en 8 images)
+        "aliceFps": {a: fps for a, (_, fps) in alice2.ANIMS.items()},
+        "dogFps": {a: fps for a, (_, fps, _) in chiens2.ANIMS.items()},      # celles des chiens (chiens2.py)
+        "badges": hud.BADGES,
+        "keys": hud.KEYS, "pads": [k for k, _ in hud.PAD_BUTTONS],   # noms des images de hud/key et hud/pad
+        "villagerFps": {k: {a: v[1] for a, v in villageois.ANIMS[k].items()} for k in villageois.KINDS},
+        "cowFps": {k: {a: fps for a, (_, fps, _) in cows.anims(k).items()} for k in cows.KINDS},
+        "duckFps": {k: {a: fps for a, (_, fps, _) in ducks.anims(k).items()} for k in ducks.KINDS},
+        "duckLoop": {k: {a: loop for a, (_, _, loop) in ducks.anims(k).items()} for k in ducks.KINDS},
+        "critterFps": {k: {a: fps for a, (_, fps, _) in critters.anims(k).items()} for k in critters.KINDS},
         "decorFps": {n: fps for n, (_, fps) in decor.ANIMATED.items()},
         # variantes de la nature (nature.py) : décor -> [sprites, tirage] ; le jeu en choisit un d'après la position
         "variants": {n: [noms, tirage] for n, (noms, tirage) in nature.VARIANTES.items()},
@@ -281,13 +320,6 @@ def build_map():
         # décors agrandis (bâtiments, camion, tracteur, chariot) : leur obstacle (FOOT) grandit d'autant
         "grow": {**batiments.agrandis(), **mobilier.agrandis(), **decor.ECH},
         "vehicleScale": vehicles.ECH,
-        "signs": [[px(x), px(y), t] for x, y, t in SIGNS],
-        "farmRoadY": px(ROAD - 0.7),                  # les poules ne descendent jamais plus bas (la grande route)
-        "ballBox": CARTE["ballBox"],                  # en tuiles : là où roulent les ballons de Léon
-        # zones (en tuiles) : la première dont un rectangle contient le point ; un bord de rectangle posé sur le bord
-        # de la carte n'a pas de limite (game.js : zoneAt) ; music : variation du thème, sinon celle de son id
-        "zones": CARTE["zones"], "landmarks": CARTE["landmarks"],
-        "ending": {k: [px(v[0]), px(v[1])] for k, v in CARTE["ending"].items()},   # scène de fin : Alice, Tecky
     }
 
 
@@ -574,7 +606,17 @@ def ecoute(game):
 
 def main():
     os.makedirs(WEB, exist_ok=True)
-    m = build_map()
+    COMPOSITES.clear()
+    cartes = {}
+    for nom in carte.noms():                          # chaque carte du jeu ; puis retour à celle du monde
+        charger_carte(nom)
+        cartes[nom] = build_map()
+    for nom, c in cartes.items():
+        for t, vers, arrivee in c["passages"]:
+            if vers not in cartes or not 0 <= arrivee < len(cartes[vers]["roadTunnels"]):
+                raise SystemExit(f"carte « {nom} » : le passage du tunnel {t} mène à « {vers} », tunnel {arrivee}, qui n'existe pas")
+    charger_carte()
+    m = cartes[carte.MONDE]
     atlas, meta = pack(collect())
     atlas.save(os.path.join(WEB, "atlas.png"), optimize=True)
     tileset = tiles.tileset(S, composites=COMPOSITES)   # eau unie : le jeu anime ses vaguelettes
@@ -594,7 +636,9 @@ def main():
             # les textes du jeu, par langue (game.js : txt()) ; la source est textes/fr.json
             "const TEXTES = " + json.dumps({"fr": json.load(open(os.path.join(ROOT, "textes", "fr.json"), encoding="utf-8"))},
                                            separators=(",", ":"), ensure_ascii=False) + ";\n"
-            "const MAP = " + json.dumps(m, separators=(",", ":"), ensure_ascii=False) + ";\n"
+            # les données du jeu, puis celles de chaque carte (game.js : MAP = la carte courante, qui hérite de JEU)
+            "const JEU = " + json.dumps(build_jeu(), separators=(",", ":"), ensure_ascii=False) + ";\n"
+            "const CARTES = " + json.dumps(cartes, separators=(",", ":"), ensure_ascii=False) + ";\n"
             "const VERSION = " + json.dumps(version(), ensure_ascii=False) + ";\n")
     html = tpl.replace("/*__DATA__*/", data).replace("/*__GAME__*/", game)
     open(os.path.join(WEB, "index.html"), "w", encoding="utf-8").write(html)
@@ -611,11 +655,13 @@ def check_placement():
     if not shutil.which("node"):
         print("(Node.js absent : vérification des placements ignorée)")
         return
-    r = subprocess.run(["node", os.path.join(SRC, "check_placement.js"), os.path.join(WEB, "index.html")],
-                       capture_output=True, text=True)
-    print(r.stdout.strip() or r.stderr.strip())
-    if r.returncode:
-        raise SystemExit("Corrige les placements signalés dans carte.json (éditeur de carte : python3 editeur.py)")
+    for nom in carte.noms():                          # chaque carte : celle du monde, puis les annexes
+        r = subprocess.run(["node", os.path.join(SRC, "check_placement.js"), os.path.join(WEB, "index.html"), "--carte", nom],
+                           capture_output=True, text=True)
+        print(r.stdout.strip() or r.stderr.strip())
+        if r.returncode:
+            raise SystemExit(f"Corrige les placements signalés dans {os.path.relpath(carte.chemin(nom), ROOT)} "
+                             "(éditeur de carte : python3 editeur.py)")
 
 
 def build_standalone(data, game, hd_files=()):

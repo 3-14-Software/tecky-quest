@@ -289,7 +289,7 @@
     if (ED.modifie && !(await P.enregistrer())) return;
     occupe('Construction du jeu et vérification des placements…');
     try {
-      const r = await fetch('verifier', { method: 'POST' }).then(r => r.json());
+      const r = await fetch('verifier', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ carte: ED.nom }) }).then(r => r.json());
       if (r.jeu) { ED.I.jeu = r.jeu; ED.change(); }
       P.atteint = r.atteint;
       $('acces').disabled = !r.atteint;
@@ -304,7 +304,7 @@
     if (ED.modifie && !(await P.enregistrer())) { if (w) w.close(); return; }
     occupe('Construction du jeu…');
     try {
-      const r = await fetch('essai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ x, y, mode }) }).then(r => r.json());
+      const r = await fetch('essai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ x, y, mode, carte: ED.nom }) }).then(r => r.json());
       if (r.ok) { if (w) w.location = r.url; else window.open(r.url, '_blank'); }
       else { if (w) w.close(); afficherProblemes({ titre: 'La construction du jeu a échoué', sortie: r.sortie }); }
     } finally { occupe(null); }
@@ -350,6 +350,11 @@
     const [atlas, tiles] = await Promise.all([image('atlas.png'), image('tiles.png')]);
     P.atlas = atlas; P.tiles = tiles;
     await ED.charger();
+    // le choix de la carte : celle du monde, ou une carte annexe (la page se recharge sur ?carte=nom)
+    const sel = $('cartes');
+    for (const n of I.cartes) sel.append(h('option', { value: n, selected: n === ED.nom }, n === 'monde' ? 'monde (carte.json)' : n));
+    sel.onchange = () => { if (!ED.modifie || confirm('Des modifications ne sont pas enregistrées. Changer de carte quand même ?')) location.search = '?carte=' + encodeURIComponent(sel.value); else sel.value = ED.nom; };
+    document.title = 'Carte ' + ED.nom + ' — Tecky Quest';
     O = ED.outils; V = ED.vue;
     const cv = $('carte');
     V.init(cv, { atlas, tiles });

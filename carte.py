@@ -18,19 +18,26 @@ import os
 ROOT = os.path.dirname(os.path.abspath(__file__))
 FICHIER = os.path.join(ROOT, "carte.json")
 FORMAT = 1
+# Le jeu a plusieurs cartes. Celle du monde (l'aventure : la niche, le village, la ferme…) reste carte.json ; les
+# autres, les cartes annexes, sont dans cartes/<nom>.json. Une carte annexe ("annexe": true) n'a que ce qu'elle
+# déclare : ni Alice, ni personnages, ni enclos si elle ne les cite pas (completer() met le reste hors de la carte).
+# On passe d'une carte à l'autre par un tunnel de la grande route : "passages".
+MONDE = "monde"
+DOSSIER = os.path.join(ROOT, "cartes")
+HORS = -2000          # en tuiles : la place de ce qu'une carte n'a pas, loin de tout
 
 # une lettre par terrain dans les lignes de « terrain » (une ligne par rangée de coins)
 LEGENDE = {".": "grass", "t": "dirt", "r": "road", "p": "paving", "b": "concrete", "s": "sidewalk", "~": "water",
            "c": "field", "f": "forest"}
 
 # ordre des clés dans le fichier (une clé inconnue est gardée, à la fin)
-ORDRE = ["format", "w", "h", "legende", "terrain", "details", "decor",
+ORDRE = ["format", "annexe", "w", "h", "legende", "terrain", "details", "decor",
          "items", "dig", "enemies", "signs", "tunnels",
          "hens", "ducks", "cows", "critters", "butterflies", "villagers",
          "start", "alice", "title", "ending",
          "farmer", "postman", "neighbor", "pompon", "leon", "iris", "piquette",
          "letters", "balls", "toys", "babies", "goal", "ballBox", "pen", "penGate", "track",
-         "roadTunnels", "traffic", "calm", "zones", "landmarks"]
+         "roadTunnels", "passages", "traffic", "calm", "zones", "landmarks"]
 
 # listes de taille fixe : « cinq lettres » et « cinq ballons » dans les dialogues (une couleur par ballon,
 # port.BALL_COLORS), les jouets d'Iris (port.TOYS : poulet, anneau, corde, dans cet ordre), les places des petits
@@ -97,6 +104,42 @@ def genres():
 
 
 # ------------------------------------------------------------------ lecture, vérification
+def chemin(nom):
+    """Le fichier de la carte `nom`."""
+    return FICHIER if nom == MONDE else os.path.join(DOSSIER, nom + ".json")
+
+
+def noms():
+    """Les cartes du jeu : celle du monde d'abord, puis les annexes par ordre alphabétique."""
+    autres = sorted(f[:-5] for f in os.listdir(DOSSIER) if f.endswith(".json")) if os.path.isdir(DOSSIER) else []
+    return [MONDE] + autres
+
+
+# ce qu'une carte annexe peut ne pas avoir, et ce qui en tient lieu (hors de la carte, ou rien)
+_LISTES = ["details", "decor", "items", "dig", "enemies", "signs", "tunnels", "hens", "ducks", "cows", "critters",
+           "butterflies", "villagers", "letters", "balls", "toys", "babies", "roadTunnels", "passages", "calm", "landmarks"]
+_RECT = [HORS, HORS, HORS + 1, HORS + 1]
+
+
+def completer(c):
+    """La carte avec tout ce que pack_web.py attend : ce qu'une carte annexe ne déclare pas est mis hors de la carte
+    (un point en (HORS, HORS)) ou vide, et « absents » en donne la liste (personnages, enclos, voie, route, fin…)."""
+    c = dict(c)
+    absents = [k for k in POINTS + ["pen", "ballBox", "track", "traffic", "ending"] if k not in c]
+    for k in _LISTES:
+        c.setdefault(k, [])
+    for k in POINTS:
+        c.setdefault(k, [HORS, HORS])
+    c.setdefault("pen", list(_RECT))
+    c.setdefault("ballBox", list(_RECT))
+    c.setdefault("penGate", [HORS, HORS + 1])
+    c.setdefault("track", None)
+    c.setdefault("traffic", None)
+    c.setdefault("ending", {"alice": [HORS, HORS], "tecky": [HORS, HORS]})
+    c["absents"] = absents
+    return c
+
+
 def charger(chemin=FICHIER, verifier=True):
     with open(chemin, encoding="utf-8") as f:
         c = json.load(f)
@@ -139,8 +182,14 @@ def valider(c, avec_genres=True):
         if bad:
             err.append("terrain : lettres inconnues " + " ".join(bad))
     g = genres() if avec_genres else None
+    annexe = c.get("annexe") is True
+    if "annexe" in c and not annexe:
+        err.append("annexe : true, ou rien (la carte du monde)")
+    la = lambda cle: not annexe or cle in c            # (une carte annexe n'a que ce qu'elle déclare)
 
     def liste(cle, forme, nom):
+        if not la(cle) or (cle == "passages" and cle not in c):
+            return []
         v = c.get(cle)
         if not isinstance(v, list):
             err.append(f"{cle} : une liste")
@@ -156,13 +205,13 @@ def valider(c, avec_genres=True):
                 err.append(f"{cle}[{i}] : genre inconnu « {e[0]} »")
     for cle in POSITIONS:
         v = liste(cle, _pt, "[x, y]")
-        if cle in TAILLES and len(v) != TAILLES[cle]:
+        if cle in TAILLES and la(cle) and len(v) != TAILLES[cle]:
             err.append(f"{cle} : exactement {TAILLES[cle]} (il y en a {len(v)})")
     for i, (x, y) in enumerate(e for e in c.get("dig", []) if _pt(e)):
         if (x % 1, y % 1) != (0.5, 0.5):
             err.append(f"dig[{i}] ({x}, {y}) : un trésor est au centre d'une tuile (x,5 ; y,5)")
     for cle in POINTS:
-        if not _pt(c.get(cle)):
+        if la(cle) and not _pt(c.get(cle)):
             err.append(f"{cle} : un point [x, y]")
     det = lambda e: isinstance(e, list) and len(e) == 3 and isinstance(e[0], str) and all(isinstance(a, int) for a in e[1:])
     for i, e in enumerate(liste("details", det, "[nom, tx, ty] (tuile entière)")):
@@ -185,21 +234,23 @@ def valider(c, avec_genres=True):
     rect = lambda e: isinstance(e, list) and len(e) == 4 and all(_num(a) for a in e) and e[0] < e[2] and e[1] < e[3]
     liste("calm", rect, "[x0, y0, x1, y1]")
     for cle in ("ballBox", "pen"):
-        if not rect(c.get(cle)):
+        if la(cle) and not rect(c.get(cle)):
             err.append(f"{cle} : un rectangle [x0, y0, x1, y1]")
     if rect(c.get("pen")) and not all(isinstance(a, int) for a in (c["pen"][0], c["pen"][2])):
         err.append("pen : x0 et x1 entiers (une clôture par tuile)")
     pg = c.get("penGate")
-    if not (isinstance(pg, list) and len(pg) == 2 and all(isinstance(a, int) for a in pg) and pg[0] < pg[1]):
+    if la("pen") and not (isinstance(pg, list) and len(pg) == 2 and all(isinstance(a, int) for a in pg) and pg[0] < pg[1]):
         err.append("penGate : [x0, x1] entiers")
     tr = c.get("track")
-    if not (isinstance(tr, list) and len(tr) == 3 and all(_num(a) for a in tr) and tr[0] < tr[1]):
+    if la("track") and not (isinstance(tr, list) and len(tr) == 3 and all(_num(a) for a in tr) and tr[0] < tr[1]):
         err.append("track : [x ouest, x est, y]")
     e = c.get("ending")
-    if not (isinstance(e, dict) and _pt(e.get("alice")) and _pt(e.get("tecky"))):
+    if la("ending") and not (isinstance(e, dict) and _pt(e.get("alice")) and _pt(e.get("tecky"))):
         err.append("ending : {alice: [x, y], tecky: [x, y]}")
     r = c.get("traffic")
-    if not (isinstance(r, dict) and isinstance(r.get("y"), int) and 0 < r["y"] < h - 3
+    if not la("traffic"):
+        pass
+    elif not (isinstance(r, dict) and isinstance(r.get("y"), int) and 0 < r["y"] < h - 3
             and isinstance(r.get("crossings"), list) and all(isinstance(x, int) for x in r["crossings"])
             and isinstance(r.get("vehicles"), list)):
         err.append("traffic : {y: première rangée de la route, crossings: [x], vehicles: [[véhicule, voie, x]]}")
@@ -230,7 +281,15 @@ def valider(c, avec_genres=True):
                                               for q in last.get("rects", [])):
             err.append("zones : la dernière couvre toute la carte (rectangle [0, 0, w, h])")
     liste("landmarks", lambda z: isinstance(z, dict) and isinstance(z.get("label"), str) and _pt(z.get("at")), "{label, at}")
-    if isinstance(c.get("items"), list):
+    # passages : [n° d'un tunnel de la route (roadTunnels), carte d'arrivée, n° de son tunnel d'arrivée]
+    nt = len(c["roadTunnels"]) if isinstance(c.get("roadTunnels"), list) else 0
+    for i, e in enumerate(liste("passages", lambda e: isinstance(e, list) and len(e) == 3 and isinstance(e[0], int)
+                                and isinstance(e[1], str) and isinstance(e[2], int), "[n° du tunnel, carte, n° du tunnel d'arrivée]")):
+        if isinstance(e, list) and len(e) == 3 and isinstance(e[0], int) and not 0 <= e[0] < nt:
+            err.append(f"passages[{i}] : pas de tunnel n° {e[0]} sur cette carte")
+    if annexe and not c.get("passages"):
+        err.append("passages : une carte annexe a au moins un passage (sinon on n'y arrive jamais)")
+    if isinstance(c.get("items"), list) and not annexe:
         for n in INDICES:
             k = sum(1 for it in c["items"] if isinstance(it, list) and it and it[0] == n)
             if k != 1:
@@ -287,15 +346,20 @@ def enregistrer(c, chemin=FICHIER):
 
 if __name__ == "__main__":
     import sys
-    c = charger(verifier=False)
-    err = valider(c)
-    if err:
-        raise SystemExit("carte.json :\n  " + "\n  ".join(err))
-    avant = open(FICHIER, encoding="utf-8").read()
-    if texte(c) == avant:
-        print("carte.json : ok")
-    elif "--verifier" in sys.argv:
-        raise SystemExit("carte.json : pas au format normalisé (python3 carte.py le réécrit)")
-    else:
-        enregistrer(c)
-        print("carte.json réécrit au format normalisé")
+    for nom in noms():                    # chaque carte du jeu : correcte, et au format de l'éditeur
+        f = chemin(nom)
+        fichier = os.path.relpath(f, ROOT)
+        c = charger(f, verifier=False)
+        err = valider(c)
+        if not err and (c.get("annexe") is True) != (nom != MONDE):
+            err = ["« annexe » : la carte du monde ne l'est pas, les autres le sont"]
+        if err:
+            raise SystemExit(fichier + " :\n  " + "\n  ".join(err))
+        avant = open(f, encoding="utf-8").read()
+        if texte(c) == avant:
+            print(fichier + " : ok")
+        elif "--verifier" in sys.argv:
+            raise SystemExit(fichier + " : pas au format normalisé (python3 carte.py le réécrit)")
+        else:
+            enregistrer(c, f)
+            print(fichier + " réécrit au format normalisé")

@@ -104,6 +104,8 @@ def infos():
         "indices": carte.INDICES, "musiques": carte.MUSIQUES, "decorsDeduits": carte.DECORS_DEDUITS,
         # décors redessinés (nature, bâtiments, mobilier) : nom du décor -> ses modèles et leur tirage (MAP.variants)
         "variants": {n: [noms, tirage] for n, (noms, tirage) in pack_web.nature.VARIANTES.items()},
+        # les cartes du jeu (carte.noms()) : celle du monde, puis les annexes ; la page en ouvre une (?carte=nom)
+        "cartes": carte.noms(),
     }
 
 
@@ -117,7 +119,8 @@ def a_jour():
     if not os.path.exists(out):
         return False
     t = os.path.getmtime(out)
-    src = [carte.FICHIER, os.path.join(ROOT, "web_src", "game.js"), os.path.join(ROOT, "web_src", "index.template.html")]
+    src = [carte.chemin(n) for n in carte.noms()]
+    src += [os.path.join(ROOT, "web_src", "game.js"), os.path.join(ROOT, "web_src", "index.template.html")]
     src += [os.path.join(ROOT, f) for f in os.listdir(ROOT) if f.endswith(".py")]
     return all(os.path.getmtime(f) <= t for f in src if os.path.exists(f))
 
@@ -133,13 +136,20 @@ def construire(force=True):
     return code == 0 or built, out
 
 
-def verifier(d):
+def carte_demandee(q):
+    """Le nom de la carte d'une requête (?carte=nom, ou « carte » dans le corps) : une carte qui existe, sinon le monde."""
+    nom = q.get("carte") if isinstance(q, dict) else None
+    nom = nom[0] if isinstance(nom, list) else nom
+    return nom if nom in carte.noms() else carte.MONDE
+
+
+def verifier(d, nom=carte.MONDE):
     with BUILD:
         ok, out = construire()
         res = {"construction": out, "construit": ok, "problemes": [], "atteint": None, "voix": "", "voixAJour": True}
         if not ok:
             return res
-        code, pl = run(["node", "web_src/check_placement.js", "web/index.html", "--json"], 300)
+        code, pl = run(["node", "web_src/check_placement.js", "web/index.html", "--json", "--carte", nom], 300)
         try:
             j = json.loads(pl.splitlines()[-1])
             res["problemes"], res["atteint"], res["resume"] = j["problemes"], j["atteint"], j["resume"]
@@ -161,14 +171,14 @@ def voix():
         return {"ok": code == 0, "sortie": vx}
 
 
-def essai(x, y, mode):
+def essai(x, y, mode, nom=carte.MONDE):
     with BUILD:
         ok, out = construire(force=False)
         if not ok:
             return {"ok": False, "sortie": out}
         html = open(os.path.join(WEB, "index.html"), encoding="utf-8").read()
         k = html.index("<script>") + len("<script>")
-        html = html[:k] + f"\nconst ESSAI = {json.dumps([round(x, 2), round(y, 2), mode])};\n" + html[k:]
+        html = html[:k] + f"\nconst ESSAI = {json.dumps([round(x, 2), round(y, 2), mode, nom])};\n" + html[k:]
         with open(os.path.join(WEB, "essai.html"), "w", encoding="utf-8") as f:
             f.write(html)
         return {"ok": True, "url": "/essai.html?t=" + str(int(time.time()))}
@@ -233,7 +243,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.envoyer(400, {"erreur": "c=NO,NE,SO,SE (noms de terrains)"})
             return self.envoyer(200, d.tuile(cs), "image/png", {"Cache-Control": "max-age=3600"})
         if p == "/carte.json":
-            b = open(carte.FICHIER, "rb").read()
+            b = open(carte.chemin(carte_demandee(parse_qs(u.query))), "rb").read()
             return self.envoyer(200, b, extra={"ETag": etag(b)})
         if p == "/essai.html":
             f = os.path.join(WEB, "essai.html")
@@ -249,20 +259,25 @@ class Handler(BaseHTTPRequestHandler):
     def do_PUT(self):
         if not self.hote_ok():
             return
-        if urlparse(self.path).path != "/carte.json":
+        u = urlparse(self.path)
+        if u.path != "/carte.json":
             return self.envoyer(404, {"erreur": "introuvable"})
-        actuel = open(carte.FICHIER, "rb").read()
+        nom = carte_demandee(parse_qs(u.query))
+        fichier = carte.chemin(nom)
+        actuel = open(fichier, "rb").read()
         if self.headers.get("If-Match") != etag(actuel):
-            return self.envoyer(409, {"erreur": "carte.json a changé sur le disque depuis son chargement (autre éditeur, "
+            return self.envoyer(409, {"erreur": os.path.basename(fichier) + " a changé sur le disque depuis son chargement (autre éditeur, "
                                                 "git…) : recharge la page pour repartir de la version du disque."})
         try:
             c = json.loads(self.corps().decode("utf-8"))
         except ValueError as e:
             return self.envoyer(400, {"erreur": f"JSON illisible : {e}"})
         err = carte.valider(c) if isinstance(c, dict) else ["un objet JSON"]
+        if not err and (c.get("annexe") is True) != (nom != carte.MONDE):
+            err = ["« annexe » : la carte du monde ne l'est pas, les autres le sont"]
         if err:
             return self.envoyer(400, {"erreur": "carte refusée", "details": err})
-        b = carte.enregistrer(c).encode("utf-8")
+        b = carte.enregistrer(c, fichier).encode("utf-8")
         self.envoyer(200, {"ok": True, "change": b != actuel}, extra={"ETag": etag(b)})
 
     def do_POST(self):
@@ -274,7 +289,7 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError:
             q = {}
         if p == "/verifier":
-            return self.envoyer(200, verifier(self.d))
+            return self.envoyer(200, verifier(self.d, carte_demandee(q)))
         if p == "/voix":
             return self.envoyer(200, voix())
         if p == "/essai":
@@ -282,7 +297,7 @@ class Handler(BaseHTTPRequestHandler):
                 x, y = float(q["x"]), float(q["y"])
             except (KeyError, TypeError, ValueError):
                 return self.envoyer(400, {"erreur": "x, y en tuiles"})
-            return self.envoyer(200, essai(x, y, "balade" if q.get("mode") == "balade" else "aventure"))
+            return self.envoyer(200, essai(x, y, "balade" if q.get("mode") == "balade" else "aventure", carte_demandee(q)))
         self.envoyer(404, {"erreur": "introuvable"})
 
 

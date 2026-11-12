@@ -324,7 +324,7 @@
     for (const [n, x, y] of c.decor) boite(n, x * TS, y * TS);
     for (const [n, x, y] of ED.deduits(c)) boite(n, x * TS, y * TS);
     for (const [x, y] of c.signs) boite('signpost', x * TS, y * TS);
-    boite('goal_net', c.goal[0] * TS, c.goal[1] * TS);
+    if (c.goal) boite('goal_net', c.goal[0] * TS, c.goal[1] * TS);
     for (const [x, y, f] of c.roadTunnels) boite('tunnel', x * TS, y * TS, f);
   }
 })();

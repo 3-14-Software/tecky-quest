@@ -12,7 +12,7 @@
     decor: c => c.decor, items: c => c.items, dig: c => c.dig, enemies: c => c.enemies, signs: c => c.signs,
     tunnels: c => c.tunnels, hens: c => c.hens, ducks: c => c.ducks, cows: c => c.cows, critters: c => c.critters,
     butterflies: c => c.butterflies, villagers: c => c.villagers, roadTunnels: c => c.roadTunnels,
-    vehicles: c => c.traffic.vehicles, crossings: c => c.traffic.crossings, calm: c => c.calm, landmarks: c => c.landmarks,
+    vehicles: c => (c.traffic || {}).vehicles, crossings: c => (c.traffic || {}).crossings, calm: c => c.calm, landmarks: c => c.landmarks,
   };
   O.LISTES = LISTES;
   const INV = () => Object.fromEntries(Object.entries(ED.c.legende).map(([k, v]) => [v, k]));
@@ -254,7 +254,8 @@
   /* ------------------------------------------------------------------ ajouter, dupliquer, supprimer */
   const msg = t => ED.panneaux.message(t);
   O.ajouter = (type, genre, x, y) => {
-    const c = ED.c, road = c.traffic.y;
+    const c = ED.c, road = c.traffic ? c.traffic.y : 0;
+    if ((type === 'vehicles' || type === 'crossings') && !c.traffic) { msg('Cette carte n’a pas de grande route.'); return; }
     if (type === 'items' && ED.I.indices.includes(genre) && c.items.some(it => it[0] === genre)) {
       msg('Un seul indice « ' + genre + ' » : déplace celui qui existe.'); return;
     }

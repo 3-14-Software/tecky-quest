@@ -239,6 +239,38 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   est éclairé à la verticale sans que rien soit décollé ; au seuil de 5 px il ne reste que deux colonnes de la
   table de terrasse, à 3 px le liseré connu le long du mur qui fuit des maisons) : à relancer après
   tout nouveau décor.
+- **Plusieurs cartes** (lot 6, jalon « deux cartes », 12 novembre 2026). Le jeu a la carte du monde (`carte.json`,
+  « monde » : toute l'aventure) et des **cartes annexes** (`cartes/<nom>.json`, `"annexe": true` ; aujourd'hui
+  `cartes/pre.json`, 40 x 24, petite et vide : elle prouve le moteur). `carte.noms()`, `carte.chemin(nom)`. Une
+  carte annexe n'a que ce qu'elle déclare : `carte.completer()` met le reste hors de la carte (`HORS`, loin de
+  tout) ou vide, et en donne la liste (`absents`) ; `valider()` ne l'exige pas. On passe d'une carte à l'autre par
+  un tunnel de la grande route : `"passages": [[n° du tunnel dans roadTunnels, carte, n° du tunnel d'arrivée]]`
+  (le tunnel de l'est du monde mène à celui de l'ouest de `pre`, et retour ; `pack_web.py` refuse un passage
+  vers une carte ou un tunnel qui n'existe pas).
+  `pack_web.py` : `charger_carte(nom)` fait d'une carte la carte courante (ses variables de module : `MW`,
+  `DECOR`, `EDGE`… ; « monde » à l'import, pour l'éditeur) ; `build_map()` rend ses données, `build_jeu()` celles
+  du jeu, les mêmes partout (dessins, ombres, cadences) ; la page embarque `JEU` et `CARTES = { monde, pre }`. Les
+  tuiles composées (`COMPOSITES`) sont numérotées à la suite pour toutes les cartes.
+  `game.js` : **`MAP` est la carte courante**, qui hérite de `JEU` (`carteOf(id)` : `MAP.w` comme `MAP.ts`) ;
+  `useMap(id)` en change et refait ce qui se calcule une fois par carte (`EDGE_DECOR`, `EDGE_SOLIDS`, `ZONES`,
+  `LANDMARKS`, le sol, l'eau, la carte de la pause, la grille du parcours à pied) ; `ici('farmer')` dit si la
+  carte courante a ce personnage, l'enclos, la voie… (`npcList()` ne rend que ceux qui sont là ; `updateTrain()`
+  ne fait rien sans voie). `reset()` = la partie (Tecky, quêtes, compteurs), puis `resetWorld()` = les habitants de
+  la carte courante. **Voyage** : Tecky pousse contre un tunnel qui a un passage (`edgeBump()`, `passageHere()`) →
+  `travel(carte, tunnel)` : fondu, la carte quittée range son état dans `elsewhere[id]` (`mapState()` : objets,
+  trésors, chiens, poules, lettres, Pompon, ballons, jouets, hérissons, cases vues), `useMap()`, `resetWorld()`,
+  la carte d'arrivée retrouve le sien (`applyMapState()`), Tecky ressort au pied du tunnel (`arrivalAt()`,
+  `PASSAGE`), sauvegarde. Ce qui le suivait (Pompon, hérissons, copains) l'attend ; un jouet d'Iris porté reste
+  devant le tunnel. Sur une carte qui n'a ni l'indice suivant ni Alice, la flèche et le flair ramènent au
+  tunnel (`arrowTarget()`). Les badges qui comptent ce que porte la carte (bêtes, canards, os dorés,
+  explorateur, copains) ne se gagnent que dans le monde : une carte vide les donnerait tous. Écran titre et
+  nouvelle partie : toujours le monde. **Pièges** : une carte annexe ne doit jamais avoir à tester « null » — ce
+  qu'elle n'a pas est en `HORS`, inerte ; un nouveau champ de carte lu par le moteur doit avoir sa valeur neutre
+  dans `carte.completer()` et `build_map()` ; un cache construit à partir de la carte doit être vidé par
+  `useMap()`. `check_placement.js --carte nom` vérifie chaque carte (sur une annexe, Tecky part de la sortie du
+  tunnel, et chaque sortie de tunnel doit être praticable). Éditeur : `http://127.0.0.1:8770/?carte=pre`, ou le
+  choix « Carte » en haut à droite ; les passages se modifient dans le fichier. Tests : `cartes.js`
+  (aller-retour, état gardé, reprise sur la deuxième carte, sauvegarde v2), `editeur_sol.js` (sol de `pre`).
 - **La carte est une donnée** : `carte.json` (en tuiles ; `carte.py` : `charger()`, `valider()`, `enregistrer()`, format
   stable, une entrée par ligne ; `python3 carte.py --verifier` dans `run_all.sh`). Terrain = 65 lignes de 97 coins (une
   lettre par terrain, `LEGENDE`), `details` (détails au sol, tuile entière ; « fleurs » = massifs, perchoirs des
@@ -500,10 +532,11 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   (`fadeFrom()` : fondu de l'écran entier, `drawFade()`), avec le pourcentage de complétion (`completion()` : os dorés,
   quêtes `QUESTS_DONE`, petites bêtes, canards, carte, copains en balade ; une nouvelle quête s'ajoute à `QUESTS_DONE`).
   Test : `ending.js`.
-- Sauvegarde (`STORE` : localStorage, repli en mémoire si refusé ; clés `tecky-quest-save` v2 (`SAVE_V`) et `tecky-quest-records`) :
+- Sauvegarde (`STORE` : localStorage, repli en mémoire si refusé ; clés `tecky-quest-save` v3 (`SAVE_V` ; une v2 se reprend : mêmes champs, dans le monde) et `tecky-quest-records`) :
   `saveGame()` toutes les `SAVE_EVERY` (4) s de jeu si `safeToSave()` (aucun chien engagé à moins de 600 px), à chaque
   indice et trésor (fin de réplique), en quittant la page (`pagehide`, onglet caché) ; jamais KO ni après la victoire.
-  Contenu : mode, place, os, score, temps, indices, trésors, objets au sol, chiens restants (`d.id` = index dans
+  Contenu : la carte courante (`carte`) et l'état des autres (`ailleurs` : `elsewhere`), puis, à plat pour la carte
+  courante, mode, place, os, score, temps, indices, trésors, objets au sol, chiens restants (`d.id` = index dans
   `MAP.enemies`). `loadGame(s, rested)` : Continuer, ou reprise après KO (`rested` = vie pleine). La victoire efface la
   sauvegarde et met à jour les records du mode (`recordRun()` : meilleur score, meilleur temps, meilleure complétion
   `done`, calculée une fois `winDone`, nombre de victoires ; `newRecord` pour les étiquettes « Record ! »). Toute nouvelle donnée de partie doit entrer dans `saveGame()` /
