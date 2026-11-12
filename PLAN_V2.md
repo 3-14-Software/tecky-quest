@@ -276,8 +276,13 @@ Fait le 12 novembre 2026, dans le jeu :
   maintenant de dessous le contour (`batiments.CONTACT`, et la niche de `nature.py`). Les ombres restent
   détaillées (il les préfère à une silhouette pleine, essayée puis retirée).
 
-Reste : les ombres qui s'allongent le soir, celles des autres décors (bancs, maisons : encore un ovale) et des
-personnages ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; le sous-bois et le
+- **Ombres calculées par le jeu** : plus d'images d'ombres dans l'atlas. Le jeu couche la silhouette de chaque
+  décor à partir de la ligne où il touche le sol (`MAP.sols`, `groundShadows()`), ce qui donne une ombre portée à
+  tous les décors (bancs, lampadaires, bottes de foin, clôtures, tracteur, camion… : plus d'ovale) et permet de
+  les allonger quand le soleil baisse (`SHADOW.len` : 1 en plein jour, 1,5 au coucher du soleil, 1,85 ensuite).
+  Les blocs de sol sont alors repeints un par image. Captures : `lot4_ombres.png`, `lot4_ombres_soir.png`.
+
+Reste : les ombres des personnages et des bêtes (encore un ovale) ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; le sous-bois et le
 champ ; les tables de terrasse et le petit mobilier, encore dans leur dessin de la v1 ; l'habillage des zones (dont : la forme des mares, encore rectangulaire ; un cerisier en
 fleurs au milieu des sapins de la forêt). L'éditeur de carte montre encore les anciens arbres (il lit
 `decor/tree`…), pas les variantes.

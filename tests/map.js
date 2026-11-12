@@ -31,7 +31,7 @@ eval(base + `setTimeout(() => {
   ok(run('rip.length') === 0, 'aucune vaguelette loin de l\\'eau');
   // --- la nature (nature.py) : variantes tirées de la position, ombres portées, herbe habillée
   const nat = run('decor.concat(EDGE_DECOR).filter(d => MAP.variants[d.n])');
-  ok(nat.length > 150 && nat.every(d => run('!!ATLAS["' + d.key + '"] && !!ATLAS["' + d.shadow + '"]')) && nat.every(d => !d.flip),
+  ok(nat.length > 150 && nat.every(d => run('!!ATLAS["' + d.key + '"] && (MAP.sols["' + d.look + '"] || []).length > 0')) && nat.every(d => !d.flip),
      nat.length + ' arbres, sapins, buissons… : chacun a son modèle et son ombre, jamais en miroir');
   ok(new Set(nat.filter(d => d.n === 'tree').map(d => d.key)).size >= 4 && new Set(nat.filter(d => d.n === 'fir').map(d => d.key)).size === 3
      && new Set(nat.filter(d => d.n === 'bush').map(d => d.key)).size >= 4, 'plusieurs modèles d\\'arbres, de sapins et de buissons sur la carte');
@@ -39,10 +39,21 @@ eval(base + `setTimeout(() => {
   run('reset();');
   ok(run('decor.concat(EDGE_DECOR).filter(d => MAP.variants[d.n]).map(d => d.key).join()') === avant, 'les mêmes d\\'une partie à l\\'autre (tirés de la position)');
   ok(run('decor.length === MAP.decor.length && decor.every((d, i) => d.n === MAP.decor[i][0])'), 'le décor garde son nom (obstacle, refuge, feuilles)');
-  run('var semis = [], blit0 = blit; blit = function (g, f) { semis.push(f); blit0.apply(null, arguments); }; resetGround(); drawGround(18 * 64, 24 * 64); blit = blit0;');
+  run('var semis = [], couches = [], blit0 = blit, cols0 = blitCols; blit = function (g, f) { semis.push(f); blit0.apply(null, arguments); };'
+    + ' blitCols = function (g, f) { couches.push(f); cols0.apply(null, arguments); }; resetGround(); drawGround(18 * 64, 24 * 64); blit = blit0;');
   const cles = k => run('semis.filter(f => ATLAS["' + k + '"].f.includes(f)).length');
   ok(cles('sol/brins') > 30 && cles('sol/fleur') > 3, 'le pré : ' + cles('sol/brins') + ' touffes de brins et ' + cles('sol/fleur') + ' fleurs semées dans le sol d\\'un écran');
-  ok(run('semis.some(f => Object.keys(ATLAS).some(k => k.startsWith("ombre/") && ATLAS[k].f.includes(f)))'), 'et les ombres des arbres y sont peintes');
+  ok(run('couches.length') > 20 && run('couches.every(f => Object.keys(MAP.sols).some(n => ATLAS["decor/" + n].f.includes(f)))'),
+     'et les ombres des décors y sont peintes à partir de leur silhouette (' + run('couches.length') + ' bandes couchées)');
+  // les ombres s'allongent quand le soleil baisse ; les blocs de sol sont alors repeints un par image
+  ok(run('sun = 0, shadowLen()') === 1 && run('sun = 2, shadowLen()') > 1.4 && run('sun = 3, shadowLen()') > run('sun = 2, shadowLen()'),
+     'ombres : longueur 1 en plein jour, ' + run('sun = 2, shadowLen()') + ' au coucher du soleil, ' + run('sun = 3, shadowLen()') + ' ensuite');
+  run('sun = 0; resetGround(); drawGround(18 * 64, 24 * 64); var blocs = ground.size; sun = 2; couches = []; drawGround(18 * 64, 24 * 64);');
+  const repeints = n => run('[...ground.values()].filter(c => c.len === shadowLen()).length') === n;
+  ok(repeints(1) && run('couches.length') > 0, 'le soleil baisse : un seul bloc de sol repeint dans l\\'image');
+  for (let i = 0; i < 8; i++) run('drawGround(18 * 64, 24 * 64)');
+  ok(run('[...ground.values()].every(c => c.len === shadowLen())') && run('ground.size === blocs'), 'puis les autres, un par image (' + run('blocs') + ' blocs à l\\'écran)');
+  run('sun = 0; resetGround(); blitCols = cols0;');
   ok(run('grassAt(20, 27)') && !run('grassAt(80, 43)') && !run('grassAt(40, 19)'), 'herbe pleine dans le pré, pas dans la rivière ni sur la route');
   // --- l'eau habillée : nénuphars entre les hauts-fonds et le large, galets sur le sable, rien le long d'un quai
   run('var lys = [], gal = []; for (let ty = -2; ty < MAP.h + 2; ty++) for (let tx = -2; tx < MAP.w + 2; tx++) { const l = lilyAt(tx, ty); if (l) lys.push([tx, ty, l[0], l[1]]);'
@@ -61,9 +72,12 @@ eval(base + `setTimeout(() => {
   ok(run('rip.length') > 200 && run('rip.every(([x, y]) => !lilyAt(Math.floor((x - 8) / 64), Math.floor(y / 64)))'), 'aucune vaguelette dans la tuile d\\'un nénuphar (' + run('rip.length') + ' vaguelettes autour d\\'eux)');
   run('semis = []; blit0 = blit; blit = function (g, f) { semis.push(f); blit0.apply(null, arguments); }; resetGround(); drawGround(' + (lys[0][2] - 480) + ', ' + (lys[0][3] - 270) + '); blit = blit0;');
   ok(cles('sol/nenuphar') >= 1 && cles('sol/galet') >= 1, 'peints dans le sol : ' + cles('sol/nenuphar') + ' nénuphars et ' + cles('sol/galet') + ' galets autour du premier');
+  ok(run('["lamppost", "bench", "hay", "fence_wood_h", "truck", "fountain"].every(n => MAP.sols[n] && MAP.sols[n].length)')
+     && run('["bridge", "sandbox", "boat", "barge", "rail", "goal_net"].every(n => !MAP.sols[n])') && run('Object.keys(ATLAS).every(k => !k.startsWith("ombre/"))'),
+     'bancs, lampadaires, foin, clôtures, camion, fontaine : une ombre portée aussi ; rien pour ce qui est à plat ou sur l\\'eau');
   // --- les bâtiments (batiments.py) : de trois quarts, avec leur ombre, leurs fenêtres du soir, leurs perchoirs
   const bat = run('decor.filter(d => d.night)');
-  ok(bat.length >= 12 && bat.every(d => run('!!ATLAS["' + d.key + '"] && !!ATLAS["' + d.shadow + '"] && !!ATLAS["' + d.night + '"]')),
+  ok(bat.length >= 12 && bat.every(d => run('!!ATLAS["' + d.key + '"] && MAP.sols["' + d.look + '"].length > 2 && !!ATLAS["' + d.night + '"]')),
      bat.length + ' bâtiments : chacun a son dessin, son ombre portée et ses fenêtres allumées');
   ok(new Set(bat.filter(d => d.n === 'house_red').map(d => d.key)).size === 2, 'les deux maisons rouges ne sont pas les mêmes (façade devant, pignon devant)');
   ok(bat.filter(d => /^house|bakery/.test(d.n)).every(d => run('(MAP.perches["' + d.look + '"] || []).length') === 2

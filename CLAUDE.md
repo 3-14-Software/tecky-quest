@@ -88,7 +88,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `nature.py` (**la nature du jeu web**, v2 : chêne, bouleau, cerisier, jeune arbre, pommiers, sapins, buissons,
   roseaux, rocher, niche de trois quarts ; contour de la teinte du décor, lumière d'en haut à gauche, pas d'ombre
   ovale ; `VARIANTES` : un décor de carte.json -> ses modèles, tirés de la position ; `ECH` / `ECHELLES` : la taille
-  dans le jeu ; `image()`, `ombre()` : l'ombre portée ; `sol_fleurs()`, `sol_brins()` : les détails semés dans l'herbe ;
+  dans le jeu ; `image()` ; `bandes()` / `bandes_image()` : la ligne où un sprite touche le sol, d'où part son ombre portée ; `sol_fleurs()`, `sol_brins()` : les détails semés dans l'herbe ;
   `sol_nenuphars()`, `sol_galets()` : ceux de l'eau et de la berge ; `fourre()` : les fourrés de la lisière, décors
   `thicket` / `thicket_dark` de `VARIANTES`, plus sombres le long de la forêt),
   `batiments.py` (**les bâtiments du jeu web**, v2 : maisons, boulangerie, grange, entrepôts, guérite, cabane
@@ -208,10 +208,20 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   Décors `FLAT` (pont, bac à sable) dessinés sous les personnages.
   **Nature** : `decorLook(n, x, y)` choisit le modèle d'un arbre, d'un sapin, d'un buisson d'après sa position
   (`MAP.variants`, `hash3`) ; `d.n` reste le nom du décor (obstacle `FOOT`, refuge, feuilles), `d.key` son sprite,
-  `d.shadow` son ombre ; jamais en miroir (ils sont éclairés de la gauche). Peints une fois dans chaque bloc de sol
+  `d.look` le nom du sprite (ombre, perchoirs) ; jamais en miroir (ils sont éclairés de la gauche). Peints une fois dans chaque bloc de sol
   (`buildChunk()`) : l'habillage de l'herbe (`groundDetails()`, `MEADOW` : plages claires ou sombres là où toutes les
   tuiles sont de l'herbe pleine `GRASS_FULL`, touffes `sol/brins`, bouquets `sol/fleur`, chacun dans sa tuile) et les
-  ombres portées (`groundShadows()`, `SHADOW` : d'abord opaques dans un canevas à part, pour ne pas se cumuler).
+  ombres portées (`groundShadows()`, `SHADOW`). **Ombres** : il n'y a pas d'image d'ombre dans l'atlas ; le jeu couche
+  la silhouette de chaque décor du côté opposé au soleil à partir de sa ligne de contact (`MAP.sols[look]`, des
+  points [u, b] écrits par `pack_web.sols()` : « pied » = une horizontale à l'origine, « contour » = au point le
+  plus bas, ou les murs d'un bâtiment), d'un bloc là où cette ligne est horizontale, colonne par colonne là où
+  elle monte (`blitCols()`). Les silhouettes passent, opaques, par un canevas à part, teinté d'un coup
+  (`source-in`) puis posé avec `SHADOW.alpha` : deux ombres ne se cumulent pas. Tous les décors en ont une, sauf
+  ceux qui sont à plat ou sur l'eau (`decor.SANS_OMBRE` ; `decor.SUR_PIED` = « pied ») ; leur ancien ovale n'est
+  plus dessiné. Elles s'allongent le soir : `shadowLen()` suit `sun` (`SHADOW.len`, par paliers de `step`), et
+  les blocs de sol périmés sont repeints un par image (`groundRepaint`), sans à-coup. Pièges rencontrés : des
+  bandes sans recouvrement laissent des liserés ; une ligne de contact qui suit le bas d'une silhouette arrondie
+  effiloche l'ombre. Les personnages et les bêtes gardent leur ovale.
   Test : `map.js`.
   **Images nettes** (`HD`, `HD_SRC`, `wantHD()`, `loadHD()`, `setHD()`, `blit()`) : sur un grand écran (au moins
   `HD_MIN` pixels de canevas par pixel de monde, pas un téléphone ni une tablette, pas une page ouverte depuis le
@@ -535,8 +545,9 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - **V2 en cours** : le plan et son avancement sont dans `PLAN_V2.md` (graphismes d'abord, puis textes en données et
   anglais, durée, voix, vitrine). Lots 2 (images nettes) et 3 (Tecky, Alice et les chiens : `tecky2.py`, `alice2.py`,
   `chiens2.py`) faits ; lot 4 (paysage) en cours : nature, ombres portées, herbe, eau, lisière, bords
-  arrondis et bâtiments faits ; restent les ombres du soir et des autres décors, le sous-bois et le champ, le
-  petit mobilier (tables de terrasse…), l'habillage des zones. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
+  arrondis, bâtiments (étals et poulailler compris), ombres de tous les décors et ombres du soir faits ; restent
+  les ombres des personnages (encore un ovale), le sous-bois et le champ, le petit mobilier (tables de
+  terrasse…), l'habillage des zones. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
   témoin dans `reference/v2/`) : des images fixes, que ni `game.js` ni `pack_web.py` n'utilisent encore (le décor
   de `nature.py` est dans le jeu depuis le lot 4). Les pistes générées par Christophe avec ChatGPT sont dans
   `reference/v2/chat_gpt/`.

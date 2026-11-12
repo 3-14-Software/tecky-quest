@@ -111,6 +111,18 @@ DECOR = _T("decor") + derived_decor()
 BRIDGES = [(round(x) - 1, round(y) - 5, round(x) + 1, round(y)) for n, x, y in DECOR if n == "bridge"]
 
 
+def sols():
+    """Où chaque décor touche le sol (nature.bandes_image) : le jeu en tire son ombre portée. Clé : le sprite
+    (« decor/<clé> ») ; les décors plats ou sur l'eau n'y sont pas."""
+    out = {n: nature.bandes(n, S) for n in sorted({v for noms, _ in nature.VARIANTES.values() for v in noms})}
+    for n in decor.DECOR:
+        if n in nature.VARIANTES or not decor.sol(n):
+            continue
+        w, h, ox, oy = decor.cadre(n)
+        out[n] = nature.bandes_image(render_svg(decor.svgs(n)[0], w, h, S, PAD), ox, oy, decor.sol(n), S)
+    return out
+
+
 def edge_keep():
     """Ce que la lisière ne doit jamais cacher : objets, personnages, bêtes, panneaux, terriers…"""
     return ([(x, y) for _, x, y, *_ in ITEMS + ENEMIES + HENS + DUCKS + CRITTERS + BUTTERFLIES + COWS + VILLAGERS]
@@ -251,6 +263,8 @@ def build_map():
         "decorFps": {n: fps for n, (_, fps) in decor.ANIMATED.items()},
         # variantes de la nature (nature.py) : décor -> [sprites, tirage] ; le jeu en choisit un d'après la position
         "variants": {n: [noms, tirage] for n, (noms, tirage) in nature.VARIANTES.items()},
+        # ombres portées : le décalage d'un point par unité de hauteur, et la ligne de contact de chaque sprite
+        "shadow": list(nature.OMBRE), "sols": sols(),
         "perches": batiments.perchoirs(S),            # où un chat se réfugie sur le toit de chaque bâtiment
         # décors agrandis (bâtiments, camion, tracteur, chariot) : leur obstacle (FOOT) grandit d'autant
         "grow": {**batiments.agrandis(), **decor.ECH},
@@ -339,10 +353,9 @@ def collect(r=1):
     for n, fn, t in (("fleur", nature.sol_fleurs, nature.SOL_T), ("brins", nature.sol_brins, nature.SOL_T),      # détails
                      ("galet", nature.sol_galets, nature.SOL_T), ("nenuphar", nature.sol_nenuphars, nature.EAU_T)):   # du sol
         out.append((f"sol/{n}", [render_svg(sv, t, t, R, PAD) for sv in fn()], (t // 2 * S + M, t // 2 * S + M), True))
-    for n in sorted({v for noms, _ in nature.VARIANTES.values() for v in noms}):       # la nature (nature.py) et ses ombres
+    for n in sorted({v for noms, _ in nature.VARIANTES.values() for v in noms}):       # la nature et les bâtiments
         _, w, h, ox, oy = nature.cadre(n)
         out.append((f"decor/{n}", [nature.image(n, R)], (ox * S + M, oy * S + M), True))
-        out.append((f"ombre/{n}", [nature.ombre(n, R)[0]], (ox * S + M, oy * S + M), True))
     for n in decor.DECOR:
         w, h, ox, oy = decor.cadre(n)
         out.append((f"decor/{n}", [render_svg(sv, w, h, R, PAD) for sv in decor.svgs(n)], (ox * S + M, oy * S + M), True))

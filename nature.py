@@ -6,18 +6,19 @@ Ce qui change par rapport à decor.py :
 - un feuillage en touffes, chacune avec son ombre et sa lumière : le soleil vient d'en haut à gauche ;
 - un contour de la teinte du décor (vert foncé pour le feuillage, brun doux pour le bois) : le brun #3A1E12 reste aux
   personnages et à ce qu'on peut toucher, qui se détachent ainsi du paysage ;
-- pas d'ombre ovale dessinée dans le sprite : l'ombre portée se calcule à partir de la silhouette (temoin.py).
+- pas d'ombre ovale dessinée dans le sprite : l'ombre portée se calcule à partir de la silhouette.
 
 Chaque fonction rend un Sprite : des calques (dessin, couleur et épaisseur du contour), la taille du cadre, le pied
 (le point posé au sol) et `sol`, la ligne où l'objet touche le sol, d'où part son ombre portée :
 - "pied" : une horizontale à la hauteur du pied (arbres, roseaux, personnages : ils ne touchent le sol qu'au pied) ;
-- "contour" : le bas de la silhouette (buissons, rocher : ils sont posés au sol sur toute leur largeur) ;
+- "contour" : une horizontale au point le plus bas de la silhouette (buissons, rocher : posés au sol) ;
 - une liste de points (x, y) du cadre, de gauche à droite (la niche : le bas du pignon, puis du mur qui fuit).
 
 Dans le jeu (pack_web.py) : VARIANTES dit, pour un décor de carte.json (« tree », « bush », « fir »…), quels sprites
 le remplacent ; le jeu en choisit un d'après la position du décor (hash3, comme les tuiles) : rien à changer dans la
 carte. Les sprites, dessinés pour le premier témoin, sont réduits de ECH : la taille des décors qu'ils remplacent,
-dont les obstacles ne bougent pas. Le jeu calcule leur ombre portée (game.js : drawShadows()).
+dont les obstacles ne bougent pas. Le jeu calcule leur ombre portée (game.js : groundShadows()) à partir de leur
+silhouette et de la ligne où ils touchent le sol (bandes()).
 
     python3 nature.py      # reference/v2/nature_v2.png
 """
@@ -27,7 +28,7 @@ import sys
 from collections import namedtuple
 
 
-from PIL import Image, ImageFilter  # noqa: E402
+from PIL import Image  # noqa: E402
 
 from spritelib import Drawing, circle, ellipse, rect, path, poly, line, render_svg, OUTLINE, PAD  # noqa: E402
 
@@ -350,9 +351,8 @@ VARIANTES = {
 
 
 ECHELLES = {"roseaux": 0.9, "sapin": 0.75, "sapin_haut": 0.75, "sapin_petit": 0.75}      # ceux qui ne sont pas réduits de ECH
-OMBRE = (0.45, 0.23)             # ombre portée : décalage vers la droite et vers le bas, par unité de hauteur
-OMBRE_TEINTE = (22, 50, 60)      # une ombre froide ; le jeu la pose sur le sol avec son opacité (game.js : SHADOW)
-CONTACT = 5                      # « contour » : le bas de la silhouette compte comme sol jusqu'à 5 unités du plus bas
+OMBRE = (0.45, 0.23)             # ombre portée à midi : décalage vers la droite et vers le bas, par unité de hauteur
+#                                  (pack_web.py le donne au jeu : MAP.shadow ; il l'allonge le soir)
 
 
 def cadre(nom):
@@ -444,44 +444,40 @@ def sol_galets():
     return out
 
 
-def ombre(nom, echelle):
-    """(image RGBA, largeur, hauteur) de l'ombre portée d'un sprite du catalogue, dans un cadre de même origine que
-    lui, élargi vers la droite et vers le bas. Chaque colonne de la silhouette est couchée à partir du point où elle
-    touche le sol (Sprite.sol) : un pixel à la hauteur h au-dessus de ce point tombe h * OMBRE plus loin."""
+def bandes_image(im, ox, oy, sol, echelle):
+    """Ligne de contact d'une image (RGBA, marge PAD comprise, à `echelle` pixels par unité, origine en (ox, oy)
+    unités) : là où elle touche le sol. Liste de points [u, b] en pixels de l'image à partir de son origine, de
+    gauche à droite, d'un bord de la silhouette à l'autre : à la colonne u, le sol est b pixels sous l'origine.
+    Le jeu couche la silhouette à partir de cette ligne pour dessiner l'ombre portée (game.js : groundShadows()) :
+    un point à la hauteur h au-dessus du sol tombe h * SHADOW plus loin, à droite et vers le bas.
+    sol : "pied" (une horizontale à l'origine), "contour" (une horizontale au point le plus bas de la silhouette :
+    un buisson, une botte de foin ; suivre le bas de la silhouette colonne par colonne effilochait l'ombre aux coins
+    arrondis) ou une liste de points (x, y) en unités, de gauche à droite (les murs d'un bâtiment)."""
     import numpy as np
+    A = np.asarray(im.getchannel("A"), dtype=np.float32) / 255.0
+    m = PAD * echelle
+    x0, y0 = ox * echelle + m, oy * echelle + m
+    plein = A > 0.5
+    cols = np.where(plein.any(axis=0))[0]
+    if not len(cols):
+        return []
+    c0, c1 = int(cols[0]) - x0, int(cols[-1]) + 1 - x0
+    if sol == "pied":
+        return [[round(c0), 0], [round(c1), 0]]
+    if sol == "contour":
+        bas = int(np.where(plein.any(axis=1))[0][-1]) - y0
+        return [[round(c0), round(bas)], [round(c1), round(bas)]]
+    pts = [[x * echelle + m - x0, y * echelle + m - y0] for x, y in sol]
+    pts[0][0], pts[-1][0] = min(pts[0][0], c0), max(pts[-1][0], c1)         # (à plat au-delà des bouts)
+    return [[round(u, 1), round(v, 1)] for u, v in pts]
+
+
+def bandes(nom, echelle):
+    """Ligne de contact d'un sprite du catalogue (voir bandes_image), à sa taille du jeu."""
     sp, w, h, ox, oy = cadre(nom)
     k = ECHELLES.get(nom, ECH)
-    im = image(nom, echelle)
-    A = np.asarray(im.getchannel("A"), dtype=np.float32) / 255.0
-    H, W = A.shape
-    cols = np.arange(W)
-    m = PAD * echelle
-    if sp.sol == "pied":
-        base = np.full(W, oy * echelle + m, dtype=np.float32)
-    elif sp.sol == "contour":
-        plein = A > 0.5
-        bas = np.where(plein.any(axis=0), H - 1 - np.argmax(plein[::-1], axis=0), 0)
-        base = np.maximum(bas, bas.max() - CONTACT * k * echelle).astype(np.float32)
-    else:
-        base = np.interp(cols, [x * k * echelle + m for x, _ in sp.sol], [y * k * echelle + m for _, y in sp.sol]).astype(np.float32)
-    sx, sy = OMBRE
-    w2, h2 = w + math.ceil(h * sx) + 2, h + math.ceil(h * sy) + 2
-    out = np.zeros((int((h2 + 2 * PAD) * echelle), int((w2 + 2 * PAD) * echelle)), dtype=np.float32)
-    for hh in range(int(base.max()) + 1):
-        ys = np.round(base - hh).astype(int)
-        ok = (ys >= 0) & (ys < H)
-        a = np.where(ok, A[np.clip(ys, 0, H - 1), cols], 0.0)
-        X = np.round(cols + hh * sx).astype(int)
-        Y = np.round(base + hh * sy).astype(int)
-        ok &= (a > 0.02) & (X >= 0) & (X < out.shape[1]) & (Y >= 0) & (Y < out.shape[0])
-        np.maximum.at(out, (Y[ok], X[ok]), a[ok])
-    # quand la ligne de contact monte et descend (« contour »), les colonnes couchées laissent des trous : on les bouche
-    alpha = Image.fromarray((out * 255).astype(np.uint8), "L")
-    r = 2 * max(1, round(echelle / 2)) + 1
-    alpha = alpha.filter(ImageFilter.MaxFilter(r)).filter(ImageFilter.MinFilter(r))
-    rgba = Image.new("RGBA", alpha.size, OMBRE_TEINTE + (0,))
-    rgba.putalpha(alpha)
-    return rgba, w2, h2
+    sol = sp.sol if isinstance(sp.sol, str) else [(x * k, y * k) for x, y in sp.sol]
+    return bandes_image(image(nom, echelle), ox, oy, sol, echelle)
 
 
 if __name__ == "__main__":

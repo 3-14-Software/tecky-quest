@@ -710,7 +710,7 @@ function groundTile(tx, ty) {              // [tuile, détail] du sol, dans la c
 }
 /* Peint le bloc de n x n tuiles dont le coin est la tuile (cx, cy), depuis le tileset img, à k pixels de canevas par
    pixel de monde. Rend { c, x, y, w, h, k } : le canevas, sa place et sa taille dans le monde, son échelle. */
-function buildChunk(cx, cy, n, img, k) {
+function buildChunk(cx, cy, n, img, k, len) {
   const c = document.createElement('canvas'), s = TS * k;
   c.width = c.height = (n * TS + 2 * CM) * k;
   const g = c.getContext('2d');
@@ -725,8 +725,8 @@ function buildChunk(cx, cy, n, img, k) {
   const x0 = cx * TS - CM, y0 = cy * TS - CM, w = n * TS + 2 * CM;
   groundDetails(g, cx, cy, n, x0, y0, k);
   waterDetails(g, cx, cy, n, x0, y0, k);
-  groundShadows(g, x0, y0, w, k);
-  return { c, x: x0, y: y0, w, h: w, k };
+  groundShadows(g, x0, y0, w, k, len || 1);
+  return { c, x: x0, y: y0, w, h: w, k, len };
 }
 /* Habillage de l'herbe, peint une fois dans le sol, tiré de la position (hash3) : rien ne s'aligne sur les tuiles.
    - de grandes plages plus claires ou plus sombres (un disque flou, pré-rendu une fois), au milieu des prés : une
@@ -844,30 +844,67 @@ function waterDetails(g, cx, cy, n, x0, y0, k) {
     }
   }
 }
-/* Ombres portées des décors de la nature (nature.py : sprites « ombre/… », la silhouette couchée du côté opposé au
-   soleil), peintes une fois dans le sol. Elles passent d'abord, opaques, par un canevas à part, posé ensuite avec
-   SHADOW.alpha : deux ombres qui se recouvrent ne se cumulent pas. */
-const SHADOW = { alpha: 0.3 };
-function groundShadows(g, x0, y0, w, k) {
+/* Ombres portées des décors, peintes une fois dans le sol à partir de leur silhouette : chaque sprite est couché
+   du côté opposé au soleil à partir de la ligne où il touche le sol (MAP.sols, nature.py : bandes_image() ; des
+   points [u, b] : à la colonne u, le sol est b px sous l'origine) : d'un bloc là où cette ligne est horizontale,
+   colonne par colonne là où elle monte (le mur d'un bâtiment qui fuit). Un point à la
+   hauteur h tombe h * (sx, sy) * len plus loin, à droite et vers le bas : len vaut 1 en plein jour et grandit quand
+   le soleil baisse (SHADOW.len, par valeur de sun). Les silhouettes passent d'abord, opaques, par un canevas à
+   part, teinté d'un coup puis posé avec SHADOW.alpha : deux ombres qui se recouvrent ne se cumulent pas.
+   Quand la longueur change (shadowLen(), par paliers), les blocs de sol sont repeints un par image (drawGround). */
+const SHADOW = { sx: MAP.shadow[0], sy: MAP.shadow[1], color: 'rgb(22, 50, 60)', alpha: 0.3,
+  len: [1, 1.15, 1.5, 1.85, 1.4], step: 0.1 };
+const shadowLen = () => Math.round(sunAt(SHADOW.len, clamp(sun, 0, 4)) / SHADOW.step) * SHADOW.step;
+function blitCols(g, f, c0, c1, x, y) {       // les colonnes c0..c1 d'une image de l'atlas, posées en (x, y)
+  const n = c1 - c0;
+  if (!HD.on) { g.drawImage(atlas, f[0] + c0, f[1], n, f[3], x, y, n, f[3]); return; }
+  const k = HD.k, p = Math.floor(f[1] / HD.page);
+  g.drawImage(HD.pages[p], (f[0] + c0) * k, (f[1] - p * HD.page) * k, n * k, f[3] * k, x, y, n, f[3]);
+}
+function groundShadows(g, x0, y0, w, k, len) {
   let o = null, og = null;
+  const cx = SHADOW.sx * len, cy = SHADOW.sy * len;
   for (const d of (decor || []).concat(EDGE_DECOR)) {
-    const s = d.shadow && ATLAS[d.shadow];
-    if (!s) continue;
-    const f = s.f[0], dx = d.x + f[4] - s.o[0], dy = d.y + f[5] - s.o[1];
-    if (dx > x0 + w || dx + f[2] < x0 || dy > y0 + w || dy + f[3] < y0) continue;
+    const sol = MAP.sols[d.look];
+    if (!sol) continue;
+    const s = ATLAS[d.key], f = s.f[0], left = d.x + f[4] - s.o[0], top = d.y + f[5] - s.o[1];
+    // (l'ombre s'étend à droite de la hauteur du sprite * cx, et en dessous de sa hauteur * cy)
+    if (left > x0 + w || left + f[2] + f[3] * cx < x0 || top > y0 + w || d.y + 40 + f[3] * cy < y0) continue;
     if (!o) { o = document.createElement('canvas'); o.width = o.height = w * k; og = o.getContext('2d'); }
-    blit(og, f, (dx - x0) * k, (dy - y0) * k, f[2] * k, f[3] * k);
+    const off = s.o[0] - f[4];                       // de l'origine du sprite à la première colonne de son image
+    const bande = (u0, u1, b, jour) => {
+      // deux colonnes de recouvrement de chaque côté : le bord adouci d'une bande tombe sous sa voisine (sinon : un
+      // liseré) ; `jour` : quand le sol monte vers la droite (le mur qui fuit), la bande suivante se couche plus
+      // loin, celle-ci s'élargit d'autant, sinon des jours s'ouvrent entre elles (une ombre hachurée)
+      const c0 = Math.max(0, Math.floor(u0 + off) - 2), c1 = Math.min(f[2], Math.ceil(u1 + off + jour) + 2);
+      if (c1 <= c0) return;
+      // repère de la bande : origine sur sa ligne de contact, la hauteur couchée vers la droite et vers le bas
+      og.setTransform(k, 0, -cx * k, -cy * k, (d.x - x0) * k, (d.y + b - y0) * k);
+      blitCols(og, f, c0, c1, c0 - off, f[5] - s.o[1] - b);
+    };
+    for (let i = 0; i + 1 < sol.length; i++) {
+      const [ua, ba] = sol[i], [ub, bb] = sol[i + 1];
+      if (ba === bb) { bande(ua, ub, ba, 0); continue; }
+      const pente = (bb - ba) / (ub - ua), jour = Math.max(0, -pente) * SHADOW.sx / SHADOW.sy;
+      for (let u = ua; u < ub; u++) bande(u, Math.min(u + 1, ub), ba + pente * (Math.min(u + 1, ub) + u - 2 * ua) / 2, jour);
+    }
   }
   if (!o) return;
+  og.setTransform(1, 0, 0, 1, 0, 0);
+  og.globalCompositeOperation = 'source-in';
+  og.fillStyle = SHADOW.color;
+  og.fillRect(0, 0, o.width, o.height);
   g.save(); g.globalAlpha = SHADOW.alpha; g.drawImage(o, 0, 0); g.restore();
 }
+let groundRepaint = 0;                    // blocs qu'on peut encore repeindre dans cette image (ombres qui s'allongent)
 function groundChunk(ci, cj) {            // le bloc (ci, cj) de la grille : peint s'il manque, puis le dernier servi
-  const key = ci + ',' + cj;
+  const key = ci + ',' + cj, len = shadowLen();
   let ch = ground.get(key);
+  if (ch && ch.len !== len && groundRepaint > 0) { groundRepaint--; ground.delete(key); ch = null; }
   if (ch) ground.delete(key);
   else {
     const n = chunkTiles();
-    ch = buildChunk(ci * n, cj * n, n, HD.k === 1 ? tilesImg : HD.tiles, HD.k);
+    ch = buildChunk(ci * n, cj * n, n, HD.k === 1 ? tilesImg : HD.tiles, HD.k, len);
     if (ground.size >= GROUND_MAX) ground.delete(ground.keys().next().value);
   }
   ground.set(key, ch);
@@ -880,6 +917,7 @@ function buildGround() {
 }
 function drawGround(vx, vy) {
   const s = chunkTiles() * TS, R = MAP.edge.r * TS;        // seulement la carte et sa marge
+  groundRepaint = 1;
   const i0 = Math.floor((Math.max(vx, -R) - CM) / s), i1 = Math.floor((Math.min(vx + VW, MAP.w * TS + R) + CM - 1) / s);
   const j0 = Math.floor((Math.max(vy, -R) - CM) / s), j1 = Math.floor((Math.min(vy + VH, MAP.h * TS + R) + CM - 1) / s);
   for (let cj = j0; cj <= j1; cj++) for (let ci = i0; ci <= i1; ci++) {
@@ -1028,15 +1066,16 @@ function moveActor(a, dx, dy, hw, noSlide) {
 const EDGE = { cam: 64, push: 0.6, again: 8, near: 8, tunnelY: 110 };
 /* Variantes de la nature (MAP.variants, nature.py) : un arbre, un buisson, un sapin de la carte prend l'un de ses
    modèles d'après sa position (hash3, comme les tuiles) ; `n` reste le nom du décor (obstacle, refuge, feuilles).
-   Ces sprites sont éclairés d'en haut à gauche : jamais en miroir. Leur ombre portée : groundShadows(). */
+   Ces sprites sont éclairés d'en haut à gauche : jamais en miroir. `look` = le nom du sprite, pour tous les décors :
+   c'est la clé de son ombre portée (MAP.sols, groundShadows()) et de ses perchoirs (MAP.perches). */
 function decorLook(n, x, y) {
   const v = MAP.variants[n];
-  if (!v) return { key: 'decor/' + n };
+  if (!v) return { key: 'decor/' + n, look: n };
   const nom = v[0][v[1][Math.floor(hash3(Math.round(x), Math.round(y), 7) * v[1].length)]];
-  return { key: 'decor/' + nom, shadow: 'ombre/' + nom, look: nom, night: ATLAS['nuit/' + nom] ? 'nuit/' + nom : undefined };
+  return { key: 'decor/' + nom, look: nom, night: ATLAS['nuit/' + nom] ? 'nuit/' + nom : undefined };
 }
 const EDGE_DECOR = MAP.edge.decor.map(([n, x, y, flip]) => Object.assign({ n, x, y, flip: flip && !MAP.variants[n] },
-  n === 'tunnel' && flip ? { key: 'decor/tunnel_est' } : decorLook(n, x, y)));    // (tunnel de l'est : dessiné éclairé de la droite, puis en miroir)
+  n === 'tunnel' ? { key: flip ? 'decor/tunnel_est' : 'decor/tunnel' } : decorLook(n, x, y)));    // (tunnel de l'est : dessiné éclairé de la droite, puis en miroir)
 const EDGE_SOLIDS = EDGE_DECOR.filter(d => FOOT[d.n]).map(({ n, x, y, flip }) => {   // (ajoutés à solids par reset)
   const [a, b, c, e] = FOOT[n];
   return flip ? [x - c, y + b, x - a, y + e] : [x + a, y + b, x + c, y + e];

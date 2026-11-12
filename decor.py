@@ -1543,6 +1543,20 @@ ANIMATED = {"fountain": (8, 10)}
 ECH = {"truck": 1.5, "tractor": 1.5, "forklift": 1.4}
 
 
+# Ombre portée (game.js : groundShadows(), à partir de la silhouette) : tous les décors en ont une, sauf ceux qui sont
+# posés à plat ou sur l'eau et le filet. Ils touchent le sol par tout le bas de leur silhouette (« contour ») ou,
+# pour ce qui tient sur un pied, des pieds ou des roues, à la hauteur de leur origine (« pied »). Leur ancien ovale
+# n'est plus dessiné (svgs()).
+SANS_OMBRE = {"bridge", "sandbox", "burrow", "rail", "dog_bed", "fallen_apples", "boat", "barge", "goal_net"}
+SUR_PIED = {"lamppost", "signpost", "road_sign", "scarecrow", "mailbox", "cafe_table", "bicycle", "swing", "slide",
+            "tractor", "truck", "forklift", "crane", "ladder", "bench", "buffer_stop"}
+
+
+def sol(name):
+    """Comment un décor touche le sol : "pied", "contour", ou None s'il n'a pas d'ombre portée."""
+    return None if name in SANS_OMBRE else "pied" if name in SUR_PIED else "contour"
+
+
 def cadre(name):
     """(largeur, hauteur, origine x, origine y) d'un décor dans le jeu, en unités de l'atlas."""
     _, (w, h), (ox, oy) = DECOR[name]
@@ -1551,14 +1565,18 @@ def cadre(name):
 
 
 def svgs(name):
-    """Les images d'un décor, en SVG, à sa taille du jeu (contour compensé)."""
+    """Les images d'un décor, en SVG, à sa taille du jeu (contour compensé), sans son ovale d'ombre s'il a une
+    ombre portée."""
     k = ECH.get(name, 1)
-    if k == 1:
-        return [d.svg() for d in frames(name)]
     w, h, _, _ = cadre(name)
     out = []
     for d in frames(name):
-        d.parts[0:0] = [(u, None, False, "") for u in d.under]        # l'ombre grandit avec le dessin
+        if sol(name):
+            d.under = []
+        if k == 1:
+            out.append(d.svg())
+            continue
+        d.parts[0:0] = [(u, None, False, "") for u in d.under]        # (l'ovale grandit avec le dessin)
         d.under, d.w, d.h = [], w, h
         out.append(d.svg(f"scale({k})", outline_w=OUTLINE_W / k))
     return out

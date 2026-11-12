@@ -23,7 +23,7 @@ function main() {
      'deux tunnels, un à chaque bout de la grande route');
   ok(run('tun.find(d => !d.flip).key === "decor/tunnel" && tun.find(d => d.flip).key === "decor/tunnel_est" && !!ATLAS["decor/tunnel_est"]'),
      'celui de l’est a son dessin (éclairé de l’autre côté), posé en miroir');
-  ok(run('EDGE_DECOR.filter(d => d.n.startsWith("thicket")).every(d => d.key.startsWith("decor/fourre") && ATLAS[d.key] && ATLAS[d.shadow] && !d.flip)')
+  ok(run('EDGE_DECOR.filter(d => d.n.startsWith("thicket")).every(d => d.key.startsWith("decor/fourre") && ATLAS[d.key] && MAP.sols[d.look].length && !d.flip)')
      && run('new Set(EDGE_DECOR.filter(d => d.n.startsWith("thicket")).map(d => d.key)).size') >= 4,
      'les fourrés sont ceux de la nature : plusieurs modèles, chacun avec son ombre portée');
   ok(run('tf[4] - T.o[0] <= -EDGE.cam - 6 && tun[0].y + tf[5] - T.o[1] <= MAP.traffic.road[0] - 60 && tun[0].y + tf[5] - T.o[1] + tf[3] >= MAP.traffic.road[1]'),
