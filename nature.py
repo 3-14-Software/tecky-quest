@@ -444,6 +444,101 @@ def sol_galets():
     return out
 
 
+def _feuille(x, y, a, L, w, fond, bord, nervure=None, ep=0.45):
+    """Une feuille effilée qui part de (x, y) dans la direction a (degrés, 0 = vers la droite, -90 = vers le haut),
+    longue de L et large de 2 w, avec sa nervure."""
+    a = math.radians(a)
+    c, s = math.cos(a), math.sin(a)
+    tx, ty, mx, my = x + L * c, y + L * s, x + 0.42 * L * c, y + 0.42 * L * s
+    out = (f'<path d="M{x:.2f},{y:.2f} Q{mx - s * w:.2f},{my + c * w:.2f} {tx:.2f},{ty:.2f} Q{mx + s * w:.2f},{my - c * w:.2f} {x:.2f},{y:.2f} Z" '
+           f'fill="{fond}" stroke="{bord}" stroke-width="{ep}" stroke-linejoin="round"/>')
+    if nervure:
+        out += (f'<path d="M{x + 0.12 * L * c:.2f},{y + 0.12 * L * s:.2f} L{x + 0.8 * L * c:.2f},{y + 0.8 * L * s:.2f}" stroke="{nervure}" '
+                f'stroke-width="{ep * 0.6:.2f}" fill="none" stroke-linecap="round"/>')
+    return out
+
+
+BOIS_T = 16                      # cadre des détails du sous-bois (origine au centre)
+SOUS_BOIS = {"fougere": (0, 2), "mousse": (2, 2), "champignon": (4, 2), "pomme_de_pin": (6, 1), "brindille": (7, 2),
+             "feuilles": (9, 2)}          # détail -> (première image, nombre d'images) de « sol/sousbois »
+
+
+def sol_sousbois():
+    """Détails semés dans le sous-bois (game.js : woodDetails()), dans l'ordre de SOUS_BOIS : petites fougères,
+    coussins de mousse, champignons bruns, pomme de pin, brindilles, feuilles mortes."""
+    c = BOIS_T / 2
+    bord = "#2F6B3A"
+    out = []
+    for frondes in (((-158, 5.6), (-124, 6.6), (-92, 7.0), (-58, 6.4), (-24, 5.4)), ((-146, 5.0), (-106, 6.2), (-70, 6.0), (-34, 4.8))):
+        s = f'<ellipse cx="{c + 0.8}" cy="{c + 4.4}" rx="4.4" ry="1.3" fill="#2E6B3C" opacity="0.45"/>'
+        for i, (a, L) in enumerate(frondes):
+            s += _feuille(c, c + 4, a, L, 1.5, "#63B659" if i % 2 else "#74C563", bord, "#A9E08A")
+        out.append(_svg(BOIS_T, s))
+    for bosses in (((-2.4, 0.6, 2.6), (1.6, 0.2, 3.0), (0, -1.0, 2.4)), ((-1.2, 0.2, 2.6), (1.8, 0.6, 2.0))):
+        s = "".join(f'<ellipse cx="{c + x:.2f}" cy="{c + y + 0.7:.2f}" rx="{r:.2f}" ry="{r * 0.62:.2f}" fill="#3E7F3F"/>' for x, y, r in bosses)
+        s += "".join(f'<ellipse cx="{c + x:.2f}" cy="{c + y:.2f}" rx="{r:.2f}" ry="{r * 0.62:.2f}" fill="#7DBE55"/>' for x, y, r in bosses)
+        s += "".join(f'<ellipse cx="{c + x - r * 0.25:.2f}" cy="{c + y - r * 0.2:.2f}" rx="{r * 0.5:.2f}" ry="{r * 0.26:.2f}" fill="#A6DA6F"/>'
+                     for x, y, r in bosses)
+        out.append(_svg(BOIS_T, s))
+    for pieds in (((-1.8, 1.2, 2.4), (2.0, 1.8, 1.7)), ((0, 1.4, 2.2),)):
+        s = ""
+        for x, y, r in pieds:
+            px, py = c + x, c + y
+            s += (f'<ellipse cx="{px + 0.7:.2f}" cy="{py + 0.5:.2f}" rx="{r * 0.9:.2f}" ry="{r * 0.3:.2f}" fill="#2E6B3C" opacity="0.45"/>'
+                  f'<rect x="{px - r * 0.3:.2f}" y="{py - r * 1.0:.2f}" width="{r * 0.6:.2f}" height="{r * 1.1:.2f}" rx="{r * 0.25:.2f}" '
+                  f'fill="#F3E6C8" stroke="#6A4628" stroke-width="0.4"/>'
+                  f'<path d="M{px - r:.2f},{py - r * 0.85:.2f} A{r:.2f},{r * 0.95:.2f} 0 0 1 {px + r:.2f},{py - r * 0.85:.2f} Z" '
+                  f'fill="#C8854C" stroke="#6A4628" stroke-width="0.45" stroke-linejoin="round"/>'
+                  f'<ellipse cx="{px - r * 0.35:.2f}" cy="{py - r * 1.4:.2f}" rx="{r * 0.32:.2f}" ry="{r * 0.17:.2f}" fill="#E7B27C"/>')
+        out.append(_svg(BOIS_T, s))
+    s = (f'<ellipse cx="{c + 0.8}" cy="{c + 1.6}" rx="3.2" ry="1.3" fill="#2E6B3C" opacity="0.45"/>'
+         f'<g transform="rotate(-24 {c} {c})"><ellipse cx="{c}" cy="{c}" rx="3.1" ry="1.9" fill="#9A6A3E" stroke="#4E3220" stroke-width="0.5"/>'
+         + "".join(f'<path d="M{c + x},{c - 1.5} Q{c + x + 1.1},{c} {c + x},{c + 1.5}" stroke="#5E3E24" stroke-width="0.45" fill="none"/>'
+                   for x in (-1.6, -0.2, 1.2))
+         + f'<ellipse cx="{c - 0.8}" cy="{c - 0.9}" rx="1.3" ry="0.4" fill="#C08E5A"/></g>')
+    out.append(_svg(BOIS_T, s))
+    for trace in ("M-4.6,1.6 L0.4,-0.2 L4.4,-1.6 M0.4,-0.2 L2.2,2.2", "M-4.0,-1.8 L-0.6,0.4 L3.8,1.0 M-0.6,0.4 L-1.6,2.8"):
+        s = "".join(f'<g transform="translate({c} {c})"><path d="{trace}" stroke="{col}" stroke-width="{w}" fill="none" stroke-linecap="round" '
+                    f'stroke-linejoin="round"/></g>' for col, w in (("#4E3220", 1.7), ("#9A6E42", 0.8)))
+        out.append(_svg(BOIS_T, s))
+    for feuilles in (((-2.6, 1.0, -30, "#D9A441"), (1.4, -1.2, 40, "#D9803A"), (2.2, 2.2, 160, "#C9B24A")), ((-1.6, -0.8, 200, "#D9803A"), (1.8, 1.0, 20, "#D9A441"))):
+        s = "".join(_feuille(c + x, c + y, a, 3.4, 1.15, col, "#7A5226", "#7A5226", 0.35) for x, y, a, col in feuilles)
+        out.append(_svg(BOIS_T, s))
+    return out
+
+
+CULTURES = ("pousses", "salades", "carottes", "poireaux")        # deux images chacune dans « sol/culture »
+
+
+def sol_cultures():
+    """Les cultures du champ, plantées en rangs sur les buttes (game.js : fieldDetails()), deux plants par culture,
+    dans l'ordre de CULTURES. Vues d'un peu au-dessus, le pied au milieu du cadre, une ombre sur la terre."""
+    c = SOL_T / 2
+    bord = "#3A7434"
+    ombre = lambda rx: f'<ellipse cx="{c + 0.7}" cy="{c + 0.7}" rx="{rx}" ry="{rx * 0.42:.2f}" fill="#7A5230" opacity="0.55"/>'
+    out = []
+    for feuilles in (((-150, 3.4), (-30, 3.4), (-90, 2.6)), ((-160, 3.0), (-20, 3.6), (-84, 3.0))):          # jeunes pousses
+        out.append(_svg(SOL_T, ombre(2.6) + "".join(_feuille(c, c + 0.4, a, L, 1.2, "#86CF62", bord, "#C4EE9A") for a, L in feuilles)))
+    for n, r in ((7, 3.5), (6, 3.1)):                                                                       # salades
+        s = ombre(r + 0.5)
+        for i in range(n):
+            a = i * 2 * math.pi / n + 0.3
+            s += (f'<ellipse cx="{c + r * 0.5 * math.cos(a):.2f}" cy="{c - 0.6 + r * 0.38 * math.sin(a):.2f}" rx="{r * 0.6:.2f}" ry="{r * 0.44:.2f}" '
+                  f'fill="{"#7CC65A" if i % 2 else "#8FD46A"}" stroke="{bord}" stroke-width="0.45"/>')
+        s += (f'<ellipse cx="{c}" cy="{c - 0.6}" rx="{r * 0.56:.2f}" ry="{r * 0.4:.2f}" fill="#A9E27C" stroke="{bord}" stroke-width="0.4"/>'
+              f'<ellipse cx="{c - 0.3}" cy="{c - 0.8}" rx="{r * 0.24:.2f}" ry="{r * 0.16:.2f}" fill="#D6F5A8"/>')
+        out.append(_svg(SOL_T, s))
+    for fanes in (((-128, 4.2), (-96, 5.0), (-62, 4.4)), ((-140, 3.8), (-104, 4.6), (-74, 4.8), (-42, 3.8))):  # carottes
+        s = ombre(2.4) + f'<ellipse cx="{c}" cy="{c + 0.5}" rx="1.5" ry="0.95" fill="#F08A32" stroke="#9A4E1A" stroke-width="0.4"/>'
+        s += "".join(_feuille(c, c + 0.2, a, L, 0.85, "#4FA84C", "#2F6B3A", "#8ED278", 0.4) for a, L in fanes)
+        out.append(_svg(SOL_T, s))
+    for brins in (((-112, 5.0), (-90, 5.6), (-66, 4.8)), ((-120, 4.4), (-96, 5.4), (-74, 5.2), (-52, 4.2))):   # poireaux
+        s = ombre(2.2) + f'<rect x="{c - 0.9}" y="{c - 1.0}" width="1.8" height="1.8" rx="0.7" fill="#EEF3D8" stroke="#6E8F5A" stroke-width="0.4"/>'
+        s += "".join(_feuille(c, c - 0.6, a, L, 0.7, "#6FB78C", "#33705A", None, 0.4) for a, L in brins)
+        out.append(_svg(SOL_T, s))
+    return out
+
+
 def bandes_image(im, ox, oy, sol, echelle):
     """Ligne de contact d'une image (RGBA, marge PAD comprise, à `echelle` pixels par unité, origine en (ox, oy)
     unités) : là où elle touche le sol. Liste de points [u, b] en pixels de l'image à partir de son origine, de

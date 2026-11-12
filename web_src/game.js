@@ -127,13 +127,18 @@ function drawSpr(key, i, x, y, opt) {
 /* Ombre portée des personnages, des bêtes et des véhicules (MAP.cast : le début de leur clé dans l'atlas) : leur
    silhouette couchée sur le sol du côté opposé au soleil, comme celle des décors (groundShadows(), SHADOW), mais
    dessinée à chaque image puisqu'ils bougent. La silhouette vient d'une copie sombre de l'atlas x2 (shadowAtlas,
-   faite une fois). drawCastShadows(list) rejoue la liste triée de drawWorld avec `ctx` remplacé par un contexte
-   qui ne dessine rien : seuls les drawSpr() des familles à ombre posent leur silhouette sur le vrai canevas, sous
-   tous les sprites. opt.lift : la hauteur d'un saut ; l'ombre reste au sol et s'éloigne. */
+   faite une fois). drawCastShadows(list, cx, cy) rejoue la liste triée de drawWorld avec `ctx` remplacé par un
+   contexte qui ne dessine rien : seuls les drawSpr() des familles à ombre posent leur silhouette, sous tous les
+   sprites. opt.lift : la hauteur d'un saut ; l'ombre reste au sol et s'éloigne.
+   Les ombres sont fusionnées (un seul soleil : un endroit est à l'ombre ou ne l'est pas) : les silhouettes vont,
+   opaques, dans un canevas à part (shadowLayer, de la taille de l'écran) ; là où le sol porte déjà l'ombre d'un
+   décor, elles sont gommées par le masque du bloc de sol (ch.m, groundShadows()) ; le reste est posé avec
+   SHADOW.alpha. Tout se fait dans l'emprise de chaque silhouette (shadowRects), jamais sur tout l'écran ; une
+   emprise traitée est effacée du canevas, si bien que deux emprises qui se recouvrent ne posent rien deux fois. */
 const CAST = new Set(MAP.cast);
 const NULL_CTX = new Proxy({}, { get: (t, k) => k === 'measureText' ? () => ({ width: 0 })
   : typeof k === 'string' && k.startsWith('create') ? () => ({ addColorStop() {} }) : () => {}, set: () => true });
-let shadowCtx = null, shadowAtlas = null;
+let shadowCtx = null, shadowAtlas = null, shadowLayer = null, shadowRects = [];
 function buildShadowAtlas() {
   shadowAtlas = document.createElement('canvas');
   shadowAtlas.width = atlas.naturalWidth; shadowAtlas.height = atlas.naturalHeight;
@@ -144,24 +149,62 @@ function buildShadowAtlas() {
   g.fillRect(0, 0, shadowAtlas.width, shadowAtlas.height);
 }
 function castShadow(g, s, f, x, y, o) {
-  const a = SHADOW.alpha * (o.alpha === undefined ? 1 : o.alpha);
+  const a = o.alpha === undefined ? 1 : o.alpha;
   if (a <= 0.01) return;
   const len = sunAt(SHADOW.len, clamp(sun, 0, 4)), lift = o.lift || 0;
+  const X = Math.round(x * scale) / scale, Y = Math.round((y + lift) * scale) / scale;
+  const kx = (o.flip ? -1 : 1) * (o.sc || 1), ky = (o.sc || 1) * (o.sy || 1);
+  const cx = SHADOW.sx * len, cy = SHADOW.sy * len;                // la hauteur, couchée vers la droite et vers le bas
+  const lx = f[4] - s.o[0], ly = f[5] - s.o[1] - lift;
   g.save();
   g.globalAlpha = a;
-  g.translate(Math.round(x * scale) / scale, Math.round((y + lift) * scale) / scale);
-  g.transform(1, 0, -SHADOW.sx * len, -SHADOW.sy * len, 0, 0);       // la hauteur, couchée vers la droite et vers le bas
-  if (o.flip) g.scale(-1, 1);
-  if (o.sc) g.scale(o.sc, o.sc);
-  if (o.sy) g.scale(1, o.sy);
-  g.drawImage(shadowAtlas, f[0], f[1], f[2], f[3], f[4] - s.o[0], f[5] - s.o[1] - lift, f[2], f[3]);
+  g.translate(X, Y);
+  g.transform(1, 0, -cx, -cy, 0, 0);
+  g.scale(kx, ky);
+  g.drawImage(shadowAtlas, f[0], f[1], f[2], f[3], lx, ly, f[2], f[3]);
   g.restore();
+  const r = [Infinity, Infinity, -Infinity, -Infinity];            // son emprise au sol, dans le monde
+  for (const px of [lx, lx + f[2]]) for (const py of [ly, ly + f[3]]) {
+    const wx = X + px * kx - cx * py * ky, wy = Y - cy * py * ky;
+    r[0] = Math.min(r[0], wx); r[1] = Math.min(r[1], wy); r[2] = Math.max(r[2], wx); r[3] = Math.max(r[3], wy);
+  }
+  shadowRects.push(r);
 }
-function drawCastShadows(list) {
+function drawCastShadows(list, cx, cy) {
   if (!shadowAtlas) { if (!atlas.complete) return; buildShadowAtlas(); }
-  const main = ctx;
-  shadowCtx = main; ctx = NULL_CTX;
+  if (!shadowLayer) shadowLayer = document.createElement('canvas');
+  if (shadowLayer.width !== cv.width || shadowLayer.height !== cv.height) { shadowLayer.width = cv.width; shadowLayer.height = cv.height; }
+  const main = ctx, g = shadowLayer.getContext('2d');
+  const tx = offX - cx * scale, ty = offY - cy * scale;
+  g.setTransform(scale, 0, 0, scale, tx, ty);
+  g.globalCompositeOperation = 'source-over';
+  shadowRects = [];
+  shadowCtx = g; ctx = NULL_CTX;
   try { for (const o of list) o.draw(); } finally { ctx = main; shadowCtx = null; }
+  if (!shadowRects.length) return;
+  const s = chunkTiles() * TS;
+  main.save();
+  main.setTransform(1, 0, 0, 1, 0, 0);
+  main.globalAlpha = SHADOW.alpha;
+  for (const r of shadowRects) {
+    // l'emprise en pixels entiers du canevas (gommer, poser et effacer portent exactement sur les mêmes pixels)
+    const p0 = Math.max(0, Math.floor(r[0] * scale + tx) - 1), q0 = Math.max(0, Math.floor(r[1] * scale + ty) - 1);
+    const p1 = Math.min(cv.width, Math.ceil(r[2] * scale + tx) + 1), q1 = Math.min(cv.height, Math.ceil(r[3] * scale + ty) + 1);
+    if (p1 <= p0 || q1 <= q0) continue;
+    const x0 = (p0 - tx) / scale, y0 = (q0 - ty) / scale, x1 = (p1 - tx) / scale, y1 = (q1 - ty) / scale;
+    g.globalCompositeOperation = 'destination-out';          // gomme ce qui est déjà à l'ombre d'un décor
+    for (let cj = Math.floor(y0 / s); cj * s < y1; cj++) for (let ci = Math.floor(x0 / s); ci * s < x1; ci++) {
+      const ch = ground.get(ci + ',' + cj);
+      if (!ch || !ch.m) continue;
+      const a0 = Math.max(x0, ci * s), b0 = Math.max(y0, cj * s), a1 = Math.min(x1, (ci + 1) * s), b1 = Math.min(y1, (cj + 1) * s);
+      const mk = ch.m.width / ch.w;
+      g.drawImage(ch.m, (a0 - ch.x) * mk, (b0 - ch.y) * mk, (a1 - a0) * mk, (b1 - b0) * mk, a0, b0, a1 - a0, b1 - b0);
+    }
+    g.globalCompositeOperation = 'source-over';
+    main.drawImage(shadowLayer, p0, q0, p1 - p0, q1 - q0, p0, q0, p1 - p0, q1 - q0);
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(p0, q0, p1 - p0, q1 - q0); g.restore();
+  }
+  main.restore();
 }
 
 /* 9-slice : bords de b px */
@@ -754,7 +797,7 @@ function groundTile(tx, ty) {              // [tuile, détail] du sol, dans la c
 }
 /* Peint le bloc de n x n tuiles dont le coin est la tuile (cx, cy), depuis le tileset img, à k pixels de canevas par
    pixel de monde. Rend { c, x, y, w, h, k } : le canevas, sa place et sa taille dans le monde, son échelle. */
-function buildChunk(cx, cy, n, img, k, len) {
+function buildChunk(cx, cy, n, img, k, len, mask) {
   const c = document.createElement('canvas'), s = TS * k;
   c.width = c.height = (n * TS + 2 * CM) * k;
   const g = c.getContext('2d');
@@ -768,9 +811,11 @@ function buildChunk(cx, cy, n, img, k, len) {
   }
   const x0 = cx * TS - CM, y0 = cy * TS - CM, w = n * TS + 2 * CM;
   groundDetails(g, cx, cy, n, x0, y0, k);
+  woodDetails(g, cx, cy, n, x0, y0, k);
+  fieldDetails(g, cx, cy, n, x0, y0, k);
   waterDetails(g, cx, cy, n, x0, y0, k);
-  groundShadows(g, x0, y0, w, k, len || 1);
-  return { c, x: x0, y: y0, w, h: w, k, len };
+  const m = groundShadows(g, x0, y0, w, k, len || 1, mask);
+  return { c, x: x0, y: y0, w, h: w, k, len, m };
 }
 /* Habillage de l'herbe, peint une fois dans le sol, tiré de la position (hash3) : rien ne s'aligne sur les tuiles.
    - de grandes plages plus claires ou plus sombres (un disque flou, pré-rendu une fois), au milieu des prés : une
@@ -784,7 +829,7 @@ const grassAt = (tx, ty) => { const t = groundTile(tx, ty); return !!t && t[0] =
 let meadowBlob = null;
 function buildBlob() {
   meadowBlob = {};
-  for (const [nom, col] of [['light', MEADOW.light], ['dark', MEADOW.dark], ['deep', POND.deep]]) {
+  for (const [nom, col] of [['light', MEADOW.light], ['dark', MEADOW.dark], ['deep', POND.deep], ['sun', WOOD.sun], ['shade', WOOD.shade]]) {
     const c = document.createElement('canvas');
     c.width = c.height = 64;
     const o = c.getContext('2d'), gr = o.createRadialGradient(32, 32, 4, 32, 32, 32);
@@ -823,10 +868,84 @@ function groundDetails(g, cx, cy, n, x0, y0, k) {
     }
   }
 }
-const chunkPut = (g, x0, y0, k) => (key, i, x, y) => {       // pose l'image i d'un sprite dans un bloc de sol
-  const s = ATLAS[key], f = s.f[i % s.f.length];
-  blit(g, f, (x + f[4] - s.o[0] - x0) * k, (y + f[5] - s.o[1] - y0) * k, f[2] * k, f[3] * k);
-};
+/* Habillage du sous-bois, peint une fois dans le sol comme celui de l'herbe et tiré de la position : des taches de
+   soleil entre les arbres et des plages d'ombre (le même disque flou, aux couleurs du sous-bois), là où toutes les
+   tuiles touchées sont du sous-bois plein ; et, chacun dans sa tuile, de petites fougères, des coussins de mousse,
+   des champignons, des pommes de pin, des brindilles, des feuilles mortes (« sol/sousbois », MAP.wild : détail ->
+   [première image, nombre d'images]), parfois quelques fleurs blanches. */
+const WOOD = { full: MAP.wood, cell: 2, sun: 'rgba(214, 236, 124, 0.24)', shade: 'rgba(24, 78, 52, 0.2)', sunny: 0.5, flowers: 0.035,
+  sow: [['fougere', 0.2], ['mousse', 0.2], ['brindille', 0.1], ['feuilles', 0.1], ['pomme_de_pin', 0.06], ['champignon', 0.05]] };
+const woodTile = (tx, ty) => { const t = groundTile(tx, ty); return !!t && t[0] === WOOD.full; };
+function woodDetails(g, cx, cy, n, x0, y0, k) {
+  if (!meadowBlob) buildBlob();
+  const C = WOOD.cell;
+  for (let gy = Math.floor((cy - 2) / C); gy <= Math.floor((cy + n + 2) / C); gy++)
+    for (let gx = Math.floor((cx - 2) / C); gx <= Math.floor((cx + n + 2) / C); gx++) {
+      const sunny = hash3(gx, gy, 101) < WOOD.sunny;
+      const r = sunny ? 0.45 + 0.5 * hash3(gx, gy, 102) : 0.8 + 0.9 * hash3(gx, gy, 102), ry = r * 0.68;   // rayons, en tuiles
+      const bx = (gx + hash3(gx, gy, 103)) * C, by = (gy + hash3(gx, gy, 104)) * C;
+      let ok = true;
+      for (let ty = Math.floor(by - ry); ok && ty <= Math.floor(by + ry); ty++)
+        for (let tx = Math.floor(bx - r); ok && tx <= Math.floor(bx + r); tx++) ok = woodTile(tx, ty);
+      if (ok) g.drawImage(meadowBlob[sunny ? 'sun' : 'shade'], ((bx - r) * TS - x0) * k, ((by - ry) * TS - y0) * k, 2 * r * TS * k, 2 * ry * TS * k);
+    }
+  const put = chunkPut(g, x0, y0, k);
+  for (let ty = cy - 1; ty < cy + n + 1; ty++) for (let tx = cx - 1; tx < cx + n + 1; tx++) {
+    const t = groundTile(tx, ty);
+    if (!t || t[0] !== WOOD.full || t[1]) continue;
+    const X = tx * TS, Y = ty * TS;
+    WOOD.sow.forEach(([nom, p], j) => {
+      const s = 110 + j * 5;
+      if (hash3(tx, ty, s) >= p) return;
+      const [i0, m] = MAP.wild[nom];
+      put('sol/sousbois', i0 + Math.floor(hash3(tx, ty, s + 1) * m), X + 14 + hash3(tx, ty, s + 2) * 36, Y + 14 + hash3(tx, ty, s + 3) * 36);
+    });
+    if (hash3(tx, ty, 150) < WOOD.flowers)                              // trois ou quatre fleurs blanches, une bleue parfois
+      for (let j = 0, m = 3 + Math.floor(hash3(tx, ty, 151) * 2); j < m; j++) {
+        const a = hash3(tx, ty, 152 + j) * 6.283, d = 4 + 13 * Math.sqrt(hash3(tx, ty, 158 + j));
+        put('sol/fleur', hash3(tx, ty, 164 + j) < 0.8 ? 0 : 3, X + 32 + Math.cos(a) * d, Y + 32 + Math.sin(a) * d * 0.8);
+      }
+  }
+}
+/* Les cultures du champ, peintes une fois dans le sol : des rangs de plants (« sol/culture », deux images par
+   culture) sur les crêtes des buttes dessinées par la tuile (MAP.furrows, tiles.py : SILLONS). La culture change
+   toutes les FIELD.band buttes, la même d'un bout à l'autre du rang ; un plant manque de temps en temps. Les tuiles
+   du bord du champ sont plantées aussi, là où le champ est assez loin de son bord : sa présence (0..1) est
+   interpolée entre les coins de la tuile comme le dessin du bord (soften(), bits NO=1, NE=2, SO=4, SE=8). */
+const FIELD = { row: MAP.fieldRow, rows: MAP.furrows, band: 3, perTile: [4, 3, 4, 4], order: [0, 1, 2, 0, 3, 1, 2, 3], gap: 0.05,
+  inside: 0.76, dy: -3 };
+function fieldBits(tx, ty) {               // les coins de la tuile qui sont du champ (0 : ce n'est pas une tuile champ / herbe)
+  const t = groundTile(tx, ty), b = t ? t[0] - FIELD.row : 0;
+  return b > 0 && b < 16 ? b : 0;
+}
+function fieldDetails(g, cx, cy, n, x0, y0, k) {
+  const put = chunkPut(g, x0, y0, k);
+  for (let ty = cy - 1; ty < cy + n + 1; ty++) for (let tx = cx - 1; tx < cx + n + 1; tx++) {
+    const bits = fieldBits(tx, ty);
+    if (!bits) continue;
+    const c = b => bits & b ? 1 : 0;
+    FIELD.rows.forEach((fy, j) => {
+      const rang = ty * FIELD.rows.length + j, bande = Math.floor(rang / FIELD.band);
+      const crop = FIELD.order[((bande % FIELD.order.length) + FIELD.order.length) % FIELD.order.length] % MAP.crops, m = FIELD.perTile[crop];
+      for (let i = 0; i < m; i++) {
+        const q = (tx * m + i) * 7919 + rang * 104729;    // le plant : son numéro dans le rang, brouillé (hash3 lie des voisins)
+        if (hash3(q, rang, 170) < FIELD.gap) continue;
+        const px = (i + 0.5) * TS / m + (hash3(q, rang, 171) - 0.5) * 5, py = fy + (hash3(q, rang, 172) - 0.5) * 3;
+        if (bits !== 15) {
+          const u = soften(px / TS), v = soften(py / TS);
+          if (c(1) * (1 - u) * (1 - v) + c(2) * u * (1 - v) + c(4) * (1 - u) * v + c(8) * u * v < FIELD.inside) continue;
+        }
+        put('sol/culture', crop * 2 + (hash3(q, rang, 173) < 0.5 ? 0 : 1), tx * TS + px, ty * TS + py + FIELD.dy);
+      }
+    });
+  }
+}
+function chunkPut(g, x0, y0, k) {            // rend la fonction qui pose l'image i d'un sprite dans un bloc de sol
+  return (key, i, x, y) => {
+    const s = ATLAS[key], f = s.f[i % s.f.length];
+    blit(g, f, (x + f[4] - s.o[0] - x0) * k, (y + f[5] - s.o[1] - y0) * k, f[2] * k, f[3] * k);
+  };
+}
 /* Habillage de l'eau, peint une fois dans le sol comme celui de l'herbe (la rive, les hauts-fonds et l'écume sont
    dans les tuiles : tiles.py, _shore()) :
    - des fonds plus sombres au large, là où toutes les tuiles touchées sont de l'eau pleine ;
@@ -894,10 +1013,12 @@ function waterDetails(g, cx, cy, n, x0, y0, k) {
    colonne par colonne là où elle monte (le mur d'un bâtiment qui fuit). Un point à la
    hauteur h tombe h * (sx, sy) * len plus loin, à droite et vers le bas : len vaut 1 en plein jour et grandit quand
    le soleil baisse (SHADOW.len, par valeur de sun). Les silhouettes passent d'abord, opaques, par un canevas à
-   part, teinté d'un coup puis posé avec SHADOW.alpha : deux ombres qui se recouvrent ne se cumulent pas.
+   part, teinté d'un coup puis posé avec SHADOW.alpha : deux ombres qui se recouvrent ne se cumulent pas. Ce canevas,
+   réduit de SHADOW.mask, est gardé avec le bloc (ch.m) : c'est le masque qui retient l'ombre d'un personnage de
+   s'ajouter à celle d'un décor (drawCastShadows()).
    Quand la longueur change (shadowLen(), par paliers), les blocs de sol sont repeints un par image (drawGround). */
 const SHADOW = { sx: MAP.shadow[0], sy: MAP.shadow[1], color: 'rgb(22, 50, 60)', alpha: 0.3,
-  len: [1, 1.15, 1.5, 1.85, 1.4], step: 0.1 };
+  len: [1, 1.15, 1.5, 1.85, 1.4], step: 0.1, mask: 0.5 };
 const shadowLen = () => Math.round(sunAt(SHADOW.len, clamp(sun, 0, 4)) / SHADOW.step) * SHADOW.step;
 function blitCols(g, f, c0, c1, x, y) {       // les colonnes c0..c1 d'une image de l'atlas, posées en (x, y)
   const n = c1 - c0;
@@ -905,7 +1026,7 @@ function blitCols(g, f, c0, c1, x, y) {       // les colonnes c0..c1 d'une image
   const k = HD.k, p = Math.floor(f[1] / HD.page);
   g.drawImage(HD.pages[p], (f[0] + c0) * k, (f[1] - p * HD.page) * k, n * k, f[3] * k, x, y, n, f[3]);
 }
-function groundShadows(g, x0, y0, w, k, len) {
+function groundShadows(g, x0, y0, w, k, len, mask) {
   let o = null, og = null;
   const cx = SHADOW.sx * len, cy = SHADOW.sy * len;
   for (const d of (decor || []).concat(EDGE_DECOR)) {
@@ -933,12 +1054,17 @@ function groundShadows(g, x0, y0, w, k, len) {
       for (let u = ua; u < ub; u++) bande(u, Math.min(u + 1, ub), ba + pente * (Math.min(u + 1, ub) + u - 2 * ua) / 2, jour);
     }
   }
-  if (!o) return;
+  if (!o) return null;
   og.setTransform(1, 0, 0, 1, 0, 0);
   og.globalCompositeOperation = 'source-in';
   og.fillStyle = SHADOW.color;
   og.fillRect(0, 0, o.width, o.height);
   g.save(); g.globalAlpha = SHADOW.alpha; g.drawImage(o, 0, 0); g.restore();
+  if (!mask) return null;
+  const m = document.createElement('canvas');          // le masque des ombres du bloc, en plus petit (drawCastShadows)
+  m.width = m.height = Math.ceil(o.width * SHADOW.mask);
+  m.getContext('2d').drawImage(o, 0, 0, m.width, m.height);
+  return m;
 }
 let groundRepaint = 0;                    // blocs qu'on peut encore repeindre dans cette image (ombres qui s'allongent)
 function groundChunk(ci, cj) {            // le bloc (ci, cj) de la grille : peint s'il manque, puis le dernier servi
@@ -948,7 +1074,7 @@ function groundChunk(ci, cj) {            // le bloc (ci, cj) de la grille : pei
   if (ch) ground.delete(key);
   else {
     const n = chunkTiles();
-    ch = buildChunk(ci * n, cj * n, n, HD.k === 1 ? tilesImg : HD.tiles, HD.k, len);
+    ch = buildChunk(ci * n, cj * n, n, HD.k === 1 ? tilesImg : HD.tiles, HD.k, len, true);
     if (ground.size >= GROUND_MAX) ground.delete(ground.keys().next().value);
   }
   ground.set(key, ch);
@@ -4869,7 +4995,7 @@ function drawWorld() {
   const blink = P.inv > 0 && P.mode !== 'ko' && Math.floor(P.inv * 12) % 2 === 0;
   list.push({ y: P.y, draw: () => P.draw((blink ? 0.35 : 1) * P.alpha) });   // P.alpha : 0 sous le grillage
   list.sort((a, b) => a.y - b.y);
-  drawCastShadows(list);                  // les ombres portées de ce qui bouge, sous tous les sprites
+  drawCastShadows(list, cx, cy);          // les ombres portées de ce qui bouge, sous tous les sprites
   for (const o of list) o.draw();
 
   // papillons : au-dessus de tout, tournés dans le sens du vol

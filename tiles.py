@@ -176,37 +176,29 @@ def tex_water(scale, seed=0):
     return _canvas(scale, TERRAINS["water"]["fill"])
 
 
+SILLONS = (8, 24)            # crêtes des buttes du champ, en px 1x dans la tuile : le jeu y plante ses rangs
+
+
 def tex_field(scale, seed=0):
-    """Champ labouré : sillons horizontaux et rangs de jeunes pousses."""
+    """Champ labouré : deux buttes par tuile, à plat. La lumière vient d'en haut : le haut d'une butte est clair, la
+    raie qui la sépare de la suivante est sombre, plus sombre encore au pied de la butte du dessus (son ombre). Le
+    dessin est le même dans toutes les tuiles (les raies se raccordent, bords de champ compris) ; ce qui change d'un
+    endroit à l'autre, ce sont les rangs de cultures, plantés par le jeu sur les crêtes (game.js : fieldDetails())."""
     im = _canvas(scale, TERRAINS["field"]["fill"])
     d = ImageDraw.Draw(im)
     k = scale * SS
-    rnd = random.Random(4000 + seed)
-    for y in range(4, 32, 8):
-        d.rectangle([0, (y + 2.2) * k, T * k, (y + 4.4) * k], fill=hexrgb("#8E5F33"))
-        d.rectangle([0, y * k, T * k, (y + 1.1) * k], fill=hexrgb("#C68F58"))
-        for x in range(3, 32, 6):
-            xx = x + rnd.uniform(-0.8, 0.8)
-            for dx in (-1.1, 1.1):
-                d.ellipse([(xx + dx - 0.9) * k, (y - 0.5) * k, (xx + dx + 0.9) * k, (y + 0.9) * k], fill=hexrgb("#6FB25E"))
+    for crete in SILLONS:
+        for y in (crete + 8, crete + 8 - T):               # la raie, sous la butte (32 = 0 : elle se referme)
+            d.rectangle([0, (y - 1.8) * k, T * k, (y + 1.8) * k], fill=hexrgb("#9D6B3C"))
+            d.rectangle([0, (y - 1.8) * k, T * k, (y - 0.7) * k], fill=hexrgb("#8A5A33"))
+            d.rectangle([0, (y + 1.8) * k, T * k, (y + 2.9) * k], fill=hexrgb("#C08B55"))
     return im
 
 
 def tex_forest(scale, seed=0):
-    """Sous-bois : herbe sombre, aiguilles de pin, quelques brindilles."""
-    im = _canvas(scale, TERRAINS["forest"]["fill"])
-    d = ImageDraw.Draw(im)
-    k = scale * SS
-    rnd = random.Random(5000 + seed)
-    for _ in range(26):
-        x, y, a = rnd.uniform(1, 31), rnd.uniform(1, 31), rnd.uniform(0, math.pi)
-        dx, dy = math.cos(a) * 1.4, math.sin(a) * 1.4
-        d.line([((x - dx) * k, (y - dy) * k), ((x + dx) * k, (y + dy) * k)],
-               fill=hexrgb(rnd.choice(("#4A8240", "#4A8240", "#6AAA5C", "#8A6A3E"))), width=int(0.55 * k))
-    for _ in range(3):
-        x, y, r = rnd.uniform(5, 27), rnd.uniform(5, 27), rnd.uniform(1.6, 2.6)
-        d.ellipse([(x - r) * k, (y - r * 0.6) * k, (x + r) * k, (y + r * 0.6) * k], fill=hexrgb("#4F8F46"))
-    return im
+    """Sous-bois : un vert sombre uni. Les taches de soleil, les fougères, la mousse, les brindilles… sont semées par
+    le jeu (game.js : woodDetails()), comme les brins et les fleurs de l'herbe."""
+    return _canvas(scale, TERRAINS["forest"]["fill"])
 
 
 def tex_lower_grass(scale, seed=0):

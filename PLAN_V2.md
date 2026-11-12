@@ -286,8 +286,19 @@ Fait le 12 novembre 2026, dans le jeu :
   silhouette sous eux à chaque image, dans le même sens et de la même longueur que celle des décors
   (`castShadow()`). Un saut laisse l'ombre au sol. Captures : `lot4_ombres_personnages.png`, `lot4_ombres_route.png`.
 
-Reste : les objets (os, lettres, ballons), les canards et les papillons, qui gardent leur petit ovale ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; le sous-bois et le
-champ ; les tables de terrasse et le petit mobilier, encore dans leur dessin de la v1 ; l'habillage des zones (dont : la forme des mares, encore rectangulaire ; un cerisier en
+- **Ombres fusionnées** (question de Christophe : « y a pas moyen de fusionner les ombres ? ») : l'ombre d'un
+  personnage ne s'ajoute plus à celle d'un arbre ou d'une maison, ni à celle d'un autre personnage. Chaque bloc
+  de sol garde le masque de ses ombres ; la silhouette d'un personnage y est gommée avant d'être posée
+  (`drawCastShadows()`). Capture : `lot4_ombres_fusion.png`.
+
+- **Sous-bois et champ** : tuiles calmes (un vert uni ; deux buttes par tuile) et habillage semé par le jeu,
+  comme l'herbe. Sous-bois : taches de soleil, plages d'ombre, fougères, mousse, champignons, pommes de pin,
+  brindilles, feuilles mortes, quelques fleurs blanches (`nature.sol_sousbois()`, `woodDetails()`). Champ : un
+  potager, des rangs de pousses, de salades, de carottes et de poireaux sur les buttes
+  (`nature.sol_cultures()`, `fieldDetails()`). Captures : `lot4_sous_bois.png`, `lot4_champ.png`.
+
+Reste : les objets (os, lettres, ballons), les canards et les papillons, qui gardent leur petit ovale ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; la souche, le tronc, les champignons
+et la grande fougère de la forêt, les tables de terrasse et le petit mobilier, encore dans leur dessin de la v1 ; l'habillage des zones (dont : la forme des mares, encore rectangulaire ; un cerisier en
 fleurs au milieu des sapins de la forêt). L'éditeur de carte montre encore les anciens arbres (il lit
 `decor/tree`…), pas les variantes.
 

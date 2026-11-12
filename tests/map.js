@@ -45,6 +45,25 @@ eval(base + `setTimeout(() => {
   ok(cles('sol/brins') > 30 && cles('sol/fleur') > 3, 'le pré : ' + cles('sol/brins') + ' touffes de brins et ' + cles('sol/fleur') + ' fleurs semées dans le sol d\\'un écran');
   ok(run('couches.length') > 20 && run('couches.every(f => Object.keys(MAP.sols).some(n => ATLAS["decor/" + n].f.includes(f)))'),
      'et les ombres des décors y sont peintes à partir de leur silhouette (' + run('couches.length') + ' bandes couchées)');
+  // --- le sous-bois et le champ : habillés comme l'herbe, peints une fois dans le sol
+  run('semis = []; blit = function (g, f) { semis.push(f); blit0.apply(null, arguments); }; var poses = [], put0 = chunkPut;'
+    + ' chunkPut = function (g, x0, y0, k) { const p = put0(g, x0, y0, k); return function (key, i, x, y) { poses.push([key, i, x, y]); return p(key, i, x, y); }; };'
+    + ' resetGround(); drawGround(70 * 64, 50 * 64);');
+  ok(cles('sol/sousbois') > 40 && run('Object.values(MAP.wild).reduce((a, v) => a + v[1], 0)') === run('ATLAS["sol/sousbois"].f.length')
+     && run('poses.filter(p => p[0] === "sol/sousbois").every(p => groundTile(Math.floor(p[2] / 64), Math.floor(p[3] / 64))[0] === MAP.wood)'),
+     'le sous-bois : ' + cles('sol/sousbois') + ' fougères, mousses, brindilles… dans le sol d\\'un écran, toutes dans du sous-bois plein');
+  ok(run('new Set(poses.filter(p => p[0] === "sol/sousbois").map(p => p[1])).size') >= 9, 'de toutes les sortes (fougères, mousse, champignons, pommes de pin, brindilles, feuilles)');
+  run('semis = []; poses = []; resetGround(); drawGround(66 * 64, 22 * 64);');
+  const plants = run('poses.filter(p => p[0] === "sol/culture")');
+  ok(plants.length > 150 && run('ATLAS["sol/culture"].f.length') === 2 * run('MAP.crops') && new Set(plants.map(p => p[1] >> 1)).size >= 3,
+     'le champ : ' + plants.length + ' plants en rangs, ' + new Set(plants.map(p => p[1] >> 1)).size + ' cultures à l\\'écran');
+  ok(plants.every(p => run('fieldBits(' + Math.floor(p[2] / 64) + ', ' + Math.floor(p[3] / 64) + ')') > 0)
+     && plants.every(p => run('MAP.furrows').some(f => Math.abs(((p[3] % 64) + 64) % 64 - f - run('FIELD.dy')) <= 2)),
+     'tous dans le champ, sur les crêtes des buttes dessinées par la tuile (' + run('MAP.furrows.join(", ")') + ' px)');
+  const rangs = {};
+  plants.forEach(p => { (rangs[Math.round(p[3] / 8)] = rangs[Math.round(p[3] / 8)] || new Set()).add(p[1] >> 1); });
+  ok(Object.values(rangs).every(s => s.size === 1), 'une seule culture par rang, d\\'un bout à l\\'autre');
+  run('chunkPut = put0; blit = blit0;');
   // les ombres s'allongent quand le soleil baisse ; les blocs de sol sont alors repeints un par image
   ok(run('sun = 0, shadowLen()') === 1 && run('sun = 2, shadowLen()') > 1.4 && run('sun = 3, shadowLen()') > run('sun = 2, shadowLen()'),
      'ombres : longueur 1 en plein jour, ' + run('sun = 2, shadowLen()') + ' au coucher du soleil, ' + run('sun = 3, shadowLen()') + ' ensuite');
@@ -109,5 +128,13 @@ eval(base + `setTimeout(() => {
   ok(run('portees.find(p => p[0].startsWith("tecky/"))[2]') === 20, 'un saut : l\\'ombre reste au sol (la hauteur du saut lui est passée)');
   run('portees = []; P.alpha = 0; drawWorld(); P.alpha = 1;');
   ok(run('portees.find(p => p[0].startsWith("tecky/"))[1]') === 0, 'Tecky sous un grillage (invisible) : son ombre aussi');
+  // les ombres fusionnent : celle de Tecky est gommée là où le sol porte déjà celle d'un arbre, puis posée d'un bloc
+  run('var vus = [], di0 = mainCtx.drawImage; mainCtx.drawImage = function (img) { vus.push(img === shadowLayer ? "couche" : [...ground.values()].some(k => k.m === img) ? mainCtx.globalCompositeOperation : ""); };');
+  run('portees = []; P.x = 13.5 * 64; P.y = 5 * 64; camX = P.x - 480; camY = P.y - 270; drawWorld(); mainCtx.drawImage = di0;');
+  ok(run('[...ground.values()].some(k => k.m && k.m.width === Math.ceil(k.c.width * SHADOW.mask))') && run('SHADOW.mask') === 0.5,
+     'chaque bloc de sol garde le masque de ses ombres, à demi-taille');
+  ok(run('vus.includes("destination-out")') && run('vus.indexOf("destination-out") < vus.indexOf("couche")')
+     && run('vus.filter(v => v === "couche").length') === run('shadowRects.length') && run('shadowRects.length') === run('portees.length'),
+     'ombres fusionnées : la silhouette de Tecky est gommée par le masque du sol avant d\\'être posée (' + run('shadowRects.length') + ' emprise(s))');
   run('castShadow = cast0; drawSpr = spr0; cars = [];');
 }, 50);`);

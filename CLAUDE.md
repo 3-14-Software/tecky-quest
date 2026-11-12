@@ -88,7 +88,8 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `nature.py` (**la nature du jeu web**, v2 : chêne, bouleau, cerisier, jeune arbre, pommiers, sapins, buissons,
   roseaux, rocher, niche de trois quarts ; contour de la teinte du décor, lumière d'en haut à gauche, pas d'ombre
   ovale ; `VARIANTES` : un décor de carte.json -> ses modèles, tirés de la position ; `ECH` / `ECHELLES` : la taille
-  dans le jeu ; `image()` ; `bandes()` / `bandes_image()` : la ligne où un sprite touche le sol, d'où part son ombre portée ; `sol_fleurs()`, `sol_brins()` : les détails semés dans l'herbe ;
+  dans le jeu ; `image()` ; `bandes()` / `bandes_image()` : la ligne où un sprite touche le sol, d'où part son ombre portée ; `sol_fleurs()`, `sol_brins()` : les détails semés dans l'herbe ; `sol_sousbois()` (`SOUS_BOIS`) : ceux du
+  sous-bois ; `sol_cultures()` (`CULTURES`) : les plants du champ ;
   `sol_nenuphars()`, `sol_galets()` : ceux de l'eau et de la berge ; `fourre()` : les fourrés de la lisière, décors
   `thicket` / `thicket_dark` de `VARIANTES`, plus sombres le long de la forêt),
   `batiments.py` (**les bâtiments du jeu web**, v2 : maisons, boulangerie, grange, entrepôts, guérite, cabane
@@ -190,6 +191,15 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   de la rivière (x 30..64) : chariot élévateur, camion,
   conteneurs sous le portique (pieds dans `RAILS`), cabane du gardien, voie ferrée du quai (`rail`, à plat), bittes,
   péniche. Terrains ajoutés : `field` (champ), `forest` (sous-bois).
+  **Sous-bois et champ** (v2) : leurs tuiles sont calmes (`tiles.tex_forest()` : un vert uni ; `tex_field()` :
+  deux buttes par tuile, les mêmes partout, crêtes en `tiles.SILLONS` → `MAP.furrows`) et le jeu les habille une
+  fois dans le sol, comme l'herbe : `woodDetails()` (`WOOD` : taches de soleil et plages d'ombre, puis fougères,
+  mousse, champignons, pommes de pin, brindilles, feuilles mortes, `sol/sousbois`, `MAP.wild`, dans les tuiles de
+  sous-bois plein `MAP.wood`) et `fieldDetails()` (`FIELD` : des rangs de plants `sol/culture` sur les crêtes,
+  pousses, salades, carottes, poireaux ; la culture change toutes les `FIELD.band` buttes, la même d'un bout à
+  l'autre du rang ; les tuiles du bord du champ sont plantées là où le champ est assez loin de son bord,
+  `fieldBits()`). L'ancien semis d'aiguilles du sous-bois (des traits en tous sens) faisait du bruit à côté des
+  aplats de la v2 : ne pas y revenir. Test : `map.js`.
 - Bord de la carte (pas de mur invisible muet) : la caméra déborde de `EDGE.cam` (une tuile) au-delà de la carte
   (`camClampX()` / `camClampY()`, partout sauf le cadrage fixe de la scène de fin) et montre une lisière
   (`MAP.edge.decor` = `EDGE_DECOR`, générée par `edge_decor(corner_grid(), edge_keep())` dans pack_web : fourrés et
@@ -224,12 +234,17 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   effiloche l'ombre. **Personnages, bêtes et véhicules** (`MAP.cast` = `pack_web.portees()`, le début de leur clé
   dans l'atlas) : leur ovale est retiré à la construction (`pack_web.sans_ovale()` enlève `Drawing.under` ;
   `vehicles.frames()` aussi) et le jeu couche leur silhouette à chaque image (`castShadow()`, depuis
-  `shadowAtlas`, une copie sombre de l'atlas x2 faite une fois). `drawCastShadows(list)` rejoue la liste triée de
+  `shadowAtlas`, une copie sombre de l'atlas x2 faite une fois). `drawCastShadows(list, cx, cy)` rejoue la liste triée de
   `drawWorld()` avec `ctx` remplacé par `NULL_CTX` (qui ne dessine rien) : seuls les `drawSpr()` des familles à
   ombre posent leur silhouette, sous tous les sprites. Donc : une fonction de dessin de la liste est appelée deux
   fois par image (trois devant un bâtiment le soir), elle ne doit rien modifier ; `opt.lift` = hauteur d'un saut
   ou d'une grimpette (l'ombre reste au sol). Les canards (sur l'eau), les objets et les papillons gardent leur
-  dessin. Une ombre qui passe sur celle d'un arbre l'assombrit un peu plus (elles ne sont pas fusionnées).
+  dessin. **Ombres fusionnées** (demande de Christophe : un seul soleil, un endroit est à l'ombre ou ne l'est
+  pas) : les silhouettes vont, opaques, dans un canevas à part (`shadowLayer`) ; là où le sol porte déjà l'ombre
+  d'un décor, elles sont gommées (`destination-out`) par le masque du bloc de sol (`ch.m` : les ombres peintes par
+  `groundShadows()`, gardées à demi-taille, `SHADOW.mask`) ; le reste est posé avec `SHADOW.alpha`. Tout se fait
+  dans l'emprise de chaque silhouette (`shadowRects`, en pixels entiers), jamais sur tout l'écran (Firefox) ; une
+  emprise traitée est effacée, donc deux ombres de personnages qui se recouvrent ne se cumulent pas non plus.
   Test : `map.js`.
   **Images nettes** (`HD`, `HD_SRC`, `wantHD()`, `loadHD()`, `setHD()`, `blit()`) : sur un grand écran (au moins
   `HD_MIN` pixels de canevas par pixel de monde, pas un téléphone ni une tablette, pas une page ouverte depuis le
@@ -554,7 +569,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   anglais, durée, voix, vitrine). Lots 2 (images nettes) et 3 (Tecky, Alice et les chiens : `tecky2.py`, `alice2.py`,
   `chiens2.py`) faits ; lot 4 (paysage) en cours : nature, ombres portées, herbe, eau, lisière, bords
   arrondis, bâtiments (étals et poulailler compris), ombres portées de tout (décors, personnages, bêtes,
-  véhicules) allongées le soir faits ; restent le sous-bois et le champ, le petit mobilier (tables de
+  véhicules) allongées le soir et fusionnées, sous-bois et champ faits ; restent le petit mobilier (tables de
   terrasse…), l'habillage des zones. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
   témoin dans `reference/v2/`) : des images fixes, que ni `game.js` ni `pack_web.py` n'utilisent encore (le décor
   de `nature.py` est dans le jeu depuis le lot 4). Les pistes générées par Christophe avec ChatGPT sont dans
