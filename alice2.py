@@ -8,7 +8,7 @@ modèle de la chaussure qu'elle perd dans la forêt (items.shoe). Grosse tête (
 dessinée plus grand puis réduite de ECH, comme Tecky (tecky2.py) : des traits plus fins, des mains, des mèches.
 Trois vues : face, dos, profil (tournée vers la droite ; la gauche est son miroir).
 
-alice.py reste celle du kit GameMaker. Mêmes noms d'animations : idle, walk, happy (le saut de joie des retrouvailles).
+Animations : idle, walk, happy (le saut de joie des retrouvailles).
 
     python3 alice2.py      # reference/v2/alice_v2.png
 """

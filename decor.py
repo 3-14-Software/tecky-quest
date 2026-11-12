@@ -1,10 +1,10 @@
 """
-Objets de décor (sprites séparés, triés en profondeur dans GameMaker).
+Objets de décor (sprites séparés, triés en profondeur par le jeu).
 Tailles en 1x ; l'origine conseillée (pied de l'objet) est donnée dans DECOR.
 """
 import math
 
-from spritelib import Drawing, circle, ellipse, rect, poly, path, line, leg, OUTLINE
+from spritelib import Drawing, circle, ellipse, rect, poly, path, line, leg, OUTLINE, OUTLINE_W
 
 
 def _shadow(d, cx, cy, rx, ry):
@@ -1536,6 +1536,32 @@ def burrow():
 
 
 ANIMATED = {"fountain": (8, 10)}
+
+
+# Décors agrandis dans le jeu (les véhicules : Christophe les trouvait trop petits, le 12 novembre 2026). L'obstacle
+# grandit d'autant : MAP.grow, appliqué à FOOT par game.js.
+ECH = {"truck": 1.5, "tractor": 1.5, "forklift": 1.4}
+
+
+def cadre(name):
+    """(largeur, hauteur, origine x, origine y) d'un décor dans le jeu, en unités de l'atlas."""
+    _, (w, h), (ox, oy) = DECOR[name]
+    k = ECH.get(name, 1)
+    return math.ceil(w * k), math.ceil(h * k), ox * k, oy * k
+
+
+def svgs(name):
+    """Les images d'un décor, en SVG, à sa taille du jeu (contour compensé)."""
+    k = ECH.get(name, 1)
+    if k == 1:
+        return [d.svg() for d in frames(name)]
+    w, h, _, _ = cadre(name)
+    out = []
+    for d in frames(name):
+        d.parts[0:0] = [(u, None, False, "") for u in d.under]        # l'ombre grandit avec le dessin
+        d.under, d.w, d.h = [], w, h
+        out.append(d.svg(f"scale({k})", outline_w=OUTLINE_W / k))
+    return out
 
 
 def frames(name):

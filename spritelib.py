@@ -1,6 +1,6 @@
 """
 spritelib — petite boîte à outils commune pour générer des sprites
-en SVG (aplats + contour) et les exporter en strips GameMaker.
+en SVG (aplats + contour) et les rendre en images.
 
 Principe : un dessin est une liste de "parts". Chaque part est une forme
 SVG dont la couleur est remplacée par %F%. Les parts marquées `sil=True`
@@ -9,7 +9,6 @@ trait épais : on obtient ainsi un contour extérieur propre, sans traits
 parasites à l'intérieur du personnage.
 """
 import io
-import os
 import re
 
 import cairosvg
@@ -122,44 +121,3 @@ def flash(im, amount=0.75):
     out = Image.blend(im, white, amount)
     out.putalpha(im.getchannel("A"))
     return out
-
-
-def mirror(im):
-    return im.transpose(Image.FLIP_LEFT_RIGHT)
-
-
-# ------------------------------------------------------------------ export
-def save_strip(frames, folder, name):
-    w, h = frames[0].size
-    strip = Image.new("RGBA", (w * len(frames), h), (0, 0, 0, 0))
-    for i, f in enumerate(frames):
-        strip.paste(f, (i * w, 0))
-    os.makedirs(folder, exist_ok=True)
-    fn = os.path.join(folder, f"{name}_strip{len(frames)}.png")
-    strip.save(fn)
-    return fn
-
-
-def save_gif(rows, fn, fps, bg=(222, 238, 206, 255), zoom=2, gap=4):
-    """rows : liste de listes de frames (une animation par colonne), bouclées ensemble."""
-    n = max(len(r) for r in rows)
-    w, h = rows[0][0].size
-    frames = []
-    for i in range(n):
-        canvas = Image.new("RGBA", (len(rows) * (w + gap) - gap, h), bg)
-        for c, r in enumerate(rows):
-            canvas.alpha_composite(r[i % len(r)], (c * (w + gap), 0))
-        canvas = canvas.resize((canvas.width * zoom, canvas.height * zoom), Image.NEAREST)
-        frames.append(canvas.convert("P", palette=Image.ADAPTIVE))
-    frames[0].save(fn, save_all=True, append_images=frames[1:], duration=int(1000 / fps), loop=0)
-
-
-def contact_sheet(rows, fn, bg=(222, 238, 206, 255), gap=2):
-    """rows : liste de listes de frames -> planche de contrôle."""
-    w, h = rows[0][0].size
-    cols = max(len(r) for r in rows)
-    sheet = Image.new("RGBA", (cols * (w + gap), len(rows) * (h + gap)), bg)
-    for y, r in enumerate(rows):
-        for x, f in enumerate(r):
-            sheet.alpha_composite(f, (x * (w + gap), y * (h + gap)))
-    sheet.save(fn)

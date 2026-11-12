@@ -31,8 +31,7 @@ TERRAINS = {
     "paving":   dict(fill="#D4CBB8", edge="#B3A88F", out="#7E735E", edge_w=1.6, out_w=0.9),
     "concrete": dict(fill="#A9ACB2", edge="#8E9197", out="#5F6268", edge_w=1.6, out_w=0.9),
     "sidewalk": dict(fill="#CDD0D5", edge="#B3B7BE", out="#6E727A", edge_w=1.4, out_w=0.9),
-    "water":    dict(fill="#5DADE2", edge="#8FD0F0", out="#2F6F9A", edge_w=2.6, out_w=1.0,
-                     halo=("#E8D39A", 2.2)),          # berge sableuse côté herbe
+    "water":    dict(fill="#5FB5E5", out="#2F7DAE", out_w=0.85, shore=True),      # berge et hauts-fonds : _shore()
     "field":    dict(fill="#B07A45", edge="#9A6638", out="#6E4628", edge_w=1.6, out_w=0.9),   # champ labouré
     "forest":   dict(fill="#5A9A4E", edge="#4F8C45", out="#3F7537", edge_w=1.2, out_w=0.7),   # sous-bois
 }
@@ -172,22 +171,9 @@ def tex_sidewalk(scale, seed=0):
     return im
 
 
-WATER_MARKS = True        # vaguelettes fixes dans la texture (la version web les anime à part : fx_ripple)
-
-
 def tex_water(scale, seed=0):
-    im = _canvas(scale, TERRAINS["water"]["fill"])
-    if not WATER_MARKS:
-        return im
-    d = ImageDraw.Draw(im)
-    k = scale * SS
-    rnd = random.Random(6000 + seed)
-    for _ in range(3):
-        x, y = rnd.uniform(7, 23), rnd.uniform(7, 25)
-        w = rnd.uniform(3, 5)
-        d.arc([(x - w) * k, (y - 1.5) * k, (x + w) * k, (y + 1.5) * k], 200, 340,
-              fill=hexrgb("#9AD6F3"), width=int(0.9 * k))
-    return im
+    """Eau unie : le jeu anime ses vaguelettes à part (fx_ripple)."""
+    return _canvas(scale, TERRAINS["water"]["fill"])
 
 
 def tex_field(scale, seed=0):
@@ -233,35 +219,96 @@ TEX = {"dirt": tex_dirt, "road": tex_road, "paving": tex_paving, "concrete": tex
 
 
 # ------------------------------------------------------------------ transitions
-def _field(bits, n):
-    """Champ bilinéaire des 4 coins et distance signée approx. au contour 0.5 (en px sur-échantillonnés)."""
+SUN = (0.6, 0.8)             # sens de la lumière au sol : elle vient d'en haut à gauche
+
+# L'eau (lot 4 de la v2, d'après l'écran témoin). Distances au bord en px 1x : négatives sur la rive, positives
+# dans l'eau. Sur la rive (seulement là où elle est de terre : BANKS), une lèvre d'herbe jaunie, du sable, du sable
+# mouillé ; dans l'eau, des hauts-fonds clairs, une eau moyenne, puis le fond (la couleur des tuiles pleines). La
+# berge du haut et de gauche jette une ombre sur les hauts-fonds ; celle du bas et de droite a un peu d'écume.
+# Les limites des hauts-fonds et de l'eau moyenne suivent le champ des coins plutôt que la distance (qui n'est
+# qu'approchée loin du bord, et saute d'une tuile à l'autre) : elles se raccordent, et s'arrêtent avant le bord
+# de la tuile, à une demi-tuile du rivage.
+BANKS = ("grass", "forest", "field", "dirt")
+SHORE = dict(lip=("#93B35A", -4.4, -3.2), sand=("#EDDFAE", -3.6), wet=("#D9C68C", -1.2),
+             shallow="#9FDFF0", mid="#78C9EC", mid_at=4.6, deep=9.5,
+             shade=("#69B4D8", 0.85), foam=("#FFFFFF", 1.5, 2.5, 0.8))
+
+
+def _ease(t):
+    """Interpolation adoucie entre deux coins (3t² - 2t³) : le champ arrive à plat sur les bords de la tuile, donc un
+    contour les traverse toujours d'équerre. Une courbe d'angle repart ainsi dans l'axe du bord droit de la tuile
+    voisine, sans cassure (avec une interpolation linéaire, elle le quittait de biais : un coude à chaque angle de
+    mare ou de chemin). game.js fait le même calcul pour l'eau (waterVal())."""
+    return t * t * (3 - 2 * t)
+
+
+def _field(bits, n, light=False):
+    """Champ des 4 coins (interpolation adoucie : _ease) et distance signée approx. au contour 0.5 (en px
+    sur-échantillonnés).
+    light : rend aussi l'éclairage du bord (-1..1 : positif là où l'intérieur est à l'ombre du bord, c'est-à-dire
+    le long des bords du haut et de gauche) et le champ lui-même (0..1, continu d'une tuile à sa voisine)."""
     nw, ne, sw, se = [(bits >> i) & 1 for i in range(4)]
-    u = (np.arange(n) + 0.5) / n
+    u = _ease((np.arange(n) + 0.5) / n)
     U, V = np.meshgrid(u, u)
     v = nw * (1 - U) * (1 - V) + ne * U * (1 - V) + sw * (1 - U) * V + se * U * V
     gy, gx = np.gradient(v)
     g = np.sqrt(gx ** 2 + gy ** 2)
     dist = (v - 0.5) / np.maximum(g, 1e-6)
     dist[g < 1e-6] = np.where(v[g < 1e-6] > 0.5, 1e6, -1e6)
+    if light:
+        return dist, (gx * SUN[0] + gy * SUN[1]) / np.maximum(g, 1e-6), v
     return dist
+
+
+def _blend(out, color, alpha):
+    """Pose `color` sur `out` avec l'opacité `alpha` (tableau 0..1)."""
+    a = np.clip(alpha, 0, 1)[..., None]
+    out[..., :3] = out[..., :3] * (1 - a) + np.array(hexrgb(color)) * a
+
+
+def _shore(out, bits, below, scale):
+    """Rive et hauts-fonds de l'eau (SHORE) autour des coins `bits`, par-dessus `out` où l'eau est déjà posée."""
+    n, k = T * scale * SS, scale * SS
+    dist, lum, v = _field(bits, n, light=True)
+    d = dist / k                                      # en px 1x
+    band = lambda a, b: (d >= a) & (d < b)
+    if below in BANKS:
+        col, a, b = SHORE["lip"]
+        out[band(a, b)] = hexrgb(col) + (255,)
+        for key in ("sand", "wet"):
+            col, a = SHORE[key]
+            out[band(a, 0)] = hexrgb(col) + (255,)
+    v1, v2 = (float(_ease(0.5 + SHORE[key] / T)) for key in ("mid_at", "deep"))    # niveaux du champ, en ligne droite
+    shallow = (v >= 0.5) & (v < v1)
+    out[shallow] = hexrgb(SHORE["shallow"]) + (255,)
+    out[(v >= v1) & (v < v2)] = hexrgb(SHORE["mid"]) + (255,)
+    col, a = SHORE["shade"]
+    _blend(out, col, shallow * (d >= a) * (lum * 6 - 0.6))
+    # écume : des tirets inégaux, tirés d'un motif qui se répète d'une tuile à l'autre (ils se raccordent)
+    u = (np.arange(n) + 0.5) / n
+    U, V = np.meshgrid(u, u)
+    motif = (np.sin(2 * np.pi * (3 * U + V)) + 0.7 * np.sin(2 * np.pi * (2 * V - 5 * U) + 1.0)
+             + 0.5 * np.sin(2 * np.pi * (7 * U + 4 * V) + 2.0))
+    col, a, b, op = SHORE["foam"]
+    _blend(out, col, band(a, b) * np.clip(-lum * 6 - 0.6, 0, 1) * (motif > 0.55) * op)
 
 
 def _layer(out, terrain, bits, below, scale, seed=0, marking=None):
     """Pose `terrain` sur `out` (tableau sur-échantillonné) dans les coins `bits`, avec le style de la paire
-    (terrain, below) : berge côté herbe, liseré, contour."""
+    (terrain, below) : liseré et contour ; pour l'eau, la rive et les hauts-fonds (_shore)."""
     n = T * scale * SS
     k = scale * SS
     spec = dict(TERRAINS[terrain])
     spec.update(PAIR_STYLE.get((terrain, below), {}))
     ter = np.array(TEX[terrain](scale, seed, marking) if terrain == "road" else TEX[terrain](scale, seed))
     dist = _field(bits, n)
-    if "halo" in spec and below == "grass":
-        col, w = spec["halo"]
-        out[(dist < 0) & (dist >= -w * k)] = hexrgb(col) + (255,)
     inside = dist >= 0
     out[inside] = ter[inside]
-    edge = (dist >= spec["out_w"] * k) & (dist < (spec["out_w"] + spec["edge_w"]) * k)
-    out[edge] = hexrgb(spec["edge"]) + (255,)
+    if spec.get("shore"):
+        _shore(out, bits, below, scale)
+    else:
+        edge = (dist >= spec["out_w"] * k) & (dist < (spec["out_w"] + spec["edge_w"]) * k)
+        out[edge] = hexrgb(spec["edge"]) + (255,)
     outline = (dist >= 0) & (dist < spec["out_w"] * k)
     out[outline] = hexrgb(spec["out"]) + (255,)
 
@@ -438,7 +485,7 @@ def overlay(scale, i):
 
 
 # ------------------------------------------------------------------ planche
-# GameMaker réserve la tuile 0 (toujours vide). Disposition, 16 colonnes :
+# La tuile 0 est toujours vide. Disposition, 16 colonnes :
 #   ligne 0      : [vide] herbe x4, marquages x4, variantes pleines x7
 #   lignes 1..14 : une paire (dessus/dessous) par ligne, colonne = bits de coins (0..15)
 #   ligne 15     : détails transparents à poser sur un 2e calque de tuiles
@@ -448,21 +495,11 @@ ROW0 = ["(vide)", "herbe", "herbe + brins", "herbe + fleurs", "herbe + cailloux"
         "terre var. 1", "terre var. 2", "route var. 1", "route var. 2",
         "pavés var. 1", "béton var. 1", "béton var. 2"]
 OVERLAY_ROW = 1 + len(PAIRS)
-COMPOSITE_BASE = (OVERLAY_ROW + 1) * COLS      # tuiles composées (version web), après la ligne des détails
+COMPOSITE_BASE = (OVERLAY_ROW + 1) * COLS      # tuiles composées, après la ligne des détails
 
 
-def tileset(scale, water_marks=True, composites=()):
-    """water_marks=False : eau unie, pour la version web qui anime ses vaguelettes.
-    composites : coins (NO, NE, SO, SE) des tuiles composées, ajoutées à partir de l'index COMPOSITE_BASE."""
-    global WATER_MARKS
-    WATER_MARKS, before = water_marks, WATER_MARKS
-    try:
-        return _tileset(scale, composites)
-    finally:
-        WATER_MARKS = before
-
-
-def _tileset(scale, composites=()):
+def tileset(scale, composites=()):
+    """composites : coins (NO, NE, SO, SE) des tuiles composées, ajoutées à partir de l'index COMPOSITE_BASE."""
     ts = T * scale
     rows = 2 + len(PAIRS) + (len(composites) + COLS - 1) // COLS
     sheet = Image.new("RGBA", (COLS * ts, rows * ts), (0, 0, 0, 0))
@@ -485,7 +522,7 @@ def _tileset(scale, composites=()):
 
 
 def tile_index(upper, bits, lower="grass"):
-    """Index GameMaker d'une tuile de transition."""
+    """Index d'une tuile de transition dans le tileset."""
     return (1 + PAIRS.index((upper, lower))) * COLS + bits
 
 

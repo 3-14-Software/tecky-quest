@@ -66,7 +66,6 @@ class Donnees:
             raise SystemExit(f"{e}\nCorrige carte.json (python3 carte.py dit ce qui ne va pas), puis relance l'éditeur.")
         atlas, self.meta = pack_web.pack(pack_web.collect())
         self.atlas = png(atlas)
-        tiles.WATER_MARKS = False          # eau unie, comme dans le jeu (il anime ses vaguelettes)
         self.tiles = png(tiles.tileset(S))
         self.tuiles = {}
         self.infos = infos()

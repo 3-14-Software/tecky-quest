@@ -8,8 +8,8 @@ CHIENS : couleurs, corps, pattes, queue, oreilles, taches, collier.
 
 Les formes sont écrites en pixels du jeu (x2), autour du milieu des pieds : x vers la droite, y vers le bas, le sol
 à y = 0 ; le dessin est réduit de ECH dans le cadre de 48 x 48 des chiens (origine aux pieds, comme avant).
-Mêmes tailles que les chiens d'avant (enemies.py, qui reste le dessin du kit GameMaker) : tout ce que le jeu règle
-sur eux (barres de vie, cœurs, aboiement du doberman) reste juste.
+Mêmes tailles que les chiens de la v1 : tout ce que le jeu règle sur eux (barres de vie, cœurs, aboiement du
+doberman) reste juste.
 
     python3 chiens2.py      # reference/v2/chiens_v2.png (les quatre chiens, les trois vues, à côté de Tecky)
 """
@@ -65,7 +65,7 @@ CHIENS = {
         tete_taches=[("M-0.30,-1.20 C0.30,-1.25 0.85,-0.80 0.95,-0.20 C0.80,0.25 0.40,0.50 0.00,0.45 C-0.40,0.35 -0.60,-0.30 -0.30,-1.20 Z", "tache")],
         croc=True,
         # face et dos
-        f_tete=(-43, 11.9, 13.1), f_corps=(-35, -18, 10.4), f_pattes=(5.6, 5.6), f_oeil=1.12,
+        f_tete=(-43, 11.9, 13.1), f_corps=(-35, -18, 10.4), f_pattes=(5.6, 5.6), f_oeil=1.12, f_croupe=-0.05,
         f_oreille=(POINTUE_F, POINTUE_F_DEDANS, (-6.5, -7), "oreille", False),
         f_taches=[("M-12,-12 L-1.5,-12 C-0.5,-7 -1,-1 -3,2.5 C-6,4 -10,3 -12,0 Z", "tache")],
         d_tete=(-44, 10.6, 12.2), d_queue="fouet", d_taches=[("M-9,-33 C-4,-36 4,-36 8,-32 C7,-26 -6,-25 -9,-33 Z", "tache")],
@@ -91,7 +91,7 @@ CHIENS = {
         oreille_pivot=(-0.40, -0.90),
         tete_taches=[],
         croc="dessous",
-        f_tete=(-36.5, 15.3, 16.4), f_corps=(-28, -13, 16.0), f_pattes=(10.0, 8.4), f_oeil=1.30,
+        f_tete=(-36.5, 15.3, 16.4), f_corps=(-28, -13, 16.0), f_pattes=(10.0, 8.4), f_oeil=1.30, f_croupe=0.22,
         f_oreille=(ROSE_F, ROSE_F_DEDANS, (-8, -9), "oreille", True),
         f_taches=[],
         d_tete=(-37.5, 13.6, 15.2), d_queue="moignon", d_taches=[],
@@ -119,10 +119,10 @@ CHIENS = {
         oreille_pivot=(-0.36, -0.95),
         tete_taches=[("M0.22,-0.80 C0.34,-0.90 0.56,-0.86 0.62,-0.72 C0.52,-0.62 0.30,-0.66 0.22,-0.80 Z", "clair")],
         croc=True,
-        f_tete=(-52.4, 10.8, 12.0), f_corps=(-45, -27, 10.6), f_pattes=(5.8, 6.4), f_oeil=0.98,
+        f_tete=(-52.4, 10.8, 12.0), f_corps=(-45, -27, 10.6), f_pattes=(5.8, 6.4), f_oeil=0.98, f_croupe=-0.05,
         f_oreille=(DROITE_F, DROITE_F_DEDANS, (-5.5, -7), "oreille", False),
         f_taches=[],
-        d_tete=(-53.4, 9.6, 11.2), d_queue="fouet", d_taches=[],
+        d_tete=(-53.4, 9.6, 11.2), d_queue="fouet", d_taches=[], queue_w=(5.0, 3.0), queue_l=14.0,
     ),
     # --- chien de berger (border collie) : noir et blanc, liste sur le front, poitrail blanc, queue en panache
     "berger": dict(
@@ -147,13 +147,13 @@ CHIENS = {
         oreille_pivot=(-0.40, -0.95),
         tete_taches=[("M0.62,-0.96 C0.72,-0.60 0.86,-0.30 1.00,-0.12 L1.40,0.10 L1.30,-0.30 C1.10,-0.55 0.90,-0.80 0.62,-0.96 Z", "clair")],
         croc=True,
-        f_tete=(-40.2, 11.9, 13.1), f_corps=(-33, -16, 12.0), f_pattes=(6.8, 6.6), f_oeil=1.12,
+        f_tete=(-40.2, 11.9, 13.1), f_corps=(-33, -16, 12.0), f_pattes=(6.8, 6.6), f_oeil=1.12, f_croupe=0.34,
         f_oreille=(PLIEE_F, PLIEE_F_BOUT, (-6.5, -6.5), "oreille", False),
         f_taches=[("M-1.9,-10.6 C-1.5,-6 -2.4,-1 -3.4,2.6 L3.4,2.6 C2.4,-1 1.5,-6 1.9,-10.6 Z", "clair")],
         d_tete=(-41.2, 10.6, 12.2), d_queue="panache", d_taches=[],
     ),
 }
-DOGS = CHIENS     # même nom que dans enemies.py
+DOGS = CHIENS
 
 
 def _ici(x, y):
@@ -402,11 +402,13 @@ def _oreilles_f(d, S, p, place, devant):
 
 def tete_face(d, S, p, hx, hy):
     """La tête d'un chien vue de face : celle de tecky2.tete_face(), à ses mesures (f_tete : demi-largeur et
-    demi-hauteur), avec ses oreilles, ses taches et ses crocs."""
+    demi-hauteur), avec ses oreilles, ses taches et ses crocs. S["gentil"] : les sourcils doux et le sourire de
+    Tecky au lieu de l'air grognon (Iris) ; S["ep"] : l'épaisseur des traits du visage."""
     sourcils, yeux, bouche, m, _ = tk._visage(p)
     _, hw, hv = S["f_tete"]
     fx, fy = hw / 8.9, hv / 10.0
-    ep = 0.82
+    ep = S.get("ep", 0.82)
+    gentil = S.get("gentil", False)
     rot = _tourne(p["incline"], hx, hy + hv * 0.9)
     brut = lambda x, y: rot(hx + x, hy + y)               # en pixels autour du centre
     place = lambda x, y: rot(hx + x * fx, hy + y * fy)    # les formes de Tecky, à la mesure de cette tête
@@ -445,7 +447,11 @@ def tete_face(d, S, p, hx, hy):
             ix = ex - s * 0.25
             d.add(path(_ovale(brut, ix, ey + 0.35 * k, 1.8 * k, 2.2 * k)), IRIS, sil=False)
             d.add(path(_ovale(brut, ix + 0.35, ey - 0.65 * k, 0.68 * k, 0.68 * k)), "#FFFFFF", sil=False)
-        if yeux != "croix":          # sourcils froncés : ils descendent vers la truffe
+        if gentil:                   # sourcils doux (inquiets : le bout vers la truffe remonte)
+            a, b_, e = (1.9, 1.75, 1.35) if sourcils == "inquiets" else (1.45, 1.75, 1.4)
+            d.raw(line(_trace(brut, f"M{ex - s * rx * 0.6:.2f},{ey - ry * a:.2f} Q{ex:.2f},{ey - ry * b_:.2f} {ex + s * rx * 0.6:.2f},{ey - ry * e:.2f}"),
+                       S["sourcil"], ep * 1.2))
+        elif yeux != "croix":        # sourcils froncés : ils descendent vers la truffe
             d.raw(line(_trace(brut, f"M{ex + s * rx * 1.1:.2f},{ey - ry * 1.55:.2f} L{ex - s * rx * 0.9:.2f},{ey - ry * 1.02:.2f}"),
                        S["sourcil"], ep * 1.5))
 
@@ -455,6 +461,9 @@ def tete_face(d, S, p, hx, hy):
         d.add(g, tk.PAL["mouth"], sil=False, edge=True)
         d.add(path(_ovale(place, 0, 7.2 + m * 3.2, 2.0, 0.5 + m * 1.2)), tk.PAL["tongue"], sil=False, clip="gueulef")
         d.raw(line(T("M0,5.7 L0,6.8"), OUTLINE, ep))
+    elif gentil:                     # le sourire de Tecky (inquiet : une moue)
+        d.raw(line(T("M0,5.7 L0,6.6 M-3.0,8.5 Q0,6.3 3.0,8.5" if bouche == "moue"
+                     else "M0,5.7 L0,7.7 M-4.7,6.1 Q-2.6,8.4 0,7.7 Q2.6,8.4 4.7,6.1"), OUTLINE, ep))
     else:                            # la bouche des grognons : les coins tombent, deux petits crocs
         d.raw(line(T("M0,5.7 L0,6.9 M-4.2,8.3 Q-2.2,6.6 0,6.9 Q2.2,6.6 4.2,8.3"), OUTLINE, ep))
         if S["croc"]:
@@ -500,6 +509,38 @@ def _patte_f(d, S, B, s, lever, avance, couleur, bas, coussin, bx):
     return fx + s * 0.3, fy - 0.1, k
 
 
+def _fouet(S, y0):
+    """Une queue en fouet vue de face ou de dos, plantée en (0, y0) : celle de tecky2._queue_dressee(), aux mesures
+    du chien. Rend (la forme fermée, le tracé de ses deux bords, sans la base)."""
+    (w0, w1), L, c = S.get("queue_w", (5.6, 3.4)), S.get("queue_l", 15.0), S.get("queue_c", 3.2)
+    return tk._queue_dressee(y0, w0, w1, L, c)
+
+
+def _arriere_f(d, S, p, bx, b):
+    """Ce qu'on voit d'un chien derrière sa tête, face à nous : sa croupe, au loin, qui dépasse un peu au-dessus du
+    crâne, et sa queue (comme tecky2._arriere_face : la vue de dos à l'envers). Plus étroite que le crâne, sans pattes
+    arrière : plus grosse, elle se lirait comme un bonnet."""
+    hh, hw, hv = S["f_tete"]
+    cx, cy = AXE - bx * 0.9, SOL + hh - hv * S.get("f_croupe", 0.42) + b * 0.6      # f_croupe : de combien elle dépasse
+    rx, ry = hw * 0.60, hv * 0.92
+    croupe = ellipse(cx, cy, rx, ry)
+    d.clip("croupef", [croupe])
+    genre = S["d_queue"]
+    Tq = _tourne(p["queue"] * (0.5 if genre == "moignon" else 1) + (24 if genre == "panache" else 0), cx, cy - ry + 2)
+    place = lambda x, y: Tq(cx + x, cy - ry + y)                # autour du sommet de la croupe
+    if genre == "fouet":
+        d.add(path(_trace(place, _fouet(S, 3.0)[0])), S["fur"])
+    elif genre == "moignon":
+        d.add(path(_ovale(place, 0, 0.2, 2.5, 2.2)), S["fur"])
+    else:                             # panache : touffu, penché de côté, le bout blanc
+        forme = path(_ovale(place, 0, -3.2, 3.7, 5.8))
+        d.add(forme, S["ombre"])
+        d.clip("panachef", [forme])
+        d.add(path(_ovale(place, 0, -8.2, 4.2, 3.0)), S["clair"], sil=False, clip="panachef")
+    d.add(croupe, S["fur"])
+    d.add(ellipse(cx, cy - ry * 0.5, rx * 0.66, ry * 0.4), S["ombre"], sil=False, clip="croupef", opacity=0.3)
+
+
 def face(S, p=None):
     """Un chien de face, vers la caméra."""
     p = p or pose()
@@ -514,6 +555,7 @@ def face(S, p=None):
     hx = AXE + bx * (-hh) / 30 + p["tete"][0]
     hy = SOL + hh + b + p["tete"][1]
 
+    _arriere_f(d, S, p, bx, b)
     for s, lv, a in ((-1, lA, aA), (1, lB, aB)):
         _patte_f(d, S, B, s, lv, a, S["fur"], S["bas"], S["clair"] if not S["bas"] else None, bx)
     C = _corps_f(S, B)
@@ -572,14 +614,12 @@ def dos(S, p=None):
     genre = S["d_queue"]
     if genre == "fouet":
         Tq = _tourne(p["queue"], 0, qy, B)
-        forme = f"M-1.7,{qy + 1:.2f} L-1.5,{qy - 12:.2f} C-1.5,{qy - 15:.2f} 1.5,{qy - 15:.2f} 1.5,{qy - 12:.2f} L1.7,{qy + 1:.2f} Z"
+        forme, bords = _fouet(S, qy)
         d.add(path(_trace(Tq, forme)), S["fur"])
-        d.raw(line(_trace(Tq, f"M-1.7,{qy:.2f} L-1.5,{qy - 12:.2f} C-1.5,{qy - 15:.2f} 1.5,{qy - 15:.2f} 1.5,{qy - 12:.2f} L1.7,{qy:.2f}"),
-                   OUTLINE, 1.2))
-    elif genre == "moignon":
+        d.raw(line(_trace(Tq, bords), OUTLINE, 1.3))
+    elif genre == "moignon":          # un petit bout de queue posé sur la croupe : un arc, pas un rond cerné
         Tq = _tourne(p["queue"] * 0.5, 0, qy + 3, B)
-        d.add(path(_ovale(Tq, 0, qy - 1, 3.2, 3.0)), S["fur"], sil=False)
-        d.raw(line(_ovale(Tq, 0, qy - 1, 3.2, 3.0), OUTLINE, 1.2))
+        d.raw(line(_trace(Tq, f"M-3.4,{qy + 1.6:.2f} C-3.6,{qy - 3.4:.2f} 3.6,{qy - 3.4:.2f} 3.4,{qy + 1.6:.2f}"), OUTLINE, 1.3))
     else:                             # panache : une grosse queue touffue qui pend, le bout blanc
         Tq = _tourne(p["queue"] * 0.7, 0, qy - 2, B)
         forme = _ovale(Tq, 0, qy + 6, 4.6, 9.5)

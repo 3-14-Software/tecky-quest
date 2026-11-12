@@ -19,7 +19,7 @@ const opts = (() => {
 })();
 
 const cv = document.getElementById('game');
-const ctx = cv.getContext('2d');
+let ctx = cv.getContext('2d');     // (drawWindows() le remplace un instant par un canevas à part)
 let dpr = 1, scale = 1, offX = 0, offY = 0;
 
 /* Au plus MAX_PIXELS pixels dans le canvas : au-delà (plein écran sur un écran 1440p ou 4K), le navigateur l'agrandit
@@ -240,7 +240,7 @@ const SFX = {
 
 /* ------------------------------------------------------------------ musique chiptune */
 /* « Promenade de Tecky » : événements générés par music.py (SONGS : une variation du thème par zone, même mélodie,
-   mêmes accords, même grille de phrases ; « base » = le WAV GameMaker, pour la niche et la campagne).
+   mêmes accords, même grille de phrases ; « base » = le thème d'origine, pour la niche et la campagne).
    Chaque zone joue sa variation avec ses instruments (TIMBRE) dans une couche (layers : gain propre). setZone()
    demande un changement ; il se fait en fondu enchaîné pendant la dernière mesure d'une phrase (MUSIC_ZONE), le tempo
    glissant d'une variation à l'autre (glide) : la phrase suivante commence avec la nouvelle variation, à son tempo. */
@@ -722,7 +722,144 @@ function buildChunk(cx, cy, n, img, k) {
     put(t[0], tx, ty);
     if (t[1]) put(t[1], tx, ty);
   }
-  return { c, x: cx * TS - CM, y: cy * TS - CM, w: n * TS + 2 * CM, h: n * TS + 2 * CM, k };
+  const x0 = cx * TS - CM, y0 = cy * TS - CM, w = n * TS + 2 * CM;
+  groundDetails(g, cx, cy, n, x0, y0, k);
+  waterDetails(g, cx, cy, n, x0, y0, k);
+  groundShadows(g, x0, y0, w, k);
+  return { c, x: x0, y: y0, w, h: w, k };
+}
+/* Habillage de l'herbe, peint une fois dans le sol, tiré de la position (hash3) : rien ne s'aligne sur les tuiles.
+   - de grandes plages plus claires ou plus sombres (un disque flou, pré-rendu une fois), au milieu des prés : une
+     plage n'est posée que si toutes les tuiles qu'elle touche sont de l'herbe pleine (elle ne déteint ni sur un
+     chemin ni sur l'eau) ;
+   - des touffes de brins (« sol/brins ») et des bouquets de petites fleurs (« sol/fleur »), chacun dans sa tuile
+     d'herbe pleine, loin de ses bords : un bloc de sol ne coupe jamais un détail. */
+const MEADOW = { cell: 3, light: 'rgba(196, 236, 120, 0.3)', dark: 'rgba(52, 128, 70, 0.17)', blades: 0.62, flowers: 0.085 };
+const GRASS_FULL = 1;                          // la tuile d'herbe pleine (pack_web.py : GRASS_VARIANTS)
+const grassAt = (tx, ty) => { const t = groundTile(tx, ty); return !!t && t[0] === GRASS_FULL && !t[1]; };
+let meadowBlob = null;
+function buildBlob() {
+  meadowBlob = {};
+  for (const [nom, col] of [['light', MEADOW.light], ['dark', MEADOW.dark], ['deep', POND.deep]]) {
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const o = c.getContext('2d'), gr = o.createRadialGradient(32, 32, 4, 32, 32, 32);
+    gr.addColorStop(0, col); gr.addColorStop(0.55, col); gr.addColorStop(1, col.replace(/[\d.]+\)$/, '0)'));
+    o.fillStyle = gr; o.fillRect(0, 0, 64, 64);
+    meadowBlob[nom] = c;
+  }
+}
+function groundDetails(g, cx, cy, n, x0, y0, k) {
+  if (!meadowBlob) buildBlob();
+  const C = MEADOW.cell;
+  for (let gy = Math.floor((cy - 3) / C); gy <= Math.floor((cy + n + 3) / C); gy++)
+    for (let gx = Math.floor((cx - 3) / C); gx <= Math.floor((cx + n + 3) / C); gx++) {
+      const r = 1.1 + 1.5 * hash3(gx, gy, 21);                          // rayon, en tuiles
+      const bx = (gx + hash3(gx, gy, 22)) * C, by = (gy + hash3(gx, gy, 23)) * C;
+      const ry = r * 0.7;
+      let ok = true;
+      for (let ty = Math.floor(by - ry); ok && ty <= Math.floor(by + ry); ty++)
+        for (let tx = Math.floor(bx - r); ok && tx <= Math.floor(bx + r); tx++) ok = grassAt(tx, ty);
+      if (!ok) continue;
+      g.drawImage(meadowBlob[hash3(gx, gy, 24) < 0.5 ? 'light' : 'dark'], ((bx - r) * TS - x0) * k, ((by - ry) * TS - y0) * k, 2 * r * TS * k, 2 * ry * TS * k);
+    }
+  const put = chunkPut(g, x0, y0, k);
+  for (let ty = cy - 1; ty < cy + n + 1; ty++) for (let tx = cx - 1; tx < cx + n + 1; tx++) {
+    if (!grassAt(tx, ty)) continue;
+    const X = tx * TS, Y = ty * TS;
+    for (let j = 0; j < 2; j++)                                          // jusqu'à deux touffes de brins
+      if (hash3(tx, ty, 30 + j) < MEADOW.blades)
+        put('sol/brins', Math.floor(hash3(tx, ty, 32 + j) * 4), X + 12 + hash3(tx, ty, 34 + j) * 40, Y + 12 + hash3(tx, ty, 36 + j) * 40);
+    if (hash3(tx, ty, 40) < MEADOW.flowers) {                           // un bouquet : 3 à 6 fleurs, une couleur qui domine
+      const m = 3 + Math.floor(hash3(tx, ty, 41) * 4), col = Math.floor(hash3(tx, ty, 42) * 4);
+      for (let j = 0; j < m; j++) {
+        const a = hash3(tx, ty, 50 + j) * 6.283, d = 4 + 15 * Math.sqrt(hash3(tx, ty, 60 + j));
+        put('sol/fleur', hash3(tx, ty, 70 + j) < 0.7 ? col : col + 1, X + 32 + Math.cos(a) * d, Y + 32 + Math.sin(a) * d * 0.8);
+      }
+    }
+  }
+}
+const chunkPut = (g, x0, y0, k) => (key, i, x, y) => {       // pose l'image i d'un sprite dans un bloc de sol
+  const s = ATLAS[key], f = s.f[i % s.f.length];
+  blit(g, f, (x + f[4] - s.o[0] - x0) * k, (y + f[5] - s.o[1] - y0) * k, f[2] * k, f[3] * k);
+};
+/* Habillage de l'eau, peint une fois dans le sol comme celui de l'herbe (la rive, les hauts-fonds et l'écume sont
+   dans les tuiles : tiles.py, _shore()) :
+   - des fonds plus sombres au large, là où toutes les tuiles touchées sont de l'eau pleine ;
+   - des nénuphars (« sol/nenuphar ») près des rives de terre, par bouquets, entre les hauts-fonds et le large
+     (POND.lily : niveaux de waterVal) : lilyAt() ; les vaguelettes évitent leur tuile (drawWater()) ;
+   - des galets (« sol/galet ») sur le sable de la berge (POND.sand).
+   shorePoint() ramène un point tiré dans la tuile sur une ligne de niveau de l'eau. Ni nénuphars ni galets le
+   long d'un quai (tuiles eau / herbe seulement : MAP.shore). */
+const POND = { cell: 3, deep: 'rgba(52, 132, 204, 0.3)', group: 4, groups: 0.45, many: 0.75, few: 0.06, lily: [0.77, 0.9],
+  pebbles: 0.32, sand: 0.418 };
+const WATER_FULL = MAP.shore + 15;
+const shoreTile = (tx, ty) => { const t = groundTile(tx, ty); return !!t && t[0] > MAP.shore && t[0] < WATER_FULL; };
+const fullWater = (tx, ty) => { const t = groundTile(tx, ty); return !!t && t[0] === WATER_FULL; };
+function shorePoint(tx, ty, level, seed, m) {   // un point de la tuile (tx, ty) où waterVal vaut `level`, à m px de ses bords ; ou null
+  let x = (tx + 0.2 + 0.6 * hash3(tx, ty, seed)) * TS, y = (ty + 0.2 + 0.6 * hash3(tx, ty, seed + 1)) * TS;
+  for (let i = 0; i < 4; i++) {           // descente vers la ligne waterVal = level
+    const v = waterVal(x, y), gx = (waterVal(x + 2, y) - waterVal(x - 2, y)) / 4, gy = (waterVal(x, y + 2) - waterVal(x, y - 2)) / 4;
+    const g2 = gx * gx + gy * gy;
+    if (g2 < 1e-9) return null;
+    x += (level - v) * gx / g2; y += (level - v) * gy / g2;
+  }
+  if (x < tx * TS + m || x > (tx + 1) * TS - m || y < ty * TS + m || y > (ty + 1) * TS - m) return null;
+  return Math.abs(waterVal(x, y) - level) < 0.012 ? [x, y] : null;
+}
+let lilies = new Map();
+function lilyAt(tx, ty) {                 // le nénuphar de la tuile (tx, ty) : [x, y, image], ou null
+  const key = tx + ',' + ty;
+  let l = lilies.get(key);
+  if (l !== undefined) return l;
+  l = null;
+  const dense = hash3(Math.floor(tx / POND.group), Math.floor(ty / POND.group), 81) < POND.groups;
+  if (shoreTile(tx, ty) && hash3(tx, ty, 82) < (dense ? POND.many : POND.few)) {
+    const p = shorePoint(tx, ty, POND.lily[0] + hash3(tx, ty, 83) * (POND.lily[1] - POND.lily[0]), 84, 13);
+    if (p) l = [p[0], p[1], Math.floor(hash3(tx, ty, 86) * 4)];
+  }
+  lilies.set(key, l);
+  return l;
+}
+function waterDetails(g, cx, cy, n, x0, y0, k) {
+  if (!meadowBlob) buildBlob();
+  const C = POND.cell;
+  for (let gy = Math.floor((cy - 3) / C); gy <= Math.floor((cy + n + 3) / C); gy++)
+    for (let gx = Math.floor((cx - 3) / C); gx <= Math.floor((cx + n + 3) / C); gx++) {
+      const r = 0.9 + 1.2 * hash3(gx, gy, 71), ry = r * 0.6;            // rayons, en tuiles
+      const bx = (gx + hash3(gx, gy, 72)) * C, by = (gy + hash3(gx, gy, 73)) * C;
+      let ok = true;
+      for (let ty = Math.floor(by - ry); ok && ty <= Math.floor(by + ry); ty++)
+        for (let tx = Math.floor(bx - r); ok && tx <= Math.floor(bx + r); tx++) ok = fullWater(tx, ty);
+      if (ok) g.drawImage(meadowBlob.deep, ((bx - r) * TS - x0) * k, ((by - ry) * TS - y0) * k, 2 * r * TS * k, 2 * ry * TS * k);
+    }
+  const put = chunkPut(g, x0, y0, k);
+  for (let ty = cy - 1; ty < cy + n + 1; ty++) for (let tx = cx - 1; tx < cx + n + 1; tx++) {
+    if (!shoreTile(tx, ty)) continue;
+    const l = lilyAt(tx, ty);
+    if (l) put('sol/nenuphar', l[2], l[0], l[1]);
+    if (hash3(tx, ty, 90) < POND.pebbles) {
+      const p = shorePoint(tx, ty, POND.sand, 91, 10);
+      if (p) put('sol/galet', Math.floor(hash3(tx, ty, 93) * 3), p[0], p[1]);
+    }
+  }
+}
+/* Ombres portées des décors de la nature (nature.py : sprites « ombre/… », la silhouette couchée du côté opposé au
+   soleil), peintes une fois dans le sol. Elles passent d'abord, opaques, par un canevas à part, posé ensuite avec
+   SHADOW.alpha : deux ombres qui se recouvrent ne se cumulent pas. */
+const SHADOW = { alpha: 0.3 };
+function groundShadows(g, x0, y0, w, k) {
+  let o = null, og = null;
+  for (const d of (decor || []).concat(EDGE_DECOR)) {
+    const s = d.shadow && ATLAS[d.shadow];
+    if (!s) continue;
+    const f = s.f[0], dx = d.x + f[4] - s.o[0], dy = d.y + f[5] - s.o[1];
+    if (dx > x0 + w || dx + f[2] < x0 || dy > y0 + w || dy + f[3] < y0) continue;
+    if (!o) { o = document.createElement('canvas'); o.width = o.height = w * k; og = o.getContext('2d'); }
+    blit(og, f, (dx - x0) * k, (dy - y0) * k, f[2] * k, f[3] * k);
+  }
+  if (!o) return;
+  g.save(); g.globalAlpha = SHADOW.alpha; g.drawImage(o, 0, 0); g.restore();
 }
 function groundChunk(ci, cj) {            // le bloc (ci, cj) de la grille : peint s'il manque, puis le dernier servi
   const key = ci + ',' + cj;
@@ -784,7 +921,7 @@ function drawWater(vx, vy, time) {
       if (hash3(tx, cyc, ty) < RIPPLE.show) {
         const x = tx * TS + 8 + hash3(tx, ty, cyc * 31) * (TS - 16) + u * RIPPLE.drift;
         const y = ty * TS + 8 + hash3(ty, tx, cyc * 17) * (TS - 16);
-        if (deepWater(x, y)) drawSpr('fx/ripple', Math.floor(u * n), x, y);
+        if (deepWater(x, y) && !lilyAt(tx, ty)) drawSpr('fx/ripple', Math.floor(u * n), x, y);
       }
       // scintillement, en plus : sa propre cadence et sa propre place, bref éclat au milieu du cycle
       c = time / RIPPLE.glintCycle + hash3(ty, tx, 11); cyc = Math.floor(c); u = c - cyc;
@@ -827,6 +964,7 @@ const FOOT = {
   // lisière : la butte du tunnel, jusqu'à la bouche (Tecky s'arrête devant au lieu d'y fourrer la tête)
   tunnel: [-200, -420, 40, 0],
 };
+for (const n in MAP.grow) if (FOOT[n]) FOOT[n] = FOOT[n].map(v => Math.round(v * MAP.grow[n]));   // décors agrandis (batiments.py, decor.py : ECH)
 const FLAT = new Set(['bridge', 'sandbox', 'burrow', 'rail', 'dog_bed', 'fallen_apples']);   // posés à plat : dessinés sous les personnages
 // collisions en plusieurs morceaux : garde-corps du pont (son tablier n'est pas de l'eau, voir BRIDGES dans
 // pack_web.py), pieds du portique du port
@@ -837,14 +975,19 @@ let solids = [];
 const BOUND = { side: 12, top: 28, bottom: 4 };
 const offMap = (x0, y0, x1, y1) =>
   x0 < BOUND.side || y0 < BOUND.top || x1 > MAP.w * TS - BOUND.side || y1 > MAP.h * TS - BOUND.bottom;
-function waterAt(x, y) {           // (au-delà du bord, l'eau continue tout droit, comme le sol de la lisière)
+/* Présence de l'eau, 0..1, interpolée entre les coins comme le dessin des tuiles (tiles.py : _ease(), interpolation
+   adoucie, pour des rives sans cassure aux angles) : la rive dessinée passe à 0,5. Au-delà du bord de la carte,
+   l'eau continue tout droit, comme le sol de la lisière. */
+const soften = t => t * t * (3 - 2 * t);
+function waterVal(x, y) {
   const fx = x / TS, fy = y / TS;
   const i = Math.floor(fx), j = Math.floor(fy);
   const W1 = MAP.w + 1, c = (a, b) => MAP.water[clamp(b, 0, MAP.h) * W1 + clamp(a, 0, MAP.w)];
-  const u = fx - i, v = fy - j;
-  const val = c(i, j) * (1 - u) * (1 - v) + c(i + 1, j) * u * (1 - v) + c(i, j + 1) * (1 - u) * v + c(i + 1, j + 1) * u * v;
-  return val > 0.42;
+  const u = soften(fx - i), v = soften(fy - j);
+  return c(i, j) * (1 - u) * (1 - v) + c(i + 1, j) * u * (1 - v) + c(i, j + 1) * (1 - u) * v + c(i + 1, j + 1) * u * v;
 }
+const WATER_EDGE = soften(0.42);     // les pieds s'arrêtent un peu avant la rive dessinée : à 0,42 tuile d'un coin de terre, en ligne droite
+function waterAt(x, y) { return waterVal(x, y) > WATER_EDGE; }
 function blockedPoint(x, y) {
   if (offMap(x, y - 12, x, y)) return true;
   if (waterAt(x, y)) return true;
@@ -883,7 +1026,17 @@ function moveActor(a, dx, dy, hw, noSlide) {
    Ce n'est pas un obstacle : c'est le bord de la carte (BOUND) qui arrête Tecky, juste devant. S'il pousse contre le
    bord sans avancer pendant EDGE.push s, il le dit (pas plus d'une fois toutes les EDGE.again s de jeu). */
 const EDGE = { cam: 64, push: 0.6, again: 8, near: 8, tunnelY: 110 };
-const EDGE_DECOR = MAP.edge.decor.map(([n, x, y, flip]) => ({ key: 'decor/' + n, n, x, y, flip }));
+/* Variantes de la nature (MAP.variants, nature.py) : un arbre, un buisson, un sapin de la carte prend l'un de ses
+   modèles d'après sa position (hash3, comme les tuiles) ; `n` reste le nom du décor (obstacle, refuge, feuilles).
+   Ces sprites sont éclairés d'en haut à gauche : jamais en miroir. Leur ombre portée : groundShadows(). */
+function decorLook(n, x, y) {
+  const v = MAP.variants[n];
+  if (!v) return { key: 'decor/' + n };
+  const nom = v[0][v[1][Math.floor(hash3(Math.round(x), Math.round(y), 7) * v[1].length)]];
+  return { key: 'decor/' + nom, shadow: 'ombre/' + nom, look: nom, night: ATLAS['nuit/' + nom] ? 'nuit/' + nom : undefined };
+}
+const EDGE_DECOR = MAP.edge.decor.map(([n, x, y, flip]) => Object.assign({ n, x, y, flip: flip && !MAP.variants[n] },
+  n === 'tunnel' && flip ? { key: 'decor/tunnel_est' } : decorLook(n, x, y)));    // (tunnel de l'est : dessiné éclairé de la droite, puis en miroir)
 const EDGE_SOLIDS = EDGE_DECOR.filter(d => FOOT[d.n]).map(({ n, x, y, flip }) => {   // (ajoutés à solids par reset)
   const [a, b, c, e] = FOOT[n];
   return flip ? [x - c, y + b, x - a, y + e] : [x + a, y + b, x + c, y + e];
@@ -1056,7 +1209,7 @@ function reset() {
   solids = [];
   decor = MAP.decor.map(([n, x, y]) => {
     for (const f of [FOOT[n], ...(RAILS[n] || [])]) if (f) solids.push([x + f[0], y + f[1], x + f[2], y + f[3]]);
-    return { key: 'decor/' + n, x, y, n };
+    return Object.assign({ x, y, n }, decorLook(n, x, y));
   });
   solids.push(...EDGE_SOLIDS);                       // les buttes des tunnels, au bord de la carte
   P = new Actor('tecky', MAP.start[0], MAP.start[1]);
@@ -1296,6 +1449,7 @@ function doBark() {
    Les chiens sont aussi écartés de la route. */
 const VEHICLE = { car: { len: 116, spd: 215, pitch: 1.15 }, van: { len: 146, spd: 185, pitch: 1 },
                   bus: { len: 240, spd: 140, pitch: 0.75 } };
+for (const n in VEHICLE) VEHICLE[n].len = Math.round(VEHICLE[n].len * (MAP.vehicleScale[n] || 1));   // (longueurs du dessin d'origine ; vehicles.py : ECH)
 const TRAFFIC = { gap: 60, accel: 260, brake: 900, honk: 300, knock: 950, look: 230 };
 function newVehicle([name, lane, x]) {
   return { name, lane, x, T: VEHICLE[name.split('_')[0]], dir: lane === 0 ? -1 : 1, y: MAP.traffic.lanes[lane],
@@ -1580,7 +1734,7 @@ function doBite() {
 const CRITTER = { scare: 170, run: 330, walk: 38, roam: 100, climb: 0.55, jump: 0.45, back: 340, wait: 4, pts: 40, hiss: 230 };
 // refuges : décor -> [décalage x, hauteur (px au-dessus du pied du décor)] du perchoir
 const REFUGES = {
-  squirrel: { tree: [[0, -58]], fir: [[0, -46]] },
+  squirrel: { tree: [[0, -66]], fir: [[0, -46]] },
   cat: { house_red: [[-44, -116], [44, -116]], house_blue: [[-44, -116], [44, -116]], house_timber: [[-34, -120], [34, -120]],
     house_tall: [[-36, -170], [36, -170]], bakery: [[-52, -110], [52, -110]], container: [[-40, -66], [40, -66]],
          container_blue: [[-40, -66], [40, -66]], container_green: [[-40, -66], [40, -66]],
@@ -1598,7 +1752,7 @@ function scareCritter(c) {
   // refuge le plus proche, en évitant ceux qui sont du côté de Tecky
   let best = null, bs = Infinity;
   for (const d of decor) {
-    const offs = (REFUGES[species(c.kind)] || {})[d.n];
+    const offs = (species(c.kind) === 'cat' && MAP.perches[d.look]) || (REFUGES[species(c.kind)] || {})[d.n];   // (toits : batiments.py)
     if (!offs) continue;
     for (const [ox, oy] of offs) {
       const bx = d.x + ox, l = dist(c.x, c.y, bx, d.y + 6);
@@ -3080,7 +3234,42 @@ function glowSpot(x, y, r, a) {                       // tache de lumière chaud
   }
   ctx.globalAlpha = a; ctx.drawImage(glowImg, x - r, y - r, r * 2, r * 2); ctx.globalAlpha = 1;
 }
-function drawLight(cx, cy) {
+/* Fenêtres allumées quand les lampadaires le sont (sprites « nuit/… », batiments.py : les vitres d'un bâtiment en
+   lumière chaude), posées après la teinte du soir, qui les assombrirait. Ce qui est devant le bâtiment (plus bas à
+   l'écran : un personnage, un arbre, un lampadaire) doit rester devant : les fenêtres passent par un petit canevas
+   à part, où ce qui a été dessiné après le bâtiment (list, la liste triée de drawWorld) est redessiné en gomme. */
+const WINDOWS = { front: 320, alpha: 0.92, glow: 0.16 };
+let winCv = null;
+function drawWindows(cx, cy, list, lamp) {
+  for (const d of decor) {
+    if (!d.night) continue;
+    const s = ATLAS[d.night], f = s.f[0], x = d.x + f[4] - s.o[0], y = d.y + f[5] - s.o[1];
+    if (x > cx + VW || x + f[2] < cx || y > cy + VH || y + f[3] < cy) continue;
+    const front = list.filter(o => o.y > d.y && o.y < d.y + WINDOWS.front);
+    if (!front.length) drawSpr(d.night, 0, d.x, d.y, { alpha: WINDOWS.alpha * lamp });
+    else {
+      const w = Math.ceil(f[2] * scale), h = Math.ceil(f[3] * scale);
+      if (!winCv) winCv = document.createElement('canvas');
+      if (winCv.width < w || winCv.height < h) { winCv.width = Math.max(winCv.width, w); winCv.height = Math.max(winCv.height, h); }
+      const g = winCv.getContext('2d'), main = ctx;
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.globalCompositeOperation = 'source-over';
+      g.clearRect(0, 0, winCv.width, winCv.height);
+      g.setTransform(scale, 0, 0, scale, -x * scale, -y * scale);
+      ctx = g;
+      try {
+        drawSpr(d.night, 0, d.x, d.y);
+        g.globalCompositeOperation = 'destination-out';
+        for (const o of front) o.draw();
+      } finally { ctx = main; }
+      ctx.globalAlpha = WINDOWS.alpha * lamp;
+      ctx.drawImage(winCv, 0, 0, w, h, x, y, w / scale, h / scale);
+      ctx.globalAlpha = 1;
+    }
+    glowSpot(d.x, d.y - 44, 120, WINDOWS.glow * lamp);          // un peu de lumière chaude sur la façade
+  }
+}
+function drawLight(cx, cy, list) {
   if (sun < 0.01 && weather.k < 0.01) return;
   const k = clamp(sun, 0, 4), wt = weatherTint();          // (la météo assombrit dans le même remplissage)
   const tint = [0, 1, 2].map(j => Math.round(sunAt(SUN.tints.map(t => t[j]), k) * wt[j] / 255));
@@ -3101,6 +3290,7 @@ function drawLight(cx, cy) {
     glowSpot(d.x, d.y - 93, 64 + 16 * night, (0.55 + 0.3 * night) * lamp);
     glowSpot(d.x, d.y - 4, 70 + 40 * night, (0.3 + 0.3 * night) * lamp);
   }
+  if (lamp > 0 && list) drawWindows(cx, cy, list, lamp);
   // retrouvailles : une lumière chaude autour d'Alice et de Tecky
   if (hug > 0) glowSpot((alice.x + P.x) / 2, (alice.y + P.y) / 2 - 50, 260, 0.45 * hug);
   if (ending && ending.home) drawFireflies();
@@ -4607,7 +4797,7 @@ function drawWorld() {
     f.y + (f.vy || 0) * f.t, { angle: f.angle, sc: f.grow ? f.grow[0] + (f.grow[1] - f.grow[0]) * f.t / f.life : undefined,
       alpha: f.life ? clamp(Math.min(f.t / 0.25, (f.life - f.t) / 0.5), 0, 1) : undefined });
   drawClouds(cx, cy);
-  drawLight(cx, cy);
+  drawLight(cx, cy, list);
   drawSkyWeather(cx, cy);
 
   // barres de vie ennemies

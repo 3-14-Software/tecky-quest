@@ -60,7 +60,8 @@ eval(base + `setTimeout(() => {
   ok(run('chunkTiles()') === 8 && blocs.length >= 2 && blocs.length <= 9 && blocs.every(([w, k, ww]) => k === 2 && w === (8 * 64 + 2 * 2) * 2 && ww === 8 * 64 + 4),
      blocs.length + ' blocs de 8 tuiles peints pour un écran, à l\\'échelle 2 (' + blocs[0][0] + ' px de canevas)');
   ok(run('calls.some(c => c[0] === T4 && c[3] === 128 && c[7] === 128)'), 'peints depuis le tileset x4, une tuile = 128 px');
-  ok(run('calls.filter(c => c[0] && c[0].getContext).every(c => c[3] === c[7] * 2 && c[4] === c[8] * 2)'), 'et posés à l\\'écran deux fois plus petits que leur canevas');
+  // (les blocs seulement : l'habillage de l'herbe et les ombres passent aussi par des canevas, en les peignant)
+  ok(run('(() => { const blocs = new Set([...ground.values()].map(k => k.c)); const v = calls.filter(c => blocs.has(c[0])); return v.length > 0 && v.every(c => c[3] === c[7] * 2 && c[4] === c[8] * 2); })()'), 'et posés à l\\'écran deux fois plus petits que leur canevas');
   run('for (let y = -128; y < MAP.h * 64; y += 300) for (let x = -128; x < MAP.w * 64; x += 500) drawGround(x, y);');
   ok(run('ground.size') === run('GROUND_MAX'), 'toute la carte parcourue : ' + run('GROUND_MAX') + ' blocs gardés, pas un de plus');
   run('calls = []; drawGround(-64, -64); drawGround(-64, -64);');

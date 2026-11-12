@@ -18,8 +18,8 @@ import sys
 
 from PIL import Image
 
-import alice
 import alice2
+import batiments
 import butterflies
 import carte
 import cows
@@ -35,10 +35,10 @@ import hens
 import hud
 import items
 import lisiere
-import tecky
 import tecky2
 import vehicles
 import music
+import nature
 import tiles
 import villageois
 from spritelib import render_svg, flash, PAD
@@ -127,9 +127,9 @@ def edge_decor(g, keep):
 
 
 EDGE = edge_decor(corner_grid(), edge_keep())
-# variantes des tuiles : herbe (brins, fleurs, cailloux) et terrains pleins (35 % des tuiles), choisies d'après la
+# variantes des tuiles : terrains pleins (35 % des tuiles), choisies d'après la
 # position de la tuile (hash3) : modifier un coin de la carte ne change rien ailleurs, et l'éditeur fait le même choix
-GRASS_VARIANTS = [1, 1, 1, 1, 2, 2, 3, 4]
+GRASS_VARIANTS = [1]        # herbe unie : brins et fleurs sont semés par le jeu (game.js : groundDetails())
 FULL_VARIANTS = {"dirt": [9, 10], "road": [11, 12], "paving": [13], "concrete": [14, 15]}
 
 
@@ -201,6 +201,7 @@ def build_map():
     return {
         "w": MW, "h": MH, "ts": TS, "ground": ground, "over": over, "water": water,
         "hole": ovrow + OV["trou creusé (trésor)"],
+        "shore": tiles.tile_index("water", 0),        # la rangée des tuiles eau / herbe (la 16e : l'eau pleine)
         "decor": [[n, px(x), px(y)] for n, x, y in DECOR],
         # lisière (lisiere.py) : sol de la marge autour de la carte (tx, ty, tuile) et ses décors (nom, x, y, miroir)
         "edge": {"r": R, "ring": ring, "decor": [[n, px(x), px(y), f] for n, x, y, f in EDGE]},
@@ -248,6 +249,12 @@ def build_map():
         "alice": [px(ALICE[0]), px(ALICE[1])],
         "title": [px(TITLE[0]), px(TITLE[1])],
         "decorFps": {n: fps for n, (_, fps) in decor.ANIMATED.items()},
+        # variantes de la nature (nature.py) : décor -> [sprites, tirage] ; le jeu en choisit un d'après la position
+        "variants": {n: [noms, tirage] for n, (noms, tirage) in nature.VARIANTES.items()},
+        "perches": batiments.perchoirs(S),            # où un chat se réfugie sur le toit de chaque bâtiment
+        # décors agrandis (bâtiments, camion, tracteur, chariot) : leur obstacle (FOOT) grandit d'autant
+        "grow": {**batiments.agrandis(), **decor.ECH},
+        "vehicleScale": vehicles.ECH,
         "signs": [[px(x), px(y), t] for x, y, t in SIGNS],
         "farmRoadY": px(ROAD - 0.7),                  # les poules ne descendent jamais plus bas (la grande route)
         "ballBox": CARTE["ballBox"],                  # en tuiles : là où roulent les ballons de Léon
@@ -317,7 +324,8 @@ def collect(r=1):
             out.append((f"{kind}/{a}", [render_svg(sv, 64, 48, R, PAD) for sv in cows.frames(kind, a)], (32 * S + M, 44 * S + M), True))
     for c in butterflies.COLORS:
         out.append((f"butterfly/{c}", [render_svg(sv, 24, 24, R, PAD) for sv in butterflies.frames(c)], (12 * S + M, 12 * S + M), True))
-    for n, (_, (w, h), (ox, oy)) in vehicles.VEHICLES.items():
+    for n in vehicles.VEHICLES:
+        w, h, ox, oy = vehicles.cadre(n)
         out.append((f"vehicle/{n}", [render_svg(sv, w, h, R, PAD) for sv in vehicles.frames(n)], (ox * S + M, oy * S + M), True))
     for kind in hens.COLORS:
         for anim in hens.ANIMS:
@@ -328,10 +336,22 @@ def collect(r=1):
     for n, (fn, size, _) in items.EFFECTS.items():
         o = (12 + M, 48 + M) if n == "bark" else (size + M, size + M)
         out.append((f"fx/{n}", [render_svg(s, size, size, R, PAD) for s in fn()], o, True))
-    for n, (fn, (w, h), (ox, oy)) in decor.DECOR.items():
-        out.append((f"decor/{n}", [render_svg(dr.svg(), w, h, R, PAD) for dr in decor.frames(n)], (ox * S + M, oy * S + M), True))
-    for n, (fn, (w, h), (ox, oy)) in lisiere.DECOR.items():        # la lisière, au bord de la carte
-        out.append((f"decor/{n}", [render_svg(fn().svg(), w, h, R, PAD)], (ox * S + M, oy * S + M), True))
+    for n, fn, t in (("fleur", nature.sol_fleurs, nature.SOL_T), ("brins", nature.sol_brins, nature.SOL_T),      # détails
+                     ("galet", nature.sol_galets, nature.SOL_T), ("nenuphar", nature.sol_nenuphars, nature.EAU_T)):   # du sol
+        out.append((f"sol/{n}", [render_svg(sv, t, t, R, PAD) for sv in fn()], (t // 2 * S + M, t // 2 * S + M), True))
+    for n in sorted({v for noms, _ in nature.VARIANTES.values() for v in noms}):       # la nature (nature.py) et ses ombres
+        _, w, h, ox, oy = nature.cadre(n)
+        out.append((f"decor/{n}", [nature.image(n, R)], (ox * S + M, oy * S + M), True))
+        out.append((f"ombre/{n}", [nature.ombre(n, R)[0]], (ox * S + M, oy * S + M), True))
+    for n in decor.DECOR:
+        w, h, ox, oy = decor.cadre(n)
+        out.append((f"decor/{n}", [render_svg(sv, w, h, R, PAD) for sv in decor.svgs(n)], (ox * S + M, oy * S + M), True))
+    for n in batiments.ECLAIRES:                                    # les fenêtres des bâtiments, allumées le soir
+        _, w, h, ox, oy = nature.cadre("nuit_" + n)
+        out.append((f"nuit/{n}", [nature.image("nuit_" + n, R)], (ox * S + M, oy * S + M), True))
+    for n, fn in lisiere.DECOR.items():                             # la lisière : les tunnels de la grande route
+        sp = fn()
+        out.append((f"decor/{n}", [nature.rendre(sp, R)], (sp.pied[0] * S + M, sp.pied[1] * S + M), True))
     for n, ims in hud.all_sprites(R).items():
         key = "hud/" + n.replace("spr_hud_", "").replace("spr_", "")
         o = {"spr_hud_arrow": (40, 40), "spr_hud_arrow_icon": (22, 22)}.get(n, (0, 0))
@@ -421,7 +441,7 @@ def build_hd(meta, height):
     if not (old.get("stamp") == stamp and old.get("files") == names
             and all(os.path.exists(os.path.join(WEB, n)) for n in names)):
         pages = pack_hd(collect(HD), meta, height)
-        for n, im in zip(names, pages + [tiles.tileset(S * HD, water_marks=False, composites=COMPOSITES)]):
+        for n, im in zip(names, pages + [tiles.tileset(S * HD, composites=COMPOSITES)]):
             im.save(os.path.join(WEB, n), optimize=True)
         json.dump({"stamp": stamp, "files": names}, open(info, "w", encoding="utf-8"))
         print("images x%d :" % (S * HD), ", ".join(f"{n} {os.path.getsize(os.path.join(WEB, n)) // 1024} Ko" for n in names))
@@ -443,8 +463,13 @@ def preview(m, atlas, meta, tileset):
             img.alpha_composite(tile(m["over"][i]), ((i % MW) * TS + o, (i // MW) * TS + o))
     for tx, ty, idx in e["ring"]:
         img.paste(tile(idx), (tx * TS + o, ty * TS + o))
-    things = [("decor/" + n, x, y, False) for n, x, y in m["decor"]]
-    things += [("decor/" + n, x, y, f) for n, x, y, f in e["decor"]]
+    def cle(n, x, y):                     # comme decorKey() de game.js
+        if n not in nature.VARIANTES:
+            return "decor/" + n
+        noms, tirage = nature.VARIANTES[n]
+        return "decor/" + noms[tirage[int(hash3(round(x), round(y), 7) * len(tirage))]]
+    things = [(cle(n, x, y), x, y, False) for n, x, y in m["decor"]]
+    things += [(cle(n, x, y), x, y, f and n not in nature.VARIANTES) for n, x, y, f in e["decor"]]
     things += [("item/" + n, x, y, False) for n, x, y in m["items"]]
     things += [(f"{n}/idle/down", x, y, False) for n, x, y in m["enemies"]]
     things += [(f"{n}/idle/right", x, y, False) for n, x, y, *_ in m["hens"]]
@@ -466,7 +491,7 @@ def main():
     m = build_map()
     atlas, meta = pack(collect())
     atlas.save(os.path.join(WEB, "atlas.png"), optimize=True)
-    tileset = tiles.tileset(S, water_marks=False, composites=COMPOSITES)   # eau unie : le jeu anime ses vaguelettes
+    tileset = tiles.tileset(S, composites=COMPOSITES)   # eau unie : le jeu anime ses vaguelettes
     tileset.save(os.path.join(WEB, "tiles.png"), optimize=True)
     preview(m, atlas, meta, tileset)
     hd = None if "--sans-hd" in sys.argv else build_hd(meta, atlas.height)

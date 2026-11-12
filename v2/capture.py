@@ -32,7 +32,7 @@ def capturer(sortie, x, y, mode="balade", js="", hud=False):
     base = open(os.path.join(DOSSIER, "index.html"), encoding="utf-8").read()
     k = base.index("<script>") + len("<script>")
     page = (base[:k] + f"\nconst ESSAI = [{x}, {y}, '{mode}'];\n" + base[k:]
-            + '<img src="atlas_x4_0.png" style="display:none"><img src="atlas_x4_1.png" style="display:none">'
+            + "".join(f'<img src="{f}" style="display:none">' for f in sorted(os.listdir(DOSSIER)) if f.startswith("atlas_x4_"))
             + '<div id="etiquette" style="position:fixed;left:8px;bottom:8px;font:20px monospace;color:#fff;'
               'background:#000;padding:2px 8px;z-index:9">?</div>\n<script>\n'
             + ("" if hud else "drawHUD = function () {}; drawBanner = function () {}; drawFsButton = function () {};\n")

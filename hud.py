@@ -1,23 +1,20 @@
 """
-HUD de Tecky Quest (à dessiner dans l'event Draw GUI).
-Tailles en 1x ; build.py exporte aussi en x2.
+HUD de Tecky Quest. Tailles en 1x ; pack_web.py les rend à l'échelle de l'atlas.
 
 Police : Fredoka (SIL Open Font License, voir fonts/OFL.txt), utilisée pour
-les chiffres en sprite-font, les touches, le logo et la maquette.
+les chiffres en sprite-font, les touches et le logo.
 """
 import math
 import os
 
 from PIL import Image, ImageDraw, ImageFont
 
-import alice
 import alice2
 import farmer
 import items
 import npcs
 import port
 import herissons
-import tecky
 import tecky2
 from spritelib import Drawing, circle, ellipse, rect, poly, path, line, render_svg, OUTLINE
 
@@ -231,7 +228,7 @@ def key_frames(scale):
             bb = dr.textbbox((0, 0), k, font=f)
             dr.text(((im.width - (bb[2] - bb[0])) / 2 - bb[0], (18 * scale - (bb[3] - bb[1])) / 2 - bb[1]),
                     k, font=f, fill=rgb("#3A3F4A"))
-        # toutes les images d'un sprite GameMaker ont la même taille : on centre dans 40x24
+        # toutes les images d'un sprite ont la même taille : on centre dans 40x24
         cell = Image.new("RGBA", (40 * scale, 24 * scale), (0, 0, 0, 0))
         cell.alpha_composite(im, ((cell.width - im.width) // 2, 0))
         out.append(cell)
@@ -493,7 +490,7 @@ def _ic_aventure(d):
 
 def _ic_copains(d):
     """Patte de Tecky (roux) et petit cœur rose : copain de tous les chiens."""
-    fur, light = tecky.PAL["fur"], tecky.PAL["light"]
+    fur, light = tecky2.PAL["fur"], tecky2.PAL["light"]
     px, py = 14.2, 20.6
     d.add(ellipse(px, py, 5.8, 4.8), fur)
     for x, y in ((-6.4, -6.0), (-2.6, -9.6), (2.6, -9.6), (6.4, -6.0)):

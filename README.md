@@ -37,7 +37,6 @@ Tout est généré par du code : sprites en SVG (aplats + contour), tileset, dé
 Les répliques sont prêtes à être lues par une synthèse vocale, une voix par personnage : voir [voix/README.md](voix/README.md).
 
 - **Jouer** : https://3-14-software.github.io/tecky-quest/ (clavier : flèches/ZQSD, X aboyer, C mordre (ou parler, gratter, lire, passer sous un grillage, jouer), R flairer, P pause, F plein écran, M son ; manette : stick ou croix, X/B aboyer, A mordre (ou parler, gratter, lire, passer sous un grillage, jouer) et valider, Y flairer, Start pause, Select son ; tactile sur téléphone).
-- **Kit GameMaker Studio 2** (sprites en strips x1/x2, tileset, décor, HUD, sons ; en pause pour l'instant) : voir [GAMEMAKER.md](GAMEMAKER.md).
 
 ## Construire
 
@@ -48,8 +47,6 @@ pip install -r requirements.txt
 
 python3 pack_web.py      # version web  -> web/index.html (une seule page) + web/tecky_quest_web/ (autonome, PWA)
                          # et les images x4 (atlas_x4_N.png, tiles_x4.png), chargées par le jeu sur grand écran
-python3 build.py         # kit GameMaker -> out/ (sprites, tileset, HUD, audio, aperçus)
-python3 music.py         # WAV de la musique et de la fanfare -> out/audio/
 ./publish_docs.sh        # copie la version autonome dans docs/ (servie par GitHub Pages)
 ```
 
@@ -89,12 +86,10 @@ os dorés, écureuils et chats, zones (bandeau, ambiance, timbre), transitions m
 
 | Fichier | Rôle |
 |---|---|
-| `spritelib.py` | boîte à outils de dessin SVG, rendu, strips, GIF |
+| `spritelib.py` | boîte à outils de dessin SVG et rendu en images |
 | `tecky2.py`, `alice2.py`, `chiens2.py` | Tecky, Alice et les chiens du jeu web (v2 : voir `PLAN_V2.md`) |
-| `tecky.py`, `alice.py`, `enemies.py`, `hens.py`, `farmer.py`, `npcs.py`, `critters.py`, `ducks.py`, `vehicles.py`, `butterflies.py`, `items.py`, `decor.py`, `tiles.py`, `hud.py` | dessin des personnages, poules, fermier, facteur et voisine, écureuils et chats, canards, véhicules, papillons, objets, décor, tileset, HUD |
-| `music.py` | partition chiptune (thème en boucle, fanfare de victoire, musique de défaite), export WAV |
-| `sample_map.py`, `hud_mockup.py` | carte d'exemple et maquette du HUD |
-| `build.py` | export du kit GameMaker dans `out/` |
+| `nature.py`, `batiments.py`, `lisiere.py`, `hens.py`, `farmer.py`, `npcs.py`, `critters.py`, `ducks.py`, `vehicles.py`, `butterflies.py`, `items.py`, `decor.py`, `tiles.py`, `hud.py` | dessin de la nature, des bâtiments, de la lisière, des poules, fermier, facteur et voisine, écureuils et chats, canards, véhicules, papillons, objets, décor, tileset, HUD |
+| `music.py` | partition chiptune (thème en boucle, fanfare de victoire, musique de défaite), jouée par le séquenceur WebAudio du jeu |
 | `carte.json`, `carte.py` | la carte du jeu, et sa lecture, sa vérification, son écriture |
 | `editeur.py`, `editeur/` | éditeur de carte (page web locale) |
 | `pack_web.py` | atlas, niveau, version web et paquet autonome dans `web/` |

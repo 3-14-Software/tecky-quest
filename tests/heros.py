@@ -1,8 +1,9 @@
 """
 Tecky, Alice et les chiens du jeu web (tecky2.py, alice2.py, chiens2.py) :
-- mêmes animations et mêmes vues que les dessins d'avant (tecky.py, alice.py) : le moteur les appelle par leur nom ;
-- debout, les pieds sont posés sur l'origine du cadre (c'est là que le jeu place le personnage) : comme ceux des
-  dessins d'avant, ils la dépassent d'une à deux unités, contour compris ;
+- les animations et les vues que le moteur appelle par leur nom (ATTENDU), avec leurs nombres d'images : le jeu
+  attend la fin d'un aboiement, d'une morsure ;
+- debout, les pieds sont posés sur l'origine du cadre (c'est là que le jeu place le personnage) : ils la dépassent
+  d'une à deux unités, contour compris ;
 - rien ne sort du cadre et de sa marge (sinon l'atlas le couperait).
 """
 import os
@@ -12,11 +13,8 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import alice  # noqa: E402
 import alice2  # noqa: E402
 import chiens2  # noqa: E402
-import enemies  # noqa: E402
-import tecky  # noqa: E402
 import tecky2  # noqa: E402
 from spritelib import render_svg, PAD  # noqa: E402
 
@@ -48,12 +46,24 @@ def dans_le_cadre(a):
     return not (a[0].any() or a[-1].any() or a[:, 0].any() or a[:, -1].any())
 
 
-# --- mêmes noms qu'avant
-ok({n: v[2] for n, v in tecky2.ANIMS.items()} == {n: v[2] for n, v in tecky.ANIMS.items()},
-   "Tecky : mêmes animations et mêmes vues que tecky.py (" + ", ".join(tecky2.ANIMS) + ")")
-ok({n: v[2:] for n, v in tecky2.REST_ANIMS.items()} == {n: v[2:] for n, v in tecky.REST_ANIMS.items()},
-   "Tecky : mêmes poses de repos, mêmes vues, mêmes boucles (" + ", ".join(tecky2.REST_ANIMS) + ")")
-ok(set(alice2.ANIMS) == set(alice.ANIMS), "Alice : mêmes animations que alice.py (" + ", ".join(alice2.ANIMS) + ")")
+# --- ce que le moteur attend (game.js les appelle par leur nom ; ne changer qu'avec lui)
+TROIS, PROFIL, DEUX = ("down", "up", "right"), ("right",), ("down", "right")
+ATTENDU = {
+    "tecky": {"idle": TROIS, "walk": TROIS, "bark": TROIS, "bite": TROIS, "hurt": TROIS, "dig": TROIS, "ko": PROFIL},
+    # repos : (vues, en boucle)
+    "repos": {"sit": (DEUX, True), "yawn": (DEUX, False), "scratch": (PROFIL, True), "sleep": (DEUX, True),
+              "shake": (DEUX, False)},
+    "alice": {"idle", "walk", "happy"},
+    "chiens": ["roquet", "bouledogue", "molosse", "berger"],
+    # chiens : (nombre d'images, vues)
+    "chien": {"idle": (4, TROIS), "walk": (8, TROIS), "bark": (4, TROIS), "bite": (5, TROIS), "hurt": (2, TROIS),
+              "ko": (4, PROFIL)},
+}
+ok({n: v[2] for n, v in tecky2.ANIMS.items()} == ATTENDU["tecky"],
+   "Tecky : les animations et les vues que le moteur appelle (" + ", ".join(tecky2.ANIMS) + ")")
+ok({n: tuple(v[2:]) for n, v in tecky2.REST_ANIMS.items()} == ATTENDU["repos"],
+   "Tecky : les poses de repos, leurs vues, leurs boucles (" + ", ".join(tecky2.REST_ANIMS) + ")")
+ok(set(alice2.ANIMS) == ATTENDU["alice"], "Alice : les animations que le moteur appelle (" + ", ".join(alice2.ANIMS) + ")")
 ok(len(tecky2.frames("walk", "right")) == 8 and len(alice2.frames("walk", "down")) == 8, "la marche a 8 images")
 
 # --- Tecky : les pieds sur l'origine, rien hors du cadre
@@ -67,8 +77,7 @@ for nom, (_, _, vues) in tecky2.ANIMS.items():
             ok(False, f"tecky/{nom}/{v} sort de son cadre")
         if nom == "idle":
             bas = pieds(rendus[0])
-            avant = pieds(alpha(tecky.frames("idle", v)[0], 48, 48)) - 44
-            ok(pose_au_sol(bas, oy), f"Tecky debout ({v}) : le bas des pattes {bas - oy:.1f} sous l'origine ({avant:.1f} avant)")
+            ok(pose_au_sol(bas, oy), f"Tecky debout ({v}) : le bas des pattes {bas - oy:.1f} sous l'origine")
 for nom, (_, _, vues, _) in tecky2.REST_ANIMS.items():
     for v in vues:
         w, h, ox, oy = tecky2.CADRE[v]
@@ -103,13 +112,11 @@ ok(diff == 12, "son pied nu se voit dans les trois vues")
 haut = [pieds(alpha(s, w, h)) for s in alice2.frames("happy", "down")]
 ok(min(haut) < oy - 2.5, f"saut de joie : elle décolle ({oy - min(haut):.1f} unités)")
 
-# --- les chiens : mêmes noms, mêmes vues et mêmes durées qu'avant (le jeu attend la fin d'un aboiement, d'une
-# morsure), sauf la marche en 8 images ; les pieds sur l'origine, rien hors du cadre, le KO posé au sol
-ok(list(chiens2.CHIENS) == list(enemies.DOGS), "chiens : les mêmes qu'avant (" + ", ".join(chiens2.CHIENS) + ")")
-avant = {n: (len(v[0]("right")), v[2]) for n, v in tecky.ANIMS.items() if n != "dig"}
+# --- les chiens : les noms, les vues et les durées que le jeu attend (la fin d'un aboiement, d'une morsure) ; les
+# pieds sur l'origine, rien hors du cadre, le KO posé au sol
+ok(list(chiens2.CHIENS) == ATTENDU["chiens"], "chiens : ceux de carte.json et de game.js (" + ", ".join(chiens2.CHIENS) + ")")
 apres = {n: (len(v[0]("right")), v[2]) for n, v in chiens2.ANIMS.items()}
-avant["walk"] = (8, avant["walk"][1])
-ok(apres == avant, "chiens : mêmes animations, mêmes vues, mêmes nombres d'images (la marche en a 8)")
+ok(apres == ATTENDU["chien"], "chiens : les animations, les vues et les nombres d'images attendus (la marche en a 8)")
 w, h, ox, oy = chiens2.CADRE
 for chien in chiens2.CHIENS:
     images, soucis = 0, []

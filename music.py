@@ -2,24 +2,14 @@
 """
 « Promenade de Tecky » — morceau chiptune original, en boucle ; fanfare de victoire et musique de défaite.
 
-Une seule source pour les deux versions :
-  - events() -> liste de notes utilisée par le jeu web (WebAudio)
-  - render_wav() -> fichier WAV pour GameMaker (out/audio/music_tecky.wav)
+events() -> liste de notes jouée par le séquenceur WebAudio du jeu (pack_web.py les écrit dans la page).
 
 Canaux, façon console 8 bits :
   lead  : onde carrée 25 %      (mélodie)
   arp   : onde carrée 12,5 %    (arpèges rapides, discrets)
   bass  : triangle              (basse sautillante)
   drums : bruit + sinus         (grosse caisse, caisse claire, charleston)
-
-    python3 music.py   -> out/audio/music_tecky.wav
 """
-import math
-import os
-import struct
-
-import numpy as np
-
 BPM = 140
 STEPS_PER_BAR = 16          # doubles-croches
 
@@ -59,7 +49,7 @@ def freq(m):
 # Variations du thème selon la zone : même mélodie, mêmes accords, même grille de phrases (elles se superposent pendant
 # le fondu enchaîné du jeu, qui fait glisser le tempo de l'une à l'autre pendant la mesure de fondu).
 STYLES = {
-    "base": dict(bpm=140),          # niche, campagne : le thème tel quel (et le WAV GameMaker)
+    "base": dict(bpm=140),          # niche, campagne : le thème tel quel
     "village": dict(bpm=152),       # plus entraînant : basse syncopée, charleston en doubles-croches, notes piquées
     "ferme": dict(bpm=136),         # country : basse alternée fondamentale-quinte, rouleaux de banjo, notes glissées
     "foret": dict(bpm=108),         # calme : basse tenue, arpèges lents, presque pas de batterie, écho sur la mélodie
@@ -320,83 +310,3 @@ def defeat_events():
         ev.append([s0 + 8, "drums", "hat", 1, 0.5])
     ev.sort(key=lambda e: e[0])
     return total, ev
-
-
-VOL = {"lead": 0.16, "arp": 0.045, "bass": 0.2, "kick": 0.5, "snare": 0.2, "hat": 0.07}
-
-
-# ------------------------------------------------------------------ rendu WAV
-def render_wav(fn, loops=2, sr=44100, song=None, bpm=None, tail=0.0):
-    """song = (total, events) ; tail > 0 : pas de bouclage, on ajoute `tail` s de silence pour laisser sonner la fin."""
-    total, ev = song or events()
-    step = 60 / (bpm or BPM) / 4
-    n = int((total * step * loops + tail) * sr)
-    buf = np.zeros(n, dtype=np.float64)
-    rng = np.random.default_rng(3)
-
-    def env(length, a=0.004, d=0.05, s=0.65, r=0.03):
-        t = np.arange(length) / sr
-        dur = length / sr
-        e = np.where(t < a, t / a, np.where(t < a + d, 1 - (1 - s) * (t - a) / d, s))
-        rel = np.clip((dur - t) / r, 0, 1)
-        return e * rel
-
-    for lp in range(loops):
-        off = lp * total
-        for e in ev:
-            st, ch, note, ln, vol = e[:5]
-            i0 = int((st + off) * step * sr)
-            if ch in ("lead", "arp", "bass"):
-                L = int(ln * step * sr)
-                t = np.arange(L) / sr
-                ph = (t * freq(note)) % 1.0
-                if ch == "lead":
-                    w = np.where(ph < 0.25, 1.0, -1.0)
-                    # léger vibrato après l'attaque
-                    w = w * env(L)
-                elif ch == "arp":
-                    w = np.where(ph < 0.125, 1.0, -1.0) * env(L, d=0.02, s=0.4)
-                else:
-                    w = (4 * np.abs(ph - 0.5) - 1) * env(L, d=0.08, s=0.8)
-                seg = w * VOL[ch] * vol
-            else:
-                if note == "kick":
-                    L = int(0.14 * sr)
-                    t = np.arange(L) / sr
-                    f = 150 * np.exp(-t * 28) + 45
-                    seg = np.sin(2 * np.pi * np.cumsum(f) / sr) * np.exp(-t * 22)
-                elif note == "snare":
-                    L = int(0.12 * sr)
-                    t = np.arange(L) / sr
-                    seg = rng.uniform(-1, 1, L) * np.exp(-t * 30) * 0.9 + np.sin(2 * np.pi * 190 * t) * np.exp(-t * 40) * 0.4
-                else:
-                    L = int(0.035 * sr)
-                    t = np.arange(L) / sr
-                    x = rng.uniform(-1, 1, L)
-                    x = np.diff(np.concatenate([[0], x]))       # passe-haut grossier
-                    seg = x * np.exp(-t * 90) * 0.6
-                seg = seg * VOL[note] * vol
-            # les queues de notes qui dépassent la fin reviennent au début : boucle sans coupure
-            idx = (np.arange(len(seg)) + i0) % n if not tail else np.arange(len(seg)) + i0
-            keep = idx < n
-            np.add.at(buf, idx[keep], seg[keep])
-    buf = np.tanh(buf * 1.1) * 0.9
-    data = (buf * 32767).astype("<i2").tobytes()
-    os.makedirs(os.path.dirname(fn), exist_ok=True)
-    with open(fn, "wb") as f:
-        f.write(b"RIFF" + struct.pack("<I", 36 + len(data)) + b"WAVEfmt ")
-        f.write(struct.pack("<IHHIIHH", 16, 1, 1, sr, sr * 2, 2, 16))
-        f.write(b"data" + struct.pack("<I", len(data)) + data)
-    return n / sr
-
-
-if __name__ == "__main__":
-    out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "audio", "music_tecky.wav")
-    dur = render_wav(out, loops=1)
-    print(f"OK -> {out} ({dur:.1f} s, boucle parfaite)")
-    out2 = os.path.join(os.path.dirname(out), "music_victoire.wav")
-    dur = render_wav(out2, loops=1, song=fanfare_events(), bpm=FANFARE_BPM, tail=1.5)
-    print(f"OK -> {out2} ({dur:.1f} s, ne boucle pas)")
-    out3 = os.path.join(os.path.dirname(out), "music_defaite.wav")
-    dur = render_wav(out3, loops=1, song=defeat_events(), bpm=DEFEAT_BPM, tail=1.5)
-    print(f"OK -> {out3} ({dur:.1f} s, ne boucle pas)")

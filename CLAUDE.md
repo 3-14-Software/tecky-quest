@@ -1,8 +1,9 @@
 # Tecky Quest — contexte pour Claude Code
 
 Mini RPG en vue de dessus, fait pour Christophe (3.14 Software, développeur Java, Fedora, il parle français) :
-Tecky, le teckel au harnais rouge, cherche Alice (la fille de Christophe, 5 ans). Deux livrables issus des mêmes sources :
-une **version web** (Canvas, une seule page HTML, PWA) et un **kit d'assets GameMaker Studio 2** (`GAMEMAKER.md`).
+Tecky, le teckel au harnais rouge, cherche Alice (la fille de Christophe, 5 ans). Un seul livrable : la **version web**
+(Canvas, une seule page HTML, PWA). Le kit d'assets GameMaker des débuts a été abandonné (12 novembre 2026) et retiré
+du dépôt avec les dessins de la v1 (`tecky.py`, `alice.py`, `enemies.py`) : ne pas le refaire.
 Langue : tout en français (interface du jeu, commentaires, README, messages de commit). Style visuel : aplats de couleurs,
 contour brun `#3A1E12`, lignes simples, ambiance mignonne. Référence des personnages : `reference/alice_tecky.png`
 (illustrations générées par IA, fournies par Christophe). Tecky : teckel roux, harnais rouge en vrai ; Alice : cheveux châtains
@@ -18,21 +19,20 @@ pip install -r requirements.txt           # cairosvg, pillow, numpy (+ Node 18+ 
 python3 pack_web.py                       # web/index.html, web/tecky_quest_web/ (autonome), atlas, niveau, images x4
 python3 pack_web.py --sans-hd             # la même chose sans les images x4 (le jeu reste en x2)
 python3 editeur.py                        # éditeur de carte : http://127.0.0.1:8770/ (modifie carte.json)
-python3 build.py                          # kit GameMaker -> out/ (efface d'abord ses anciennes sorties)
 ./tests/run_all.sh                        # reconstruit puis lance tous les tests (doit finir avec exit=0)
 ./publish_docs.sh                         # copie la version autonome dans docs/ (GitHub Pages)
 ```
 
 Jeu en ligne : https://3-14-software.github.io/tecky-quest/ — publié par `.github/workflows/pages.yml` à chaque push touchant `docs/`.
 Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit (docs/ inclus), push sur `main`.
-`web/` et `out/` sont générés et ignorés par Git ; `docs/` est commité.
+`web/` est généré et ignoré par Git ; `docs/` est commité.
 `docs/glitch/` : la démo de **Glitch**, fork pour adultes (dossier `../glitch`, son propre `CLAUDE.md`), publiée là
 par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) ; `publish_docs.sh` d'ici l'épargne.
 
 ## Architecture
 
 - `spritelib.py` : classe `Drawing` (parts SVG, silhouette dessinée en premier avec un trait épais = contour propre),
-  `render_svg(svg, w, h, scale, pad)`, strips `_stripN`. Les vues gauches sont le miroir des vues droites.
+  `render_svg(svg, w, h, scale, pad)`, `flash()`. Les vues gauches sont le miroir des vues droites.
 - `tecky2.py` et `alice2.py` : **Tecky et Alice du jeu web** (v2, lot 3 de `PLAN_V2.md`). Dessinés plus grand que
   les autres personnages puis réduits de `ECH` (Tecky 0,5, Alice 0,59 : 41 unités de haut,
   elle a 5 ans ; les adultes en font 55 à 60, le petit Lucas 45) : traits plus fins, mêmes contours (`TRAIT`).
@@ -59,11 +59,16 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `d_tete`), écrit en pixels du jeu autour du milieu des pieds, puis réduit de `ECH` (0,47 : la taille des chiens
   d'avant, que règlent les barres de vie, les cœurs et l'aboiement du doberman dans game.js). Mêmes animations et
   mêmes nombres d'images qu'avant (le jeu attend la fin d'un aboiement, d'une morsure), sauf la marche en 8 images
-  (`MAP.dogFps`, `d.fps`). KO : une vraie attitude « dos », comme Tecky. Planche : `python3 chiens2.py`
+  (`MAP.dogFps`, `d.fps`). KO : une vraie attitude « dos », comme Tecky. De face, Tecky et les chiens montrent un peu
+  de leur croupe et leur queue derrière la tête (`tecky2._arriere_face`, `chiens2._arriere_f` : la vue de dos à
+  l'envers) ; la croupe reste plus étroite que le crâne et sans pattes arrière (plus grosse, c'est un bonnet). De
+  face comme de dos, une queue dressée est effilée et un peu courbée (`tecky2._queue_dressee`, `chiens2._fouet`) :
+  droite et étroite, c'est un bâton ; `f_croupe` règle de combien la croupe, donc la queue, dépasse de la tête. Iris
+  (`npcs._iris`) a la tête de `chiens2.tete_face()` avec `gentil` (sourcils doux, sourire). Planche : `python3 chiens2.py`
   (`reference/v2/chiens_v2.png`). Test : `tests/heros.py`.
-- `tecky.py`, `alice.py`, `enemies.py` : les dessins d'avant (Tecky, Alice, les chiens sur le squelette de
-  `tecky.py`). Ils ne servent plus qu'au kit GameMaker (`build.py`, `sample_map.py`) ; `carte.py` et
-  `tests/heros.py` lisent encore la liste des chiens dans `enemies.DOGS`. Le jeu web ne dessine plus rien avec eux.
+- Ce que le moteur attend de ces trois modules (noms des animations, vues, nombres d'images, liste des chiens) est
+  écrit en dur dans `tests/heros.py` (`ATTENDU`) : ne le changer qu'avec game.js. `carte.py` lit les chiens permis
+  dans `chiens2.CHIENS`.
 - `hens.py` (poules animées, redessinées pour la v2 et réduites autour de leurs pieds : plus petites que Tecky),
   `farmer.py` (le fermier Gaston, vu de face, 48x64, pieds en (24, 60) ; `FACE` pour son portrait ; le visage des
   humains est commun : `npcs._eyes()`, grands yeux à deux reflets comme ceux d'Alice, et `npcs._nez()`, petit nez sans
@@ -80,19 +85,56 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `critters.py` (écureuil, chats roux et noir, de profil, 32x32, réduits de `SCALE` : un chat est un peu plus petit que
   Tecky, un écureuil bien plus petit qu'un chat ; leurs cuisses, `_cuisse()`, sont fondues dans le corps avec un pli,
   comme celles de Tecky), `vehicles.py` (voitures, camionnette, bus),
-  `butterflies.py` (papillons, vus de dessus), `lisiere.py` (le bord de la carte : fourrés, tunnel de la route, et
-  `decor()`, le placement de la lisière), `items.py`, `decor.py`, `tiles.py`, `hud.py` :
+  `nature.py` (**la nature du jeu web**, v2 : chêne, bouleau, cerisier, jeune arbre, pommiers, sapins, buissons,
+  roseaux, rocher, niche de trois quarts ; contour de la teinte du décor, lumière d'en haut à gauche, pas d'ombre
+  ovale ; `VARIANTES` : un décor de carte.json -> ses modèles, tirés de la position ; `ECH` / `ECHELLES` : la taille
+  dans le jeu ; `image()`, `ombre()` : l'ombre portée ; `sol_fleurs()`, `sol_brins()` : les détails semés dans l'herbe ;
+  `sol_nenuphars()`, `sol_galets()` : ceux de l'eau et de la berge ; `fourre()` : les fourrés de la lisière, décors
+  `thicket` / `thicket_dark` de `VARIANTES`, plus sombres le long de la forêt),
+  `batiments.py` (**les bâtiments du jeu web**, v2 : maisons, boulangerie, grange, entrepôts, guérite, cabane
+  d'Alice ; de trois quarts comme la niche, choix de Christophe sur `reference/v2/maisons_options.png` : « B et C
+  mélangés », façade longue devant (`_murs_facade()`, `_toit_long()`) ou pignon devant (`_toit_pignon()`), le mur
+  de droite qui fuit dans l'ombre (`FUITE`) ; ce sont des `nature.Sprite` à leur taille, inscrits dans
+  `nature.CATALOGUE` / `VARIANTES` : atlas, ombre portée et choix par position comme la nature, `d.n` reste le
+  décor de carte.json et son obstacle `FOOT`, dans l'emprise duquel chaque dessin tient ; `lumieres()` : les vitres
+  enregistrées par `_fenetre()` → sprites `nuit/…` ; `PERCHOIRS` → `MAP.perches`, où un chat se réfugie sur chaque
+  toit ; planche : `python3 batiments.py`). **Tailles** : Christophe a trouvé les maisons puis les véhicules trop
+  petits à côté des villageois ; ils sont agrandis par `batiments.ECH` (maisons 1,3), `decor.ECH` (camion,
+  tracteur 1,5 ; chariot 1,4 : `decor.cadre()`, `decor.svgs()`) et `vehicles.ECH` (voitures, camionnette, bus 1,5 ;
+  Titine reste petite). Le jeu suit sans réglage à la main : `MAP.grow` agrandit d'autant les obstacles `FOOT`,
+  `MAP.vehicleScale` les longueurs de `VEHICLE`, `MAP.perches` est déjà à l'échelle. Après un changement
+  d'échelle : regarder ce qui se retrouve derrière un bâtiment ou coupé par le bord, et déplacer l'élément dans
+  `carte.json` (Christophe : « n'hésite pas à adapter le positionnement sur la carte ») : le doberman de
+  l'entrepôt, l'os derrière l'étal de légumes, la maison haute (sa cheminée sortait de l'écran) l'ont été.
+  Les étals du marché (`etal()`) et le poulailler sur pieds (`poulailler()`) y sont aussi, sans fenêtres
+  (`ECLAIRES` = ceux qui en ont). `decor.py` garde les anciens dessins, que seul l'éditeur de carte montre encore.
+  **Ombres** : la ligne de contact (`Sprite.sol`) passe un peu au-dessus du bas des murs (`CONTACT`), pour que
+  l'ombre parte de dessous le contour : posée juste sous le mur, elle laissait un liseré clair entre le bâtiment
+  et son ombre. Christophe tient aux ombres détaillées (les jours entre les pieds du poulailler, sous le store
+  d'un étal) : ne pas les boucher.
+  `butterflies.py` (papillons, vus de dessus), `lisiere.py` (le bord de la carte : `decor()`, le placement de la
+  lisière, et `tunnel()`, le tunnel de la route, un `nature.Sprite` en calques : butte, pierres, touffes ;
+  `tunnel(est=True)` = le même, éclairé de la droite, que le jeu pose en miroir au bord est : la lumière vient
+  toujours d'en haut à gauche), `items.py`, `decor.py`, `tiles.py`, `hud.py` :
   dessins et animations. `tiles.py` : tileset Wang/marching squares de 16 tuiles par transition (bits NO=1, NE=2, SO=4, SE=8),
   tuile 0 vide, 16 colonnes, `PAIRS`, `PRIORITY`, `resolve()`. Là où trois terrains se rencontrent (ou deux sans
   paire), `needs_composite()` : la version web pose une tuile composée (`composite()` : chaque terrain par-dessus le
   précédent ; `COMPOSITES` dans pack_web, ajoutées au tileset à partir de `COMPOSITE_BASE`) au lieu de remplacer un
   terrain par un autre (encoches carrées au bout des chemins et des trottoirs). Un chemin s'arrête au bord de la
   route (coins de la route intacts) : sinon il mord sur la chaussée, sous le passage piéton.
+  **Bords arrondis** : le champ des coins est interpolé en douceur (`_ease()`, 3t² - 2t³), il arrive à plat sur les
+  bords de la tuile : un contour les traverse toujours d'équerre, la courbe d'un angle repart dans l'axe du bord
+  droit voisin. Avec une interpolation linéaire, il y avait une cassure à chaque angle de mare, de chemin, de
+  place (Christophe l'a vue tout de suite) : ne pas y revenir. `waterVal()` de game.js fait le même calcul.
+  **Eau** (`_shore()`, `SHORE`, `BANKS`) : sur la rive de terre, lèvre d'herbe, sable, sable mouillé ; dans l'eau,
+  hauts-fonds clairs, eau moyenne, puis le fond (la couleur des tuiles pleines) ; ombre de la berge du haut et de
+  gauche, écume en tirets le long de celle du bas et de droite (motif périodique : il se raccorde d'une tuile à
+  l'autre). Les limites des bandes larges suivent le champ (continu entre tuiles), pas la distance approchée.
 - `music.py` : **source unique** de la musique (thème « Promenade de Tecky », 32 mesures, boucle ; fanfare de victoire et
-  musique de défaite, 3 mesures chacune à 140 BPM, même durée). Génère les WAV GameMaker et les données
+  musique de défaite, 3 mesures chacune à 140 BPM, même durée). Génère les données
   `SONGS`/`WINSONG`/`LOSESONG` jouées par le séquenceur WebAudio du jeu (`Music.start('main' | 'win' | 'lose')`).
   Variations du thème par zone (`STYLES`, `events(style)` : `_lead`, `_bass`, `_arp`, `_drums`) : même mélodie, mêmes
-  accords, même grille de phrases, tempo propre ; « base » (niche, campagne) = le thème d'origine et le WAV GameMaker.
+  accords, même grille de phrases, tempo propre ; « base » (niche, campagne) = le thème d'origine.
   Village plus entraînant (152), ferme country (136 : basse alternée, rouleaux de banjo, notes glissées = 6e champ),
   forêt calme (108 : basse tenue, écho), parc boîte à musique (126, sans batterie), industrie mécanique (140) ; et la
   berceuse de la fin (84, sans batterie, timbre `TIMBRE.end`).
@@ -154,7 +196,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   arbres, sapins le long de la forêt, jamais par-dessus ce que liste `edge_keep()`) sur un sol qui prolonge celui du
   bord (`MAP.edge.ring`, `lisiere.RING` tuiles : `pick()` de `build_map()` avec les coins ramenés sur le bord ; la
   route, la rivière et le ruisseau continuent, `waterAt()` aussi). Aux deux bouts de la grande route, un tunnel
-  (`ROAD_TUNNELS`, sprite `decor/tunnel`, en miroir à l'est) où les voitures disparaissent ; sa butte est un obstacle
+  (`ROAD_TUNNELS`, sprite `decor/tunnel` ; à l'est, `decor/tunnel_est` en miroir) où les voitures disparaissent ; sa butte est un obstacle
   (`FOOT.tunnel`, `EDGE_SOLIDS`) : Tecky s'arrête devant la bouche. La lisière n'est pas un obstacle : c'est `BOUND`
   (`offMap()`, dans `blockedFeet()`) qui arrête au bord. Tecky qui y pousse sans avancer le dit (`edgeBump()`,
   `EDGE.push` s, au plus une fois toutes les `EDGE.again` s ; axe par axe : au joystick, il glisse le long du bord ou de
@@ -164,6 +206,13 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   la lisière comprise) : une seule image de la carte dépasserait la taille de canevas permise sur certains
   téléphones. Un bloc n'est peint que quand la caméra l'atteint, et seuls les `GROUND_MAX` derniers sont gardés.
   Décors `FLAT` (pont, bac à sable) dessinés sous les personnages.
+  **Nature** : `decorLook(n, x, y)` choisit le modèle d'un arbre, d'un sapin, d'un buisson d'après sa position
+  (`MAP.variants`, `hash3`) ; `d.n` reste le nom du décor (obstacle `FOOT`, refuge, feuilles), `d.key` son sprite,
+  `d.shadow` son ombre ; jamais en miroir (ils sont éclairés de la gauche). Peints une fois dans chaque bloc de sol
+  (`buildChunk()`) : l'habillage de l'herbe (`groundDetails()`, `MEADOW` : plages claires ou sombres là où toutes les
+  tuiles sont de l'herbe pleine `GRASS_FULL`, touffes `sol/brins`, bouquets `sol/fleur`, chacun dans sa tuile) et les
+  ombres portées (`groundShadows()`, `SHADOW` : d'abord opaques dans un canevas à part, pour ne pas se cumuler).
+  Test : `map.js`.
   **Images nettes** (`HD`, `HD_SRC`, `wantHD()`, `loadHD()`, `setHD()`, `blit()`) : sur un grand écran (au moins
   `HD_MIN` pixels de canevas par pixel de monde, pas un téléphone ni une tablette, pas une page ouverte depuis le
   disque), le jeu charge les images x4 à côté de la page et lit l'atlas par `blit()` (même cadre, deux fois plus de
@@ -174,15 +223,24 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   « images x4 » à côté de la version quand elles sont chargées. `drawSpr()` pose l'origine sur la grille des pixels du canevas : un sprite immobile entre deux
   pixels serait lissé.
   Décors animés (`decor.ANIMATED`, ex. la fontaine : la fonction reçoit la phase 0..1 ; fps dans `MAP.decorFps`).
-  Eau animée : le tileset web a une eau unie (`tiles.tileset(S, water_marks=False)`) et `drawWater()` y sème des
+  Eau animée : le tileset a une eau unie (`tiles.tex_water()`) et `drawWater()` y sème des
   vaguelettes `fx/ripple` légères (une par tuile, un cycle sur deux, position tirée par `hash3`) et, en plus, des
   scintillements `fx/glint` (mini-étoiles, cadence propre), seulement en eau profonde (`deepWater()` : tout le contour plus une
   marge, sinon ils mordent sur le liseré des berges).
+  **Eau** : `waterVal(x, y)` = présence de l'eau (0..1), interpolée entre les coins comme le dessin des tuiles
+  (`soften()` = `tiles._ease()`) : la rive dessinée passe à 0,5 ; `waterAt()` = au-delà de `WATER_EDGE` (les pieds
+  s'arrêtent un peu avant la rive). Habillage peint une fois dans le sol (`waterDetails()`, `POND`) : fonds plus
+  sombres au large (là où tout est eau pleine, `fullWater()`), nénuphars `sol/nenuphar` par bouquets entre les
+  hauts-fonds et le large (`lilyAt()` ; les vaguelettes évitent leur tuile), galets `sol/galet` sur le sable
+  (`shorePoint()` : un point de la tuile ramené sur une ligne de niveau de `waterVal`). Seulement dans les tuiles
+  eau / herbe (`shoreTile()`, `MAP.shore`) : rien le long d'un quai. Test : `map.js`.
 - Ambiance (`game.js`, section « petits effets ») : poussière sous les pattes (`dusts`, `DUST`), feuilles qui tombent des
   arbres et sapins visibles (`leaves`, `LEAF`, sprite `fx/leaf` : une image par couleur), ombres de nuages pré-rendues
   (`clouds`, `CLOUD`, `buildClouds()`), du jour à la nuit (`sun`, `SUN`, `drawLight()` : teinte multipliée sur le
   monde seulement ; vignette et halo pré-rendus en petit par `buildLight()` ; lampadaires et lumière des retrouvailles
-  par `glowSpot()`, `hug`). `sun` suit `sunGoal()` = nombre d'indices (3 aux retrouvailles, 4 pendant la scène de fin
+  par `glowSpot()`, `hug` ; fenêtres des bâtiments allumées avec les lampadaires : `drawWindows()`, `WINDOWS`, sprites
+  `nuit/…` posés après la teinte ; ce qui est devant un bâtiment y est redessiné en gomme dans un petit canevas à
+  part, `ctx` remplacé le temps du dessin, pour rester devant ses fenêtres). `sun` suit `sunGoal()` = nombre d'indices (3 aux retrouvailles, 4 pendant la scène de fin
   et l'écran de victoire) : il est donc restauré avec la sauvegarde. 0 plein jour, 1 fin d'après-midi, 2 coucher
   orangé, 3 (troisième indice) toujours le coucher, un peu plus rouge, lampadaires allumés (passé `SUN.lamp`,
   `lampsOn()` : plus d'arc-en-ciel), 4 la nuit bleutée (lampadaires plus forts), qui tombe quand Tecky et Alice
@@ -476,10 +534,10 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 
 - **V2 en cours** : le plan et son avancement sont dans `PLAN_V2.md` (graphismes d'abord, puis textes en données et
   anglais, durée, voix, vitrine). Lots 2 (images nettes) et 3 (Tecky, Alice et les chiens : `tecky2.py`, `alice2.py`,
-  `chiens2.py`) faits ; reste le paysage (lot 4), puis la suite. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
+  `chiens2.py`) faits ; lot 4 (paysage) en cours : nature, ombres portées, herbe, eau, lisière, bords
+  arrondis et bâtiments faits ; restent les ombres du soir et des autres décors, le sous-bois et le champ, le
+  petit mobilier (tables de terrasse…), l'habillage des zones. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
   témoin dans `reference/v2/`) : des images fixes, que ni `game.js` ni `pack_web.py` n'utilisent encore (le décor
-  de `v2/nature.py` est pour le lot 4). Les pistes générées par Christophe avec ChatGPT sont dans
+  de `nature.py` est dans le jeu depuis le lot 4). Les pistes générées par Christophe avec ChatGPT sont dans
   `reference/v2/chat_gpt/`.
-- Kit GameMaker **en pause** (choix de Christophe : on avance sur la version web). `build.py` doit continuer à
-  tourner, mais les nouveautés (fermier, petites bêtes, terriers, flair, carte, ambiances…) n'y sont pas documentées.
 - Piste en réflexion : dialogues lus à voix haute (pour qu'Alice joue sans savoir lire).

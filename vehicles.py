@@ -6,7 +6,7 @@ Origine au sol, sous les roues (VEHICLES).
 """
 import math
 
-from spritelib import Drawing, circle, ellipse, rect, poly, path, line
+from spritelib import Drawing, circle, ellipse, rect, poly, path, line, OUTLINE_W
 
 CAR_COLORS = {   # nom : (carrosserie, ombre)
     "red": ("#D7332B", "#A82520"),
@@ -167,6 +167,32 @@ VEHICLES = {   # nom : (fonction(spin), (largeur, hauteur) 1x, origine 1x)
 }
 
 
+# Taille dans le jeu : les véhicules de la route sont agrandis (Christophe les trouvait trop petits, le 12 novembre
+# 2026) ; Titine reste un petit train. game.js : VEHICLE (longueurs).
+ECH = {"car": 1.5, "van": 1.5, "bus": 1.5}
+
+
+def echelle(name):
+    return ECH.get(name.split("_")[0], 1)
+
+
+def cadre(name):
+    """(largeur, hauteur, origine x, origine y) d'un véhicule dans le jeu, en unités de l'atlas."""
+    _, (w, h), (ox, oy) = VEHICLES[name]
+    k = echelle(name)
+    return math.ceil(w * k), math.ceil(h * k), ox * k, oy * k
+
+
 def frames(name):
-    fn, _, _ = VEHICLES[name]
-    return [fn(s).svg() for s in SPINS]
+    """Les images d'un véhicule (les enjoliveurs tournent), en SVG, à sa taille du jeu (contour compensé)."""
+    fn, k = VEHICLES[name][0], echelle(name)
+    if k == 1:
+        return [fn(s).svg() for s in SPINS]
+    w, h, _, _ = cadre(name)
+    out = []
+    for s in SPINS:
+        d = fn(s)
+        d.parts[0:0] = [(u, None, False, "") for u in d.under]        # l'ombre grandit avec le dessin
+        d.under, d.w, d.h = [], w, h
+        out.append(d.svg(f"scale({k})", outline_w=OUTLINE_W / k))
+    return out

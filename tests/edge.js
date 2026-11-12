@@ -21,6 +21,11 @@ function main() {
   run('var tun = EDGE_DECOR.filter(d => d.n === "tunnel"), T = ATLAS["decor/tunnel"], tf = T.f[0];');
   ok(run('tun.length === 2 && tun.every(d => d.y > MAP.traffic.road[1] && d.y - 7 * 64 < MAP.traffic.road[0])') && run(`tun.some(d => !d.flip && d.x === 0) && tun.some(d => d.flip && d.x === ${W})`),
      'deux tunnels, un à chaque bout de la grande route');
+  ok(run('tun.find(d => !d.flip).key === "decor/tunnel" && tun.find(d => d.flip).key === "decor/tunnel_est" && !!ATLAS["decor/tunnel_est"]'),
+     'celui de l’est a son dessin (éclairé de l’autre côté), posé en miroir');
+  ok(run('EDGE_DECOR.filter(d => d.n.startsWith("thicket")).every(d => d.key.startsWith("decor/fourre") && ATLAS[d.key] && ATLAS[d.shadow] && !d.flip)')
+     && run('new Set(EDGE_DECOR.filter(d => d.n.startsWith("thicket")).map(d => d.key)).size') >= 4,
+     'les fourrés sont ceux de la nature : plusieurs modèles, chacun avec son ombre portée');
   ok(run('tf[4] - T.o[0] <= -EDGE.cam - 6 && tun[0].y + tf[5] - T.o[1] <= MAP.traffic.road[0] - 60 && tun[0].y + tf[5] - T.o[1] + tf[3] >= MAP.traffic.road[1]'),
      'la butte couvre la route sur toute la marge visible : les voitures y disparaissent');
   // Tecky pousse contre le bord ouest, dans le pré : il le dit au bout d'un moment, une fois

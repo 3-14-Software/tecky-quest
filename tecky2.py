@@ -9,8 +9,7 @@ dessinées de mémoire (museau en coin, petit œil), ont été jugées « vraime
 de la planche, pas de l'imagination. De profil, la tête n'a qu'un œil, comme sur la planche.
 
 Le dessin est plus grand que les 48 x 48 des autres personnages : il est réduit de ECH dans le jeu (CADRE).
-tecky.py reste le squelette des chiens ennemis (enemies.py) et du kit GameMaker ; le Tecky du jeu web, c'est ici.
-Mêmes noms d'animations que tecky.py (ANIMS, REST_ANIMS) : le moteur ne voit pas la différence.
+Les noms et les vues des animations (ANIMS, REST_ANIMS) sont ceux que le moteur appelle : tests/heros.py les garde.
 
     python3 tecky2.py      # reference/v2/tecky_v2.png (têtes, vues, poses) et tecky_v2_anims.png (toutes les images)
 """
@@ -621,6 +620,31 @@ def _harnais_face(d, B, clip):
     d.add(path(_trace(B, "M-1.7,34.6 L1.7,34.6 L1.7,42 L-1.7,42 Z")), c["harness"], sil=False, clip=clip)
 
 
+def _queue_dressee(y0, w0, w1, L, c):
+    """Une queue dressée vue de face ou de dos, plantée en (0, y0) : large à la base (w0), effilée (w1 au bout),
+    longue de L, le bout déporté de c — pas un bâton droit (Christophe). Rend (la forme fermée, le tracé de ses deux
+    bords, sans la base). Sert aussi aux chiens (chiens2._fouet)."""
+    bords = (f"M{-w0 / 2:.2f},{y0 + 1:.2f} Q{-w0 / 2 - 0.4:.2f},{y0 - L * 0.5:.2f} {c - w1 / 2:.2f},{y0 - L:.2f} "
+             f"C{c - w1 / 2:.2f},{y0 - L - w1 * 0.75:.2f} {c + w1 / 2:.2f},{y0 - L - w1 * 0.75:.2f} {c + w1 / 2:.2f},{y0 - L:.2f} "
+             f"Q{w0 / 2 + c * 0.8:.2f},{y0 - L * 0.5:.2f} {w0 / 2:.2f},{y0 + 1:.2f}")
+    return bords + " Z", bords
+
+
+def _arriere_face(d, c, p, bx, b):
+    """Ce qu'on voit de Tecky derrière sa tête quand il est debout, face à nous : sa croupe, au loin, qui dépasse un
+    peu au-dessus du crâne, et sa queue dressée. C'est la vue de dos à l'envers : là-bas, c'est la tête, plus petite,
+    qui dépasse derrière la croupe. Sans eux, il paraissait plat, et assis (Christophe). Pas de pattes arrière : la
+    croupe doit rester petite, plus étroite que le crâne (plus grosse, elle se lisait comme un bonnet)."""
+    cx, cy = X0 - bx * 0.9, 11.4 + b * 0.6
+    croupe = ellipse(cx, cy, 7.0, 9.0)
+    d.clip("croupef", [croupe])
+    Tq = _tourne(p["queue"], cx, cy - 7.0)
+    place = lambda x, y: Tq(cx + x, cy + y)
+    d.add(path(_trace(place, _queue_dressee(-6.0, 5.4, 3.4, 8.0, 2.2)[0])), c["fur"])
+    d.add(croupe, c["fur"])
+    d.add(ellipse(cx, cy - 4.6, 4.6, 3.6), c["ombre"], sil=False, clip="croupef", opacity=0.3)
+
+
 def face(p=None):
     """Tecky de face, vers la caméra : debout, assis ou couché."""
     p = p or pose()
@@ -659,6 +683,9 @@ def face(p=None):
             _pied_face(d, X0 + s * 11.6, SOL - 1.3, c["fur"], None)
             d.add(ellipse(X0 + s * 9.0, 40.6 + b, 4.6, 5.2), c["fur"])
 
+    if att == "debout":
+        _arriere_face(d, c, p, bx, b)
+
     # pattes avant et poitrail
     for s, lv, a in ((-1, lA, aA), (1, lB, aB)):
         _patte_face(d, B, s * (0.9 if att == "assis" else 1), lv, a, c["fur"], c["light"], bx)
@@ -678,8 +705,7 @@ def face(p=None):
 # ====================================================================== DOS
 CORPS_D = ("M-4.6,21 C-6.2,25.6 -9.0,30.5 -9.6,34.6 C-9.9,37.6 -9.4,39.8 -8.9,41.1 L8.9,41.1 "
            "C9.4,39.8 9.9,37.6 9.6,34.6 C9.0,30.5 6.2,25.6 4.6,21 Z")
-QUEUE_D = "M-1.95,33.0 L-1.95,21.0 C-1.95,17.8 1.95,17.8 1.95,21.0 L1.95,33.0 Z"
-QUEUE_D_BORD = "M-1.95,32.0 L-1.95,21.0 C-1.95,17.8 1.95,17.8 1.95,21.0 L1.95,32.0"
+QUEUE_D = _queue_dressee(32.4, 6.2, 3.8, 12.6, 2.6)     # la queue vue de dos : (forme, bords)
 HARNAIS_D = ("M-10.5,33.2 C-6.5,29.6 -2.6,27.6 0,27.3 C2.6,27.6 6.5,29.6 10.5,33.2 L10.5,36.0 "
              "C6.5,32.2 2.6,30.2 0,29.9 C-2.6,30.2 -6.5,32.2 -10.5,36.0 Z")
 # Oreille gauche vue de derrière, autour du centre du crâne ; la droite est son miroir.
@@ -723,8 +749,8 @@ def dos(p=None):
 
     # la queue, dressée devant nous
     place_q = _tourne(p["queue"], 0, 32.5, B)
-    d.add(path(_trace(place_q, QUEUE_D)), c["fur"])
-    d.raw(line(_trace(place_q, QUEUE_D_BORD), OUTLINE, 1.3))
+    d.add(path(_trace(place_q, QUEUE_D[0])), c["fur"])
+    d.raw(line(_trace(place_q, QUEUE_D[1]), OUTLINE, 1.3))
 
     _oreilles(d, p, place, OREILLE_D, OREILLE_D_PLI, OREILLE_D_PIVOT, devant=True)
     return d

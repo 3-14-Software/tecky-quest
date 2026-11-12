@@ -71,11 +71,11 @@ SPRITES = {
 def genres():
     """Genres permis pour chaque liste nommée (ceux que pack_web.collect() dessine dans l'atlas)."""
     import butterflies
+    import chiens2
     import cows
     import critters
     import decor
     import ducks
-    import enemies
     import hens
     import items
     import tiles
@@ -84,7 +84,7 @@ def genres():
     return {
         "decor": [n for n in decor.DECOR if n not in DECORS_DEDUITS],
         "items": [n for n in items.ITEMS if n != "goldbone"],
-        "enemies": list(enemies.DOGS),
+        "enemies": list(chiens2.CHIENS),
         "hens": list(hens.COLORS),
         "ducks": list(ducks.KINDS),
         "cows": list(cows.KINDS),

@@ -1,90 +1,84 @@
 """
 Lisière : ce qui borde la carte (version web), dessiné dans la marge que la caméra montre au-delà des bords
-(EDGE.cam dans game.js) : des fourrés devant une rangée d'arbres (des sapins le long de la forêt) et, aux deux bouts de
-la grande route, l'entrée d'un tunnel où les voitures disparaissent. Ce ne sont pas des obstacles : Tecky s'arrête au
+(EDGE.cam dans game.js) : des fourrés devant une rangée d'arbres (des sapins le long de la forêt ; arbres, sapins et
+fourrés sont ceux de nature.py, un modèle par position) et, aux deux bouts de la grande route, l'entrée d'un tunnel
+où les voitures disparaissent. Ce ne sont pas des obstacles : Tecky s'arrête au
 bord de la carte (BOUND dans game.js), juste devant. Le sol de la marge (RING tuiles autour de la carte) prolonge celui
 du bord : pack_web.build_map.
 """
 import math
 import random
 
-from spritelib import Drawing, circle, path, rect, line
+import nature
+from spritelib import Drawing, path, rect, line
 
 RING = 2                      # tuiles de sol autour de la carte (la caméra en montre une)
+OMBRE = '#16323C'             # teinte des ombres (celle des ombres portées de la nature : nature.OMBRE_TEINTE)
 
 
-def _shadow(d, cx, cy, rx, ry):
-    d.under.append(f'<ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}" fill="#000" opacity="0.2"/>')
-
-
-def thicket(dark=False):
-    """Fourré de la lisière : un gros buisson touffu, sans baies, plus sombre au fond (dark : celui de la forêt)."""
-    back, front, light = ("#24633A", "#2F7A45", "#4C9A5C") if dark else ("#3F8439", "#4E9A47", "#72BE5E")
-    d = Drawing(48, 32)
-    _shadow(d, 24, 28, 21, 3.5)
-    for cx, cy, r in ((15, 14, 9), (31, 12, 10), (24, 9, 7.5), (40, 17, 6.5)):     # touffes du fond, à l'ombre
-        d.add(circle(cx, cy, r), back)
-    for cx, cy, r in ((9, 21, 7), (21, 19.5, 8.5), (33, 20, 8), (41, 23, 5.5)):
-        d.add(circle(cx, cy, r), front)
-    for cx, cy, r in ((18, 15.5, 3.2), (31, 16, 2.6), (8, 18, 2), (24, 7, 2.2)):   # reflets
-        d.add(circle(cx, cy, r), light, sil=False)
-    return d
-
-
-def _clump(d, cx, cy, k=1.0):
-    """Touffe de fourré (trois boules et un reflet), pour habiller la butte du tunnel."""
-    for dx, dy, r in ((-7, 2, 6.5), (6, 1.5, 7), (0, -4, 6.5)):
-        d.add(circle(cx + dx * k, cy + dy * k, r * k), "#4E9A47")
-    d.add(circle(cx - 3 * k, cy - 6 * k, 2.4 * k), "#72BE5E", sil=False)
-
-
-def tunnel():
-    """Entrée du tunnel de la grande route au bord ouest de la carte (en miroir au bord est) : une butte boisée que la
-    route traverse ; la bouche, cerclée de pierres, s'ouvre vers la carte et la route s'y enfonce dans le noir.
-    Origine (56, 208) : pied de la butte, sur le bord de la carte ; la route passe entre v 64 et v 192 (ligne du
-    milieu en v 128). On n'en voit que la partie droite (u > 24) : la caméra ne déborde que d'une tuile."""
-    d = Drawing(72, 216)
-    d.under.append('<path d="M60,58 L68,62 Q73,128 68,194 L60,198 Z" fill="#000" opacity="0.2"/>')   # ombre
-    d.under.append('<ellipse cx="40" cy="211" rx="30" ry="4" fill="#000" opacity="0.2"/>')
-    # la butte : herbe un peu plus sombre que le pré, flanc tourné vers la carte encore plus sombre
+def tunnel(est=False):
+    """Entrée du tunnel de la grande route au bord ouest de la carte : une butte boisée que la route traverse ; la
+    bouche, cerclée de pierres, s'ouvre vers la carte et la route s'y enfonce dans le noir. Rend un nature.Sprite
+    (butte, pierres, touffes : chacune avec le contour de sa teinte, comme la nature).
+    Pied (56, 208) : au bas de la butte, sur le bord de la carte ; la route passe entre v 64 et v 192 (ligne du
+    milieu en v 128). On n'en voit que la partie droite (u > 24) : la caméra ne déborde que d'une tuile.
+    est : le tunnel du bord est, que le jeu dessine en miroir. Le soleil venant d'en haut à gauche, son flanc tourné
+    vers la carte est éclairé (celui de l'ouest est dans l'ombre) : il est dessiné éclairé de la droite."""
+    w, h = 72, 216
+    # --- la butte : une herbe un peu plus soutenue que le pré, un flanc tourné vers la carte
+    b = Drawing(w, h)
+    b.under.append(f'<path d="M60,58 L68,62 Q73,128 68,194 L60,198 Z" fill="{OMBRE}" opacity="0.3"/>')
+    b.under.append(f'<path d="M4,213 C20,220 56,220 70,214 L70,210 L4,210 Z" fill="{OMBRE}" opacity="0.3"/>')
     hill = path("M0,12 C10,4 26,2 40,6 C54,10 64,18 66,32 C67,40 64,46 62,50 L62,206 C66,207 68,211 64,214 L0,214 Z")
-    d.clip("tunnel_hill", [hill])
-    d.add(hill, "#6DB75C")
-    d.add(path("M50,0 C64,12 72,30 64,48 L62,52 L62,214 L54,214 L54,0 Z"), "#5A9A4E", sil=False, clip="tunnel_hill")
-    for x, y in ((14, 40), (30, 66), (22, 150), (36, 178), (10, 100), (44, 92), (40, 160)):        # brins d'herbe
-        d.raw(line(f"M{x - 2},{y} L{x},{y - 3.2} L{x + 2},{y}", "#4F8C45", 1.0))
-    # la bouche : arc de pierres ; dedans, la route s'enfonce dans le noir
+    b.clip("tunnel_hill", [hill])
+    b.add(hill, "#74BF62")
+    b.add(path("M50,0 C64,12 72,30 64,48 L62,52 L62,214 L53,214 C55,150 55,80 53,40 C52,24 52,10 50,0 Z"),
+          "#93D67A" if est else "#57A04F", sil=False, clip="tunnel_hill")
+    if not est:                                                  # le haut de la butte, face au soleil
+        b.add(path("M0,14 C12,6 28,4 42,9 C32,9 16,13 0,24 Z"), "#93D67A", sil=False, clip="tunnel_hill")
+    for x, y in ((14, 40), (30, 66), (22, 150), (36, 178), (10, 100), (44, 92), (40, 160), (32, 120)):   # brins d'herbe
+        b.raw(line(f"M{x - 2},{y} Q{x - 1.4},{y - 2.2} {x - 1},{y - 3.4} M{x},{y} L{x + 0.2},{y - 4.2} "
+                   f"M{x + 2},{y} Q{x + 1.6},{y - 2} {x + 1.4},{y - 3}", "#4C9A4C", 1.0))
+    # --- la bouche : un arc de pierres ; dedans, la route s'enfonce dans le noir
+    p = Drawing(w, h)
     mouth = path("M63,56 A20,72 0 0 0 63,200 Z")
-    d.add(path("M63,46 A27,82 0 0 0 63,210 Z"), "#B5ADA0")
-    d.add(mouth, "#2B1E17", sil=False)
-    d.clip("tunnel_mouth", [mouth])
-    d.add(rect(52, 64, 12, 128), "#3E4048", sil=False, clip="tunnel_mouth")                 # la route, dans l'ombre
-    d.add(rect(52, 64, 12, 2.4), "#7A7D86", sil=False, clip="tunnel_mouth")                 # ses bordures
-    d.add(rect(52, 189.6, 12, 2.4), "#7A7D86", sil=False, clip="tunnel_mouth")
-    d.add(rect(56, 127, 7, 2), "#8D9098", sil=False, clip="tunnel_mouth")                   # ligne du milieu
-    d.add(path("M63,74 A12,54 0 0 0 63,182 Z"), "#1C130E", sil=False)                     # le fond, tout noir
+    arc = path("M63,46 A27,82 0 0 0 63,210 Z")
+    p.clip("tunnel_arc", [arc])
+    p.add(arc, "#C2BAAB")
+    p.add(rect(30, 40, 40, 62), "#D9D2C5", sil=False, clip="tunnel_arc")                    # pierres du haut, au soleil
+    p.add(rect(30, 160, 40, 56), "#A8A092", sil=False, clip="tunnel_arc")                   # celles du bas, à l'ombre
+    p.add(mouth, "#2B1E17", sil=False)
+    p.clip("tunnel_mouth", [mouth])
+    p.add(rect(52, 64, 12, 128), "#3E4048", sil=False, clip="tunnel_mouth")                 # la route, dans l'ombre
+    p.add(rect(52, 64, 12, 2.4), "#7A7D86", sil=False, clip="tunnel_mouth")                 # ses bordures
+    p.add(rect(52, 189.6, 12, 2.4), "#7A7D86", sil=False, clip="tunnel_mouth")
+    p.add(rect(56, 127, 7, 2), "#8D9098", sil=False, clip="tunnel_mouth")                   # ligne du milieu
+    p.add(path("M63,74 A12,54 0 0 0 63,182 Z"), "#1C130E", sil=False)                     # le fond, tout noir
+    p.raw(line("M63,56 A20,72 0 0 0 63,200", "#6A6257", 0.9))                              # arête de la voûte
     for k in range(1, 12):                                                                 # joints des pierres
         a = math.pi / 2 + k * math.pi / 12
         x0, y0 = 63 + 20 * math.cos(a), 128 + 72 * math.sin(a)
         x1, y1 = 63 + 27 * math.cos(a), 128 + 82 * math.sin(a)
-        d.raw(line(f"M{x0:.1f},{y0:.1f} L{x1:.1f},{y1:.1f}", "#7E766B", 0.9))
-    d.add(rect(60, 42, 6, 172, 2), "#CFC8BB", sil=False, edge=True)                       # dessus du mur de tête
+        p.raw(line(f"M{x0:.1f},{y0:.1f} L{x1:.1f},{y1:.1f}", "#7E766B", 0.9))
+    p.add(rect(60, 42, 6, 172, 2), "#D6CFC2")                                              # dessus du mur de tête
+    p.add(rect(63.4, 43, 2.2, 170, 1), "#B5AD9F", sil=False)
     for y in range(50, 212, 12):
-        d.raw(line(f"M61,{y} L65,{y}", "#9A9286", 0.8))
-    # la butte est boisée, comme la lisière : des touffes en haut et en bas, par-dessus son contour
-    for cx, cy, k in ((30, 10, 1.1), (48, 16, 1.0), (60, 30, 0.85), (20, 206, 1.0), (40, 208, 1.1), (60, 210, 0.8)):
-        _clump(d, cx, cy, k)
-    return d
+        p.raw(line(f"M61,{y} L65,{y}", "#9A9286", 0.8))
+    # --- la butte est boisée, comme la lisière : des touffes en haut et en bas, par-dessus son contour
+    t = Drawing(w, h)
+    nature._touffes(t, [(48, 15, 8.5), (30, 9, 9.5), (60, 29, 7)], "buisson", "th")
+    nature._touffes(t, [(22, 205, 8.5), (60, 208, 7), (41, 206, 9.5)], "buisson", "tb")
+    return nature.Sprite([(b, "#2F6B3A", nature.TRAIT), (p, "#5E574C", nature.TRAIT),
+                          (t, nature.FEUILLAGES["buisson"][3], nature.TRAIT)], w, h, (56, 208))
 
 
-DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x) ; dessinés dans l'atlas sous decor/<nom>
-    "thicket": (thicket, (48, 32), (24, 28)),
-    "thicket_dark": (lambda: thicket(dark=True), (48, 32), (24, 28)),
-    "tunnel": (tunnel, (72, 216), (56, 208)),
+DECOR = {   # nom : fonction qui rend un nature.Sprite ; dessinés dans l'atlas sous decor/<nom>, à leur taille
+    "tunnel": tunnel,
+    "tunnel_est": lambda: tunnel(est=True),
 }
 
 # encombrement à l'écran (demi-largeur, hauteur au-dessus du pied), en tuiles : rien d'important ne doit être caché
-SIZE = {"thicket": (0.72, 0.85), "thicket_dark": (0.72, 0.85), "tree": (0.8, 1.75), "fir": (0.9, 2.3)}
+SIZE = {"thicket": (0.84, 0.95), "thicket_dark": (0.84, 0.95), "tree": (0.8, 1.75), "fir": (0.9, 2.3)}
 TUNNEL_H = 6.6                # hauteur de la butte du tunnel au-dessus de son pied (tuiles)
 
 

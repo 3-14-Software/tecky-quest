@@ -51,7 +51,7 @@ lumière), la musique.
 | 1. Écran témoin | Une scène du jeu redessinée à la qualité visée : la référence de tout le reste | petit | direction validée le 10 novembre 2026 ; second témoin (village) à faire avant les bâtiments |
 | 2. Netteté | Atlas et tuiles à plusieurs échelles, affichage net en 1080p et au-delà | petit | fait dans le moteur ; reste à voir sur une télévision et sur téléphone |
 | 3. Tecky et Alice | Les deux héros redessinés et animés ; puis les chiens | moyen | dans le jeu : Tecky et Alice le 10 novembre 2026, Tecky redessiné d'après la planche et les chiens le 11 ; à voir en jouant |
-| 4. Paysage | Variantes, sol, eau, ombres portées, bâtiments, habillage des zones | gros | à faire |
+| 4. Paysage | Variantes, sol, eau, ombres portées, bâtiments, habillage des zones | gros | en cours : nature, ombres, herbe, eau, lisière, bords arrondis et bâtiments dans le jeu le 12 novembre 2026 |
 | 5. Textes et anglais | Tous les textes en données, jeu jouable en anglais | moyen | à faire |
 | 6. Durée | Plusieurs cartes dans le moteur, puis de nouveaux épisodes | très gros | à cadrer |
 | 7. Voix | Répliques lues dans le jeu, en français et en anglais | moyen | à faire |
@@ -70,11 +70,11 @@ C'est une image fixe, pas le jeu : rien dans `game.js` ni dans `pack_web.py` ne 
 python3 v2/temoin.py            # reference/v2/temoin_niche.png (1920 x 1080) et avant_apres.png
 python3 v2/temoin.py --avant    # refait d'abord avant_niche.png : une capture du jeu actuel (après pack_web.py)
 python3 tecky2.py               # reference/v2/tecky_v2.png et tecky_v2_anims.png : les planches du nouveau Tecky
-python3 v2/nature.py            # reference/v2/nature_v2.png : arbres, buissons, rocher, niche
+python3 nature.py               # reference/v2/nature_v2.png : arbres, buissons, rocher, niche
 ```
 
 - `tecky2.py` (à la racine depuis le lot 3 : c'est le Tecky du jeu) : Tecky en vrai teckel, et ses expressions.
-- `v2/nature.py` : chêne, bouleau, cerisier en fleurs, jeune arbre, buissons, roseaux, rocher, niche de trois
+- `nature.py` : chêne, bouleau, cerisier en fleurs, jeune arbre, buissons, roseaux, rocher, niche de trois
   quarts et sa gamelle.
 - `v2/temoin.py` : le sol calculé d'après les coins de `carte.json`, ce qui est posé à plat (brins, fleurs,
   cailloux, nénuphars), les ombres portées, puis les sprites triés par leur pied.
@@ -89,7 +89,7 @@ village, suivra pour les bâtiments et les personnages (avant le lot 4).
 Ce qu'on retient des deux pistes générées avec ChatGPT (`reference/v2/chat_gpt/`) :
 
 - **La scène** : un feuillage au bord festonné, en trois tons, plutôt que des boules brillantes, et des verts plus
-  chauds. Les deux sont repris dans `v2/nature.py` et `v2/temoin.py`. Non repris : le pelage moucheté de Tecky et le
+  chauds. Les deux sont repris dans `nature.py` et `v2/temoin.py`. Non repris : le pelage moucheté de Tecky et le
   contour uniforme (le témoin garde le brun pour les personnages, une teinte foncée pour le paysage).
 - **La planche de Tecky** : elle confirme le corps du témoin (long, harnais à anneau, grande oreille), et ses
   expressions sont plus réussies que celles du premier témoin. `v2/tecky2.py` en reprend la grosse truffe, le bas
@@ -156,7 +156,7 @@ Fait le 10 novembre 2026, dans le jeu ; Tecky redessiné le 11 (voir « Taille �
   unités (l'ancien Tecky : 40 x 28 ; le roquet : 32 x 34) : plus petit que tous les chiens, la tête sous la jupe
   d'Alice. À 0,8 (le premier témoin), à 0,7, puis à 0,58 (la taille de l'ancien Tecky), Christophe l'a trouvé
   « énorme », puis « encore trop gros » : sa taille se juge à côté d'Alice et des chiens, pas seul, et pas d'après
-  l'ancien sprite. Le décor du témoin (`v2/nature.py`), dessiné pour un Tecky bien plus grand, sera à réduire
+  l'ancien sprite. Le décor du témoin (`nature.py`), dessiné pour un Tecky bien plus grand, sera à réduire
   d'autant au lot 4.
 - **Règles du jeu** : rien ne change. La boîte de collision (les pieds) est la même, et la morsure porte au même
   endroit ; seuls l'aboiement, les « z » et le jouet dans la gueule ont été recalés sur le nouveau dessin.
@@ -168,7 +168,9 @@ Fait le 10 novembre 2026, dans le jeu ; Tecky redessiné le 11 (voir « Taille �
   images, KO sur le dos. Planche : `reference/v2/chiens_v2.png` ; dans le jeu : `chiens_en_jeu.png` ; en
   mouvement : `chiens_v2_marche.gif`. Si Christophe préfère un modèle, le prompt pour ChatGPT est dans « Visuels
   générés » ; les planches se relèveraient comme celle de Tecky.
-- `tecky.py`, `alice.py` et `enemies.py` restent en place : le kit GameMaker s'en sert.
+- `tecky.py`, `alice.py` et `enemies.py` (les dessins de la v1) ont été retirés le 12 novembre 2026 avec le kit
+  GameMaker, abandonné par Christophe : le jeu web est le seul livrable. `tests/heros.py` garde, écrit en dur, ce
+  que le moteur attend des animations (noms, vues, nombres d'images).
 
 ```bash
 python3 tecky2.py     # reference/v2/tecky_v2.png (têtes, vues, poses) et tecky_v2_anims.png (toutes les images)
@@ -201,7 +203,9 @@ Reste à faire :
     réduites, canards réduits et retouchés (`hens.py`, `ducks.py`) ; Maman Piquette redessinée et ramenée à 26
     unités de haut, ses petits à 14 x 9 (`npcs.py`, `herissons.py`) ; bulles, compteurs du HUD, file des petits et
     boîtes des vaches réglés dans `game.js`.
-  Restent dans leur dessin d'avant : Iris (le vieux Jack Russell), les papillons, les véhicules. À côté du nouveau
+  - de face, Tecky et les chiens montrent un peu de leur croupe et leur queue derrière la tête (sans elles, ils
+    paraissaient plats et assis) ; Iris est redessiné avec la tête des nouveaux chiens et un air amical.
+  Restent dans leur dessin d'avant : les papillons, les véhicules. À côté du nouveau
   Tecky, Alice paraît maintenant petite : il lui arrive à la taille.
 - **Le museau dans les murs** : de profil, Tecky dépasse sa boîte de collision de 22 px (20 avant). Collé à un mur
   ou à un tronc, son museau passe dessus, un peu plus qu'avant. À revoir avec les obstacles du lot 4.
@@ -223,6 +227,60 @@ Reste à faire :
   rivière et chemins moins droits.
 
 Fini quand chaque zone a sa capture comparée à l'écran témoin.
+
+Fait le 12 novembre 2026, dans le jeu :
+
+- **Variantes** (`nature.py`, à la racine : c'est le décor du jeu) : un arbre de `carte.json` devient un chêne, un
+  chêne sombre, un bouleau, un jeune arbre ou un cerisier en fleurs ; un buisson, l'un de cinq (fleuri, à baies,
+  sombre…) ; un sapin, l'un de trois ; pommiers, rocher, roseaux et niche de trois quarts redessinés. Le modèle
+  est tiré de la position du décor (`nature.VARIANTES`, `MAP.variants`, `decorLook()` dans `game.js`) : rien ne
+  change dans la carte, ni les obstacles. Les sprites du témoin sont réduits (`nature.ECH`) à la taille des décors
+  qu'ils remplacent.
+- **Ombres portées** : la silhouette de chaque sprite de la nature, couchée vers la droite (`nature.ombre()`,
+  sprites `ombre/…`), peinte une fois dans le sol (`groundShadows()`) : deux ombres qui se recouvrent ne se
+  cumulent pas, et rien n'est recalculé à chaque image.
+- **Herbe** : tuile unie, puis, peints dans le sol d'après la position (`groundDetails()`) : de grandes plages
+  plus claires ou plus sombres au milieu des prés, des touffes de brins, des bouquets de petites fleurs.
+
+- **Eau** (`tiles.py` : `_shore()` ; `game.js` : `waterDetails()`) : une berge de sable, des hauts-fonds clairs,
+  une eau moyenne puis le fond, l'ombre de la berge du haut et de gauche, de l'écume en bas et à droite ; au
+  large, des fonds plus sombres ; près des rives, des nénuphars par bouquets ; sur le sable, des galets.
+  Captures : `reference/v2/lot4_eau.png`, `lot4_niche.png`.
+- **Lisière** : ses fourrés sont ceux de la nature (`nature.fourre()`, cinq modèles, plus sombres le long de la
+  forêt, avec leur ombre portée) ; le tunnel de la route est redessiné en calques, celui de l'est éclairé du bon
+  côté. Captures : `lot4_lisiere.png`, `lot4_tunnel.png`.
+- **Angles arrondis** (demande de Christophe : « une cassure visible à chaque angle » des mares et des chemins) :
+  le champ qui dessine tous les bords est interpolé en douceur (`tiles._ease()`), les courbes repartent dans
+  l'axe des bords droits. La collision de l'eau suit le même tracé (`waterVal()`).
+- Les ombres des buissons et des rochers étaient hachurées vues de près : bouchées (`nature.ombre()`).
+- **Bâtiments** (`batiments.py`) : Christophe a choisi sur planche (`reference/v2/maisons_options.png`) le trois
+  quarts de la niche, « B et C mélangés » : façade longue devant (maison rouge, maison haute à lucarne et balcon,
+  boulangerie, entrepôts, guérite) ou pignon devant (maison bleue, colombages, grange à toit brisé, cabane
+  d'Alice, et l'une des deux maisons rouges). Mur de droite dans l'ombre, toit en volume, ombre portée ; chaque
+  dessin tient dans l'emprise de l'ancien (obstacles et carte inchangés). Le soir, quand les lampadaires
+  s'allument, les fenêtres aussi ; un personnage devant une maison reste devant ses fenêtres. Les chats ont leurs
+  perchoirs sur les nouveaux toits. Planche : `reference/v2/batiments_v2.png` ; dans le jeu : `lot4_village.png`,
+  `lot4_village_soir.png`, `lot4_ferme.png`.
+- **Tailles** (demande de Christophe, le même jour : maisons puis véhicules « trop petits ») : bâtiments agrandis
+  de 1,2 à 1,3 (`batiments.ECH`), voitures, camionnette et bus de 1,5 (`vehicles.ECH`), camion, tracteur et chariot
+  élévateur de 1,4 à 1,5 (`decor.ECH`) ; les obstacles et les longueurs des véhicules suivent (`MAP.grow`,
+  `MAP.vehicleScale`). Le doberman de l'entrepôt est décalé de 0,8 tuile dans `carte.json` : il se retrouvait
+  derrière le bâtiment. Captures : `lot4_route.png`, `lot4_port.png`. Les véhicules gardent leur dessin de la v1.
+- **Marché et basse-cour** : les trois étals (comptoir, cagettes, store rayé qui fuit) et le poulailler sur pieds
+  (rampe, nichoir) sont de trois quarts eux aussi, agrandis de 1,25. Christophe a donné carte blanche pour
+  déplacer ce qui passe derrière un décor agrandi ou sort de l'écran : l'os derrière l'étal de légumes est remonté
+  de 0,7 tuile, la maison haute descendue de 0,4 (sa cheminée était coupée). Captures : `lot4_marche.png`,
+  `lot4_poulailler.png`.
+- **Ombres des bâtiments** (remarque de Christophe : « une marge entre le poulailler et son ombre, pareil pour
+  les maisons ») : l'ombre partait d'une ligne posée juste sous les murs, d'où un liseré clair ; elle part
+  maintenant de dessous le contour (`batiments.CONTACT`, et la niche de `nature.py`). Les ombres restent
+  détaillées (il les préfère à une silhouette pleine, essayée puis retirée).
+
+Reste : les ombres qui s'allongent le soir, celles des autres décors (bancs, maisons : encore un ovale) et des
+personnages ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; le sous-bois et le
+champ ; les tables de terrasse et le petit mobilier, encore dans leur dessin de la v1 ; l'habillage des zones (dont : la forme des mares, encore rectangulaire ; un cerisier en
+fleurs au milieu des sapins de la forêt). L'éditeur de carte montre encore les anciens arbres (il lit
+`decor/tree`…), pas les variantes.
 
 ### 5. Textes et anglais
 
@@ -288,7 +346,7 @@ n'importe quelle taille), bande-annonce d'une minute.
 ## Après la v2
 
 Enveloppe de bureau pour Steam (succès à partir des badges, sauvegarde dans le nuage, Steam Deck), page de
-magasin, puis la question du portage console. Le kit GameMaker reste en pause.
+magasin, puis la question du portage console. (Le kit GameMaker a été abandonné le 12 novembre 2026.)
 
 ## Visuels générés (ChatGPT)
 
