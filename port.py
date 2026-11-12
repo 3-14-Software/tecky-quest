@@ -48,12 +48,23 @@ def balloon_relief():
 TOYS = ["duck", "ring", "rope"]
 
 
+def _dans(d, cid, forme, couleur, opacity=None):
+    """Une forme bornée à une silhouette (relief : un croissant d'ombre, une plage claire)."""
+    op = f' opacity="{opacity}"' if opacity is not None else ""
+    d.raw(f'<g clip-path="url(#{cid})"{op}>' + forme.replace('fill="%F%"', f'fill="{couleur}"') + "</g>")
+
+
 def rubber_duck(d, dx=0.0, dy=0.0):
-    """Canard en caoutchouc jaune, tourné vers la gauche (aussi l'icône du badge d'Iris)."""
-    d.add(path(f"M{6 + dx},{19 + dy} Q{6 + dx},{27 + dy} {16 + dx},{27 + dy} L{22 + dx},{27 + dy} "
-               f"Q{29 + dx},{26.5 + dy} {28 + dx},{18.5 + dy} Q{27 + dx},{14 + dy} {23.5 + dx},{16.5 + dy} "
-               f"L{15 + dx},{17 + dy} Z"), "#F7D154")
-    d.add(circle(12 + dx, 12.5 + dy, 5.6), "#F7D154")
+    """Canard en caoutchouc jaune, tourné vers la gauche (aussi l'icône du badge d'Iris) ; le ventre à l'ombre."""
+    corps = path(f"M{6 + dx},{19 + dy} Q{6 + dx},{27 + dy} {16 + dx},{27 + dy} L{22 + dx},{27 + dy} "
+                 f"Q{29 + dx},{26.5 + dy} {28 + dx},{18.5 + dy} Q{27 + dx},{14 + dy} {23.5 + dx},{16.5 + dy} "
+                 f"L{15 + dx},{17 + dy} Z")
+    tete = circle(12 + dx, 12.5 + dy, 5.6)
+    d.clip("jouet_canard", [corps, tete])
+    d.add(corps, "#F7D154")
+    d.add(tete, "#F7D154")
+    _dans(d, "jouet_canard", ellipse(18 + dx, 26.6 + dy, 12, 3.6), "#E2AE2A")
+    _dans(d, "jouet_canard", ellipse(10.4 + dx, 9.6 + dy, 2.6, 1.3, f"rotate(-25 {10.4 + dx} {9.6 + dy})"), "#FFEFA8")
     d.add(path(f"M{6.8 + dx},{12.2 + dy} Q{2.2 + dx},{12.6 + dy} {2.8 + dx},{14.6 + dy} Q{4.5 + dx},{16 + dy} {7.6 + dx},{15 + dy} Z"),
           "#F28C28")
     d.add(circle(11 + dx, 11.2 + dy, 1.1), OUTLINE, sil=False)
@@ -69,7 +80,9 @@ def toy_frames():
     out.append(d.svg())
     d = Drawing(32, 32)                      # anneau rouge à bandes bleues
     ring = path("M5,16 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 Z M10.6,16 a5.4,5.4 0 1,0 10.8,0 a5.4,5.4 0 1,0 -10.8,0 Z")
-    d.add(ring.replace("<path ", '<path fill-rule="evenodd" '), "#E24B4B")
+    d.add(ring.replace("<path ", '<path fill-rule="evenodd" '), "#B93A34")
+    clair = path("M5.3,15.2 a9.9,9.9 0 1,0 19.8,0 a9.9,9.9 0 1,0 -19.8,0 Z M9,15.2 a6.2,6.2 0 1,0 12.4,0 a6.2,6.2 0 1,0 -12.4,0 Z")
+    d.add(clair.replace("<path ", '<path fill-rule="evenodd" '), "#E24B4B", sil=False)     # (un croissant d'ombre en bas à droite)
     for a in (20, 140, 260):                 # bandes bleues, posées dans l'épaisseur de l'anneau
         pts = []
         for r, da in ((5.9, -11), (5.9, 11), (10.5, 8), (10.5, -8)):
@@ -82,8 +95,11 @@ def toy_frames():
     rope = "M8,21.5 Q16,11.5 25,17"
     d.raw(line(rope, OUTLINE, 7.0) + line(rope, "#E3C995", 4.6)
           + line(rope, "#C9A26D", 4.6).replace("/>", ' stroke-dasharray="1.3 2.4"/>'))
+    d.raw(line("M8.6,19.6 Q16,10.4 24.4,15.4", "#F6E7C2", 1.0))            # la lumière sur le dessus de la corde
     for cx, cy in ((7.2, 22.2), (25.4, 17.4)):
-        d.add(circle(cx, cy, 3.6), "#D4B47A")
+        d.add(circle(cx, cy, 3.6), "#B8955E")
+        d.add(circle(cx - 0.5, cy - 0.5, 3.1), "#D4B47A", sil=False)
+        d.add(circle(cx - 1.3, cy - 1.4, 0.8), "#F6E7C2", sil=False)
         d.raw(line(f"M{cx - 2:.1f},{cy - 1:.1f} Q{cx},{cy + 1.5} {cx + 2:.1f},{cy - 1:.1f}", "#B8955E", 0.8))
     out.append(d.svg())
     return out

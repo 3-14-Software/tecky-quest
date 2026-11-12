@@ -312,7 +312,7 @@ Fait le 12 novembre 2026, dans le jeu :
   poutre-caisson, cabine, chariot, crochet), péniche (1,4), bitte, heurtoir, toboggan et balançoire (1,3), nid
   de feuilles de Maman Piquette, panier d'Iris, lampadaire, cône, panneau indicateur, panneau routier. Le
   lampadaire du quai est passé à gauche du portique. Planche de ce qui reste dans son dessin de la v1 :
-  `reste_a_relooker.png` (à trancher avec Christophe).
+  `reste_a_relooker.png` (remplacée depuis par `relooke_24.png`).
 
 - **Véhicules** : voitures, camionnette de boulangerie et bus de la route, tracteur, chariot élévateur et camion
   garés, redessinés sans changer leurs cadres : lumière d'en haut (juste aussi en miroir), passages de roue,
@@ -330,8 +330,12 @@ Fait le 12 novembre 2026, dans le jeu :
 - **Habillage** : les quatre mares ne sont plus des rectangles (formes de haricot, `carte.json`) ; le cerisier en
   fleurs de la forêt est devenu un chêne.
 
-Reste : ce que liste la planche `reste_a_relooker.png` (15 décors, les trois indices, la lettre, les jouets
-d'Iris, Titine) ; les canards et les papillons, qui gardent leur petit ovale ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; l'habillage des zones (dont : la forme des mares, encore rectangulaire ; un cerisier en
+- **Les 24 derniers** (Christophe les a tous cochés sur la planche numérotée) : les trois indices, la lettre et
+  les jouets d'Iris ont du relief ; Titine et ses wagons ont la lumière des véhicules ; les quinze décors restés
+  dans `decor.py` sont relookés sur place (clôtures, grillages, voie ferrée, vélo, échelle, pommes, terrier,
+  barque, bac à sable, filet, épouvantail, fontaine, pont). Planche : `relooke_24.png`.
+
+Reste : les canards et les papillons, qui gardent leur petit ovale ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; l'habillage des zones (dont : la forme des mares, encore rectangulaire ; un cerisier en
 fleurs au milieu des sapins de la forêt). L'éditeur de carte montre encore les anciens arbres (il lit
 `decor/tree`…), pas les variantes.
 

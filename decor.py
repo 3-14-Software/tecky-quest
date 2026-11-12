@@ -7,6 +7,12 @@ import math
 from spritelib import Drawing, circle, ellipse, rect, poly, path, line, leg, OUTLINE, OUTLINE_W
 
 
+def _dans(d, cid, forme, couleur, opacity=None):
+    """Une forme bornée à une silhouette (relief de la v2 : une plage claire à gauche, de l'ombre à droite)."""
+    op = f' opacity="{opacity}"' if opacity is not None else ""
+    d.raw(f'<g clip-path="url(#{cid})"{op}>' + forme.replace('fill="%F%"', f'fill="{couleur}"') + "</g>")
+
+
 def _shadow(d, cx, cy, rx, ry):
     d.under.append(f'<ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}" fill="#000" opacity="0.2"/>')
 
@@ -57,29 +63,34 @@ def apple_tree_young():
 
 
 def fallen_apples():
-    """Quelques pommes tombées dans l'herbe (posées à plat)."""
+    """Quelques pommes tombées dans l'herbe (posées à plat) : un croissant d'ombre, un reflet."""
     d = Drawing(32, 32)
-    for x, y, r in ((10, 20, 2.4), (16.5, 22.5, 2.2), (22, 18.5, 2.3)):
-        d.add(ellipse(x, y + 1.6, r * 1.1, 0.8), "#000000", sil=False, opacity=0.15)
-        d.add(circle(x, y, r), "#E0413A", edge=True)
-        d.add(circle(x - 0.6, y - 0.7, 0.55), "#FFFFFF", sil=False, opacity=0.7)
+    for i, (x, y, r) in enumerate(((10, 20, 2.4), (16.5, 22.5, 2.2), (22, 18.5, 2.3))):
+        d.add(ellipse(x + 0.9, y + 1.7, r * 1.15, 0.8), "#16323C", sil=False, opacity=0.25)
+        d.clip(f"pomme{i}", [circle(x, y, r)])
+        d.add(circle(x, y, r), "#B92F2A")
+        _dans(d, f"pomme{i}", circle(x - 0.5, y - 0.5, r * 0.95), "#E2463F")
+        d.add(circle(x - 0.7, y - 0.8, 0.55), "#FFFFFF", sil=False, opacity=0.75)
         d.raw(line(f"M{x},{y - r} L{x + 0.6},{y - r - 1.2}", "#6B4A30", 0.6))
     d.add(ellipse(19.6, 21.0, 1.8, 0.9, "rotate(-30 19.6 21)"), "#5DAA4E", sil=False, edge=True)    # une feuille
     return d
 
 
 def ladder():
-    """Échelle de cueillette en bois, appuyée (elle penche vers la droite)."""
+    """Échelle de cueillette en bois, appuyée (elle penche vers la droite) : le chant des montants au soleil,
+    le dessous des barreaux à l'ombre."""
     d = Drawing(32, 64)
     _shadow(d, 14, 58, 9, 2)
     for x0, x1 in ((7, 17), (14, 24)):
         d.add(poly([(x0, 58), (x0 + 2.4, 58), (x1 + 2.4, 6), (x1, 6)]), "#B98556")
+        d.add(poly([(x0, 58), (x0 + 0.8, 58), (x1 + 0.8, 6), (x1, 6)]), "#DDAA72", sil=False)
     for i in range(7):
         y = 52 - i * 7.2
         t = (58 - y) / 52
         a = 7 + 10 * t + 2.4
         b = 14 + 10 * t
         d.add(rect(a - 0.4, y - 1.1, b - a + 0.8, 2.2, 0.6), "#C98A4B", sil=False, edge=True)
+        d.raw(line(f"M{a + 0.2:.2f},{y - 0.5} L{b - 0.2:.2f},{y - 0.5}", "#E6B880", 0.5))
     return d
 
 
@@ -90,14 +101,20 @@ def bicycle():
     for cx in (11, 37):
         d.raw(f'<circle cx="{cx}" cy="21" r="7" fill="none" stroke="{OUTLINE}" stroke-width="2.2"/>')
         d.raw(f'<circle cx="{cx}" cy="21" r="7" fill="none" stroke="#4A4F57" stroke-width="1.2"/>')
+        for k in range(4):                                                      # rayons
+            a = k * math.pi / 4 + 0.3
+            d.raw(line(f"M{cx - 6 * math.cos(a):.2f},{21 - 6 * math.sin(a):.2f} L{cx + 6 * math.cos(a):.2f},{21 + 6 * math.sin(a):.2f}", "#B8BCC3", 0.4))
+        d.raw(line(f"M{cx - 4.6},{16.2} A6.6,6.6 0 0 1 {cx + 4.6},{16.2}", "#7A808A", 0.5))    # le haut du pneu au soleil
         d.add(circle(cx, 21, 1.2), "#8C9098", sil=False, edge=True)
     frame = "M11,21 L20,21 L30,12 L19,12 Z M20,21 L17,9 M30,12 L37,21 M30,12 L31,8"
     d.raw(line(frame, OUTLINE, 2.6))
     d.raw(line(frame, "#3E7BC4", 1.5))
+    d.raw(line("M19.4,11.6 L29.6,11.6 M12,20.5 L19.6,20.5", "#8DB6EA", 0.5))    # le dessus du cadre au soleil
     d.add(rect(14, 7.4, 6, 2, 1), "#3A3A44")                                   # selle
     d.add(rect(28.6, 6.6, 6, 1.6, 0.8), "#3A3A44")                             # guidon
     d.add(rect(32, 7, 9, 6, 1.2), "#B98556")                                   # panier
-    d.raw(line("M33,9 L40,9 M33,11 L40,11", "#8A5A3A", 0.6))
+    d.add(rect(32, 10.6, 9, 2.4, 1), "#9A6B43", sil=False)                     # le bas du panier, à l'ombre
+    d.raw(line("M33,9 L40,9 M33,11 L40,11 M35,7.4 L35,12.6 M38,7.4 L38,12.6", "#8A5A3A", 0.5))
     d.add(ellipse(37, 5, 1.4, 5, "rotate(30 37 5)"), "#E3A954", sil=False, edge=True)   # une baguette
     return d
 
@@ -148,20 +165,29 @@ def rock():
 
 
 def fence_wood_h():
+    """Clôture de bois, une tuile qui se répète : un poteau, deux lisses ; le dessus au soleil, le dessous à l'ombre."""
     d = Drawing(32, 32)
-    for x in (4,):
-        d.add(rect(x - 2, 10, 4, 18, 1), "#9A6B43")
-    d.add(rect(0, 13, 32, 3, 0), "#B98556")
-    d.add(rect(0, 20, 32, 3, 0), "#B98556")
-    d.add(rect(2, 9, 4, 3, 1.5), "#B98556")
+    d.add(rect(2, 10, 4, 18, 1), "#9A6B43")
+    d.add(rect(4.5, 12, 1.5, 16, 0.6), "#7E5433", sil=False)
+    d.add(rect(2.3, 12, 0.9, 15, 0.4), "#B98556", sil=False)
+    for y in (13, 20):
+        d.add(rect(0, y, 32, 3, 0), "#B98556")
+        d.add(rect(0, y, 32, 0.9, 0), "#DDAA72", sil=False)
+        d.add(rect(0, y + 2.2, 32, 0.8, 0), "#96683C", sil=False)
+    d.add(rect(2, 9, 4, 3, 1.5), "#C4925E")
+    d.add(rect(2.5, 9.4, 3, 0.9, 0.4), "#E6B880", sil=False)
     return d
 
 
 def fence_wood_v():
+    """Clôture de bois vue en enfilade : la lisse éclairée à gauche, à l'ombre à droite, la tête d'un poteau."""
     d = Drawing(32, 32)
     d.add(rect(14, 0, 4, 32, 0), "#B98556")
+    d.add(rect(14, 0, 1.1, 32, 0), "#DDAA72", sil=False)
+    d.add(rect(16.9, 0, 1.1, 32, 0), "#96683C", sil=False)
     d.add(rect(12.5, 2, 7, 7, 2), "#9A6B43")
-    d.raw(line("M16,12 L16,30", "#9A6B43", 0.8))
+    d.add(rect(13.1, 2.6, 5.8, 2.4, 1.2), "#C4925E", sil=False)
+    d.add(rect(17.6, 4.4, 1.9, 4.6, 0.9), "#7E5433", sil=False)
     return d
 
 
@@ -717,6 +743,8 @@ def goal_net():
     d.raw(line("M6,34 L12,6 M90,34 L84,6", "#E6EBF0", 1.4))
     d.add(rect(4, 32, 4, 28, 1), "#FFFFFF")                                  # cadre avant
     d.add(rect(88, 32, 4, 28, 1), "#FFFFFF")
+    for x in (4, 88):                                                        # (le flanc droit des montants, à l'ombre)
+        d.add(rect(x + 2.5, 32.6, 1.5, 26.8, 0.7), "#C9CED6", sil=False)
     d.add(rect(4, 31, 88, 4, 1), "#FFFFFF")
     for x in (4, 88):
         for y in (38, 48):
@@ -758,12 +786,16 @@ def dog_bed():
 
 
 def rail():
-    """Voie ferrée posée à plat, une tuile qui se répète vers la droite : traverses en bois, deux rails."""
+    """Voie ferrée posée à plat, une tuile qui se répète vers la droite : traverses de bois (le dessus au soleil,
+    le chant à l'ombre), deux rails qui brillent."""
     d = Drawing(32, 32)
     for x in (1, 9, 17, 25):
         d.add(rect(x, 6, 5.5, 20, 1), "#8A5A3A", sil=False, edge=True)
+        d.add(rect(x + 0.6, 6.6, 1.4, 18.8, 0.6), "#A8744A", sil=False)
+        d.add(rect(x + 4, 6.6, 1, 18.8, 0.5), "#6E4528", sil=False)
     for y in (9.5, 20.5):
         d.add(rect(0, y, 32, 2.4, 0), "#A9AEB5", sil=False)
+        d.raw(line(f"M0,{y + 0.5} L32,{y + 0.5}", "#E2E6EC", 0.6))
         d.raw(line(f"M0,{y + 2.4} L32,{y + 2.4}", "#5C6168", 0.7))
     return d
 
@@ -821,7 +853,9 @@ def crate():
 def fence_metal_h():
     d = Drawing(32, 32)
     d.add(rect(2, 4, 3, 24, 1), "#8C9098")
+    d.add(rect(2.4, 5, 0.9, 22, 0.4), "#C4C8D0", sil=False)                    # le poteau, éclairé à gauche
     d.add(rect(0, 5, 32, 2, 0), "#8C9098")
+    d.add(rect(0, 5, 32, 0.7, 0), "#C4C8D0", sil=False)
     mesh = ""
     for i in range(-4, 12):
         x = i * 4
@@ -835,7 +869,10 @@ def fence_metal_h():
 def fence_metal_v():
     d = Drawing(32, 32)
     d.add(rect(15, 0, 2, 32, 0), "#8C9098")
-    d.add(circle(16, 5, 2.4), "#8C9098")
+    d.add(rect(15, 0, 0.7, 32, 0), "#C4C8D0", sil=False)
+    d.add(circle(16, 5, 2.4), "#6F747D")
+    d.add(circle(15.5, 4.5, 2), "#8C9098", sil=False)
+    d.add(circle(15, 4, 0.7), "#C4C8D0", sil=False)
     return d
 
 
@@ -992,6 +1029,7 @@ def scarecrow():
     _shadow(d, 16, 60, 6, 1.6)
     # piquet + traverse (dans les manches)
     d.add(rect(14.6, 40, 2.8, 20, 1), "#8A5A3A")
+    d.add(rect(16.3, 44, 1.1, 15.6, 0.5), "#6E4528", sil=False)
     # paille qui dépasse des manches et du bas de la chemise
     for x, s in ((3.2, -1), (28.8, 1)):
         d.add(path(f"M{x - s * 1.5},28 L{x + s * 2.5},26.2 L{x + s * 1.5},29 L{x + s * 3},30.6 "
@@ -1006,13 +1044,16 @@ def scarecrow():
            "".join(f"M2,{y} L30,{y} " for y in (28.5, 34, 39.5))
     d.raw(f'<g clip-path="url(#chemise)">{line(grid, "#A82520", 2.2)}'
           f'{line(grid, "#F3E7CF", 0.6)}</g>')
+    _dans(d, "chemise", rect(17.6, 22, 14, 24), "#000000", 0.14)              # le côté droit, à l'ombre
     # pièce rapiécée + boutons
     d.add(rect(17.5, 36.5, 3.6, 3.6, 0.5), "#2E6FD1", sil=False, edge=True)
     d.raw(line("M18.2,37.2 L20.4,39.4 M20.4,37.2 L18.2,39.4", "#FFF7E6", 0.4))
     for y in (30, 34, 38.5):
         d.add(circle(16, y, 0.75), "#F3E7CF", sil=False)
     # tête en sac
-    d.add(path("M9.5,17 Q9,9.5 16,9.5 Q23,9.5 22.5,17 Q22,24 16,24 Q10,24 9.5,17 Z"), "#E3C995")
+    d.clip("tete", [path("M9.5,17 Q9,9.5 16,9.5 Q23,9.5 22.5,17 Q22,24 16,24 Q10,24 9.5,17 Z")])
+    d.add(path("M9.5,17 Q9,9.5 16,9.5 Q23,9.5 22.5,17 Q22,24 16,24 Q10,24 9.5,17 Z"), "#CBAE77")
+    _dans(d, "tete", circle(15.1, 16, 6.9), "#E3C995")                        # (un croissant d'ombre à droite)
     d.add(path("M12.5,23 L19.5,23 L18.5,26 L13.5,26 Z"), "#E3C995")       # cou noué
     d.raw(line("M13,24.6 L19,24.6", "#8A5A3A", 1.0))                       # ficelle
     # visage souriant
@@ -1026,7 +1067,9 @@ def scarecrow():
     # chapeau de paille
     d.add(ellipse(16, 11, 11.5, 3.2), "#F2C14E")
     d.add(path("M10.5,11 Q10.5,3.5 16,3.5 Q21.5,3.5 21.5,11 Z"), "#E3B94F")
+    d.add(path("M16.6,3.5 Q21.5,3.6 21.5,11 L16.6,11 Z"), "#C99B35", sil=False, opacity=0.7)
     d.add(rect(10.6, 8, 10.8, 2.2, 0), "#D7332B", sil=False)
+    d.add(ellipse(11, 10.4, 4.6, 0.9), "#FBE08A", sil=False, opacity=0.8)
     d.raw(line("M7,12 Q16,14.4 25,12", "#C99B35", 0.7))
     d.add(path("M20,9.5 L23.5,6.5 L22.5,10 Z"), "#F7D154", sil=False, edge=True)  # petit épi glissé
     return d
@@ -1055,6 +1098,7 @@ def bridge():
         # clous aux deux extrémités (sur les longerons)
         for nx in (19, 77):
             d.add(circle(nx, y + 4, 0.65), "#6E4428", sil=False)
+    d.add(rect(16, 0, 3.2, 160, 0), "#5E3A1E", sil=False, opacity=0.22)      # l'ombre du garde-corps de gauche
     # traverses aux deux bouts
     for y in (0, 156):
         d.add(rect(16, y, 64, 4, 0.5), "#A36D37", sil=False, edge=True)
@@ -1124,8 +1168,10 @@ def boat():
           sil=False, edge=True)
     d.add(path("M7,13 Q8,9.4 29,8.8 Q48,9.2 51,12.4 Q47.5,17.2 29,17.6 Q10,17.4 7,13 Z"), "#DDA566",
           sil=False)
+    d.add(path("M7,13 Q8,9.4 29,8.8 Q20,10.6 12,15.6 Q8.4,14.8 7,13 Z"), "#C08B4C", sil=False, opacity=0.7)   # l'ombre du bord
     for y in (11, 13.2, 15.4):
         d.raw(line(f"M10,{y} Q29,{y + 0.6} 48,{y}", "#C9944F", 0.6))
+    d.raw(line("M6,11.4 Q8.6,8.2 27,7.5", "#B98556", 0.8))                    # le plat-bord au soleil
     # bancs (traverses)
     for x in (18, 36):
         d.add(rect(x - 2.4, 8.9, 4.8, 8.7, 0.6), "#A36D37", sil=False, edge=True)
@@ -1415,6 +1461,9 @@ def sandbox():
     # sable
     d.add(rect(8.5, 13.5, 47, 20, 2.5), "#F3DFA8", sil=False, edge=True)
     d.add(rect(9, 14, 46, 2.6, 1.2), "#D9BE80", sil=False, opacity=0.8)        # ombre de la bordure du fond
+    d.add(rect(9, 14, 2.6, 19, 1.2), "#D9BE80", sil=False, opacity=0.8)        # et de celle de gauche
+    d.add(rect(9, 9.8, 46, 2.4, 1.2), "#E3B274", sil=False, opacity=0.7)       # la planche du fond, au soleil
+    d.add(rect(56.2, 14, 3.6, 19, 1.2), "#A87643", sil=False, opacity=0.6)     # celle de droite, à l'ombre
     for x, y in ((14, 21), (26, 18.5), (31, 29), (22, 27.5), (51, 30.5), (12, 29.5), (34, 19)):
         d.raw(line(f"M{x - 1.2},{y} Q{x},{y - 0.9} {x + 1.2},{y}", "#DCC07E", 0.8))
     # château de sable (une seule forme : tours crénelées + mur)
@@ -1458,7 +1507,10 @@ def fountain(phase=0.0):
     water, water_dk, water_lt = "#9FD3F0", "#6DB6E3", "#DDF3FC"
     wave = lambda off=0.0: math.sin(2 * math.pi * (phase + off))
     # bassin : paroi avant + margelle
+    d.clip("paroi", [path("M5,40 L5,47 A27,11 0 0 0 59,47 L59,40 Z")])
     d.add(path("M5,40 L5,47 A27,11 0 0 0 59,47 L59,40 Z"), stone)
+    _dans(d, "paroi", rect(40, 38, 22, 24), stone_dk, 0.5)                     # la paroi : à l'ombre à droite,
+    _dans(d, "paroi", rect(4, 38, 9, 24), stone_lt, 0.6)                       # au soleil à gauche
     for x in (12, 22, 32, 42, 52):
         y = 47 + 11 * math.sqrt(max(0, 1 - ((x - 32) / 27) ** 2))
         d.raw(line(f"M{x},{y - 6.5:.1f} L{x},{y - 0.8:.1f}", stone_dk, 0.8))
@@ -1476,8 +1528,11 @@ def fountain(phase=0.0):
     # colonne et vasque
     d.add(rect(29.6, 26, 4.8, 18, 1), stone, edge=True)
     d.add(rect(30.4, 27, 1.2, 15, 0.6), stone_lt, sil=False)
+    d.add(rect(32.8, 27, 1.2, 15, 0.6), stone_dk, sil=False, opacity=0.7)
     d.raw(_ring(32, 43.6, 4.6, 1.4, water_lt, 0.9))
+    d.clip("vasque", [path("M22,24 Q22.5,30.5 32,30.5 Q41.5,30.5 42,24 Z")])
     d.add(path("M22,24 Q22.5,30.5 32,30.5 Q41.5,30.5 42,24 Z"), stone, edge=True)
+    _dans(d, "vasque", rect(34, 22, 10, 10), stone_dk, 0.55)
     d.add(ellipse(32, 24, 10, 3), stone_lt, edge=True)
     d.add(ellipse(32, 24.3, 8, 2), water, sil=False)
     # gerbe : jet central qui retombe dans la vasque, filets qui débordent dans le bassin
@@ -1551,15 +1606,19 @@ def playhouse():
 
 # décors animés : nom -> (nombre d'images, images par seconde) ; la fonction reçoit la phase 0..1
 def burrow():
-    """Terrier creusé sous un grillage (posé à plat) : monticule de terre, trou sombre, quelques mottes.
-    Tecky peut s'y glisser pour passer de l'autre côté."""
+    """Terrier creusé sous un grillage (posé à plat) : monticule de terre éclairé d'en haut à gauche, trou sombre,
+    quelques mottes. Tecky peut s'y glisser pour passer de l'autre côté."""
     d = Drawing(40, 24)
-    d.add(ellipse(20, 14, 17, 7.5), "#B98F58")
+    d.clip("butte", [ellipse(20, 14, 17, 7.5)])
+    d.add(ellipse(20, 14, 17, 7.5), "#A07A45")
+    _dans(d, "butte", ellipse(18.8, 13.2, 16.4, 7), "#C29B63")
     d.add(ellipse(20, 13, 13, 5), "#9C6B3F", sil=False)
     d.add(ellipse(20, 13.6, 9, 3.6), "#3A2418", sil=False)
-    d.add(ellipse(20, 12.6, 6.5, 1.8), "#5A3A26", sil=False, opacity=0.8)
+    d.add(ellipse(20, 12.6, 6.5, 1.8), "#241208", sil=False, opacity=0.8)     # le fond du trou, sous le bord du haut
+    d.raw(line("M11.4,14.6 Q13,17.2 20,17.4 Q27,17.2 28.6,14.6", "#B98F58", 0.7))   # la lèvre du bas, au soleil
     for x, y, r in ((5.5, 17.5, 2.2), (34, 16.5, 2.6), (30, 20, 1.6), (9, 20.4, 1.4), (24, 20.6, 1.8)):
-        d.add(ellipse(x, y, r * 1.2, r), "#A97C4A", sil=False, edge=True)
+        d.add(ellipse(x, y, r * 1.2, r), "#8E6A3C", sil=False, edge=True)
+        d.add(ellipse(x - r * 0.2, y - r * 0.2, r * 0.95, r * 0.72), "#B58B56", sil=False)
     return d
 
 

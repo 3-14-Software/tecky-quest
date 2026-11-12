@@ -113,19 +113,29 @@ def hairclip(d):
     """Barrette : nœud rose sur une pince."""
     tr = "rotate(-12 16 18)"
     d.add(rect(6.5, 19.2, 19, 2.6, 1.3, tr), "#C9CED6")
-    d.add(path("M16,18 Q9.5,8.5 5.6,12.6 Q3.6,18 5.6,23.4 Q9.5,27.5 16,18 Z", tr), "#F4A7C3")
-    d.add(path("M16,18 Q22.5,8.5 26.4,12.6 Q28.4,18 26.4,23.4 Q22.5,27.5 16,18 Z", tr), "#F4A7C3")
+    ailes = [path("M16,18 Q9.5,8.5 5.6,12.6 Q3.6,18 5.6,23.4 Q9.5,27.5 16,18 Z", tr),
+             path("M16,18 Q22.5,8.5 26.4,12.6 Q28.4,18 26.4,23.4 Q22.5,27.5 16,18 Z", tr)]
+    d.clip("noeud", ailes)
+    for a in ailes:
+        d.add(a, "#F4A7C3")
+    _dans(d, "noeud", rect(2, 19.4, 28, 10, 0, tr), "#E286AC", 0.75)                  # le bas des coques, à l'ombre
     for s in (-1, 1):
         d.add(path(f"M{16 + s * 3},18 Q{16 + s * 7},12.5 {16 + s * 9.2},14.6 Q{16 + s * 10},18 {16 + s * 9.2},21.4 "
                    f"Q{16 + s * 7},23.5 {16 + s * 3},18 Z", tr), "#F9C6D9", sil=False)
-    d.add(circle(16, 18, 3, tr), "#DE85A8")
+    d.raw(line("M7,13.6 Q8.6,11.6 11,12.2 M21.6,12 Q23.6,11.4 25.2,13.2", "#FFFFFF", 0.9).replace("<path", f'<path transform="{tr}" opacity="0.8"'))
+    d.raw(line("M7.4,21.2 L24.6,21.2", "#FFFFFF", 0.5).replace("<path", f'<path transform="{tr}" opacity="0.7"'))
+    d.add(circle(16, 18, 3, tr), "#C96A90")
+    d.add(circle(15.5, 17.5, 2.6, tr), "#DE85A8", sil=False)
     d.add(circle(15.2, 17.2, 0.9, tr), "#FBE36A", sil=False)
 
 
 def shoe(d):
     """Petite chaussure rouge à bride : celle qu'Alice porte (alice2.py), perdue dans la forêt."""
-    d.add(path("M6,24 Q5,16.5 10.5,15.8 L14.5,15.8 Q16.5,19.5 21,18.8 Q27.5,18 28,22.4 Q28.2,25 26,25 L8,25 Q6,25 6,24 Z"),
-          "#DB352C")
+    soulier = path("M6,24 Q5,16.5 10.5,15.8 L14.5,15.8 Q16.5,19.5 21,18.8 Q27.5,18 28,22.4 Q28.2,25 26,25 L8,25 Q6,25 6,24 Z")
+    d.clip("soulier", [soulier])
+    d.add(soulier, "#DB352C")
+    _dans(d, "soulier", rect(4, 22, 26, 4), "#B02620", 0.6)                          # le bas, à l'ombre
+    _dans(d, "soulier", ellipse(8.6, 19.6, 1.6, 2.4), "#F2847C", 0.75)               # le talon au soleil
     d.add(rect(5.4, 24.2, 23.4, 2.6, 1.3), "#B02620")
     d.add(ellipse(12.4, 17.2, 3.4, 1.4), "#7C1F1F", sil=False)
     d.raw(line("M10.6,18.4 Q15.6,13.4 20,18.2", "#B02620", 1.8))
@@ -139,11 +149,16 @@ def plush(d):
     for s in (-1, 1):
         d.add(ellipse(16 + s * 4, 7.6, 2.6, 6.4, f"rotate({s * 12} {16 + s * 4} 12)"), fur)
         d.add(ellipse(16 + s * 4, 8.2, 1.2, 4.4, f"rotate({s * 12} {16 + s * 4} 12)"), "#F4A7C3", sil=False)
-    d.add(ellipse(16, 23.4, 7.4, 6.4), fur)
+    d.clip("corps", [ellipse(16, 23.4, 7.4, 6.4)])
+    d.add(ellipse(16, 23.4, 7.4, 6.4), "#DCCBA6")
+    _dans(d, "corps", ellipse(15, 22.4, 7.2, 6.2), fur)                              # (un croissant d'ombre en bas à droite)
     for s in (-1, 1):
         d.add(ellipse(16 + s * 6.4, 22, 2, 3.3, f"rotate({-s * 20} {16 + s * 6.4} 22)"), fur)
         d.add(ellipse(16 + s * 4.6, 28.4, 2.9, 1.8), fur)
-    d.add(circle(16, 15.4, 6), fur)
+    d.clip("tete", [circle(16, 15.4, 6)])
+    d.add(circle(16, 15.4, 6), "#DCCBA6")
+    _dans(d, "tete", circle(15.1, 14.5, 5.8), fur)
+    d.add(ellipse(13, 11.6, 2, 1, "rotate(-30 13 11.6)"), "#FFFFFF", sil=False, opacity=0.7)
     d.add(ellipse(16, 24.6, 4, 3.6), "#FFF7E6", sil=False)
     d.add(path("M12.4,20.4 L16,21.8 L19.6,20.4 L19.6,23 L16,21.8 L12.4,23 Z"), "#F4A7C3", sil=False, edge=True)
     for s in (-1, 1):

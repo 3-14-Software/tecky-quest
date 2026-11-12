@@ -895,9 +895,13 @@ LW = LH = 32      # comme les objets d'items.py : origine conseillée (16, 16)
 
 def _letter(d, flap=0.0):
     """Enveloppe crème vue de dos (rabat en V), petit timbre rouge oblitéré ; flap : le rabat se soulève un peu."""
+    d.clip("lettre", [rect(5.4, 10.4, 21.2, 14.2, 1.6)])
     d.add(rect(5.4, 10.4, 21.2, 14.2, 1.6), "#FFF8EA")
+    for forme in (rect(5, 21.8, 22, 3.2), rect(24.4, 10, 2.4, 15)):                           # le bas et la droite, à l'ombre
+        d.raw('<g clip-path="url(#lettre)">' + forme.replace('fill="%F%"', 'fill="#EADFC6"') + "</g>")
     d.raw(line("M6.6,23.6 L13.8,17.9 M25.4,23.6 L18.2,17.9", "#D9C8A6", 0.8))                 # plis du dos
     tip = 19.4 - flap * 1.6
+    d.raw('<g clip-path="url(#lettre)" opacity="0.6">' + poly([(6.4, 11.8), (25.6, 11.8), (16, tip + 1.2)]).replace('fill="%F%"', 'fill="#D9C8A6"') + "</g>")
     d.add(poly([(5.9, 10.9), (26.1, 10.9), (16, tip)]), "#F2E4C6", sil=False, edge=True)      # rabat
     d.add(circle(16, tip - 1.6, 1.3), "#E9D5AE", sil=False, opacity=0.8)                      # pointe collée
     # timbre (bord blanc dentelé) dans le coin

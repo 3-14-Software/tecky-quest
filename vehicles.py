@@ -201,14 +201,20 @@ def loco(spin=0):
     d = Drawing(64, 48)
     _shadow(d, 4, 60, 44.4)
     d.add(rect(5, 6, 18, 4, 1.5), "#2B2B33")                                          # toit de la cabine
+    d.clip("cabine", [rect(7, 9, 15, 26, 1.5)])
     d.add(rect(7, 9, 15, 26, 1.5), red)                                               # cabine
+    d.add(rect(7, 28, 15, 8), dark, sil=False, clip="cabine")
+    d.add(rect(5.8, 6.6, 16.4, 1.1, 0.5), "#5A5A64", sil=False)                       # (le toit au soleil)
     d.add(rect(10, 13, 9, 8, 1.5), GLASS, sil=False, edge=True)
     d.raw(line("M12,19 L16.5,14.5", "#FFFFFF", 0.9))
+    d.clip("chaudiere", [rect(21, 18, 33, 15, 7.5)])
     d.add(rect(21, 18, 33, 15, 7.5), red)                                             # chaudière
-    d.add(rect(21, 18, 33, 4, 2), "#FFFFFF", sil=False, opacity=0.25)
+    d.add(rect(21, 18, 33, 3.6), _clair(red), sil=False, clip="chaudiere")            # le dessus au soleil
+    d.add(rect(21, 28, 33, 6), dark, sil=False, clip="chaudiere")                     # le dessous à l'ombre
     for x in (31, 42):                                                                # cerclages dorés
         d.add(rect(x, 18, 2, 15, 0), gold, sil=False)
     d.add(rect(45, 7, 6.5, 12, 1), "#2B2B33")                                         # cheminée
+    d.add(rect(46, 8.6, 1.2, 10, 0.5), "#5A5A64", sil=False)
     d.add(rect(43.6, 5, 9.3, 3.2, 1.2), gold, edge=True)
     d.add(path("M33,18 Q33,12.5 36.5,12.5 Q40,12.5 40,18 Z"), gold)                   # dôme (cloche)
     d.add(circle(54.5, 25.5, 2.4), "#FFF1B8", sil=False, edge=True)                   # phare
@@ -216,7 +222,9 @@ def loco(spin=0):
     d.add(poly([(56, 32), (62, 40), (56, 40)]), "#5C6168")                            # chasse-pierres
     for x, r in ((16, 6.4), (31, 6.4), (45, 5.4)):
         y = 44 - r
-        d.add(circle(x, y, r), red)
+        d.add(circle(x, y, r), dark)
+        d.add(circle(x, y, r * 0.8), red, sil=False)
+        d.raw(line(f"M{x - r * 0.6:.2f},{y - r * 0.62:.2f} A{r * 0.87:.2f},{r * 0.87:.2f} 0 0 1 {x + r * 0.6:.2f},{y - r * 0.62:.2f}", "#F0786E", 0.8))
         d.add(circle(x, y, r * 0.35), gold, sil=False, edge=True)
         for k in range(4):
             a = math.radians(spin * 1.5 + k * 45)
@@ -237,8 +245,12 @@ def wagon(color, spin=0):
     d.add(rect(6, 9, 36, 20, 0.5), col)                                               # conteneur
     for x in range(9, 41, 3):
         d.raw(line(f"M{x},10 L{x},28", rib, 0.7))
+    for x in range(9, 41, 3):
+        d.raw(line(f"M{x + 0.9},10 L{x + 0.9},28", _clair(col, 0.3), 0.45))
+    d.add(rect(6, 24.6, 36, 4.4), rib, sil=False, opacity=0.6)                        # le bas à l'ombre
     d.add(rect(6, 7, 36, 4, 0.5), col)
-    d.add(rect(6, 7, 36, 4, 0.5), "#FFFFFF", sil=False, opacity=0.25)
+    d.add(rect(6, 7, 36, 4, 0.5), "#FFFFFF", sil=False, opacity=0.3)                  # le dessus au soleil
+    d.add(rect(8.4, 13.4, 6, 3.6, 0.5), "#F4EFE4", sil=False)                         # la plaque
     d.add(rect(3, 28, 42, 3.6, 1), "#4A4F57")                                         # plateau
     d.add(rect(0.6, 28.6, 3, 2.2, 0.8), "#2B2B33")                                    # attelages
     d.add(rect(44.4, 28.6, 3, 2.2, 0.8), "#2B2B33")

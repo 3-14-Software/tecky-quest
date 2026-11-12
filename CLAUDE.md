@@ -121,16 +121,17 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   1,3, tonneaux 1,35, banc 1,2 ; le halo d'un lampadaire suit `MAP.grow.lamppost`. `MAP.grow` agrandit aussi
   `RAILS` (pieds du portique) ; `PERCHOIRS` : où un chat se pose sur un conteneur (`MAP.perches`). Un décor
   redessiné n'a plus son ancien dessin dans l'atlas (`pack_web.collect()`). Planche : `python3 mobilier.py`.
-  Restent dans leur dessin de `decor.py` (planche numérotée `reference/v2/reste_a_relooker.png`, avec les
-  indices, la lettre, les jouets d'Iris et Titine, pas relookés non plus) : terrier, pommes
-  tombées, vélo, échelle, clôtures, grillages, voie ferrée, barque, bac à sable, filet de Léon, épouvantail,
-  fontaine (animée : le catalogue ne sait qu'une image par sprite), pont : gardés tels quels.
+  Les quinze décors restés dans `decor.py` (terrier, pommes tombées, vélo, échelle, clôtures, grillages, voie
+  ferrée, barque, bac à sable, filet de Léon, épouvantail, fontaine — animée : le catalogue ne sait qu'une image
+  par sprite —, pont) gardent leur dessin, relooké sur place (`decor._dans()` : une plage claire à gauche, de
+  l'ombre à droite). Planche de ces retouches, des objets et de Titine : `reference/v2/relooke_24.png`.
   **Véhicules** (`vehicles.py` : voitures, camionnette, bus ; `decor.py` : tracteur, chariot élévateur, camion
   garés) : redessinés pour la v2 sans changer ni cadre, ni silhouette, ni roues (le jeu ne voit rien). Ils
   restent de profil, et la lumière vient d'en haut (dessus clairs `_clair()`, bas de caisse à l'ombre, passages
   de roue `_passage()`) : elle reste juste quand le véhicule roule vers la gauche, en miroir — une lumière de
   gauche ou une vue de trois quarts ne le seraient pas. Du monde derrière les vitres (`_tete()` : conducteurs,
   boulanger en toque, passagers du bus). Planche : `reference/v2/vehicules_v2.png`.
+  Titine et ses wagons : même lumière (chaudière, cabine, roues, conteneurs).
   **Ombres** : la ligne de contact (`Sprite.sol`) passe un peu au-dessus du bas des murs (`CONTACT`), pour que
   l'ombre parte de dessous le contour : posée juste sous le mur, elle laissait un liseré clair entre le bâtiment
   et son ombre. Christophe tient aux ombres détaillées (les jours entre les pieds du poulailler, sous le store
@@ -164,7 +165,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - **Objets à ramasser** (`items.py` ; lettres de Marcel `npcs.letter_frames()` ; jouets d'Iris `port.toy_frames()`) :
   ils détonnaient dans le décor de la v2 (à plat, flottants au-dessus d'un ovale). Choix de Christophe sur
   `reference/v2/objets_options.png` : **posés au sol, à 85 %, avec leur ombre portée**. Os, saucisse, médaille,
-  canard, balle et os doré ont du relief (`items._dans()` : un croissant d'ombre, une plage claire) ; plus
+  canard, balle, os doré, les trois indices, la lettre et les jouets d'Iris ont du relief (`items._dans()` : un croissant d'ombre, une plage claire) ; plus
   d'ovale, de rebond ni d'étoile dans le dessin (une image par objet, sauf le canard pouic-pouic et la lettre).
   Le jeu les pose avec `drawPosed()` (`POSED` : taille, hauteur du sol sous `it.y`, cadence du scintillement
   `fx/glint`) ; `MAP.itemBase` / `MAP.toyBase` (`pack_web.bases()`) = où le dessin s'assoit ; les familles
@@ -615,8 +616,8 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `chiens2.py`) faits ; lot 4 (paysage) en cours : nature, ombres portées, herbe, eau, lisière, bords
   arrondis, bâtiments (étals et poulailler compris), ombres portées de tout (décors, personnages, bêtes,
   véhicules) allongées le soir et fusionnées, sous-bois et champ, mobilier (`mobilier.py` : du pot de fleurs au
-  portique du port), véhicules, objets à ramasser posés au sol, mares en haricot faits ; restent ce
-  que liste `reference/v2/reste_a_relooker.png` et des rives moins droites. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
+  portique du port), véhicules, objets à ramasser posés au sol, mares en haricot faits ; reste des
+  rives et des bords de chemin moins droits (et les canards, les papillons, qui gardent leur ovale). Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
   témoin dans `reference/v2/`) : des images fixes, que ni `game.js` ni `pack_web.py` n'utilisent encore (le décor
   de `nature.py` est dans le jeu depuis le lot 4). Les pistes générées par Christophe avec ChatGPT sont dans
   `reference/v2/chat_gpt/`.
