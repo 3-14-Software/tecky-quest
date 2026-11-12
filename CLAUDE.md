@@ -109,6 +109,17 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   l'entrepôt, l'os derrière l'étal de légumes, la maison haute (sa cheminée sortait de l'écran) l'ont été.
   Les étals du marché (`etal()`) et le poulailler sur pieds (`poulailler()`) y sont aussi, sans fenêtres
   (`ECLAIRES` = ceux qui en ont). `decor.py` garde les anciens dessins, que seul l'éditeur de carte montre encore.
+  `mobilier.py` (**le petit mobilier du jeu web**, v2, inscrit dans `nature.CATALOGUE` / `VARIANTES` comme les
+  bâtiments) : conteneurs, caisses, palettes, tonneaux, bottes de foin (carrée ou ronde), cagette, banc, boîte
+  aux lettres, haie, de trois quarts comme les étals (`_boite()` : flanc, face, dessus ; `_sol_boite()` : la
+  ligne de contact) ; table de terrasse sous son parasol, pots de fleurs (trois bouquets) ; souche, tronc
+  couché, champignons (amanites ou bolets), fougères, au contour doux de la nature. `ECH` : conteneurs 1,5
+  (Christophe : « les containers et la grue sont très petits »), table 1,35, banc 1,2, foin 1,3, tonneaux
+  1,35 ; `decor.ECH` : portique 1,5, lampadaire 1,3 (le halo de sa lanterne suit `MAP.grow.lamppost`).
+  `MAP.grow` agrandit aussi `RAILS` (pieds du portique) ; `PERCHOIRS` : où un chat se pose sur un conteneur
+  (`MAP.perches`). Un décor redessiné n'a plus son ancien dessin dans l'atlas (`pack_web.collect()`).
+  Planche : `python3 mobilier.py`. Restent en dessin v1 (`decor.py`) : portique, péniche, barque, camion,
+  chariot, tracteur, jeux du parc, fontaine, clôtures, panneaux, lampadaire, cône, épouvantail, pont.
   **Ombres** : la ligne de contact (`Sprite.sol`) passe un peu au-dessus du bas des murs (`CONTACT`), pour que
   l'ombre parte de dessous le contour : posée juste sous le mur, elle laissait un liseré clair entre le bâtiment
   et son ombre. Christophe tient aux ombres détaillées (les jours entre les pieds du poulailler, sous le store
@@ -532,7 +543,10 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   ajouter à la fin. `tools/export_voix.js` en tire le ton (`TONE`).
 - **IA des chiens** : `steer()` contourne les obstacles en choisissant le côté le plus court (simulation avec `moveActor`) et
   garde ce côté tant que la route directe est barrée (grillages longs). Ne pas revenir à un détour de durée fixe : tremblement.
-  Tests : `tests/obstacles.js`, `fence.js`, `fence_scan.js` (210 cas, 0 clignotement de direction).
+  Tests : `tests/obstacles.js`, `fence.js`, `fence_scan.js` (210 cas, 0 clignotement de direction). Ces deux
+  derniers se jouent au premier grillage du dépôt et comptent sur le conteneur posé juste en dessous
+  (`["container", 33.5, 25.4]`) : il barre le chemin de droite et laisse un couloir sous le grillage. Le
+  déplacer ou le rapprocher du grillage les fait échouer (c'est arrivé en l'agrandissant).
 - Les tests Node exécutent le script de `web/index.html` dans un `vm` avec canvas/audio simulés ; `tests/game_full.js` est une
   copie générée (`tests/regen.py`) — la régénérer après toute modif de `game.js` (fait par `run_all.sh`).
 - Dialogues : 3 lignes maximum affichées (4 en texte grand) ; chaîne longue = la découper en plusieurs répliques.
@@ -569,8 +583,8 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   anglais, durée, voix, vitrine). Lots 2 (images nettes) et 3 (Tecky, Alice et les chiens : `tecky2.py`, `alice2.py`,
   `chiens2.py`) faits ; lot 4 (paysage) en cours : nature, ombres portées, herbe, eau, lisière, bords
   arrondis, bâtiments (étals et poulailler compris), ombres portées de tout (décors, personnages, bêtes,
-  véhicules) allongées le soir et fusionnées, sous-bois et champ faits ; restent le petit mobilier (tables de
-  terrasse…), l'habillage des zones. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
+  véhicules) allongées le soir et fusionnées, sous-bois et champ, petit mobilier (`mobilier.py`) faits ; restent les gros
+  objets du port et du parc encore en v1 (portique, péniche, véhicules, jeux), l'habillage des zones. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
   témoin dans `reference/v2/`) : des images fixes, que ni `game.js` ni `pack_web.py` n'utilisent encore (le décor
   de `nature.py` est dans le jeu depuis le lot 4). Les pistes générées par Christophe avec ChatGPT sont dans
   `reference/v2/chat_gpt/`.

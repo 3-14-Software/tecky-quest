@@ -297,8 +297,19 @@ Fait le 12 novembre 2026, dans le jeu :
   potager, des rangs de pousses, de salades, de carottes et de poireaux sur les buttes
   (`nature.sol_cultures()`, `fieldDetails()`). Captures : `lot4_sous_bois.png`, `lot4_champ.png`.
 
-Reste : les objets (os, lettres, ballons), les canards et les papillons, qui gardent leur petit ovale ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; la souche, le tronc, les champignons
-et la grande fougère de la forêt, les tables de terrasse et le petit mobilier, encore dans leur dessin de la v1 ; l'habillage des zones (dont : la forme des mares, encore rectangulaire ; un cerisier en
+- **Petit mobilier** (`mobilier.py`, planche `mobilier_v2.png`) : conteneurs, caisses, palettes, tonneaux,
+  bottes de foin (carrées ou rondes), cagette de pommes, banc, boîte aux lettres, haie, de trois quarts comme
+  les étals ; table de terrasse sous son parasol, pots de fleurs (trois bouquets) ; souche, tronc couché,
+  champignons (amanites ou bolets) et fougères au contour de la nature. Tailles (remarque de Christophe :
+  « les containers et la grue sont très petits ») : conteneurs et portique à 1,5, table de terrasse 1,35,
+  lampadaire 1,3, foin 1,3, tonneaux 1,35, banc 1,2. Au port, déplacés dans `carte.json` : le portique et la
+  pile de conteneurs (vers l'est), le conteneur vert (à droite du portique), le second conteneur orange (en bas
+  à gauche du quai), un entrepôt, une palette, deux tonneaux, un lampadaire, un chat et un ballon de Léon.
+  Captures : `lot4_port.png`, `lot4_terrasse.png`, `lot4_foret_mobilier.png`.
+
+Reste : les objets (os, lettres, ballons), les canards et les papillons, qui gardent leur petit ovale ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; les gros objets encore dans leur
+dessin de la v1 (portique, péniche, barque, camion, chariot, tracteur, jeux du parc, fontaine, clôtures,
+lampadaire) ; l'habillage des zones (dont : la forme des mares, encore rectangulaire ; un cerisier en
 fleurs au milieu des sapins de la forêt). L'éditeur de carte montre encore les anciens arbres (il lit
 `decor/tree`…), pas les variantes.
 

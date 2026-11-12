@@ -1540,7 +1540,7 @@ ANIMATED = {"fountain": (8, 10)}
 
 # Décors agrandis dans le jeu (les véhicules : Christophe les trouvait trop petits, le 12 novembre 2026). L'obstacle
 # grandit d'autant : MAP.grow, appliqué à FOOT par game.js.
-ECH = {"truck": 1.5, "tractor": 1.5, "forklift": 1.4}
+ECH = {"truck": 1.5, "tractor": 1.5, "forklift": 1.4, "crane": 1.5, "lamppost": 1.3}
 
 
 # Ombre portée (game.js : groundShadows(), à partir de la silhouette) : tous les décors en ont une, sauf ceux qui sont

@@ -21,6 +21,7 @@ from PIL import Image
 
 import alice2
 import batiments
+import mobilier
 import butterflies
 import carte
 import cows
@@ -272,9 +273,9 @@ def build_map():
         # ombres portées : le décalage d'un point par unité de hauteur, et la ligne de contact de chaque sprite
         "shadow": list(nature.OMBRE), "sols": sols(),
         "cast": portees(),                            # familles de sprites à ombre portée (personnages, bêtes, véhicules)
-        "perches": batiments.perchoirs(S),            # où un chat se réfugie sur le toit de chaque bâtiment
+        "perches": {**batiments.perchoirs(S), **mobilier.perchoirs(S)},   # où un chat se réfugie : toits, conteneurs
         # décors agrandis (bâtiments, camion, tracteur, chariot) : leur obstacle (FOOT) grandit d'autant
-        "grow": {**batiments.agrandis(), **decor.ECH},
+        "grow": {**batiments.agrandis(), **mobilier.agrandis(), **decor.ECH},
         "vehicleScale": vehicles.ECH,
         "signs": [[px(x), px(y), t] for x, y, t in SIGNS],
         "farmRoadY": px(ROAD - 0.7),                  # les poules ne descendent jamais plus bas (la grande route)
@@ -377,6 +378,8 @@ def collect(r=1):
         _, w, h, ox, oy = nature.cadre(n)
         out.append((f"decor/{n}", [nature.image(n, R)], (ox * S + M, oy * S + M), True))
     for n in decor.DECOR:
+        if n in nature.VARIANTES:                                   # redessiné (nature, bâtiments, mobilier) : l'ancien
+            continue                                                # dessin ne sert plus qu'à l'éditeur de carte
         w, h, ox, oy = decor.cadre(n)
         out.append((f"decor/{n}", [render_svg(sv, w, h, R, PAD) for sv in decor.svgs(n)], (ox * S + M, oy * S + M), True))
     for n in batiments.ECLAIRES:                                    # les fenêtres des bâtiments, allumées le soir

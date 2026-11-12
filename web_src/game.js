@@ -1178,6 +1178,7 @@ const FLAT = new Set(['bridge', 'sandbox', 'burrow', 'rail', 'dog_bed', 'fallen_
 // pack_web.py), pieds du portique du port
 const RAILS = { bridge: [[-80, -320, -62, 0], [62, -320, 80, 0]], crane: [[-204, -16, -156, 0], [156, -16, 204, 0]],
   goal_net: [[-90, -58, -72, 0], [72, -58, 90, 0], [-80, -64, 80, -52]] };   // filet de Léon : côtés et fond
+for (const n in MAP.grow) if (RAILS[n]) RAILS[n] = RAILS[n].map(r => r.map(v => Math.round(v * MAP.grow[n])));
 let solids = [];
 // limites des pieds (rectangle [x0, y0] -> [x1, y1]) au bord de la carte ; au-delà, la lisière (voir « bord de la carte »)
 const BOUND = { side: 12, top: 28, bottom: 4 };
@@ -3496,7 +3497,7 @@ function drawLight(cx, cy, list) {
   const lamp = clamp((k - SUN.lamp) * 2, 0, 1), night = clamp(k - 3, 0, 1);
   if (lamp > 0) for (const d of decor) {
     if (d.n !== 'lamppost' || d.x < cx - 160 || d.x > cx + VW + 160 || d.y < cy - 40 || d.y > cy + VH + 200) continue;
-    glowSpot(d.x, d.y - 93, 64 + 16 * night, (0.55 + 0.3 * night) * lamp);
+    glowSpot(d.x, d.y - 93 * (MAP.grow.lamppost || 1), 64 + 16 * night, (0.55 + 0.3 * night) * lamp);   // (la lanterne, à la taille du dessin)
     glowSpot(d.x, d.y - 4, 70 + 40 * night, (0.3 + 0.3 * night) * lamp);
   }
   if (lamp > 0 && list) drawWindows(cx, cy, list, lamp);

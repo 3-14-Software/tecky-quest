@@ -91,7 +91,7 @@ eval(base + `setTimeout(() => {
   ok(run('rip.length') > 200 && run('rip.every(([x, y]) => !lilyAt(Math.floor((x - 8) / 64), Math.floor(y / 64)))'), 'aucune vaguelette dans la tuile d\\'un nénuphar (' + run('rip.length') + ' vaguelettes autour d\\'eux)');
   run('semis = []; blit0 = blit; blit = function (g, f) { semis.push(f); blit0.apply(null, arguments); }; resetGround(); drawGround(' + (lys[0][2] - 480) + ', ' + (lys[0][3] - 270) + '); blit = blit0;');
   ok(cles('sol/nenuphar') >= 1 && cles('sol/galet') >= 1, 'peints dans le sol : ' + cles('sol/nenuphar') + ' nénuphars et ' + cles('sol/galet') + ' galets autour du premier');
-  ok(run('["lamppost", "bench", "hay", "fence_wood_h", "truck", "fountain"].every(n => MAP.sols[n] && MAP.sols[n].length)')
+  ok(run('["lamppost", "banc", "foin", "fence_wood_h", "truck", "fountain"].every(n => MAP.sols[n] && MAP.sols[n].length)')
      && run('["bridge", "sandbox", "boat", "barge", "rail", "goal_net"].every(n => !MAP.sols[n])') && run('Object.keys(ATLAS).every(k => !k.startsWith("ombre/"))'),
      'bancs, lampadaires, foin, clôtures, camion, fontaine : une ombre portée aussi ; rien pour ce qui est à plat ou sur l\\'eau');
   // --- les bâtiments (batiments.py) : de trois quarts, avec leur ombre, leurs fenêtres du soir, leurs perchoirs
