@@ -5,7 +5,7 @@ function main() {
   run('audioOn(); STORE.mem = {}; loadBadges(); toTitle();');
   const N = run('MAP.badges.length');
   ok(N === 16 && run('ATLAS["hud/badge"].f.length') === N + 1, N + ' badges (et l’image « verrouillé »)');
-  ok(run('MAP.badges.every(id => BADGE_INFO[id])'), 'chacun a un nom et un objectif');
+  ok(run('MAP.badges.every(id => txtAt("badges." + id + ".nom") && txtAt("badges." + id + ".but"))'), 'chacun a un nom et un objectif');
   ok(ids().endsWith('options,badges') && run('menu.items[menu.items.length - 1].sub').includes('0 sur ' + N), 'menu principal : « Badges », 0 sur ' + N);
   run('menu.sel = menu.items.findIndex(i => i.id === "aventure"); pressed.ok = true'); step(1); advanceDialog();
   run('dogs = []; cars = []; P.inv = 999; P.x = 8 * 64; P.y = 5 * 64 + 32; P.mode = "free";');

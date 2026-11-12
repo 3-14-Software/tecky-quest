@@ -313,6 +313,21 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   (`offMap()`, dans `blockedFeet()`) qui arrête au bord. Tecky qui y pousse sans avancer le dit (`edgeBump()`,
   `EDGE.push` s, au plus une fois toutes les `EDGE.again` s ; axe par axe : au joystick, il glisse le long du bord ou de
   la butte, et ça compte ; près de la butte, `EDGE.tunnelY`, c'est le message du tunnel). Les bulles de mots restent dans l'écran. Test : `edge.js`.
+- **Textes** (lot 5, le mécanisme ; 12 novembre 2026) : `textes/fr.json` est la source de tous les textes du jeu,
+  embarquée par `pack_web.py` (`TEXTES = { fr: … }`, `LANG`). `game.js` ne connaît que des clés :
+  `txt('farmer.merci.0')`, `txt('farmer.encore', { n })` (les `{mots}` sont remplacés ; une entrée `{ one, other }`
+  se choisit d'après `n`, selon le pluriel de la langue, `plural()` : en français 0 et 1 sont au singulier),
+  `txtDev('badges.retour')` (variante `.tactile` ou `.touches` d'un texte d'aide), `txtAt()` (la valeur brute,
+  ou rien). Clés rangées par celui qui parle (`farmer`, `postman`, `neighbor`, `leon`, `iris`, `piquette`,
+  `tecky`, `chat`…) ou par écran (`menu`, `options`, `badges`, `victoire`, `pause`…) ; `noms` (personnages),
+  `dites` (les touches à dire à voix haute). La fonction ne s'appelle pas `t` : trop de variables locales
+  portent ce nom (une boucle `for (const t of toys)` l'aurait masquée) ; de même, un test ne doit pas déclarer
+  de variable `txt` dans le jeu (c'est arrivé dans `nettete.js`). Un texte nouveau : une clé dans
+  `textes/fr.json`, jamais une phrase dans `game.js` — `tests/textes.js` le refuse (aucun littéral qui ressemble
+  à une phrase), et vérifie que chaque clé citée existe et que chaque texte sert. Ne sont pas encore des clés :
+  les panneaux, les noms de zones et de lieux de `carte.json`, la version (`pack_web.version()`), les touches
+  dessinées (`hud.KEYS` : « Entrée », « Échap »), le titre de la page et le manifeste. Pas encore d'anglais ni
+  d'option « Langue » : c'est la suite du lot 5.
 - `web_src/game.js` : tout le moteur. Monde en pixels x2 (tuile = 64), caméra 960x540, interface 1920x1080 (`GW`/`GH`).
   Sol pré-rendu en blocs de 1024 px de canevas (`ground`, `groundChunk()`, `buildChunk()`, `groundTile()`, marge de
   la lisière comprise) : une seule image de la carte dépasserait la taille de canevas permise sur certains
@@ -404,12 +419,12 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   et, depuis l'écran titre seulement, « Réinitialiser la progression » (`resetAsk` : confirmation, « Non » d'abord ;
   au toucher, deux cases `resetPills()` ; `resetProgress()` efface sauvegarde, records et badges, pas les options ;
   lignes plus serrées au-delà de 9, `optBox(i, n)`). Test : `options.js`.
-- Badges (`MAP.badges` = `hud.BADGES`, image i de `hud/badge`, la dernière = verrouillé ; `BADGE_INFO`, `BADGES_KEY`,
+- Badges (`MAP.badges` = `hud.BADGES`, image i de `hud/badge`, la dernière = verrouillé ; textes `badges.<id>.nom` / `.but` (`badgeName()`, `badgeGoal()`), `BADGES_KEY`,
   gardés d'une partie à l'autre) : `checkBadges()` toutes les demi-secondes, `winBadges()` à la victoire (aventure,
   sans morsure = `bitten` faux, sauvegardé : seules les vraies morsures comptent, `hurtPlayer(…, bite)` — l'aboiement du
   doberman et la charge du chien de berger font mal sans être des morsures ; moins de 10 min). `unlockBadge()` : annonce « Nouveau badge ! »
   (`toasts`), rappel sur l'écran de victoire (`newBadges`), écran « Badges » depuis le menu principal
-  (`state === 'badges'`). Un nouveau badge : l'ajouter à `hud.BADGES` (dessin), `BADGE_INFO` et une condition.
+  (`state === 'badges'`). Un nouveau badge : l'ajouter à `hud.BADGES` (dessin), à `textes/fr.json` (`badges.<id>`) et lui donner une condition.
   Test : `badges.js`.
 - Météo (`weather`, `WEATHER`, option `opts.weather` : auto / soleil / pluie / neige ; `december()`) : en auto, une averse
   de temps en temps (neige en décembre). `weather.k` = force (monte et descend en `WEATHER.ramp` s). Pluie : gouttes
@@ -447,7 +462,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   bruitages multipliés par `SFX_VOL` (1,4). KO de Tecky → `Music.start('lose')` ; rejouer relance le thème.
 - Trésors (médaille 100, jouet pouic-pouic 50, balle 20) : jamais dans l'eau — `check_placement.js` le vérifie.
 - Indices (`CLUES` : barrette à la ferme, chaussure dans la forêt, doudou au parc) : chacun dit où chercher ensuite
-  (`CLUE_NEXT`), la flèche du HUD vise le prochain indice puis Alice (`arrowTarget()`). Elle n'est **pas permanente** :
+  (`clueNext()`, textes `indices.ensuite`), la flèche du HUD vise le prochain indice puis Alice (`arrowTarget()`). Elle n'est **pas permanente** :
   `showArrow()` l'affiche 12 s après l'intro et chaque indice, et 8 s en rappel après 45 s sans progrès (`ARROW` ; taille
   `ARROW.sc`). Seule la
   pointe (`hud/arrow`) tourne ; l'icône de la cible (`hud/arrow_icon` : 3 indices + tête d'Alice) reste droite. Alice est **cachée**
@@ -461,7 +476,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   posent sur les pots de fleurs ou les massifs (détails « fleurs » de carte.json, `FLOWER_BEDS`), s'envolent si Tecky approche
   ou aboie. Chacun doit avoir une fleur à portée (testé). Dessinés au-dessus de tout, sans collision. Test :
   `butterflies.js`.
-- Villageois (`villagers`, `VILLAGER`, `VILLAGER_LINES`, `MAP.villagers`, villageois.py) : Bernard le boulanger,
+- Villageois (`villagers`, `VILLAGER`, `VILLAGER_LINES` = combien de phrases chacun, textes `villageois.<qui>.<i>`, `MAP.villagers`, villageois.py) : Bernard le boulanger,
   Josette la marchande de fruits, Lili la fleuriste, Lucas et son ballon. Sans quête : ils ne sont pas dans
   `npcList()` (ni « ! », ni « Parler »), mais saluent Tecky qui passe d'une bulle (une phrase après l'autre, au plus
   une fois toutes les `VILLAGER.again` s) et de la main (Lucas sautille : `hop`). Obstacles comme les personnages.
@@ -551,10 +566,11 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   (jouet dans la gueule, Pompon ou petits hérissons qui le suivent) : c'est l'arrivée qui parle. Des petits hérissons
   arrivés ensemble n'ont droit qu'à un cri de leur maman (`piquetteCall()`, `BABY.call` s après le dernier).
 - Voix des répliques (`voix/`, `tools/export_voix.js`) : l'outil fait tourner le jeu sans affichage, appelle chaque
-  dialogue dans tous ses cas et relève les répliques écrites en dur ; de même pour les bulles (`addWordPop(texte, x,
+  dialogue dans tous ses cas et relève les répliques à clé fixe (un `txt('clé')` sans paramètre est remis en clair
+  d'après `textes/fr.json`, puis lu comme une phrase écrite là) ; de même pour les bulles (`addWordPop(texte, x,
   y, qui)` : le 4e argument dit qui parle, personnage, 'tecky', 'info' ou animal ; `npcShout()` le passe tout seul) ; il écrit `voix/repliques.csv` / `.json` (une
   ligne par fichier audio : nom = `voiceKey()` du jeu, personnage + empreinte du texte à dire ; texte à dire =
-  `spokenText()`, les [action] en mots selon l'appareil, `GLYPH_SPOKEN`). Une nouvelle réplique dont le texte est
+  `spokenText()`, les [action] en mots selon l'appareil, textes `dites.<action>`). Une nouvelle réplique dont le texte est
   calculé : la produire dans l'outil et ajuster `DYNAMIC_SITES` (`DYNAMIC_POPS` pour une bulle). `run_all.sh` vérifie que la liste est à jour
   (`--check`) : après toute modification d'une réplique, relancer `node tools/export_voix.js`.
 - Dialogues : `say()` pendant un dialogue **met la réplique à la suite** (`dialog.queue`) au lieu de le remplacer

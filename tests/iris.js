@@ -24,7 +24,7 @@ function main() {
   ok(run('used.includes("port/toy")'), 'compteur de jouets dans le HUD');
   // Tecky passe sur un jouet : il le prend dans sa gueule
   run('var T0 = toys[0]; P.x = T0.x; P.y = T0.y + 10; P.mode = "free"; pops = [];'); step(2);
-  ok(run('T0.carried') && run('carried() === T0') && run('pops.some(p => p.text === TOY_NAMES[0])'), 'il prend le poulet dans sa gueule');
+  ok(run('T0.carried') && run('carried() === T0') && run('pops.some(p => p.text === toyName(0))'), 'il prend le poulet dans sa gueule');
   run('updateCamera(10); used = []; drawSpr = function (k, f, x, y) { used.push([k, f, x, y]); return ds0.apply(this, arguments); }; render(); drawSpr = ds0;');
   ok(run('used.some(u => u[0] === "port/toy" && u[1] === 0 && Math.abs(u[2] - P.x - MOUTH[P.dir][0]) < 1)'), 'le jouet est dessiné dans sa gueule');
   // un seul à la fois

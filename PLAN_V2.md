@@ -51,9 +51,9 @@ lumière), la musique.
 | 1. Écran témoin | Une scène du jeu redessinée à la qualité visée : la référence de tout le reste | petit | direction validée le 10 novembre 2026 ; second témoin (village) à faire avant les bâtiments |
 | 2. Netteté | Atlas et tuiles à plusieurs échelles, affichage net en 1080p et au-delà | petit | fait dans le moteur ; reste à voir sur une télévision et sur téléphone |
 | 3. Tecky et Alice | Les deux héros redessinés et animés ; puis les chiens | moyen | dans le jeu : Tecky et Alice le 10 novembre 2026, Tecky redessiné d'après la planche et les chiens le 11 ; à voir en jouant |
-| 4. Paysage | Variantes, sol, eau, ombres portées, bâtiments, habillage des zones | gros | en cours : nature, ombres, herbe, eau, lisière, bords arrondis et bâtiments dans le jeu le 12 novembre 2026 |
-| 5. Textes et anglais | Tous les textes en données, jeu jouable en anglais | moyen | à faire |
-| 6. Durée | Plusieurs cartes dans le moteur, puis de nouveaux épisodes | très gros | à cadrer |
+| 4. Paysage | Variantes, sol, eau, ombres portées, bâtiments, habillage des zones | gros | fait le 12 novembre 2026 (relu par Christophe dans Firefox, publié) |
+| 5. Textes et anglais | Tous les textes en données, jeu jouable en anglais | moyen | le mécanisme d'abord (textes en données, sans traduire), avant le lot 6 ; l'anglais après |
+| 6. Durée | De nouveaux épisodes, un par saison ; plusieurs cartes dans le moteur | très gros | cadré le 12 novembre 2026 : épisodes par saison |
 | 7. Voix | Répliques lues dans le jeu, en français et en anglais | moyen | à faire |
 | 8. Vitrine | Écran titre illustré, vignette, captures, bande-annonce | moyen | à faire |
 
@@ -374,7 +374,12 @@ petits ne sont donc pas à faire.
 ### 5. Textes et anglais
 
 - Tous les textes sortent de `game.js` : `textes/fr.json` (la source) et `textes/en.json`, une fonction
-  `t('clé', {n})` avec les pluriels. Les `[action]` restent telles quelles.
+  `txt('clé', {n})` avec les pluriels. Les `[action]` restent telles quelles.
+  **Fait le 12 novembre 2026 pour le français** (le mécanisme, avant le lot 6) : 334 textes dans `textes/fr.json`,
+  264 clés citées dans `game.js`, plus aucune phrase écrite en dur (`tests/textes.js`). Vérifié sans rien changer
+  à ce qui s'affiche : la liste des 226 répliques et bulles à enregistrer est identique à celle d'avant, et un
+  relevé de tout ce que le jeu écrit sur 65 écrans (titre, options, badges, pause, fin, au clavier, à la manette
+  et au toucher) aussi. La fonction s'appelle `txt` et non `t`, que masquaient des variables locales.
 - Panneaux, noms de zones et de lieux de `carte.json` : des clés.
 - Option « Langue » (celle du navigateur ou de Steam par défaut).
 - Tests : chaque clé existe dans chaque langue ; chaque réplique tient en 3 lignes (4 en texte grand) dans chaque
@@ -387,10 +392,22 @@ aucun code.
 
 ### 6. Durée
 
-Objectif à chiffrer après mesure (une première partie complète, jouée par quelqu'un qui découvre le jeu). Cible
-proposée : deux à trois heures pour tout voir.
+Mesure (Christophe, 12 novembre 2026) : une première partie complète dure **moins de 30 minutes**. Cible : deux à
+trois heures pour tout voir, soit quatre épisodes d'une demi-heure à trois quarts d'heure.
 
-Proposition : **quatre épisodes, un par saison**, dans un monde qui change.
+Décidé le 12 novembre 2026 : **quatre épisodes, un par saison**, dans un monde qui change (plutôt qu'un monde plus
+grand ou les intérieurs d'abord). Et, avant d'écrire du contenu, **les textes passent en données** (le mécanisme du
+lot 5 : `textes/fr.json`, `t()`, sans traduire), pour que les nouveaux épisodes s'écrivent déjà hors de `game.js`.
+
+Ordre proposé :
+
+1. Textes en données (mécanisme du lot 5).
+2. La notion d'épisode sur la carte actuelle : une saison = une palette, des variantes de décor et une météo ; ses
+   placements, ses indices et ses quêtes ; sauvegarde v3. Aucune carte nouvelle n'est nécessaire pour cela.
+3. Un premier nouvel épisode, pour mesurer ce qu'il coûte et ce qu'il dure (l'automne ou l'hiver : ni l'un ni
+   l'autre ne demande de lieu nouveau).
+4. Le moteur à plusieurs cartes, pour les lieux nouveaux (le lac ou la plage de l'été) et les intérieurs.
+5. Rejouer : cachettes tirées au sort, album d'autocollants.
 
 - **Moteur** : plusieurs cartes (`MAP` est aujourd'hui une constante unique, 135 références), passages d'une carte à
   l'autre (les tunnels de la route, des portes), sauvegarde v3 (épisode, carte, progression de chaque épisode),
@@ -428,7 +445,7 @@ n'importe quelle taille), bande-annonce d'une minute.
 | Quand | Décision |
 |---|---|
 | Fin du lot 1 | La direction de l'écran témoin : on continue par code, ou un illustrateur fait la planche de style |
-| Avant le lot 6 | La structure du contenu : épisodes par saison, monde plus grand, ou intérieurs d'abord |
+| Avant le lot 6 | La structure du contenu : épisodes par saison, monde plus grand, ou intérieurs d'abord — décidé le 12 novembre 2026 : épisodes par saison |
 | Avant le lot 7 | Synthèse vocale (licence commerciale, voix d'enfant crédible) ou comédiens ; qui prête sa voix à Alice |
 | Avant le lot 5 | Les langues au lancement (français et anglais proposés) |
 

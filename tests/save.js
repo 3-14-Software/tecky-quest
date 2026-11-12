@@ -39,7 +39,7 @@ function main() {
   ok(ids() === 'continue,aventure,balade,options,badges' && run('menu.sel') === 0, 'écran titre : « Continuer » en premier');
   ok(/Aventure · 1 indice sur 3 · 2 min 05 s/.test(run('menu.items[0].sub')), 'résumé de la partie : ' + run('menu.items[0].sub'));
   run('pressed.ok = true'); step(1);
-  ok(run('state') === 'dialog' && /Me revoilà/.test(run('dialog.lines[0].text')) && run('dialog.lines[1].text') === run('CLUE_NEXT[1]'),
+  ok(run('state') === 'dialog' && /Me revoilà/.test(run('dialog.lines[0].text')) && run('dialog.lines[1].text') === run('clueNext(1)'),
      'Continuer : Tecky rappelle où chercher ensuite');
   advanceDialog();
   ok(run('clues.join()') === 'true,false,false' && run('digs[1].dug') && run('treasures') === 1 && run('score') === 420 &&

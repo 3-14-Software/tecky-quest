@@ -591,6 +591,9 @@ def main():
             # images nettes, à côté de la page (game.js : loadHD) ; null : construit sans elles
             "const HD_SRC = " + json.dumps(hd and {k: v for k, v in hd.items() if k != "files"}, separators=(",", ":")) + ";\n"
             "const SONGS = " + json.dumps(music.songs(), separators=(",", ":")) + ";\n"
+            # les textes du jeu, par langue (game.js : txt()) ; la source est textes/fr.json
+            "const TEXTES = " + json.dumps({"fr": json.load(open(os.path.join(ROOT, "textes", "fr.json"), encoding="utf-8"))},
+                                           separators=(",", ":"), ensure_ascii=False) + ";\n"
             "const MAP = " + json.dumps(m, separators=(",", ":"), ensure_ascii=False) + ";\n"
             "const VERSION = " + json.dumps(version(), ensure_ascii=False) + ";\n")
     html = tpl.replace("/*__DATA__*/", data).replace("/*__GAME__*/", game)

@@ -1,6 +1,6 @@
 // Export des répliques pour la synthèse vocale : node tools/export_voix.js (après python3 pack_web.py).
 // Fait tourner le jeu sans affichage (comme les tests) et appelle chaque dialogue dans tous ses cas (comptes, appareil,
-// mode, état des quêtes) en notant les répliques ; puis relève dans game.js les répliques écrites en dur, pour n'en
+// mode, état des quêtes) en notant les répliques ; puis relève dans game.js les répliques à clé fixe, pour n'en
 // oublier aucune ; de même pour les petites bulles (exclamations des personnages, de Tecky, cris des animaux : le 4e
 // argument d'addWordPop dit qui parle). Une ligne par fichier audio à générer : voix/repliques.csv et
 // voix/repliques.json (nom du fichier = voiceKey() du jeu, texte à dire = spokenText()). --check : dit seulement si ces
@@ -72,8 +72,8 @@ function main() {
   ask('Reprendre après un KO', 'saveGame(); loadGame(STORE.get(SAVE_KEY), true);');
   run('dogs = []; cars = [];');
   // indices d'Alice, os dorés, panneaux
-  ask('Indice trouvé', 'CLUE_FOUND.forEach(t => say([{ who: "tecky", text: t }]));');
-  ask('Où chercher ensuite', 'CLUE_NEXT.forEach(t => say([{ who: "tecky", text: t }]));');
+  ask('Indice trouvé', '[0, 1, 2].forEach(i => say([{ who: "tecky", text: clueFound(i) }]));');
+  ask('Où chercher ensuite', '[0, 1, 2, 3].forEach(i => say([{ who: "tecky", text: clueNext(i) }]));');
   ask('Os doré déterré', 'treasures = 0; digs.forEach(g => uncover(g));');
   ask('Panneau', 'MAP.signs.forEach(s => say([{ who: "info", text: s[2] }]));');
   // quêtes : première demande, rappels (chaque compte), remerciements, après coup
@@ -152,7 +152,12 @@ function main() {
   const rec = JSON.parse(run('JSON.stringify(REC)'));
 
   // répliques écrites en dur dans game.js : toutes doivent être là (sinon, on les ajoute avec leur fonction comme contexte)
-  const src = fs.readFileSync(SRC, 'utf8');
+  // (les textes sont dans textes/fr.json : un txt('clé') sans paramètre est d'abord remis en clair, comme s'il était
+  // écrit en dur ; ceux qui ont des paramètres, txtDev() et les autres appels sont des textes calculés)
+  const TEXTES = JSON.parse(fs.readFileSync(path.join(ROOT, 'textes', 'fr.json'), 'utf8'));
+  const clair = k => k.split('.').reduce((v, x) => v == null ? v : v[x], TEXTES);
+  const src = fs.readFileSync(SRC, 'utf8').replace(/\btxt\('([\w.]+)'\)/g, (m, k) =>
+    typeof clair(k) === 'string' ? "'" + clair(k).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'" : m);
   const lit = /who: '(\w+)'(?:,\s*face: ([^,]+))?,\s*text: ("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')\s*}/g;
   let m, literal = 0;
   while ((m = lit.exec(src))) {
@@ -188,7 +193,7 @@ function main() {
     const a = args(src.slice(mm.index + mm[0].length, mm.index + 400));
     const [textArg, whoList] = mm[1] === 'npcShout' ? [a[1], [NPC_VARS[a[0]]]] : [a[0], a[3] ? lits(a[3]).length ? lits(a[3]) : [] : []];
     if (!whoList.length || !whoList[0]) continue;                      // personne ne le dit (« ! » du chien de berger)
-    if (/[+`]|^\w+$|\[/.test(textArg.replace(/'(?:[^'\\]|\\.)*'/g, "''"))) {          // calculé
+    if (/[+`]|^\w+$|\[|\b(txt\w*|toyName)\(/.test(textArg.replace(/'(?:[^'\\]|\\.)*'/g, "''"))) {          // calculé
       pops++;
       if (process.argv.includes('--sites')) console.log('bulle calculée, ligne', src.slice(0, mm.index).split('\n').length);
       continue;

@@ -33,7 +33,7 @@ eval(base + `setTimeout(() => {
   const take = n => { run('var it = ' + item(n) + '; P.x = it.x; P.y = it.y + 30; P.mode = "free";'); step(2); };
   run('farm.state = "done"; farmer.near = true;');   // (le fermier, voir farm.js : pas de salut ici)
   take('hairclip');
-  ok(run('clues[0]') && run('dialog.lines[0].text') === run('CLUE_FOUND[0]') && run('dialog.lines[1].text') === run('CLUE_NEXT[1]'),
+  ok(run('clues[0]') && run('dialog.lines[0].text') === run('clueFound(0)') && run('dialog.lines[1].text') === run('clueNext(1)'),
      'barrette : Tecky la reconnaît et dit où chercher ensuite (la forêt)');
   advanceDialog();
   ok(run('arrowTarget() === ' + item('shoe')) && run('arrowT') > 11, 'la flèche se montre à nouveau, vers la chaussure');
@@ -41,11 +41,11 @@ eval(base + `setTimeout(() => {
   ok(run('calls[1] && calls[1][1]') === 1, 'avec l\\'icône de la chaussure');
   // le doudou avant la chaussure : l'indice suivant reste la chaussure
   take('plush');
-  ok(run('clues[2]') && run('dialog.lines[1].text') === run('CLUE_NEXT[1]'), 'doudou trouvé avant la chaussure : on renvoie vers la chaussure');
+  ok(run('clues[2]') && run('dialog.lines[1].text') === run('clueNext(1)'), 'doudou trouvé avant la chaussure : on renvoie vers la chaussure');
   advanceDialog();
   ok(run('alice.hidden'), 'Alice reste cachée avec deux indices');
   take('shoe');
-  ok(!run('alice.hidden') && run('dialog.lines[1].text') === run('CLUE_NEXT[3]'), 'troisième indice : Alice sort de sa cachette');
+  ok(!run('alice.hidden') && run('dialog.lines[1].text') === run('clueNext(3)'), 'troisième indice : Alice sort de sa cachette');
   advanceDialog();
   ok(run('arrowTarget() === alice') && run('arrowT') > 11, 'la flèche montre Alice');
   run('calls = []; P.x = 5*64; P.y = 5*64; updateCamera(9); drawHUD(); drawSpr = drawSpr0;');

@@ -74,10 +74,10 @@ eval(base + `setTimeout(() => {
   run('calls = []; mapImg = null; buildMapImg();');
   ok(run('!!mapImg') && run('calls.some(c => c[0] === tilesImg)') && !run('calls.some(c => c[0] === T4)'), 'la carte de la pause garde le tileset x2 (elle est au quart)');
   // --- l'écran titre le dit, à côté de la version
-  run('var txt = []; var fill0 = ctx.fillText; ctx.fillText = function (s) { txt.push(String(s)); }; openTitleMenu(); drawTitle();');
-  ok(run('txt.some(s => / · images x4$/.test(s))'), 'écran titre : « ' + run('txt.find(s => /images x4$/.test(s))') + ' »');
-  run('txt = []; setHD(1, 0, null, null); drawTitle(); ctx.fillText = fill0; setHD(2, ' + PAGE + ', [P0, P1], T4);');
-  ok(!run('txt.some(s => /images x/.test(s))') && run('txt.includes(VERSION)'), 'en x2, seulement la version');
+  run('var ecrits = []; var fill0 = ctx.fillText; ctx.fillText = function (s) { ecrits.push(String(s)); }; openTitleMenu(); drawTitle();');
+  ok(run('ecrits.some(s => / · images x4$/.test(s))'), 'écran titre : « ' + run('ecrits.find(s => /images x4$/.test(s))') + ' »');
+  run('ecrits = []; setHD(1, 0, null, null); drawTitle(); ctx.fillText = fill0; setHD(2, ' + PAGE + ', [P0, P1], T4);');
+  ok(!run('ecrits.some(s => /images x/.test(s))') && run('ecrits.includes(VERSION)'), 'en x2, seulement la version');
   // --- retour en x2
   run('setHD(1, 0, null, null); calls = []; drawSpr("' + key + '", 0, 300, 200);');
   ok(run('calls[0][0] === atlas') && run('chunkTiles()') === 16, 'sans images nettes : atlas x2, blocs de 16 tuiles');

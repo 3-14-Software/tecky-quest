@@ -90,6 +90,30 @@ function blit(g, f, x, y, w, h, part) {
 }
 
 /* ------------------------------------------------------------------ utilitaires */
+/* Textes. Ils sont tous dans textes/fr.json (embarqué par pack_web.py : TEXTES[langue]) ; le code ne connaît que
+   leurs clés : txt('farmer.merci.0'), txt('farmer.encore', { n: 3 }). Les {mots} d'un texte sont remplacés par les
+   paramètres ; une entrée { one, other } se choisit d'après n, selon le pluriel de la langue (en français, 0 et 1
+   sont au singulier). Les [action] (icônes de touches, GLYPH) restent dans les textes. txtDev : la variante
+   « tactile » ou « touches » d'un texte d'aide. Une clé inconnue s'affiche telle quelle (tests/textes.js les refuse).
+   (Pas « t » : trop de variables locales portent ce nom.) */
+let LANG = 'fr';
+function plural(n) {
+  if (typeof Intl === 'undefined' || !Intl.PluralRules) return n > 1 ? 'other' : 'one';
+  return (plural[LANG] = plural[LANG] || new Intl.PluralRules(LANG)).select(n);
+}
+function txtAt(key) {
+  let v = TEXTES[LANG];
+  for (const k of key.split('.')) { if (v == null) return undefined; v = v[k]; }
+  return v;
+}
+function txt(key, p) {
+  let v = txtAt(key);
+  if (v && typeof v === 'object' && !Array.isArray(v) && p && p.n !== undefined) v = v[plural(p.n)] !== undefined ? v[plural(p.n)] : v.other;
+  if (typeof v !== 'string') return key;
+  return p ? v.replace(/\{(\w+)\}/g, (m, k) => p[k] !== undefined ? p[k] : m) : v;
+}
+const txtDev = (key, p) => txt(key + (touchMode ? '.tactile' : '.touches'), p);
+
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -1629,7 +1653,7 @@ function edgeBump(dt, ix, iy, ox, oy) {
   P.edgeT = 0; P.edgeAt = timePlayed;
   // au bout de la grande route (ou juste à côté de la butte du tunnel)
   const [r0, r1] = MAP.traffic.road, tunnel = outX && P.y > r0 - EDGE.tunnelY && P.y < r1 + EDGE.tunnelY;
-  addWordPop(tunnel ? 'Le tunnel, c’est pour les voitures !' : 'Alice n’a pas pu aller si loin !', P.x, P.y - 120, 'tecky');
+  addWordPop(tunnel ? txt('bord.tunnel') : txt('bord.carte'), P.x, P.y - 120, 'tecky');
 }
 
 /* Déplacement d'un chien avec contournement : s'il est bloqué, il longe l'obstacle
@@ -1747,17 +1771,8 @@ const ITEM = {
 /* Indices : Alice joue à cache-cache et a semé trois affaires. Chacune oriente vers la suivante (la flèche
    au bord de l'écran aussi) ; Alice ne sort de sa cachette, la cabane du parc, qu'une fois les trois trouvées. */
 const CLUES = ['hairclip', 'shoe', 'plush'];
-const CLUE_FOUND = [
-  "La barrette d'Alice ! Elle est passée par la ferme.",
-  "Une chaussure d'Alice ! Elle a traversé la rivière par le pont.",
-  "Le doudou d'Alice ! Elle ne doit plus être bien loin.",
-];
-const CLUE_NEXT = [                  // où chercher ensuite : le prochain indice, puis Alice
-  "Je vais chercher du côté de la ferme, tout à l'est, en suivant la grande route.",
-  "Ses traces partent vers le pont, au sud de la ferme… Elle est allée dans la forêt !",
-  "Elle a continué à travers la forêt, vers l'ouest. Ça sent le parc, par là !",
-  "Et maintenant, je sens son odeur ! Elle se cache au parc, du côté de la cabane.",
-];
+const clueFound = i => txt('indices.trouve.' + i);
+const clueNext = i => txt('indices.ensuite.' + i);      // où chercher ensuite : le prochain indice, puis Alice
 let clues = [false, false, false];
 function nextClue() { const i = clues.indexOf(false); return i < 0 ? 3 : i; }
 /* La flèche n'est pas permanente : elle s'affiche quelques secondes quand Tecky apprend où chercher (intro, indice),
@@ -1838,14 +1853,14 @@ function reset() {
 // Visages du portrait de Tecky (hud.tecky_portrait) : le champ face d'une réplique
 const FACE = { calme: 0, clin: 1, parle: 2, ko: 3, inquiet: 4, surpris: 5, fier: 6 };
 const WHO = {
-  tecky: { name: 'Tecky', portrait: 'hud/portrait_tecky' },      // ses visages : FACE
-  alice: { name: 'Alice', portrait: 'hud/portrait_alice' },
-  farmer: { name: 'Gaston', portrait: 'hud/portrait_farmer' },
-  postman: { name: 'Marcel', portrait: 'hud/portrait_postman' },
-  neighbor: { name: 'Mamie Rose', portrait: 'hud/portrait_neighbor' },
-  leon: { name: 'Léon', portrait: 'hud/portrait_leon' },
-  iris: { name: 'Iris', portrait: 'hud/portrait_iris' },
-  piquette: { name: 'Maman Piquette', portrait: 'hud/portrait_piquette' },
+  tecky: { get name() { return txt('noms.tecky'); }, portrait: 'hud/portrait_tecky' },      // ses visages : FACE
+  alice: { get name() { return txt('noms.alice'); }, portrait: 'hud/portrait_alice' },
+  farmer: { get name() { return txt('noms.farmer'); }, portrait: 'hud/portrait_farmer' },
+  postman: { get name() { return txt('noms.postman'); }, portrait: 'hud/portrait_postman' },
+  neighbor: { get name() { return txt('noms.neighbor'); }, portrait: 'hud/portrait_neighbor' },
+  leon: { get name() { return txt('noms.leon'); }, portrait: 'hud/portrait_leon' },
+  iris: { get name() { return txt('noms.iris'); }, portrait: 'hud/portrait_iris' },
+  piquette: { get name() { return txt('noms.piquette'); }, portrait: 'hud/portrait_piquette' },
   info:  { name: '', portrait: null },
 };
 // une réplique demandée pendant un dialogue passe à la suite (ex. : le fermier parle, et Tecky ramasse la barrette)
@@ -1882,23 +1897,19 @@ function updateDialog(dt) {
 }
 function introLines() {
   return [
-    { who: 'tecky', face: FACE.inquiet, text: "Ouaf ! Alice est partie jouer… et elle n'est pas rentrée !" },
-    { who: 'tecky', face: 2, text: "Elle a dû semer des affaires en chemin. En les retrouvant, je saurai où elle se cache !" },
+    { who: 'tecky', face: FACE.inquiet, text: txt('intro.partie') },
+    { who: 'tecky', face: 2, text: txt('intro.affaires') },
     { who: 'tecky', face: 0, text: balade()
-        ? "La flèche au bord de l'écran me guide. Et les chiens du coin ont l'air d'avoir envie de jouer !"
-        : "La flèche au bord de l'écran me guide. Gare aux chiens du coin, ils ne sont pas commodes." },
+        ? txt('intro.fleche.balade')
+        : txt('intro.fleche.aventure') },
     { who: 'info', text: touchMode
-        ? "Glisse le doigt à gauche pour marcher. Les boutons à droite servent à aboyer, à mordre et à flairer la piste d'Alice."
-        : "[walk] pour marcher, [bark] pour aboyer, [sniff] pour flairer la piste d'Alice. [pause] pour la pause, [mute] pour le son." },
+        ? txt('intro.touches.tactile')
+        : txt('intro.touches.touches') },
     // le bouton de morsure fait tout ce qui se fait de près (biteAction) : la bulle au-dessus de la cible le dit
-    { who: 'info', text: (balade() ? 'En balade, personne ne se fait mal : ' + (touchMode ? 'le bouton de morsure' : '[bite]') +
-        " sert à jouer avec un chien, à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire."
-      : (touchMode ? 'Le bouton de morsure' : '[bite]') +
-        " sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.") },
-    { who: 'info', text: "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Et des traces de pattes au sol cachent peut-être un trésor : il n'y a plus qu'à gratter !" },
+    { who: 'info', text: txtDev('intro.action.' + (balade() ? 'balade' : 'aventure')) },
+    { who: 'info', text: txt('intro.os') },
   ].concat(balade() ? [
-    { who: 'info', text: "En balade, joue avec les chiens du coin : vous deviendrez copains ! " +
-        (touchMode ? 'Aboyer les appelle.' : '[bark] les appelle.') },
+    { who: 'info', text: txtDev('intro.copains') },
   ] : []);
 }
 
@@ -1960,7 +1971,7 @@ function hurtDog(d, dmg, kx, ky, stun) {
 }
 
 function doBark() {
-  dropToy('Oups !');                   // on n'aboie pas la gueule pleine
+  dropToy(txt('tecky.oups'));                   // on n'aboie pas la gueule pleine
   const [vx, vy] = DIRV[P.dir];
   barkAtTrain(vx, vy);
   const mouth = { right: [40, -26], left: [-40, -26], up: [0, -44], down: [0, -20] }[P.dir];     // devant sa truffe
@@ -1977,13 +1988,13 @@ function doBark() {
     if (balade()) { callDog(d); continue; }
     if (d.T.barkImmune) {
       // aucun effet : il se fâche et répond
-      if (!pops.some(p => p.word && p.dog === d)) { addWordPop('Même pas peur !', d.x, d.y - 130, 'doberman'); pops[pops.length - 1].dog = d; SFX.growl(d.T.pitch, d); }
+      if (!pops.some(p => p.word && p.dog === d)) { addWordPop(txt('doberman.peur'), d.x, d.y - 130, 'doberman'); pops[pops.length - 1].dog = d; SFX.growl(d.T.pitch, d); }
       d.mode = 'chase';
       d.barkCd = Math.min(d.barkCd, 0.4);
       if (!barkImmuneSeen) {
         barkImmuneSeen = true;
         pendingSay = { t: 0.7, lines: [{ who: 'tecky', face: FACE.inquiet,
-          text: "Grr… Ce doberman n'a pas peur de mes aboiements. Il va falloir le mordre !" }] };
+          text: txt('tecky.doberman') }] };
       }
       continue;
     }
@@ -2019,7 +2030,7 @@ function doBark() {
   }
   {                                    // Pompon n'aime pas qu'on lui aboie dessus
     const dx = pompon.x - P.x, dy = pompon.y - P.y, l = Math.hypot(dx, dy);
-    if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) { pompon.hissT = 0.8; addWordPop('Pfff !', pompon.x, pompon.y - 58, 'cat'); SFX.hiss(1, pompon); }
+    if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) { pompon.hissT = 0.8; addWordPop(txt('chat.feule'), pompon.x, pompon.y - 58, 'cat'); SFX.hiss(1, pompon); }
   }
 }
 
@@ -2082,7 +2093,7 @@ function updateVehicle(v, dt) {
     P.mode = 'hurt'; P.setAnim('hurt'); P.timer = 0.25; P.bumpT = 1;
     shake = 0.15;
     for (let k = 0; k < 4; k++) addDust(P.x + (Math.random() - 0.5) * 30, P.y - 2, (Math.random() - 0.5) * 90, -10 - Math.random() * 20, 6 + Math.random() * 3);
-    addWordPop('Ouf !', P.x, P.y - 130, 'tecky');
+    addWordPop(txt('tecky.ouf'), P.x, P.y - 130, 'tecky');
     SFX.bump();
     rumble('bump');
   }
@@ -2235,7 +2246,7 @@ function cowStep(c, dx, dy) {
   return c.x !== ox || c.y !== oy;
 }
 function cowMoo(c) {
-  addWordPop('Meuh !', c.x, c.y - (c.kind === 'calf' ? 80 : 110), 'cow');
+  addWordPop(txt('vache.meuh'), c.x, c.y - (c.kind === 'calf' ? 80 : 110), 'cow');
   SFX.moo(c.kind === 'calf' ? 1.6 : 1, c);
   if (c.mode !== 'trot') { c.mode = 'moo'; c.timer = 0.9; cowAnim(c, 'moo'); c.dir = P.x < c.x ? 'left' : 'right'; }
 }
@@ -2243,7 +2254,7 @@ function scareCow(c) {               // un aboiement : elle meugle et s'éloigne
   if (c.mode === 'trot') return;
   const dx = c.x - P.x, dy = c.y - P.y, l = Math.max(1, Math.hypot(dx, dy));
   c.vx = dx / l; c.vy = dy / l * 0.6; c.mode = 'trot'; c.timer = COW.trotT; c.dir = c.vx < 0 ? 'left' : 'right'; cowAnim(c, 'walk');
-  addWordPop('Meuuuh !', c.x, c.y - (c.kind === 'calf' ? 80 : 110), 'cow');
+  addWordPop(txt('vache.meuuuh'), c.x, c.y - (c.kind === 'calf' ? 80 : 110), 'cow');
   SFX.moo(c.kind === 'calf' ? 1.6 : 0.9, c);
   for (const o of cows) if (cowMother(o) === c) scareCow(o);
 }
@@ -2289,7 +2300,7 @@ function drawCow(c) {
 }
 
 function doBite() {
-  dropToy('Oups !');
+  dropToy(txt('tecky.oups'));
   const [vx, vy] = DIRV[P.dir];
   const hx = P.x + vx * 58, hy = P.y - 22 + vy * 46;
   addFx('fx/bite', hx, hy, { fps: 18 });
@@ -2377,7 +2388,7 @@ function updateCritter(c, dt) {
           c.scored = true; score += CRITTER.pts;
           addPop('+' + CRITTER.pts, c.x - 20, c.y - 48);
         }
-        addWordPop(c.kind === 'squirrel' ? 'Tchic tchic !' : 'Pfff !', c.x, c.y - 72, c.kind === 'squirrel' ? 'squirrel' : 'cat');
+        addWordPop(c.kind === 'squirrel' ? txt('ecureuil.fuit') : txt('chat.feule'), c.x, c.y - 72, c.kind === 'squirrel' ? 'squirrel' : 'cat');
         if (c.kind === 'squirrel') SFX.chitter(1, c); else SFX.hiss(1, c);
         return;
       }
@@ -2404,7 +2415,7 @@ function updateCritter(c, dt) {
         critAnim(c, alive && dP < CRITTER.hiss ? 'hiss' : 'idle');
       } else if (alive && dP < 260 && (c.chatT -= dt) <= 0) {
         c.chatT = 2.5 + Math.random() * 2;
-        addWordPop('Tchic !', c.x, c.y - c.h - 40, 'squirrel');
+        addWordPop(txt('ecureuil.grimpe'), c.x, c.y - c.h - 40, 'squirrel');
         SFX.chitter(1, c);
       }
       c.timer = dP > CRITTER.back ? c.timer + dt : 0;
@@ -2480,7 +2491,7 @@ function scareDuck(d) {
     SFX.flap(1, d);
   }
   if (!d.scored) { d.scored = true; score += DUCK.pts; addPop('+' + DUCK.pts, d.x - 20, d.y - 44); }
-  addWordPop('Coin coin !', d.x, d.y - 58, 'duck');
+  addWordPop(txt('canard.coin'), d.x, d.y - 58, 'duck');
   SFX.quack(d.kind === 'duck' ? 0.95 : 1.1, d);
 }
 function swimTo(d, tx, ty, sp, dt) {  // avance vers (tx, ty) sans quitter l'eau ; faux si la rive barre le chemin
@@ -2581,7 +2592,7 @@ function updateDuck(d, dt) {
         if (p) {
           d.mode = 'fly'; d.timer = 0; [d.tx, d.ty] = p; d.fleeDa = 0; duckAnim(d, 'fly');
           for (const k of ducks) if (k.lead && k.fam === d.fam) { k.mode = 'fly'; k.h = 1; duckAnim(k, 'fly'); }
-          addWordPop('Coin coin !', d.x, d.y - 58, 'duck');
+          addWordPop(txt('canard.coin'), d.x, d.y - 58, 'duck');
           SFX.flap(1, d);
           return;
         }
@@ -2654,9 +2665,9 @@ function keepHen(h) {
     h.penned = true; h.hx = h.x; h.hy = h.y;
     score += FARM.perHen;
     addPop('+' + FARM.perHen, h.x - 20, h.y - 50);
-    addWordPop(hensLeft() ? 'Rentrée !' : 'Toutes rentrées !', h.x, h.y - 74, 'info');
+    addWordPop(hensLeft() ? txt('poules.rentree') : txt('poules.toutes'), h.x, h.y - 74, 'info');
     SFX.cluck(1, h);
-    if (!hensLeft()) { farmer.waveT = 2.5; npcShout(farmer, farm.state === 'asked' ? 'Bravo ! Viens me voir !' : 'Oh ! Mes poules !'); }
+    if (!hensLeft()) { farmer.waveT = 2.5; npcShout(farmer, farm.state === 'asked' ? txt('farmer.bravo') : txt('farmer.oh')); }
   }
 }
 function newNpc(kind, [x, y], pitch) {
@@ -2665,8 +2676,8 @@ function newNpc(kind, [x, y], pitch) {
 }
 const newFarmer = () => newNpc('farmer', MAP.farmer, 0.8);
 const farmThanks = () => [
-  { who: 'farmer', face: 2, text: "Toutes mes poules sont rentrées ! Tu es un vrai chien de berger, Tecky." },
-  { who: 'farmer', face: 0, text: "Tiens, voilà une bonne saucisse pour toi. Et bonne chance pour retrouver Alice !" },
+  { who: 'farmer', face: 2, text: txt('farmer.merci.0') },
+  { who: 'farmer', face: 0, text: txt('farmer.merci.1') },
 ];
 function finishFarm() {
   farm.state = 'done';
@@ -2681,31 +2692,29 @@ function farmerMark() {          // « ! » : une demande, ou des remerciements 
   return farm.state === 'asked' && hensLeft() ? 1 : 0;
 }
 function farmerGreet() {
-  if (farm.state === 'new') npcShout(farmer, 'Hé, petit chien ! Par ici !');
+  if (farm.state === 'new') npcShout(farmer, txt('farmer.appel'));
   else if (farm.state === 'asked') {
     const n = hensLeft();
-    npcShout(farmer, !n ? 'Bravo ! Viens me voir !' : 'Encore ' + n + (n > 1 ? ' poules !' : ' poule !'));
-  } else { npcShout(farmer, 'Bonjour, Tecky !'); farmer.waveT = 1.5; }
+    npcShout(farmer, !n ? txt('farmer.bravo') : txt('farmer.encore', { n }));
+  } else { npcShout(farmer, txt('farmer.bonjour')); farmer.waveT = 1.5; }
 }
 function talkFarmer() {
   if (farm.state === 'done') {
     farmer.waveT = 2;
-    say([{ who: 'farmer', face: 2, text: "Merci encore pour mes poules, Tecky ! Bonne chance pour retrouver Alice." }]);
+    say([{ who: 'farmer', face: 2, text: txt('farmer.apres') }]);
     return;
   }
   if (!hensLeft()) { say(farmThanks(), finishFarm); return; }
   if (farm.state === 'asked') {
     const n = hensLeft();
-    say([{ who: 'farmer', face: 0, text: n > 1
-      ? `Il en reste ${n} dehors ! Aboie derrière elles pour les pousser vers la barrière ouverte, au sud de l'enclos.`
-      : "Plus qu'une ! Aboie derrière elle pour la pousser vers la barrière ouverte, au sud de l'enclos." }]);
+    say([{ who: 'farmer', face: 0, text: txt('farmer.rappel', { n }) }]);
     return;
   }
   farm.state = 'asked';
   say([
-    { who: 'farmer', face: 0, text: "Bonjour, petit teckel ! Une petite fille est passée par ici tout à l'heure… Mais pardon, mes poules se sont sauvées !" },
-    { who: 'farmer', face: 0, text: "Tu voudrais bien les ramener dans l'enclos ? Aboie derrière elles pour les pousser vers la barrière ouverte, au sud." },
-    { who: 'tecky', face: FACE.fier, text: "Ouaf ! Je m'en occupe !" },
+    { who: 'farmer', face: 0, text: txt('farmer.demande.0') },
+    { who: 'farmer', face: 0, text: txt('farmer.demande.1') },
+    { who: 'tecky', face: FACE.fier, text: txt('farmer.demande.2') },
   ], saveGame);
 }
 function updateNpcAnim(n, dt) {       // parle, se réjouit, salue, s'inquiète ou attend
@@ -2776,22 +2785,22 @@ function updateLetters(dt) {
     if (l.got || dist(P.x, P.y, l.x, l.y + 20) > POST.pick || P.mode === 'ko') continue;
     l.got = true;
     const n = letters.length - lettersLeft();
-    addWordPop(post.state === 'new' ? 'Une lettre ?' : 'Une lettre ! (' + n + '/' + letters.length + ')', l.x, l.y - 70, 'tecky');
+    addWordPop(post.state === 'new' ? txt('lettres.premiere') : txt('lettres.trouvee', { n, total: letters.length }), l.x, l.y - 70, 'tecky');
     SFX.paper(); SFX.pick();
-    if (!lettersLeft()) { postman.waveT = 2.5; if (post.state === 'asked') npcShout(postman, 'Mes lettres ! Viens vite !'); }
+    if (!lettersLeft()) { postman.waveT = 2.5; if (post.state === 'asked') npcShout(postman, txt('postman.vite')); }
   }
 }
 function postmanMark() { return post.state === 'done' ? -1 : post.state === 'asked' && lettersLeft() ? 1 : 0; }
 function postmanGreet() {
-  if (post.state === 'new') npcShout(postman, 'Oh là là, mes lettres !');
+  if (post.state === 'new') npcShout(postman, txt('postman.oh'));
   else if (post.state === 'asked') {
     const n = lettersLeft();
-    npcShout(postman, !n ? 'Mes lettres ! Merci !' : 'Encore ' + n + (n > 1 ? ' lettres !' : ' lettre !'));
-  } else { npcShout(postman, 'Bonne journée, Tecky !'); postman.waveT = 1.5; }
+    npcShout(postman, !n ? txt('postman.merci_bulle') : txt('postman.encore', { n }));
+  } else { npcShout(postman, txt('postman.bonjour')); postman.waveT = 1.5; }
 }
 const postThanks = () => [
-  { who: 'postman', face: 2, text: "Toutes mes lettres ! Merci, Tecky : tout le monde va enfin recevoir son courrier." },
-  { who: 'postman', face: 0, text: "Tiens, un bel os pour la peine. Et si je croise ta petite Alice, je lui dis que tu la cherches !" },
+  { who: 'postman', face: 2, text: txt('postman.merci.0') },
+  { who: 'postman', face: 0, text: txt('postman.merci.1') },
 ];
 function finishPost() {
   post.state = 'done'; score += POST.reward;
@@ -2803,23 +2812,21 @@ function finishPost() {
 function talkPostman() {
   if (post.state === 'done') {
     postman.waveT = 2;
-    say([{ who: 'postman', face: 2, text: "Grâce à toi, la tournée est finie à l'heure ! Bonne chance pour retrouver Alice." }]);
+    say([{ who: 'postman', face: 2, text: txt('postman.apres') }]);
     return;
   }
   if (!lettersLeft()) { post.state = 'asked'; say(postThanks(), finishPost); return; }
   if (post.state === 'asked') {
     const n = lettersLeft();
-    say([{ who: 'postman', face: 0, text: (n > 1 ? `Il m'en manque encore ${n}.` : "Plus qu'une !") +
-      " Le vent les a emportées un peu partout : dans le village, dans la campagne, et même vers les entrepôts." }]);
+    say([{ who: 'postman', face: 0, text: txt('postman.rappel', { n }) }]);
     return;
   }
   post.state = 'asked';
   const got = letters.length - lettersLeft();
   say([
-    { who: 'postman', face: 3, text: "Bonjour, petit chien ! Un coup de vent a fait s'envoler mes lettres, juste au début de ma tournée…" },
-    { who: 'postman', face: 0, text: got ? `Tu en as déjà trouvé ${got} ? Bravo ! Il y en a cinq en tout, autour du village. Rapporte-les-moi, s'il te plaît !`
-      : "Il y en a cinq, dans le village et autour. Si tu les trouves, rapporte-les-moi, s'il te plaît !" },
-    { who: 'tecky', face: 2, text: "Ouaf ! Je vais les chercher !" },
+    { who: 'postman', face: 3, text: txt('postman.demande.0') },
+    { who: 'postman', face: 0, text: got ? txt('postman.deja', { n: got }) : txt('postman.demande.1') },
+    { who: 'tecky', face: 2, text: txt('postman.demande.2') },
   ], saveGame);
 }
 
@@ -2853,18 +2860,18 @@ function updatePompon(dt) {
       catAnim(c, 'idle');
       if (dP < 300) c.dir = P.x < c.x ? 'left' : 'right';
       if (dP < CAT.find && rose.state === 'asked') {
-        if (c.mode === 'lost') say([{ who: 'tecky', face: 2, text: "Te voilà, Pompon ! Viens, on rentre chez Mamie Rose." }]);
-        c.mode = 'follow'; addWordPop('Miaou !', c.x, c.y - 58, 'cat'); SFX.meow(1.1, c);
-      } else if (dP < 260 && (c.meowT -= dt) <= 0) { c.meowT = rnd(CAT.meow); addWordPop(c.mode === 'lost' ? 'Miaou ?' : 'Miaou !', c.x, c.y - 58, 'cat'); SFX.meow(c.mode === 'lost' ? 0.9 : 1, c); }
+        if (c.mode === 'lost') say([{ who: 'tecky', face: 2, text: txt('tecky.pompon') }]);
+        c.mode = 'follow'; addWordPop(txt('chat.miaou'), c.x, c.y - 58, 'cat'); SFX.meow(1.1, c);
+      } else if (dP < 260 && (c.meowT -= dt) <= 0) { c.meowT = rnd(CAT.meow); addWordPop(c.mode === 'lost' ? txt('chat.miaou_perdu') : txt('chat.miaou'), c.x, c.y - 58, 'cat'); SFX.meow(c.mode === 'lost' ? 0.9 : 1, c); }
       return;
     case 'follow': {
       const [tx, ty] = crumbAt(CAT.gap);
       catMove(c, tx, ty, dt);
       if (dist(c.x, c.y, neighbor.x, neighbor.y) < CAT.home) {
         c.mode = 'home'; neighbor.cheerT = 3;
-        npcShout(neighbor, 'Pompon ! Viens me voir, Tecky !');
+        npcShout(neighbor, txt('neighbor.viens'));
         saveGame();
-      } else if (dP > CAT.lost) { c.mode = 'wait'; addWordPop('Miaou !', c.x, c.y - 58, 'cat'); SFX.meow(1, c); }
+      } else if (dP > CAT.lost) { c.mode = 'wait'; addWordPop(txt('chat.miaou'), c.x, c.y - 58, 'cat'); SFX.meow(1, c); }
       return;
     }
     case 'home':                       // près de Mamie Rose, à côté de ses chaussons
@@ -2879,13 +2886,13 @@ function drawPompon() {
 }
 function neighborMark() { return rose.state === 'done' ? -1 : rose.state === 'asked' && pompon.mode !== 'home' ? 1 : 0; }
 function neighborGreet() {
-  if (rose.state === 'new') npcShout(neighbor, 'Pompon ? Pompon, où es-tu ?');
-  else if (rose.state === 'asked') { if (pompon.mode !== 'follow') npcShout(neighbor, pompon.mode === 'home' ? 'Mon Pompon est là !' : 'Tu as vu Pompon ?'); }
-  else { npcShout(neighbor, 'Bonjour, Tecky !'); neighbor.waveT = 1.5; }
+  if (rose.state === 'new') npcShout(neighbor, txt('neighbor.cherche'));
+  else if (rose.state === 'asked') { if (pompon.mode !== 'follow') npcShout(neighbor, pompon.mode === 'home' ? txt('neighbor.la') : txt('neighbor.vu')); }
+  else { npcShout(neighbor, txt('neighbor.bonjour')); neighbor.waveT = 1.5; }
 }
 const nbThanks = () => [
-  { who: 'neighbor', face: 2, text: "Pompon ! Te voilà enfin, mon chaton ! J'étais si inquiète…" },
-  { who: 'neighbor', face: 0, text: "Merci, Tecky ! Tiens, une bonne saucisse : tu l'as bien méritée." },
+  { who: 'neighbor', face: 2, text: txt('neighbor.merci.0') },
+  { who: 'neighbor', face: 0, text: txt('neighbor.merci.1') },
 ];
 function finishNeighbor() {
   rose.state = 'done'; score += POST.reward;
@@ -2897,21 +2904,21 @@ function finishNeighbor() {
 function talkNeighbor() {
   if (rose.state === 'done') {
     neighbor.waveT = 2;
-    say([{ who: 'neighbor', face: 2, text: "Pompon ne quitte plus le jardin, grâce à toi. Bonne chance pour retrouver ta petite Alice !" }]);
+    say([{ who: 'neighbor', face: 2, text: txt('neighbor.apres') }]);
     return;
   }
   if (pompon.mode === 'home') { say(nbThanks(), finishNeighbor); return; }
   if (rose.state === 'asked') {
     say([{ who: 'neighbor', face: 3, text: pompon.mode === 'follow' || pompon.mode === 'wait'
-      ? "Tu l'as trouvé ! Ramène-le-moi : il te suivra si tu ne vas pas trop vite."
-      : "Pompon adore se cacher près des entrepôts, de l'autre côté de la grande route. Attention aux voitures !" }]);
+      ? txt('neighbor.rappel.suit')
+      : txt('neighbor.rappel.perdu') }]);
     return;
   }
   rose.state = 'asked';
   say([
-    { who: 'neighbor', face: 3, text: "Bonjour, mon petit. Tu n'aurais pas vu mon chat, Pompon ? Il est tout blanc, avec un collier rose et un grelot." },
-    { who: 'neighbor', face: 0, text: "Il s'est sauvé ce matin… Il adore se cacher près des entrepôts, de l'autre côté de la grande route." },
-    { who: 'tecky', face: FACE.fier, text: "Ouaf ! Je te le ramène !" },
+    { who: 'neighbor', face: 3, text: txt('neighbor.demande.0') },
+    { who: 'neighbor', face: 0, text: txt('neighbor.demande.1') },
+    { who: 'tecky', face: FACE.fier, text: txt('neighbor.demande.2') },
   ], saveGame);
 }
 
@@ -2967,9 +2974,9 @@ function checkGoal(b) {
   b.inNet = true; b.vx *= 0.4; b.vy *= 0.4;
   score += LEON.perBall;
   addPop('+' + LEON.perBall, b.x - 20, b.y - 80);
-  addWordPop(ballsLeft() ? 'But !' : 'Tous dans le filet !', b.x, b.y - 110, 'info');
+  addWordPop(ballsLeft() ? txt('ballons.but') : txt('ballons.tous'), b.x, b.y - 110, 'info');
   SFX.goal(1, b);
-  if (!ballsLeft()) { leon.cheerT = 3; npcShout(leon, fete.state === 'asked' ? 'Bravo, champion ! Viens me voir !' : 'Mes ballons !'); }
+  if (!ballsLeft()) { leon.cheerT = 3; npcShout(leon, fete.state === 'asked' ? txt('leon.bravo') : txt('leon.ballons')); }
 }
 function updateBall(b, dt) {
   b.cd = Math.max(0, b.cd - dt);
@@ -3000,15 +3007,15 @@ function drawBall(b) {
 }
 function leonMark() { return fete.state === 'done' ? -1 : fete.state === 'asked' && ballsLeft() ? 1 : 0; }
 function leonGreet() {
-  if (fete.state === 'new') npcShout(leon, 'Oh non, mes ballons !');
+  if (fete.state === 'new') npcShout(leon, txt('leon.oh'));
   else if (fete.state === 'asked') {
     const n = ballsLeft();
-    npcShout(leon, !n ? 'Bravo, champion ! Viens me voir !' : 'Encore ' + n + (n > 1 ? ' ballons !' : ' ballon !'));
-  } else { npcShout(leon, 'Salut, champion !'); leon.waveT = 1.5; }
+    npcShout(leon, !n ? txt('leon.bravo') : txt('leon.encore', { n }));
+  } else { npcShout(leon, txt('leon.salut')); leon.waveT = 1.5; }
 }
 const leonThanks = () => [
-  { who: 'leon', face: 2, text: "Cinq buts ! Tous mes ballons sont dans le filet. Bravo, champion !" },
-  { who: 'leon', face: 0, text: "Tiens, un bon os pour toi. Et si tu croises une petite fille, dis-lui qu'il y aura des ballons à la fête du parc !" },
+  { who: 'leon', face: 2, text: txt('leon.merci.0') },
+  { who: 'leon', face: 0, text: txt('leon.merci.1') },
 ];
 function finishLeon() {
   fete.state = 'done'; score += LEON.reward;
@@ -3020,21 +3027,20 @@ function finishLeon() {
 function talkLeon() {
   if (fete.state === 'done') {
     leon.waveT = 2;
-    say([{ who: 'leon', face: 2, text: "Merci encore, champion ! Mes ballons seront prêts pour la fête du parc." }]);
+    say([{ who: 'leon', face: 2, text: txt('leon.apres') }]);
     return;
   }
   if (!ballsLeft()) { fete.state = 'asked'; say(leonThanks(), finishLeon); return; }
   if (fete.state === 'asked') {
     const n = ballsLeft();
-    say([{ who: 'leon', face: 0, text: (n > 1 ? `Il en reste ${n} !` : "Plus qu'un !") +
-      " Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux." }]);
+    say([{ who: 'leon', face: 0, text: txt('leon.rappel', { n }) }]);
     return;
   }
   fete.state = 'asked';
   say([
-    { who: 'leon', face: 3, text: "Salut, petit chien ! Je devais livrer ces gros ballons pour la fête du parc… mais le carton s'est ouvert, et ils ont roulé partout !" },
-    { who: 'leon', face: 0, text: "Tu veux bien les pousser dans le grand filet, à côté de moi ? Fonce dedans, ou aboie derrière eux : comme au foot !" },
-    { who: 'tecky', face: 2, text: "Ouaf ! Je vais marquer des buts !" },
+    { who: 'leon', face: 3, text: txt('leon.demande.0') },
+    { who: 'leon', face: 0, text: txt('leon.demande.1') },
+    { who: 'tecky', face: 2, text: txt('leon.demande.2') },
   ], saveGame);
 }
 
@@ -3047,19 +3053,10 @@ function talkLeon() {
    remercie (une saucisse et des points), puis donne un conseil de vieux chien à chaque visite (IRIS_TIPS, iris.tip).
    Tout marche aussi avant de lui avoir parlé. Sauvegardé (jouets, toys ; un jouet porté l'est par terre, aux pieds de
    Tecky). */
-const IRIS_TIPS = [
-  () => "Un conseil de vieux chien : quand tu ne sais plus où aller, fais confiance à ta truffe. " +
-    (touchMode ? 'Touche le bouton à truffe' : 'Appuie sur [sniff]') + ", et suis la piste !",
-  () => "Un chien te cherche des ennuis ? Un bon aboiement " + (touchMode ? '' : '[bark] ') + "et il recule. " +
-    "Sauf le doberman : celui-là, il faut le mordre " + (touchMode ? '!' : '[bite] !'),
-  () => "Les trous sous les grillages, ce sont des terriers : un vrai raccourci de teckel ! Approche-toi, et " +
-    (touchMode ? 'touche « Passer ».' : 'appuie sur [bite].'),
-  () => "Pour traverser la grande route, prends les passages piétons : les voitures s'y arrêtent toujours.",
-  () => "Tu es fatigué ? Les os te redonnent des forces, et une saucisse, encore plus. Ouvre l'œil, il y en a partout !",
-];
+const IRIS_TIPS = [0, 1, 2].map(i => () => txtDev('iris.conseil.' + i)).concat([3, 4].map(i => () => txt('iris.conseil.' + i)));
 const IRIS = { reward: 150, perToy: 20, pick: 54, give: 110, markY: 90, home: [[-46, 10], [46, 12], [-22, 28]],
   regrab: 1.2 };     // regrab : un jouet lâché ne se reprend pas tout de suite (Tecky est juste à côté)
-const TOY_NAMES = ['Le poulet d’Iris !', 'L’anneau d’Iris !', 'La corde d’Iris !'];
+const toyName = i => txt('iris.jouet.' + i);
 const MOUTH = { right: [30, -22], left: [-30, -22], up: [0, -34], down: [0, -21] };   // gueule de Tecky (jouet porté)
 let jouets = { state: 'new' }, iris = null, toys = [];
 const toysLeft = () => toys.filter(t => !t.home).length;
@@ -3080,8 +3077,8 @@ function giveToy(t) {
   addPop('+' + IRIS.perToy, iris.x - 20, iris.y - 120);
   iris.cheerT = 2.2;
   const left = toysLeft();
-  npcShout(iris, left ? (jouets.state === 'asked' ? 'Bravo ! Encore ' + left + ' !' : 'Tiens, mon jouet !')
-    : jouets.state === 'asked' ? 'Tous mes jouets ! Viens me voir !' : 'Mes jouets ! Bravo !');
+  npcShout(iris, left ? (jouets.state === 'asked' ? txt('iris.bravo_encore', { n: left }) : txt('iris.tiens'))
+    : jouets.state === 'asked' ? txt('iris.tous') : txt('iris.bravo'));
 }
 function updateToys(dt) {
   for (const t of toys) { t.t += dt; t.cd = Math.max(0, t.cd - dt); }
@@ -3095,7 +3092,7 @@ function updateToys(dt) {
   for (const t of toys) {
     if (t.home || t.cd > 0 || dist(P.x, P.y, t.x, t.y) > IRIS.pick) continue;
     t.carried = true;
-    addWordPop(jouets.state === 'new' ? 'Un jouet ?' : TOY_NAMES[t.i], P.x, P.y - 120, 'tecky');
+    addWordPop(jouets.state === 'new' ? txt('tecky.jouet') : toyName(t.i), P.x, P.y - 120, 'tecky');
     if (t.i === 0) SFX.pouic(); else SFX.pick();
     break;
   }
@@ -3125,15 +3122,15 @@ function drawToy(t) {
 function irisMark() { return jouets.state === 'done' ? -1 : jouets.state === 'asked' && toysLeft() ? 1 : 0; }
 function irisGreet() {
   if (carried()) return;                 // il lui rapporte un jouet : giveToy() parle
-  if (jouets.state === 'new') npcShout(iris, 'Salut, mon petit Tecky !');
+  if (jouets.state === 'new') npcShout(iris, txt('iris.salut'));
   else if (jouets.state === 'asked') {
     const n = toysLeft();
-    npcShout(iris, !n ? 'Tous mes jouets ! Viens me voir !' : 'Encore ' + n + (n > 1 ? ' jouets !' : ' jouet !'));
-  } else { npcShout(iris, 'Bonne chasse, Tecky !'); iris.waveT = 1.5; }
+    npcShout(iris, !n ? txt('iris.tous') : txt('iris.encore', { n }));
+  } else { npcShout(iris, txt('iris.chasse')); iris.waveT = 1.5; }
 }
 const irisThanks = () => [
-  { who: 'iris', face: 2, text: "Mes trois jouets ! Bravo, Tecky : quelle truffe ! Je n'aurais pas fait mieux à ton âge." },
-  { who: 'iris', face: 0, text: "Tiens, une bonne saucisse pour la route. Reviens me voir quand tu veux : j'ai toujours un conseil pour toi." },
+  { who: 'iris', face: 2, text: txt('iris.merci.0') },
+  { who: 'iris', face: 0, text: txt('iris.merci.1') },
 ];
 function finishIris() {
   jouets.state = 'done'; score += IRIS.reward;
@@ -3151,17 +3148,16 @@ function talkIris() {
   if (!toysLeft()) { jouets.state = 'asked'; say(irisThanks(), finishIris); return; }
   if (jouets.state === 'asked') {
     const n = toysLeft();
-    say([{ who: 'iris', face: 0, text: (n > 1 ? `Encore ${n} à trouver, mon petit.` : "Plus qu'un !") +
-      " Ils sont dans les prés de la ferme. Et n'oublie pas : si tu aboies, tu les lâches !" }]);
+    say([{ who: 'iris', face: 0, text: txt('iris.rappel', { n }) }]);
     return;
   }
   jouets.state = 'asked';
   say([
-    { who: 'iris', face: 2, text: "Tiens, mon petit Tecky ! Ça me fait plaisir de te voir. Alors, tu cherches ta petite Alice ?" },
-    { who: 'tecky', face: FACE.inquiet, text: "Ouaf ! Iris ! Elle joue à cache-cache, et je ne la trouve pas…" },
-    { who: 'iris', face: 0, text: "Un bon chien ne perd jamais une piste. Pour t'entraîner, j'ai caché mes trois jouets dans les prés de la ferme : mon poulet, mon anneau et ma corde." },
-    { who: 'iris', face: 0, text: "Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !" },
-    { who: 'tecky', face: 2, text: "Ouaf ! « Va chercher », c'est mon jeu préféré !" },
+    { who: 'iris', face: 2, text: txt('iris.demande.0') },
+    { who: 'tecky', face: FACE.inquiet, text: txt('iris.demande.1') },
+    { who: 'iris', face: 0, text: txt('iris.demande.2') },
+    { who: 'iris', face: 0, text: txt('iris.demande.3') },
+    { who: 'tecky', face: 2, text: txt('iris.demande.4') },
   ], saveGame);
 }
 
@@ -3172,12 +3168,7 @@ function talkIris() {
    VILLAGER_LINES ; pas plus d'une fois toutes les VILLAGER.again s) et de la main (Lucas sautille). On ne leur parle
    pas : ni « ! » ni « Parler » (ils ne sont pas dans npcList). Obstacles, comme les personnages. Rien n'est sauvegardé. */
 const VILLAGER = { near: 170, again: 10, wave: 1.8, markY: 150, kidMarkY: 112 };
-const VILLAGER_LINES = {
-  baker: ['Bonjour, Tecky !', 'Ça sent bon le pain chaud !'],
-  vendor: ['Des belles pommes !', 'Tout frais, tout beau !'],
-  florist: ['Coucou, Tecky !', 'Une jolie fleur ?'],
-  kid: ['Un toutou !', 'Regarde mon ballon !'],
-};
+const VILLAGER_LINES = { baker: 2, vendor: 2, florist: 2, kid: 2 };     // combien de phrases chacun (textes : villageois.<qui>.<i>)
 const VILLAGER_PITCH = { baker: 0.85, vendor: 1.15, florist: 1.35, kid: 1.7 };
 let villagers = [];
 function newVillager([kind, x, y]) {
@@ -3188,8 +3179,7 @@ function updateVillager(v, dt) {
   v.t += dt; v.cd = Math.max(0, v.cd - dt);
   const near = P.mode !== 'ko' && dist(P.x, P.y, v.x, v.y) < VILLAGER.near;
   if (near && !v.near && v.cd <= 0) {
-    const lines = VILLAGER_LINES[v.kind];
-    addWordPop(lines[v.i++ % lines.length], v.x, v.y - (v.kind === 'kid' ? VILLAGER.kidMarkY : VILLAGER.markY) + 10, v.kind);
+    addWordPop(txt('villageois.' + v.kind + '.' + (v.i++ % VILLAGER_LINES[v.kind])), v.x, v.y - (v.kind === 'kid' ? VILLAGER.kidMarkY : VILLAGER.markY) + 10, v.kind);
     SFX.hey(VILLAGER_PITCH[v.kind], v);
     v.waveT = VILLAGER.wave; v.cd = VILLAGER.again;
   }
@@ -3233,8 +3223,8 @@ function babyHome(b) {
 function piquetteCall() {
   const left = babiesLeft(), k = piquette.got;
   piquette.got = 0; piquette.callT = 0;
-  npcShout(piquette, left ? (k > 1 ? 'Mes petits ! Encore ' : 'Mon petit ! Encore ') + left + ' !'
-    : piq.state === 'asked' ? 'Tous mes petits ! Viens me voir !' : 'Mes petits !');
+  npcShout(piquette, left ? txt('piquette.arrive', { n: k, reste: left })
+    : piq.state === 'asked' ? txt('piquette.tous') : txt('piquette.petits'));
 }
 function updateBaby(b, dt) {
   const dP = dist(b.x, b.y, P.x, P.y);
@@ -3246,9 +3236,9 @@ function updateBaby(b, dt) {
       babyAnim(b, 'idle');
       if (dP < 300) b.dir = P.x < b.x ? 'left' : 'right';
       if (dP < BABY.find && piq.state === 'asked' && P.alpha !== 0) {
-        b.mode = 'follow'; b.seq = ++babySeq; addWordPop('Couic !', b.x, b.y - 34, 'hedgehog'); SFX.squeak(1.1, b);
+        b.mode = 'follow'; b.seq = ++babySeq; addWordPop(txt('herisson.couic'), b.x, b.y - 34, 'hedgehog'); SFX.squeak(1.1, b);
       } else if (dP < 240 && (b.squeakT -= dt) <= 0) {
-        b.squeakT = rnd(BABY.squeak); addWordPop(b.mode === 'hidden' ? 'Couic ?' : 'Couic !', b.x, b.y - 34, 'hedgehog'); SFX.squeak(1, b);
+        b.squeakT = rnd(BABY.squeak); addWordPop(b.mode === 'hidden' ? txt('herisson.couic_cache') : txt('herisson.couic'), b.x, b.y - 34, 'hedgehog'); SFX.squeak(1, b);
       }
       return;
     case 'follow': {          // en file indienne, derrière Pompon et les petits trouvés avant lui
@@ -3256,7 +3246,7 @@ function updateBaby(b, dt) {
       const [tx, ty] = crumbAt(BABY.gap * (rank + 1) + (pompon.mode === 'follow' ? CAT.gap : 0));
       babyMove(b, tx, ty, dt);
       if (dist(b.x, b.y, piquette.x, piquette.y) < BABY.home) babyHome(b);
-      else if (dP > BABY.lost) { b.mode = 'wait'; addWordPop('Couic !', b.x, b.y - 34, 'hedgehog'); SFX.squeak(0.9, b); }
+      else if (dP > BABY.lost) { b.mode = 'wait'; addWordPop(txt('herisson.couic'), b.x, b.y - 34, 'hedgehog'); SFX.squeak(0.9, b); }
       return;
     }
     case 'home': {            // blotti contre sa maman, tourné vers elle
@@ -3273,15 +3263,15 @@ function drawBaby(b) {
 function piquetteMark() { return piq.state === 'done' ? -1 : piq.state === 'asked' && babiesLeft() ? 1 : 0; }
 function piquetteGreet() {
   if (babies.some(b => b.mode === 'follow')) return;      // ses petits arrivent : piquetteCall() parle
-  if (piq.state === 'new') npcShout(piquette, 'Mes petits ! Où êtes-vous ?');
+  if (piq.state === 'new') npcShout(piquette, txt('piquette.cherche'));
   else if (piq.state === 'asked') {
     const n = babiesLeft();
-    npcShout(piquette, !n ? 'Tous mes petits ! Viens me voir !' : 'Encore ' + n + (n > 1 ? ' petits !' : ' petit !'));
-  } else { npcShout(piquette, 'Bonjour, Tecky !'); piquette.waveT = 1.5; }
+    npcShout(piquette, !n ? txt('piquette.tous') : txt('piquette.encore', { n }));
+  } else { npcShout(piquette, txt('piquette.bonjour')); piquette.waveT = 1.5; }
 }
 const piquetteThanks = () => [
-  { who: 'piquette', face: 2, text: "Mes trois petits ! Merci, gentil teckel. Ils ont bien joué, mais maintenant, c'est l'heure de la sieste !" },
-  { who: 'piquette', face: 0, text: "Tiens, un bon os que j'ai trouvé sous les feuilles. Et bonne chance pour retrouver ta petite fille !" },
+  { who: 'piquette', face: 2, text: txt('piquette.merci.0') },
+  { who: 'piquette', face: 0, text: txt('piquette.merci.1') },
 ];
 function finishPiquette() {
   piq.state = 'done'; score += 150;
@@ -3293,21 +3283,20 @@ function finishPiquette() {
 function talkPiquette() {
   if (piq.state === 'done') {
     piquette.waveT = 2;
-    say([{ who: 'piquette', face: 2, text: "Mes petits dorment à poings fermés. Merci encore, Tecky !" }]);
+    say([{ who: 'piquette', face: 2, text: txt('piquette.apres') }]);
     return;
   }
   if (!babiesLeft()) { piq.state = 'asked'; say(piquetteThanks(), finishPiquette); return; }
   if (piq.state === 'asked') {
     const n = babiesLeft();
-    say([{ who: 'piquette', face: 3, text: (n > 1 ? `Il m'en manque encore ${n}.` : "Plus qu'un !") +
-      " Ils se cachent sous les fougères : approche-toi doucement, ils te suivront. Mais n'aboie pas, ça leur fait peur !" }]);
+    say([{ who: 'piquette', face: 3, text: txt('piquette.rappel', { n }) }]);
     return;
   }
   piq.state = 'asked';
   say([
-    { who: 'piquette', face: 3, text: "Oh, bonjour, petit chien ! Je suis Maman Piquette. Mes trois petits jouaient à cache-cache dans la forêt…" },
-    { who: 'piquette', face: 0, text: "Ils se sont cachés sous les fougères, et ils n'osent plus sortir. Tu veux bien me les ramener ? Ils te suivront !" },
-    { who: 'tecky', face: 2, text: "Ouaf ! Moi aussi, je cherche quelqu'un qui joue à cache-cache !" },
+    { who: 'piquette', face: 3, text: txt('piquette.demande.0') },
+    { who: 'piquette', face: 0, text: txt('piquette.demande.1') },
+    { who: 'tecky', face: 2, text: txt('piquette.demande.2') },
   ], saveGame);
 }
 
@@ -3363,7 +3352,7 @@ function updateTrain(dt) {
     return;
   }
   const who = trainBlocker();
-  if (who === P && !T.rang) { T.rang = true; addWordPop('Tut-tut !', P.x, P.y - 120, 'train'); SFX.bell(1, { x: train.x, y: trainY() }); }
+  if (who === P && !T.rang) { T.rang = true; addWordPop(txt('train.tut'), P.x, P.y - 120, 'train'); SFX.bell(1, { x: train.x, y: trainY() }); }
   if (!who) T.rang = false;
   const target = who ? 0 : TRAIN.spd;
   T.v = T.v < target ? Math.min(target, T.v + TRAIN.acc * dt) : Math.max(target, T.v - TRAIN.brake * dt);
@@ -3383,7 +3372,7 @@ function barkAtTrain(vx, vy) {
   });
   if (!near) return;
   train.whistleT = TRAIN.whistleCd;
-  addWordPop('Tchou-tchou !', train.x, trainY() - 140, 'train');
+  addWordPop(txt('train.tchou'), train.x, trainY() - 140, 'train');
   trainPuff(4);
   SFX.whistle(1, { x: train.x, y: trainY() });
   if (!train.scored) { train.scored = true; score += TRAIN.score; addPop('+' + TRAIN.score, train.x - 20, trainY() - 110); }
@@ -3428,7 +3417,7 @@ function updateTunnel(dt) {
     addFx('fx/dirt', P.x, P.y + 4, { fps: 16 });
     if (!tunnelSeen) {
       tunnelSeen = true;
-      say([{ who: 'tecky', face: FACE.fier, text: "Un teckel, ça creuse des terriers : hop, sous le grillage ! Les autres chiens, eux, doivent faire le tour." }]);
+      say([{ who: 'tecky', face: FACE.fier, text: txt('tecky.terrier') }]);
     }
   }
 }
@@ -3511,7 +3500,7 @@ function scentPath(x, y, len) {
 }
 function startSniff() {
   P.mode = 'sniff'; P.timer = SNIFF.time; P.cdSniff = SNIFF.cd; P.cdSniffMax = SNIFF.cd; P.setAnim('idle');
-  addWordPop('Snif snif…', P.x, P.y - 130, 'tecky');
+  addWordPop(txt('tecky.snif'), P.x, P.y - 130, 'tecky');
   SFX.sniff();
 }
 function layTrail() {
@@ -3533,7 +3522,7 @@ function layTrail() {
       }
       acc += seg - u;
     }
-  } else addWordPop('Hmm…', P.x, P.y - 160, 'tecky');
+  } else addWordPop(txt('tecky.hmm'), P.x, P.y - 160, 'tecky');
   for (const g of digs) if (!g.dug && dist(P.x, P.y, g.x, g.y) < SNIFF.treasure) addFx('fx/pickup', g.x, g.y - 24, { fps: 9 });
 }
 function updateTrail(dt) {
@@ -3667,7 +3656,7 @@ function uncover(g) {
   SFX.treasure();
   shake = 0.15;
   rumble('treasure');
-  say([{ who: 'tecky', face: FACE.surpris, text: "Wouf ! Un os doré était enterré ! (" + treasures + " / " + MAP.dig.length + ")" }], saveGame);
+  say([{ who: 'tecky', face: FACE.surpris, text: txt('tecky.os_dore', { n: treasures, total: MAP.dig.length }) }], saveGame);
 }
 
 // bite : une vraie morsure (badge « Sans une égratignure ») ; l'aboiement du doberman et la charge du chien de berger
@@ -4233,8 +4222,8 @@ function loadGame(s, rested) {
   camY = camClampY(P.y - 40 - VH / 2);
   state = 'play';
   Music.start();
-  say([{ who: 'tecky', face: rested ? 0 : 2, text: rested ? "Ouf, une petite sieste et ça repart !" : "Me revoilà ! Je reprends mes recherches." },
-       { who: 'tecky', face: 0, text: CLUE_NEXT[nextClue()] }], () => showArrow());
+  say([{ who: 'tecky', face: rested ? 0 : 2, text: rested ? txt('tecky.sieste') : txt('tecky.revoila') },
+       { who: 'tecky', face: 0, text: clueNext(nextClue()) }], () => showArrow());
 }
 function newGame(mode, again) {
   transition();
@@ -4245,7 +4234,7 @@ function newGame(mode, again) {
   if (!again) { camX = cx; camY = cy; }          // depuis l'écran titre, la caméra glisse du village jusqu'à la niche
   state = 'play';
   Music.start();
-  say(again ? [{ who: 'tecky', face: 0, text: "C'est reparti ! Je vais retrouver les affaires d'Alice, et Alice avec." }] : introLines(),
+  say(again ? [{ who: 'tecky', face: 0, text: txt('tecky.reparti') }] : introLines(),
     () => { showArrow(); saveGame(); });
 }
 
@@ -4263,13 +4252,12 @@ function recordRun() {
   STORE.set(RECORDS_KEY, all);
   recs = all;
 }
-const fmtTime = t => Math.floor(t / 60) + ' min ' + String(Math.floor(t % 60)).padStart(2, '0') + ' s';
-const MODE_NAME = { aventure: 'Aventure', balade: 'Balade' };
+const fmtTime = t => txt('temps', { m: Math.floor(t / 60), s: String(Math.floor(t % 60)).padStart(2, '0') });
 function recordLine(mode) {
   const r = recs[recKey(mode, opts.diff)];
   if (!r || !r.wins) return '';
-  return 'Records en ' + mode + (opts.diff === 'facile' ? ' facile' : '') + ' : ' + r.score + ' points · ' + fmtTime(r.time) +
-    (r.done >= 0 ? ' · ' + r.done + '\u00a0%' : '');
+  return txt('menu.records', { mode: txt('modes.min.' + mode), facile: opts.diff === 'facile' ? txt('modes.facile') : '',
+    score: r.score, temps: fmtTime(r.time) }) + (r.done >= 0 ? txt('menu.records_fait', { n: r.done }) : '');
 }
 
 /* ------------------------------------------------------------------ menus (écran titre, KO) */
@@ -4281,24 +4269,25 @@ function openTitleMenu() {
   const s = loadSave(), items = [];
   if (s) {
     const n = s.clues.filter(Boolean).length;
-    items.push({ id: 'continue', label: 'Continuer', mode: s.mode,
-      sub: MODE_NAME[s.mode] + (s.diff === 'facile' ? ' facile' : '') + ' · ' + (n ? n + (n > 1 ? ' indices' : ' indice') + ' sur 3' : 'aucun indice') + ' · ' + fmtTime(s.time) });
+    items.push({ id: 'continue', label: txt('menu.continuer'), mode: s.mode,
+      sub: txt('menu.continuer_note', { mode: txt('modes.' + s.mode), facile: s.diff === 'facile' ? txt('modes.facile') : '',
+        indices: n ? txt('menu.indices', { n }) : txt('menu.aucun_indice'), temps: fmtTime(s.time) }) });
   }
-  items.push({ id: 'aventure', label: 'Nouvelle aventure', sub: 'Gare aux chiens du coin !', mode: 'aventure' });
-  items.push({ id: 'balade', label: 'Nouvelle balade', sub: 'Les chiens veulent seulement jouer', mode: 'balade' });
-  items.push({ id: 'options', label: 'Options', sub: 'Son, difficulté, texte, météo…' });
-  items.push({ id: 'badges', label: 'Badges', sub: badgeCount() + ' sur ' + MAP.badges.length + ' gagnés' });
+  items.push({ id: 'aventure', label: txt('menu.aventure'), sub: txt('menu.aventure_note'), mode: 'aventure' });
+  items.push({ id: 'balade', label: txt('menu.balade'), sub: txt('menu.balade_note'), mode: 'balade' });
+  items.push({ id: 'options', label: txt('menu.options'), sub: txt('menu.options_note') });
+  items.push({ id: 'badges', label: txt('menu.badges'), sub: txt('menu.badges_note', { n: badgeCount(), total: MAP.badges.length }) });
   menu = items.length > 4 ? { items, sel: 0, y0: 500, w: 760, h: 80, gap: 12 } : { items, sel: 0, y0: 506, w: 760, h: 88, gap: 14 };
 }
 function openOverMenu() {
   const items = [];
-  if (loadSave()) items.push({ id: 'resume', label: 'Reprendre la partie', sub: 'Après une petite sieste, avec les indices trouvés' });
-  items.push({ id: 'restart', label: 'Recommencer', sub: 'Depuis la niche, sans les indices' });
-  items.push({ id: 'title', label: 'Menu principal', sub: 'Pour changer de mode' });
+  if (loadSave()) items.push({ id: 'resume', label: txt('menu.reprendre_partie'), sub: txt('menu.reprendre_partie_note') });
+  items.push({ id: 'restart', label: txt('menu.recommencer'), sub: txt('menu.recommencer_note') });
+  items.push({ id: 'title', label: txt('menu.principal'), sub: txt('menu.principal_note') });
   menu = { items, sel: 0, y0: 600, w: 760, h: 96, gap: 18 };
 }
 function openPauseMenu() {             // sous la carte de la pause, en ligne
-  menu = { items: [{ id: 'unpause', label: 'Reprendre' }, { id: 'options', label: 'Options' }, { id: 'quit', label: 'Menu principal' }],
+  menu = { items: [{ id: 'unpause', label: txt('menu.reprendre') }, { id: 'options', label: txt('menu.options') }, { id: 'quit', label: txt('menu.principal') }],
     sel: 0, y0: 912, w: 380, h: 78, gap: 30, row: true };
 }
 function menuBox(i) {
@@ -4389,24 +4378,7 @@ function rumble(kind) {
    victoire débloque aussi « aventure », « intact » (sans morsure, bitten) et « rapide ». À chaque nouveau badge, une
    annonce en haut de l'écran (toasts). Écran « Badges » depuis le menu principal ; nouveaux badges rappelés à la fin. */
 const BADGES_KEY = 'tecky-quest-badges';
-const BADGE_INFO = {
-  aventure: ['Retrouvailles', 'Retrouver Alice en mode aventure.'],
-  copains: ['Copain de tous', 'En balade, devenir copain avec tous les chiens.'],
-  os_dores: ['Chercheur d’or', 'Déterrer tous les os dorés.'],
-  intact: ['Sans une égratignure', 'Retrouver Alice en aventure sans se faire mordre.'],
-  rapide: ['Truffe rapide', 'Retrouver Alice en moins de 10 minutes.'],
-  poules: ['Chien de berger', 'Ramener toutes les poules de Gaston.'],
-  facteur: ['Facteur en herbe', 'Rapporter ses cinq lettres à Marcel.'],
-  chat: ['Ami des chats', 'Ramener Pompon à Mamie Rose.'],
-  betes: ['Curieux', 'Surprendre tous les écureuils et les chats.'],
-  canards: ['Coin-coin', 'Faire s’envoler tous les canards.'],
-  explorateur: ['Explorateur', 'Découvrir toute la carte.'],
-  sieste: ['Roi de la sieste', 'Laisser Tecky s’endormir.'],
-  ballons: ['Champion du ballon', 'Pousser tous les ballons de Léon dans le filet.'],
-  iris: ['Va chercher !', 'Rapporter ses trois jouets à Iris.'],
-  train: ['Tchou-tchou !', 'Faire siffler Titine, le petit train du port.'],
-  herissons: ['Nounou des hérissons', 'Ramener ses trois petits à Maman Piquette.'],
-};
+const badgeName = id => txt('badges.' + id + '.nom'), badgeGoal = id => txt('badges.' + id + '.but');
 const TOAST = { life: 3.6 };
 let badges = {}, toasts = [], newBadges = [], badgeT = 0, bitten = false;
 function loadBadges() { badges = STORE.get(BADGES_KEY) || {}; }
@@ -4464,8 +4436,8 @@ function drawToast() {                // « Nouveau badge ! » en haut de l'écr
   ctx.save(); ctx.globalAlpha = a;
   drawNine('hud/panel', x, y, w, h, 32);
   drawSpr('hud/badge', MAP.badges.indexOf(T.id), x + 18, y + 12, { sc: 1 });
-  text('Nouveau badge !', x + 130, y + 48, 28, '#D7332B', 'left', 600);
-  text(BADGE_INFO[T.id][0], x + 130, y + 90, 36, '#3A1E12', 'left', 700);
+  text(txt('badges.nouveau'), x + 130, y + 48, 28, '#D7332B', 'left', 600);
+  text(badgeName(T.id), x + 130, y + 90, 36, '#3A1E12', 'left', 700);
   ctx.restore();
 }
 // écran des badges : 4 x 3 cartes ; ceux qu'il reste à gagner sont en gris, avec leur objectif
@@ -4475,7 +4447,7 @@ function badgesInput() { if (pressed.pause || pressed.bark || pressed.ok || pres
 function drawBadges() {
   guiTransform();
   veil(0.6);
-  outlined('Badges : ' + badgeCount() + ' / ' + MAP.badges.length, GW / 2, 118, 64, '#FFF7E6');
+  outlined(txt('badges.titre', { n: badgeCount(), total: MAP.badges.length }), GW / 2, 118, 64, '#FFF7E6');
   // trois rangées de quatre au plus : grandes cases ; au-delà (jusqu'à 16 badges), cases plus compactes
   const big = MAP.badges.length <= 12, sc = big ? 1 : 0.76;
   const cw = 420, ch = big ? 236 : 196, gx = 26, gy = big ? 22 : 14, x0 = GW / 2 - (4 * cw + 3 * gx) / 2, y0 = 168;
@@ -4483,10 +4455,10 @@ function drawBadges() {
     const x = x0 + (i % 4) * (cw + gx), y = y0 + Math.floor(i / 4) * (ch + gy), got = !!badges[id];
     drawNine(got ? 'hud/panel' : 'hud/panel_dark', x, y, cw, ch, 32);
     drawSpr('hud/badge', got ? i : MAP.badges.length, x + cw / 2 - 48 * sc, y + (big ? 14 : 8), { sc });
-    text(got ? BADGE_INFO[id][0] : '?', x + cw / 2, y + (big ? 144 : 112), 30, got ? '#3A1E12' : '#FFF7E6', 'center', 700);
-    para(BADGE_INFO[id][1], x + cw / 2, y + (big ? 180 : 146), 22, got ? '#6B5A4E' : '#E9DCC8', 'center', 500, cw - 50, 28);
+    text(got ? badgeName(id) : '?', x + cw / 2, y + (big ? 144 : 112), 30, got ? '#3A1E12' : '#FFF7E6', 'center', 700);
+    para(badgeGoal(id), x + cw / 2, y + (big ? 180 : 146), 22, got ? '#6B5A4E' : '#E9DCC8', 'center', 500, cw - 50, 28);
   });
-  text(touchMode ? 'Touche l’écran pour revenir' : '[back] pour revenir', GW / 2, GH - 30, 26, '#E9DCC8', 'center', 500);
+  text(touchMode ? txt('badges.retour.tactile') : txt('badges.retour.touches'), GW / 2, GH - 30, 26, '#E9DCC8', 'center', 500);
 }
 
 /* ------------------------------------------------------------------ écran d'options */
@@ -4499,24 +4471,24 @@ const OPTV = { y0: 196, w: 1120, h: 76, gap: 10, hTight: 68, gapTight: 8 };
 let optSel = 0, optReturn = 'title';
 function optRows() {
   const rows = [
-    { id: 'music', label: 'Musique', level: true },
-    { id: 'sfx', label: 'Bruitages', level: true },
-    { id: 'diff', label: 'Difficulté', values: [['normal', 'Normale'], ['facile', 'Facile']],
-      note: opts.diff === 'facile' ? '5 os au départ, morsures moins fortes, moins de chiens' : 'Pour les nouvelles parties' },
-    { id: 'text', label: 'Texte des dialogues', values: [['normal', 'Normal'], ['grand', 'Grand']] },
-    { id: 'image', label: 'Image', values: [['fluide', 'Fluide'], ['nette', 'Nette']],
-      note: opts.image === 'nette' ? 'Pleine résolution : pour les ordinateurs rapides' : 'Plus légère sur les grands écrans' },
-    { id: 'vib', label: 'Vibrations', values: [['oui', 'Oui'], ['non', 'Non']], note: 'Manette et téléphone' },
-    { id: 'weather', label: 'Météo', values: [['auto', 'Auto'], ['soleil', 'Soleil'], ['pluie', 'Pluie'], ['neige', 'Neige']],
-      note: opts.weather === 'auto' ? 'Une averse de temps en temps, de la neige en décembre' : '' },
+    { id: 'music', label: txt('options.music.label'), level: true },
+    { id: 'sfx', label: txt('options.sfx.label'), level: true },
+    { id: 'diff', label: txt('options.diff.label'), values: [['normal', txt('options.diff.valeurs.normal')], ['facile', txt('options.diff.valeurs.facile')]],
+      note: opts.diff === 'facile' ? txt('options.diff.note.facile') : txt('options.diff.note.normal') },
+    { id: 'text', label: txt('options.text.label'), values: [['normal', txt('options.text.valeurs.normal')], ['grand', txt('options.text.valeurs.grand')]] },
+    { id: 'image', label: txt('options.image.label'), values: [['fluide', txt('options.image.valeurs.fluide')], ['nette', txt('options.image.valeurs.nette')]],
+      note: opts.image === 'nette' ? txt('options.image.note.nette') : txt('options.image.note.fluide') },
+    { id: 'vib', label: txt('options.vib.label'), values: [['oui', txt('commun.oui')], ['non', txt('commun.non')]], note: txt('options.vib.note') },
+    { id: 'weather', label: txt('options.weather.label'), values: [['auto', txt('options.weather.valeurs.auto')], ['soleil', txt('options.weather.valeurs.soleil')], ['pluie', txt('options.weather.valeurs.pluie')], ['neige', txt('options.weather.valeurs.neige')]],
+      note: opts.weather === 'auto' ? txt('options.weather.note') : '' },
   ];
-  if (canFullscreen()) rows.push({ id: 'fs', label: 'Plein écran', value: fsElement() ? 'Oui' : 'Non',
-    note: performance.now() - fsRefusedAt < FS_REFUSED_NOTE ? 'Ce navigateur le refuse à la manette : [fs] au clavier, ou un clic ici' : '' });
+  if (canFullscreen()) rows.push({ id: 'fs', label: txt('options.fs.label'), value: fsElement() ? txt('commun.oui') : txt('commun.non'),
+    note: performance.now() - fsRefusedAt < FS_REFUSED_NOTE ? txt('options.fs.note') : '' });
   // remise à zéro : seulement depuis l'écran titre (en jeu, la partie se resauvegarderait aussitôt) ; elle demande
   // confirmation, « Non » d'abord (resetAsk)
-  if (optReturn === 'title') rows.push(resetAsk ? { id: 'reset', label: 'Tout effacer ?', ask: true, note: 'Partie en cours, records et badges' }
-    : { id: 'reset', label: 'Réinitialiser la progression', value: '', note: 'Efface la partie en cours, les records et les badges' });
-  rows.push({ id: 'back', label: 'Retour' });
+  if (optReturn === 'title') rows.push(resetAsk ? { id: 'reset', label: txt('options.reset.question'), ask: true, note: txt('options.reset.question_note') }
+    : { id: 'reset', label: txt('options.reset.label'), value: '', note: txt('options.reset.note') });
+  rows.push({ id: 'back', label: txt('options.back.label') });
   return rows;
 }
 let resetAsk = null, resetDoneAt = -1e9;        // { yes } pendant la confirmation ; heure de la dernière remise à zéro
@@ -4605,8 +4577,8 @@ function arrowHead(x, y, dir, size, color) {   // petit triangle ◀ ▶ (la pol
 function drawOptions() {
   guiTransform();
   veil(0.55);
-  outlined('Options', GW / 2, 128, 68, '#FFF7E6');
-  if (performance.now() - resetDoneAt < RESET_NOTE) outlined('Progression effacée', GW / 2, 178, 32, '#F2C14E');
+  outlined(txt('options.titre'), GW / 2, 128, 68, '#FFF7E6');
+  if (performance.now() - resetDoneAt < RESET_NOTE) outlined(txt('options.efface'), GW / 2, 178, 32, '#F2C14E');
   const rows = optRows();
   rows.forEach((r, i) => {
     const b = optBox(i, rows.length), sel = i === optSel, ink = sel ? '#3A1E12' : '#FFF7E6', soft = sel ? '#6B5A4E' : '#E9DCC8';
@@ -4620,7 +4592,7 @@ function drawOptions() {
         const on = resetAsk.yes === q.yes;
         ctx.fillStyle = on ? (q.yes ? '#D7332B' : '#4E9A47') : (sel ? '#E3D3B8' : 'rgba(255, 247, 230, 0.22)');
         ctx.fillRect(q.x, cy - 24, q.w, 48);
-        text(q.yes ? 'Oui' : 'Non', q.x + q.w / 2, cy + 12, 32, on ? '#FFF7E6' : ink, 'center', 700);
+        text(q.yes ? txt('commun.oui') : txt('commun.non'), q.x + q.w / 2, cy + 12, 32, on ? '#FFF7E6' : ink, 'center', 700);
       });
       return;
     }
@@ -4638,8 +4610,8 @@ function drawOptions() {
       if (r.values) { arrowHead(vx - 8, cy, 1, 11, ink); arrowHead(vx - 58 - w, cy, -1, 11, ink); }
     }
   });
-  text(touchMode ? 'Touche une ligne pour la régler (à gauche : moins, à droite : plus)' : pad.on ? '[arrows] : choisir et régler · [back] : retour' :
-    '[updown] : choisir · [leftright] : régler · [back] : retour', GW / 2, GH - 34, 26, '#E9DCC8', 'center', 500);
+  text(touchMode ? txt('options.aide.tactile') : pad.on ? txt('options.aide.manette') :
+    txt('options.aide.clavier'), GW / 2, GH - 34, 26, '#E9DCC8', 'center', 500);
 }
 
 /* ------------------------------------------------------------------ mise à jour */
@@ -4798,7 +4770,7 @@ function updatePlayer(dt) {
   // devant la cachette trop tôt : Tecky la sent mais il lui manque des indices
   if (alice.hidden && !aliceSniffed && dist(P.x, P.y, alice.x, alice.y) < 170) {
     aliceSniffed = true;
-    say([{ who: 'tecky', face: FACE.inquiet, text: "Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !" }],
+    say([{ who: 'tecky', face: FACE.inquiet, text: txt('tecky.indices_manquent') }],
       () => showArrow());
   }
 }
@@ -4856,7 +4828,7 @@ function updateDog(d, dt) {
         if (!d.friend) {
           d.friend = true; fled++; score += T.score;
           addPop('+' + T.score, d.x - 20, d.y - 120);
-          addWordPop('Copain !', d.x, d.y - 150, 'dog');
+          addWordPop(txt('chien.copain'), d.x, d.y - 150, 'dog');
           SFX.treasure();
         }
       }
@@ -4930,7 +4902,7 @@ function updateDog(d, dt) {
   if (d.mode === 'chase') {
     if (balade() && (d.wait = (d.wait || 0) + dt) > PLAY.patience) { d.mode = 'return'; d.calm = PLAY.calm; d.wait = 0; }
     else if (!alive || l > T.aggro * 1.5 || homeD > 750) {
-      if (calmP && l < T.aggro * 1.5) { addWordPop('Grrr…', d.x, d.y - 100, 'dog'); SFX.growl(T.pitch, d); }     // il n'ose pas le suivre plus loin
+      if (calmP && l < T.aggro * 1.5) { addWordPop(txt('chien.grrr'), d.x, d.y - 100, 'dog'); SFX.growl(T.pitch, d); }     // il n'ose pas le suivre plus loin
       d.mode = 'return';
     }
     else if (balade() && l < T.range) {
@@ -5023,7 +4995,7 @@ function updateItems(dt) {
         if (P.hpMax < MAX_BONES * 2) {
           P.hpMax += 2;
           P.boneFx = 1;
-          addWordPop('Un os de plus !', P.x, P.y - 140, 'tecky');
+          addWordPop(txt('tecky.os_de_plus'), P.x, P.y - 140, 'tecky');
           SFX.treasure();
         } else SFX.heal();
         P.hp = Math.min(P.hpMax, P.hp + 2);
@@ -5034,7 +5006,7 @@ function updateItems(dt) {
         SFX.treasure();
         const k = nextClue();
         if (k === 3) revealAlice();
-        say([{ who: 'tecky', face: FACE.surpris, text: CLUE_FOUND[e.clue] }, { who: 'tecky', face: 0, text: CLUE_NEXT[k] }],
+        say([{ who: 'tecky', face: FACE.surpris, text: clueFound(e.clue) }, { who: 'tecky', face: 0, text: clueNext(k) }],
           () => { showArrow(); saveGame(); });
       } else if (e.heal) {
         if (P.hp >= P.hpMax) continue;   // vie pleine : on laisse l'os pour plus tard
@@ -5045,7 +5017,7 @@ function updateItems(dt) {
         score += e.pts;
         addPop('+' + e.pts, it.x - 24, it.y - 60);
         addFx('fx/pickup', it.x, it.y, { fps: 14 });
-        if (e.gold) { SFX.treasure(); addWordPop('Os doré !', P.x, P.y - 150, 'tecky'); }
+        if (e.gold) { SFX.treasure(); addWordPop(txt('tecky.os_dore_bulle'), P.x, P.y - 150, 'tecky'); }
         else if (it.pop === undefined) { if (it.n === 'squeaky') SFX.pouic(1.15); else SFX.pick(); }
       }
       items.splice(i, 1);
@@ -5085,10 +5057,10 @@ function finale() {
   Music.stop();
   Music.start('win');
   say([
-    { who: 'alice', face: 2, text: "Tecky ! Tu m'as trouvée ! Tu as vu ma super cachette dans la cabane ?" },
-    { who: 'tecky', face: 2, text: "Ouaf ! Ouaf ouaf !" },
-    { who: 'alice', face: 0, text: "Et tu as ramassé ma barrette, ma chaussure et mon doudou ! Merci mon Tecky." },
-    { who: 'alice', face: 0, text: "Viens, on rentre à la maison. Tu as bien mérité une grosse saucisse !" },
+    { who: 'alice', face: 2, text: txt('retrouvailles.0') },
+    { who: 'tecky', face: 2, text: txt('retrouvailles.1') },
+    { who: 'alice', face: 0, text: txt('retrouvailles.2') },
+    { who: 'alice', face: 0, text: txt('retrouvailles.3') },
   ], startEnding);
 }
 
@@ -5186,7 +5158,7 @@ function drawEnding() {
   if (r > 0.5) { ctx.moveTo(cx + r, cy); ctx.arc(cx, cy, r, 0, Math.PI * 2); }
   ctx.fill('evenodd');
   const tf = ti - E.irisDur - E.hold - E.close;
-  if (tf > 0) { ctx.globalAlpha = Math.min(1, tf / 0.6); outlined('Fin', GW / 2, GH / 2 + 45, 130, '#FFF7E6'); ctx.globalAlpha = 1; }
+  if (tf > 0) { ctx.globalAlpha = Math.min(1, tf / 0.6); outlined(txt('fin.mot'), GW / 2, GH / 2 + 45, 130, '#FFF7E6'); ctx.globalAlpha = 1; }
 }
 
 /* Fondus de l'écran entier, au-dessus de tout. fadeFrom(d) : part du noir et s'éclaircit en d secondes. transition() :
@@ -5433,12 +5405,12 @@ function drawWorld() {
   if (digHint && state === 'play' && P.mode !== 'dig') {
     // juste au-dessus des traces de pattes, dessinées sur la tuile du sol qui contient le trésor
     const mx = Math.floor(digHint.x / TS) * TS + TS / 2, my = Math.floor(digHint.y / TS) * TS;
-    actionBubble('Gratter', mx, my - 36 + bob);
+    actionBubble(txt('actions.gratter'), mx, my - 36 + bob);
   }
-  if (hintText && state === 'play') actionBubble('Lire', hintText.x, hintText.y + bob);
-  if (playHint && state === 'play' && P.mode !== 'play') actionBubble('Jouer', playHint.x, playHint.y - 125 + bob);
-  if (tunnelHint && state === 'play' && P.mode !== 'tunnel') actionBubble('Passer', tunnelHint.x, tunnelHint.y - 100 + bob);
-  if (talkHint && state === 'play') actionBubble('Parler', talkHint.x, talkHint.y + bob);
+  if (hintText && state === 'play') actionBubble(txt('actions.lire'), hintText.x, hintText.y + bob);
+  if (playHint && state === 'play' && P.mode !== 'play') actionBubble(txt('actions.jouer'), playHint.x, playHint.y - 125 + bob);
+  if (tunnelHint && state === 'play' && P.mode !== 'tunnel') actionBubble(txt('actions.passer'), tunnelHint.x, tunnelHint.y - 100 + bob);
+  if (talkHint && state === 'play') actionBubble(txt('actions.parler'), talkHint.x, talkHint.y + bob);
   // « ! » / « ? » au-dessus des personnages (sauf celui à qui Tecky peut parler : bulle « Parler »)
   for (const n of npcList()) {
     const m = NPC_DO[n.kind].mark(), k = ATLAS['hud/talk'];
@@ -5451,7 +5423,7 @@ function actionBubble(label, bx, by) {
   ctx.font = '600 22px Fredoka, "Trebuchet MS", sans-serif';
   ctx.textAlign = 'center'; ctx.lineWidth = 5; ctx.strokeStyle = '#3A1E12'; ctx.lineJoin = 'round';
   // même écart touche-mot que pour « Gratter », l'ensemble restant centré
-  const shift = (ctx.measureText('Gratter').width - ctx.measureText(label).width) / 2;
+  const shift = (ctx.measureText(txt('actions.gratter')).width - ctx.measureText(label).width) / 2;
   if (!touchMode) drawSpr(...glyphFrame('bite'), bx - 40 - 34 + shift, by - 4, { sc: 0.9 });
   const tx = touchMode ? bx : bx + 26;
   ctx.strokeText(label, tx, by + 26); ctx.fillStyle = '#FFF7E6'; ctx.fillText(label, tx, by + 26);
@@ -5479,22 +5451,16 @@ const GLYPH = {
   pause: ['P', 'Start'], mute: ['M', 'Select'], fs: ['F', null], walk: ['arrows/zqsd', 'stick/croix'],
   updown: ['up+down', 'croix'], leftright: ['left+right', 'croix'], arrows: ['arrows', 'croix'],
 };
-// les mêmes, à dire (synthèse vocale des répliques) : [clavier, manette]
-const GLYPH_SPOKEN = {
-  bite: ['la touche C', 'le bouton A'], bark: ['la touche X', 'le bouton X'], sniff: ['la touche R', 'le bouton Y'],
-  ok: ['la touche Entrée', 'le bouton A'], back: ['la touche Échap', 'le bouton B'], pause: ['la touche P', 'le bouton Start'],
-  mute: ['la touche M', 'le bouton Select'], fs: ['la touche F', 'la touche F'], walk: ['les flèches ou Z, Q, S, D', 'le stick ou la croix'],
-  updown: ['les flèches haut et bas', 'la croix'], leftright: ['les flèches gauche et droite', 'la croix'], arrows: ['les flèches', 'la croix'],
-};
+// les mêmes, à dire (synthèse vocale des répliques) : textes « dites.<action> » = [clavier, manette]
 /* Voix des répliques (tools/export_voix.js, voix/) : le texte à dire (spokenText : les [action] en mots, selon
    l'appareil, « (3 / 8) » -> « 3 sur 8 »), et le nom de son fichier (voiceKey : personnage + empreinte du texte à dire,
    si bien qu'une réplique modifiée change de nom et se repère tout de suite). device : 'clavier' ou 'manette'. */
 function spokenText(text, device) {
   const k = device === 'manette' ? 1 : 0;
   return text.replace(/\[([a-z]+)\]/g, (m, n, at) => {
-    const w = GLYPH_SPOKEN[n] ? GLYPH_SPOKEN[n][k] : m;
+    const w = txtAt('dites.' + n + '.' + k) || m;
     return at === 0 || /[.!?]\s+$/.test(text.slice(0, at)) ? w[0].toUpperCase() + w.slice(1) : w;
-  }).replace(/\((\d+) ?\/ ?(\d+)\)/g, '$1 sur $2');
+  }).replace(/\((\d+) ?\/ ?(\d+)\)/g, txt('dites.sur'));
 }
 function voiceKey(who, spoken) {
   let h = 0x811c9dc5;                                    // FNV-1a 32 bits
@@ -5696,7 +5662,7 @@ function drawHUD() {
       drawSpr(...glyphFrame(k), x, y + 86);
     });
   }
-  if (muted) text('son coupé · [mute] pour le remettre', 40, GH - 30, 28, '#FFF7E6', 'left', 500);
+  if (muted) text(txt('hud.muet'), 40, GH - 30, 28, '#FFF7E6', 'left', 500);
   drawBanner();
 }
 
@@ -5746,15 +5712,15 @@ function drawTitle() {
   veil(0.35);
   const bob = Math.sin(titleT * 2) * 8;
   drawSpr('hud/title_logo', 0, GW / 2, 250 + bob, { sc: 1.75 });
-  outlined('Aide Tecky le teckel à retrouver Alice', GW / 2, 472, 38, '#FFF7E6');
+  outlined(txt('titre.accroche'), GW / 2, 472, 38, '#FFF7E6');
   drawMenu(titleT);
   const r = recordLine(menu.items[menu.sel].mode);
   const last = menuBox(menu.items.length - 1);
   if (r) outlined(r, GW / 2, last.y + last.h + 46, 30, '#F2C14E');
-  if (!touchMode) text('[updown] pour choisir, [ok] pour valider',
+  if (!touchMode) text(txt('titre.aide'),
     GW / 2, GH - 28, 26, '#E9DCC8', 'center', 500);
   // date de construction (pack_web), et « images x4 » quand le jeu lit les images nettes
-  text(VERSION + (HD.k > 1 ? ' · images x' + 2 * HD.k : ''), GW - 28, GH - 28, 20, 'rgba(233, 220, 200, 0.75)', 'right', 500);
+  text(VERSION + (HD.k > 1 ? txt('titre.images', { n: 2 * HD.k }) : ''), GW - 28, GH - 28, 20, 'rgba(233, 220, 200, 0.75)', 'right', 500);
 }
 /* entrées du menu : l'entrée choisie est claire, encadrée de deux os qui la montrent */
 function drawMenu(t) {
@@ -5778,36 +5744,36 @@ function drawEnd(win) {
   if (overT < 0.4) return;
   if (!win) {
     // KO : le menu (reprendre, recommencer, menu principal) sur le voile
-    outlined('Tecky est épuisé…', GW / 2, 190, 72, '#E24B4B');
+    outlined(txt('defaite.titre'), GW / 2, 190, 72, '#E24B4B');
     drawSpr('hud/portrait_tecky', 3, GW / 2 - 48, 230);
-    const ny = para('Il reste des os et des saucisses sur le chemin pour reprendre des forces.', GW / 2, 440, 32, '#FFF7E6', 'center', 500, 900, 42);
-    text('Score : ' + score, GW / 2, ny + 22, 36, '#F2C14E', 'center', 600);
+    const ny = para(txt('defaite.conseil'), GW / 2, 440, 32, '#FFF7E6', 'center', 500, 900, 42);
+    text(txt('defaite.score', { n: score }), GW / 2, ny + 22, 36, '#F2C14E', 'center', 600);
     if (overT > 1 && menu) drawMenu(overT);
     return;
   }
   const pw = 900, ph = 650, px = (GW - pw) / 2, py = (GH - ph) / 2;
   drawNine('hud/panel', px, py, pw, ph, 32);
-  outlined('Tecky a retrouvé Alice !', GW / 2, py + 100, 64, '#F2C14E');
+  outlined(txt('victoire.titre'), GW / 2, py + 100, 64, '#F2C14E');
   drawSpr('hud/portrait_tecky', 2, GW / 2 - 130, py + 140);
   drawSpr('hud/portrait_alice', 2, GW / 2 + 34, py + 140);
   // badges gagnés pendant cette partie, en petit sous les portraits
   newBadges.forEach((id, i) => drawSpr('hud/badge', MAP.badges.indexOf(id), GW / 2 - newBadges.length * 30 + i * 60 + 4, py + 242, { sc: 0.55 }));
-  const rows = [['Score', String(score)], ['Temps', fmtTime(timePlayed)],
-    ['Os dorés', treasures + ' / ' + MAP.dig.length], [balade() ? 'Copains de jeu' : 'Chiens mis en fuite', String(fled)],
-    [balade() ? 'Balade complétée' : 'Aventure complétée', winDone + '\u00a0%']];
+  const rows = [[txt('victoire.score'), String(score)], [txt('victoire.temps'), fmtTime(timePlayed)],
+    [txt('victoire.os_dores'), treasures + ' / ' + MAP.dig.length], [balade() ? txt('victoire.copains') : txt('victoire.chiens'), String(fled)],
+    [balade() ? txt('victoire.balade') : txt('victoire.aventure'), winDone + '\u00a0%']];
   rows.forEach(([k, v], i) => {
     text(k, px + 180, py + 320 + i * 46, 34, '#6B5A4E', 'left', 500);
     text(v, px + pw - 180, py + 320 + i * 46, 34, '#3A1E12', 'right', 600);
     // meilleur score, meilleur temps, meilleure complétion : une étiquette dorée à côté de la valeur
     if ((i === 0 && newRecord.score) || (i === 1 && newRecord.time) || (i === 4 && newRecord.done)) {
       ctx.save(); ctx.translate(px + pw - 98, py + 308 + i * 46); ctx.rotate(-0.08);
-      outlined('Record !', 0, 0, 26, '#F2C14E'); ctx.restore();
+      outlined(txt('victoire.record'), 0, 0, 26, '#F2C14E'); ctx.restore();
     }
   });
   const r = recordLine(gameMode);
   if (r) text(r, GW / 2, py + ph - 96, 26, '#6B5A4E', 'center', 500);
   if (overT > 1 && Math.floor(overT * 1.6) % 2 === 0)
-    text(touchMode ? 'Touche l’écran pour revenir au menu' : '[ok] pour revenir au menu',
+    text(touchMode ? txt('victoire.retour.tactile') : txt('victoire.retour.touches'),
       GW / 2, py + ph - 40, 34, '#D7332B', 'center', 600);
 }
 
@@ -5817,7 +5783,7 @@ function render() {
   ctx.fillRect(0, 0, cv.width, cv.height);
   if (state === 'loading') {
     guiTransform();
-    text('Chargement…', GW / 2, GH / 2, 48, '#FFF7E6', 'center', 600);
+    text(txt('chargement'), GW / 2, GH / 2, 48, '#FFF7E6', 'center', 600);
     return;
   }
   ctx.save();
@@ -5833,12 +5799,11 @@ function render() {
     if (state === 'dialog' && dialog) drawDialog();
     if (state === 'pause') {
       veil(0.6);
-      outlined('Pause', GW / 2, 104, 68, '#FFF7E6');
+      outlined(txt('pause.titre'), GW / 2, 104, 68, '#FFF7E6');
       drawPauseMap();
       if (menu) drawMenu(titleT);
-      text((touchMode ? 'Touche un bouton, ou ailleurs pour reprendre' :
-        '[leftright] et [ok] pour choisir, [pause] pour reprendre' + (pad.on ? '' : ', [fs] pour le plein écran')) + ' · mode ' + gameMode +
-        (facile() ? ' facile' : '') + ' · partie enregistrée', GW / 2, GH - 34, 26, '#E9DCC8', 'center', 500);
+      text(txt('pause.aide.' + (touchMode ? 'tactile' : pad.on ? 'manette' : 'clavier')) +
+        txt('pause.etat', { mode: txt('modes.min.' + gameMode), facile: facile() ? txt('modes.facile') : '' }), GW / 2, GH - 34, 26, '#E9DCC8', 'center', 500);
       if (touchMode && canFullscreen() && !fsElement()) drawFsButton();
     }
     if (state === 'options') drawOptions();
