@@ -116,7 +116,8 @@ BRIDGES = [(round(x) - 1, round(y) - 5, round(x) + 1, round(y)) for n, x, y in D
 def sols():
     """Où chaque décor touche le sol (nature.bandes_image) : le jeu en tire son ombre portée. Clé : le sprite
     (« decor/<clé> ») ; les décors plats ou sur l'eau n'y sont pas."""
-    out = {n: nature.bandes(n, S) for n in sorted({v for noms, _ in nature.VARIANTES.values() for v in noms})}
+    out = {n: nature.bandes(n, S) for n in sorted({v for noms, _ in nature.VARIANTES.values() for v in noms})
+           if nature.CATALOGUE[n]().sol}                 # (sol = None : à plat ou sur l'eau, pas d'ombre portée)
     for n in decor.DECOR:
         if n in nature.VARIANTES or not decor.sol(n):
             continue

@@ -1176,7 +1176,7 @@ for (const n in MAP.grow) if (FOOT[n]) FOOT[n] = FOOT[n].map(v => Math.round(v *
 const FLAT = new Set(['bridge', 'sandbox', 'burrow', 'rail', 'dog_bed', 'fallen_apples']);   // posés à plat : dessinés sous les personnages
 // collisions en plusieurs morceaux : garde-corps du pont (son tablier n'est pas de l'eau, voir BRIDGES dans
 // pack_web.py), pieds du portique du port
-const RAILS = { bridge: [[-80, -320, -62, 0], [62, -320, 80, 0]], crane: [[-204, -16, -156, 0], [156, -16, 204, 0]],
+const RAILS = { bridge: [[-80, -320, -62, 0], [62, -320, 80, 0]], crane: [[-197, -24, -135, 0], [135, -24, 197, 0]],
   goal_net: [[-90, -58, -72, 0], [72, -58, 90, 0], [-80, -64, 80, -52]] };   // filet de Léon : côtés et fond
 for (const n in MAP.grow) if (RAILS[n]) RAILS[n] = RAILS[n].map(r => r.map(v => Math.round(v * MAP.grow[n])));
 let solids = [];

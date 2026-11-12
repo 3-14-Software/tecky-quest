@@ -109,17 +109,22 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   l'entrepôt, l'os derrière l'étal de légumes, la maison haute (sa cheminée sortait de l'écran) l'ont été.
   Les étals du marché (`etal()`) et le poulailler sur pieds (`poulailler()`) y sont aussi, sans fenêtres
   (`ECLAIRES` = ceux qui en ont). `decor.py` garde les anciens dessins, que seul l'éditeur de carte montre encore.
-  `mobilier.py` (**le petit mobilier du jeu web**, v2, inscrit dans `nature.CATALOGUE` / `VARIANTES` comme les
+  `mobilier.py` (**le mobilier du jeu web**, v2, inscrit dans `nature.CATALOGUE` / `VARIANTES` comme les
   bâtiments) : conteneurs, caisses, palettes, tonneaux, bottes de foin (carrée ou ronde), cagette, banc, boîte
-  aux lettres, haie, de trois quarts comme les étals (`_boite()` : flanc, face, dessus ; `_sol_boite()` : la
-  ligne de contact) ; table de terrasse sous son parasol, pots de fleurs (trois bouquets) ; souche, tronc
-  couché, champignons (amanites ou bolets), fougères, au contour doux de la nature. `ECH` : conteneurs 1,5
-  (Christophe : « les containers et la grue sont très petits »), table 1,35, banc 1,2, foin 1,3, tonneaux
-  1,35 ; `decor.ECH` : portique 1,5, lampadaire 1,3 (le halo de sa lanterne suit `MAP.grow.lamppost`).
-  `MAP.grow` agrandit aussi `RAILS` (pieds du portique) ; `PERCHOIRS` : où un chat se pose sur un conteneur
-  (`MAP.perches`). Un décor redessiné n'a plus son ancien dessin dans l'atlas (`pack_web.collect()`).
-  Planche : `python3 mobilier.py`. Restent en dessin v1 (`decor.py`) : portique, péniche, barque, camion,
-  chariot, tracteur, jeux du parc, fontaine, clôtures, panneaux, lampadaire, cône, épouvantail, pont.
+  aux lettres, haie, cône, heurtoir, de trois quarts comme les étals (`_boite()`, `_boite_p()` : flanc, face,
+  dessus ; `_sol_boite()` : la ligne de contact) ; portique du port et balançoire sur des chevalets en A dans le
+  plan qui fuit (`_chevalet()`), péniche, bitte, toboggan ; table de terrasse sous son parasol, pots de fleurs
+  (trois bouquets), lampadaire, panneaux ; souche, tronc couché, champignons (amanites ou bolets), fougères, nid
+  de feuilles de Maman Piquette, au contour doux de la nature ; panier d'Iris. `Sprite.sol = None` : à plat ou
+  sur l'eau, pas d'ombre portée (péniche, panier). `ECH` : conteneurs et portique 1,5 (Christophe : « les
+  containers et la grue sont très petits »), péniche 1,4, table 1,35, lampadaire, toboggan, balançoire et foin
+  1,3, tonneaux 1,35, banc 1,2 ; le halo d'un lampadaire suit `MAP.grow.lamppost`. `MAP.grow` agrandit aussi
+  `RAILS` (pieds du portique) ; `PERCHOIRS` : où un chat se pose sur un conteneur (`MAP.perches`). Un décor
+  redessiné n'a plus son ancien dessin dans l'atlas (`pack_web.collect()`). Planche : `python3 mobilier.py`.
+  Restent dans leur dessin de `decor.py` (planche `reference/v2/mobilier_reste_v1.png`) : terrier, pommes
+  tombées, vélo, échelle, clôtures, grillages, voie ferrée, barque, bac à sable, filet de Léon, épouvantail,
+  fontaine (animée : le catalogue ne sait qu'une image par sprite), pont, et les trois engins garés (tracteur,
+  chariot, camion), de profil comme les véhicules de la route.
   **Ombres** : la ligne de contact (`Sprite.sol`) passe un peu au-dessus du bas des murs (`CONTACT`), pour que
   l'ombre parte de dessous le contour : posée juste sous le mur, elle laissait un liseré clair entre le bâtiment
   et son ombre. Christophe tient aux ombres détaillées (les jours entre les pieds du poulailler, sous le store
@@ -583,8 +588,8 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   anglais, durée, voix, vitrine). Lots 2 (images nettes) et 3 (Tecky, Alice et les chiens : `tecky2.py`, `alice2.py`,
   `chiens2.py`) faits ; lot 4 (paysage) en cours : nature, ombres portées, herbe, eau, lisière, bords
   arrondis, bâtiments (étals et poulailler compris), ombres portées de tout (décors, personnages, bêtes,
-  véhicules) allongées le soir et fusionnées, sous-bois et champ, petit mobilier (`mobilier.py`) faits ; restent les gros
-  objets du port et du parc encore en v1 (portique, péniche, véhicules, jeux), l'habillage des zones. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
+  véhicules) allongées le soir et fusionnées, sous-bois et champ, mobilier (`mobilier.py` : du pot de fleurs au
+  portique du port) faits ; restent les véhicules (garés et sur la route), l'habillage des zones. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
   témoin dans `reference/v2/`) : des images fixes, que ni `game.js` ni `pack_web.py` n'utilisent encore (le décor
   de `nature.py` est dans le jeu depuis le lot 4). Les pistes générées par Christophe avec ChatGPT sont dans
   `reference/v2/chat_gpt/`.

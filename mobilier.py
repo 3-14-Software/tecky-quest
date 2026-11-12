@@ -550,6 +550,332 @@ def fougere(grande=False):
     return Sprite([(d, contour, nature.TRAIT)], w, h, (px, py), "contour")
 
 
+# ====================================================================== GROS OBJETS : PORT, PARC, CLAIRIÈRE
+def _boite_p(d, cle, x0, x1, yb, haut, p0, prof, face, cote, dessus):
+    """Un pavé (voir _boite) dont la face est reculée de p0 : x et y sont ceux qu'il aurait à la profondeur 0."""
+    return _boite(d, cle, x0 + p0 * FUITE[0], x1 + p0 * FUITE[0], yb - p0 * FUITE[1], haut, prof, face, cote, dessus)
+
+
+def _chevalet(d, x, yb, haut, D, ep, clair, sombre, entretoise=0.42):
+    """Un chevalet en A dans le plan qui fuit : un pied devant (profondeur 0), un pied derrière (profondeur D), qui
+    se rejoignent en haut, et une entretoise. Le pied du fond est dans l'ombre."""
+    F, B, A = (x, yb), _p(x, yb, D), _p(x, yb - haut, D / 2)
+    jambe = lambda P: [(P[0] - ep / 2, P[1]), (P[0] + ep / 2, P[1]), (A[0] + ep / 2, A[1]), (A[0] - ep / 2, A[1])]
+    d.add(_pts(jambe(B)), sombre)
+    if entretoise:
+        f = (F[0] + (A[0] - F[0]) * entretoise, F[1] + (A[1] - F[1]) * entretoise)
+        b = (B[0] + (A[0] - B[0]) * entretoise, B[1] + (A[1] - B[1]) * entretoise)
+        e = ep * 0.32
+        d.add(_pts([(f[0], f[1] - e), (b[0], b[1] - e), (b[0], b[1] + e), (f[0], f[1] + e)]), sombre)
+    d.add(_pts(jambe(F)), clair)
+    d.add(_pts([(F[0] + ep * 0.12, F[1]), (F[0] + ep / 2, F[1]), (A[0] + ep / 2, A[1]), (A[0] + ep * 0.12, A[1])]), sombre, sil=False, opacity=0.55)
+
+
+ACIER = ("#6A6F7A", "#4A4F57", "#8E949E")                 # face, flanc, dessus
+
+
+def portique():
+    """Portique jaune du port, de trois quarts : deux chevalets en A sur leurs boggies, une poutre-caisson aux bouts
+    rayés, la cabine du grutier dessous, le chariot dessus, ses câbles et son crochet. Pieds : RAILS (game.js)."""
+    w, h, px, py = 208, 128, 104, 124
+    jaune, ocre, clair = "#F2C14E", "#D3A22C", "#F9DC80"
+    D = 28
+    d = Drawing(w, h)
+    for i, x in enumerate((14, 180)):
+        _boite_p(d, f"bf{i}", x - 7, x + 7, py, 6, D - 3, 6, *ACIER)                      # boggie du fond
+        _chevalet(d, x, py - 6, 92, D, 6.4, jaune, ocre)
+        _boite_p(d, f"ba{i}", x - 7, x + 7, py, 6, -3, 6, *ACIER)                         # boggie de devant
+        for cle, p in ((f"ba{i}", -3), (f"bf{i}", D - 3)):
+            a = _p(x - 7, py - 2, p)
+            _dans(d, "f" + cle, line(f"M{a[0]:.2f},{a[1]:.2f} l14,0", ACIER[1], 0.7))
+    _boite_p(d, "cab", 146, 166, 43.2, 15, 9, 8, "#F3EAD6", "#CBBE9F", "#FFFFFF")         # cabine du grutier
+    d.add(rect(153, 27.6, 15, 7.4, 1), "#A9D8F2", sil=False, edge=True)
+    d.raw(line("M156.5,34 L160,28.6 M160.5,34 L164,28.6", "#FFFFFF", 0.9))
+    d.raw(line("M150.5,37.4 L170.5,37.4", "#CBBE9F", 0.6))
+    _boite_p(d, "p", 4, 196, 28.6, 11, 10, 8, jaune, ocre, clair)                          # la poutre
+    d.add(rect(9, 22, 192, 3), ocre, sil=False, clip="fp")
+    for x0 in (9, 181):                                                                   # bouts rayés
+        for k in range(4):
+            d.add(_pts([(x0 + k * 5, 14), (x0 + k * 5 + 2.6, 14), (x0 + k * 5 + 7.6, 25), (x0 + k * 5 + 5, 25)]), "#2B2B33", sil=False, clip="fp")
+    d.raw(line("M9,14 L201,14", "#FFFFFF", 0.6).replace("/>", ' opacity="0.55"/>'))
+    for x in range(40, 180, 22):                                                          # raidisseurs
+        d.raw(line(f"M{x},15.4 L{x},21.6", ocre, 0.7))
+    _boite_p(d, "ch", 92, 118, 17.6, 6.5, 9, 10, *ACIER)                                   # le chariot
+    d.raw(line("M106,25 L107.6,63.5 M113,25 L111.4,63.5", "#3A3E45", 1.0))                 # les câbles
+    d.add(rect(101.5, 63, 16, 7.5, 1.6), "#D8362E")                                        # la moufle
+    d.add(rect(103, 64.2, 13, 1.6, 0.8), "#F0786E", sil=False)
+    d.add(path("M108.3,70.5 L110.7,70.5 L110.7,75 Q110.7,80.5 105.6,79.4 L105.2,77.2 Q107.8,77.8 108.3,75 Z"), ACIER[0])
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "pied")
+
+
+def balancoire():
+    """Balançoire du parc : deux chevalets bleus, une barre rouge, deux sièges au bout de leurs chaînes."""
+    w, h, px, py = 64, 64, 32, 60
+    bleu, bleu_o = "#3273D4", "#23579F"
+    d = Drawing(w, h)
+    for x in (6, 46):
+        _chevalet(d, x, py, 47.4, 20, 3.4, bleu, bleu_o, 0)
+    d.add(rect(8.6, 7, 45, 4, 1.6), "#D8362E")
+    d.add(rect(9.6, 7.6, 43, 1.2, 0.6), "#F0786E", sil=False)
+    for x in (9.6, 52.6):
+        d.add(circle(x, 9, 2.4), "#F2C14E")
+    for x, couleur in ((23, "#F2C14E"), (39, "#35A7D8")):
+        d.raw(line(f"M{x - 3.4},11 L{x - 4},44.6 M{x + 4.6},11 L{x + 5.4},43.2", "#8E949E", 0.9))
+        d.add(_pts([(x - 5.4, 45), (x + 4.6, 45), (x + 7.2, 43.1), (x - 2.8, 43.1)]), couleur)
+        d.add(rect(x - 5.4, 45, 10, 1.9, 0.6), _fonce(couleur, 0.8))
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "pied")
+
+
+def _bezier(P, n=24):
+    (x0, y0), (x1, y1), (x2, y2), (x3, y3) = P
+    out = []
+    for i in range(n + 1):
+        t = i / n
+        u = 1 - t
+        out.append((u ** 3 * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t ** 3 * x3,
+                    u ** 3 * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t ** 3 * y3))
+    return out
+
+
+def toboggan():
+    """Toboggan du parc : l'échelle à gauche, une plate-forme sur quatre poteaux, la glissière jaune entre ses deux
+    rebords rouges, qui descend vers la droite."""
+    w, h, px, py = 64, 64, 32, 60
+    bleu, bleu_o, rouge, jaune = "#3273D4", "#23579F", "#D8362E", "#F7CF4D"
+    P, yp = 8, py - 34                                    # profondeur ; hauteur de la plate-forme
+    fx, fy = P * FUITE[0], -P * FUITE[1]
+    d = Drawing(w, h)
+    for x in (17, 25.4):                                  # poteaux du fond
+        d.add(rect(x + fx - 1.1, yp + fy, 2.2, 34, 0.8), bleu_o)
+    d.add(_pts([(8.4 + fx, py + fy), (10.6 + fx, py + fy), (17.6 + fx, yp + fy - 1), (15.4 + fx, yp + fy - 1)]), bleu_o)   # montant du fond
+    for k in range(5):                                    # barreaux
+        t = (k + 0.7) / 5.4
+        x, y = 5.5 + (15.4 - 5.5) * t + 1.1, py + (yp - 1 - py) * t
+        d.add(_pts([(x, y), (x + fx, y + fy), (x + fx, y + fy + 1.6), (x, y + 1.6)]), "#F2C14E")
+    d.add(_pts([(4.4, py), (6.6, py), (17.6, yp - 1), (15.4, yp - 1)]), bleu)                # montant de devant
+    courbe = _bezier(((26, yp - 1.4), (37, yp + 1), (43, py - 5), (60, py - 4.4)))
+    fond = [(x + fx, y + fy) for x, y in courbe]
+    d.add(_pts(fond + [(x, y - 3.6) for x, y in fond[::-1]]), "#B02A24")                    # rebord du fond
+    d.add(_pts(courbe + fond[::-1]), jaune)                                                 # la glissière
+    d.raw(line("M" + " L".join(f"{x + fx * 0.5:.2f},{y + fy * 0.5:.2f}" for x, y in courbe[2:-2]), "#FFFFFF", 0.7).replace("/>", ' opacity="0.6"/>'))
+    for x in (17, 25.4):                                  # poteaux de devant
+        d.add(rect(x - 1.1, yp, 2.2, 34, 0.8), bleu)
+    d.add(rect(46.4, py - 8.6, 2.2, 8.6, 0.8), bleu)                                        # le pied de la glissière
+    _boite(d, "pl", 15.4, 27, yp + 1.2, 2.6, P, bleu, bleu_o, "#6B9BE6")                    # la plate-forme
+    d.add(_pts(courbe + [(x, y - 3.6) for x, y in courbe[::-1]]), rouge)                    # rebord de devant
+    d.raw(line("M" + " L".join(f"{x:.2f},{y - 2.9:.2f}" for x, y in courbe[1:-1]), "#F0786E", 0.6))
+    arceau = f"M16.4,{yp - 1.6} L16.4,{yp - 9} Q16.4,{yp - 12.4} {16.4 + fx:.2f},{yp - 12.4 + fy:.2f} L{26 + fx:.2f},{yp - 12.4 + fy:.2f}"
+    d.raw(line(arceau, OUTLINE, 3.2))                                                       # la main courante
+    d.raw(line(arceau, "#F2C14E", 1.5))
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "pied")
+
+
+def heurtoir():
+    """Heurtoir du bout de la voie : une traverse rayée rouge et blanc sur deux montants, étayés vers l'arrière."""
+    w, h, px, py = 32, 40, 16, 36
+    d = Drawing(w, h)
+    for x in (7.4, 20):
+        d.add(_pts([(x + 0.4, 22), (x + 2.8, 22), (x + 8, py - 3.6), (x + 5.6, py - 3.6)]), ACIER[1])     # étais
+    for x in (7.4, 20):
+        d.add(rect(x, 20, 3, py - 20, 0.8), ACIER[0])
+    yt = _boite(d, "h", 3, 27, 22.5, 9, 4, "#FFFFFF", "#C9CDD4", "#FFFFFF")
+    for k in range(4):
+        d.add(_pts([(0.6 + k * 8, yt), (4.6 + k * 8, yt), (9.2 + k * 8, 22.5), (5.2 + k * 8, 22.5)]), "#D8362E", sil=False, clip="fh")
+    d.add(_pts([_p(27, yt + 3, 0), _p(27, yt + 3, 4), _p(27, yt + 6, 4), _p(27, yt + 6, 0)]), "#A82520", sil=False)
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "pied")
+
+
+def bitte():
+    """Bitte d'amarrage en fonte : une embase, un fût cintré, un chapeau large ; éclairée à gauche."""
+    base, sombre, clair = "#5C6168", "#3F444C", "#8A9099"
+    w, h, px, py = 32, 32, 16, 28
+    d = Drawing(w, h)
+    d.add(ellipse(16, 26.4, 8.4, 2.5), sombre)
+    fut = "M10.6,26 C12.4,21.5 12.4,19 11,15 L21,15 C19.6,19 19.6,21.5 21.4,26 A5.4,1.8 0 0 1 10.6,26 Z"
+    d.clip("fut", [path(fut)])
+    d.add(path(fut), base)
+    d.add(rect(16.6, 14, 6, 14), sombre, sil=False, clip="fut")
+    d.add(rect(12.4, 14, 1.7, 14), clair, sil=False, clip="fut", opacity=0.8)
+    d.add(ellipse(16, 14.4, 8.8, 3.7), base)
+    d.add(path("M16,10.7 A8.8,3.7 0 0 1 16,18.1 Q21,14.4 16,10.7 Z"), sombre, sil=False)
+    d.add(ellipse(15.4, 13.4, 6.2, 2.3), clair, sil=False)
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "contour")
+
+
+def peniche():
+    """Péniche amarrée au quai (sur l'eau : pas d'ombre portée) : la coque bleue à liston rouge et ses pneus, le
+    pont, la cale pleine de sable, la timonerie à l'arrière avec sa cheminée et son pavillon."""
+    w, h, px, py = 184, 54, 92, 46
+    bleu, bleu_o = "#2F568F", "#1F3A66"
+    d = Drawing(w, h)
+    d.raw('<ellipse cx="90" cy="45.6" rx="85" ry="4.4" fill="#1F5A85" opacity="0.32"/>')
+    d.raw(line("M1,47 q4,-2 8,0 M38,49.6 q5,-2 10,0 M112,50 q5,-2 10,0 M170,46.4 q4,-1.8 8,0", "#B5E3F8", 1.0))
+    d.add(_pts([(168, 30), (175, 25), (175, 37.5), (168, 43)]), bleu_o)                    # le tableau arrière
+    coque = "M3,28.6 L168,30 L168,43 Q90,47.5 16,43.5 Q7,39 3,28.6 Z"
+    d.clip("coque", [path(coque)])
+    d.add(path(coque), bleu)
+    d.add(rect(0, 28, 170, 4.6), "#D8362E", sil=False, clip="coque")
+    d.add(rect(0, 40.4, 170, 8), bleu_o, sil=False, clip="coque", opacity=0.8)
+    d.raw(line("M6,33.4 L167,34.4", "#5C86C4", 0.6))
+    d.add(path("M3,28.6 L168,30 L175,25 L18,24 Q8,24.6 3,28.6 Z"), "#BFC4CE")              # le pont
+    d.add(_pts([(24, 29), (112, 29.6), (117, 26.2), (29, 25.6)]), "#3A3F4A", sil=False)    # la cale
+    tas = "M27,28.8 Q44,9.6 66,23.6 Q86,11.6 113,27.6 L112,29.6 L24,29 Z"
+    d.clip("sable", [path(tas)])
+    d.add(path(tas), "#E8CF9C")
+    d.add(path("M47,15.4 Q58,18.6 66,23.6 L61,30 L45,30 Z"), "#CDB07A", sil=False, clip="sable")
+    d.add(path("M89,16.4 Q104,20.6 114,27.6 L113,30 L95,30 Z"), "#CDB07A", sil=False, clip="sable")
+    d.raw(line("M34,22 q4,-4.6 9,-6 M74,20.4 q5,-3.6 10,-4", "#F6E6BE", 1.0))
+    d.raw(line("M24,29 L112,29.6", "#3A3F4A", 1.3))
+    d.add(rect(9.4, 22.6, 2.6, 4.4, 0.8), ACIER[0])                                        # bitte de proue
+    _boite_p(d, "k", 126, 156, 30, 15, 3, 8, "#F6F0E4", "#CFC6B4", "#FFFFFF")              # la timonerie
+    for x in (131, 144):
+        d.add(rect(x, 17.4, 8.4, 6.2, 1), "#A9D8F2", sil=False, edge=True)
+        d.raw(line(f"M{x + 2},{22.6} L{x + 5},{18.4}", "#FFFFFF", 0.8))
+    d.add(rect(148.4, 2.6, 5, 8.4, 1), "#3A3F4A")                                          # la cheminée
+    d.add(rect(148.4, 4.6, 5, 1.8, 0), "#D8362E", sil=False)
+    _boite_p(d, "r", 124, 158, 15, 2.6, 2, 10, bleu, bleu_o, "#4F7BBB")                    # son toit
+    d.add(rect(170.2, 5, 1.7, 21.4, 0.6), ACIER[0])                                        # le mât, le pavillon
+    d.add(path("M171.9,6 L179.4,8.6 L171.9,11.2 Z"), "#D8362E")
+    for x in (40, 84, 128):                                                               # pneus de défense
+        d.add(circle(x, 37, 2.9), "#2B2B33", sil=False)
+        d.add(circle(x, 37, 1.1), bleu, sil=False)
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), None)
+
+
+# ====================================================================== CLAIRIÈRE, VERGER
+FEUILLES_MORTES = ("#E59A3C", "#F2C24E", "#C9642E", "#B8763A", "#D9803A")
+
+
+def nid_de_feuilles():
+    """Le nid de Maman Piquette : un dôme de feuilles mortes posées comme des tuiles, éclairé d'en haut à gauche,
+    une entrée ronde, des brindilles, un coussin de mousse."""
+    w, h, px, py = 48, 32, 24, 28
+    d = Drawing(w, h)
+    dome = "M4,28 C4,17 12,8.4 24,8.4 C36,8.4 44,17 44,28 Z"
+    d.clip("nid", [path(dome)])
+    d.add(path(dome), "#A8672F")
+    d.add(path("M26,6 C38,8 46,18 46,30 L30,30 C33,22 31,13 26,6 Z"), "#84501F", sil=False, clip="nid")
+    for r, n, L in ((17, 11, 7.6), (12, 8, 7.4), (6.6, 5, 7)):                            # trois rangs, du bord au sommet
+        for i in range(n):
+            a = -172 + i * 164 / (n - 1) + (3 if r == 12 else 0)
+            x, y = 24 + (r - L * 0.75) * math.cos(math.radians(a)), 27.4 + (r - L * 0.75) * 0.95 * math.sin(math.radians(a))
+            teinte = FEUILLES_MORTES[(i * 2 + int(r)) % len(FEUILLES_MORTES)]
+            if a > -62:                                                                   # le côté droit, à l'ombre
+                teinte = _fonce(teinte, 0.8)
+            _dans(d, "nid", nature._feuille(x, y, a + (i % 3 - 1) * 9, L, 2.5, teinte, "#6E4020", "#8A5226", 0.5))
+    d.raw(nature._feuille(22.4, 12.6, -128, 6, 2.3, "#F2C24E", "#6E4020", "#8A5226", 0.5))
+    d.raw(nature._feuille(25.6, 12.2, -58, 6, 2.3, "#D9803A", "#6E4020", "#8A5226", 0.5))
+    d.raw(line("M9,13.6 L14.6,17.2 M12.4,14.2 L12.8,12 M36.6,12.4 L32.6,16.6", "#6E4528", 0.9))    # brindilles
+    d.add(path("M19.4,28 L19.4,23.6 Q24,17.2 28.6,23.6 L28.6,28 Z"), "#3A2010", sil=False)          # l'entrée
+    d.raw(line("M19.4,28 L19.4,23.6 Q24,17.2 28.6,23.6 L28.6,28", "#6E4020", 0.8))
+    d.add(path("M22,28 L22,25 Q24,22.4 26,25 L26,28 Z"), "#1F1008", sil=False)
+    for cx, cy, r in ((6, 27, 2.2), (8.8, 26.2, 1.9), (3.8, 27.6, 1.5)):                            # mousse au pied
+        d.add(circle(cx, cy, r), MOUSSE[0])
+    d.add(circle(7, 25.8, 0.8), MOUSSE[1], sil=False)
+    d.raw(nature._feuille(40, 27.6, 12, 5.6, 2, "#E59A3C", "#6E4020", "#8A5226", 0.5))              # une feuille tombée
+    return Sprite([(d, BOIS, nature.TRAIT)], w, h, (px, py), "contour")
+
+
+def panier():
+    """Le panier d'Iris, posé à plat : un bourrelet d'osier tressé, un coussin rouge à carreaux."""
+    w, h, px, py = 48, 32, 24, 22
+    d = Drawing(w, h)
+    d.add(ellipse(24, 19.4, 20, 9), "#A86F38")                                             # la paroi
+    for i in range(11):                                                                    # le tressage, devant
+        x = 6.5 + i * 3.5
+        y = 19.4 + 9 * math.sqrt(max(0, 1 - ((x - 24) / 20) ** 2))
+        d.raw(line(f"M{x:.1f},{y - 4.2:.1f} l1.2,3", "#8A5628", 0.7))
+    d.add(ellipse(24, 16.6, 20, 8.6), "#D9A566")                                           # le bourrelet
+    d.raw(f'<ellipse cx="24" cy="16.2" rx="17.6" ry="7.2" fill="none" stroke="#EFC98E" stroke-width="0.9"/>')
+    coussin = ellipse(24, 17, 15, 5.9)
+    d.clip("coussin", [coussin])
+    d.add(coussin, "#E2584B", sil=False, edge=True)
+    d.add(ellipse(22.6, 14, 15, 4.2), "#B03A30", sil=False, clip="coussin", opacity=0.55)  # l'ombre du bourrelet
+    for x in (15, 21, 27, 33):
+        _dans(d, "coussin", line(f"M{x},10 L{x},24", "#F2938A", 0.7))
+    for y in (15, 18.6):
+        _dans(d, "coussin", line(f"M8,{y} L40,{y}", "#F2938A", 0.7))
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), None)
+
+
+# ====================================================================== LA RUE
+def lampadaire():
+    """Lampadaire de fonte verte : socle, fût éclairé à gauche, lanterne à quatre vitres sous son chapeau."""
+    base, sombre, clair = "#35594F", "#24403A", "#5C8B7C"
+    w, h, px, py = 32, 64, 16, 61
+    d = Drawing(w, h)
+    d.add(ellipse(16, 59.4, 5.8, 1.9), sombre)
+    d.add(rect(11.6, 54.4, 8.8, 5.2, 1.4), base)
+    d.add(rect(16.4, 54.4, 4, 5.2, 1.4), sombre, sil=False)
+    d.add(rect(13.2, 52.4, 5.6, 2.8, 1), base)
+    d.add(rect(14.7, 18, 2.6, 35, 1), base)
+    d.add(rect(16.2, 18, 1.1, 35, 0.5), sombre, sil=False)
+    d.add(rect(14.95, 19, 0.7, 33, 0.3), clair, sil=False)
+    d.add(rect(13.6, 38, 4.8, 2.1, 0.8), base)
+    d.add(rect(12.4, 16.8, 7.2, 2.4, 1), base)
+    d.add(_pts([(11.6, 17), (20.4, 17), (21.8, 10), (10.2, 10)]), "#FFE9A3")
+    d.add(_pts([(16.6, 17), (20.4, 17), (21.8, 10), (17, 10)]), "#F6CF6B", sil=False)
+    d.raw(line("M13.3,17 L12.7,10 M18.7,17 L19.3,10 M16,17 L16,10", base, 0.8))
+    d.add(_pts([(9.4, 10.6), (22.6, 10.6), (19.6, 5), (12.4, 5)]), base)
+    d.add(_pts([(16.4, 10.6), (22.6, 10.6), (19.6, 5), (16.2, 5)]), sombre, sil=False)
+    d.raw(line("M11.2,9.4 L13.2,5.8", clair, 0.7))
+    d.add(rect(14.4, 2.2, 3.2, 3.4, 1.4), base)
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "pied")
+
+
+def cone_de_chantier():
+    """Cône de chantier sur sa semelle carrée : deux bandes blanches, le côté droit à l'ombre."""
+    w, h, px, py = 32, 32, 16, 28
+    d = Drawing(w, h)
+    _boite(d, "s", 8.5, 21.5, py, 2.2, 6, "#E0612A", "#B9481A", "#F08A4B")
+    corps = "M12.6,26.2 L16,7.6 Q17.2,6.2 18.4,7.6 L21.8,26.2 Z"
+    d.clip("cone", [path(corps)])
+    d.add(path(corps), "#F47A2B")
+    d.add(rect(17.6, 5, 6, 22), "#D9601F", sil=False, clip="cone")
+    for y, e in ((13, 3.6), (19.6, 3.2)):
+        d.add(rect(10, y, 14, e), "#FFFFFF", sil=False, clip="cone")
+        d.add(rect(17.6, y, 6, e), "#D5D9E0", sil=False, clip="cone")
+    d.add(rect(14.5, 8, 0.9, 18), "#FBA468", sil=False, clip="cone", opacity=0.85)
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), _sol_boite(8.5, 21.5, py, 6))
+
+
+def panneau_indicateur():
+    """Poteau indicateur de bois : deux planches en flèche, leur chant du bas à l'ombre, des lettres gravées."""
+    bois, sombre, clair = "#C98A4B", "#9C6835", "#E3AE72"
+    w, h, px, py = 32, 48, 16, 45
+    d = Drawing(w, h)
+    d.add(rect(14.4, 6.6, 3.2, 38.4, 1), "#8A5A3A")
+    d.add(rect(16.2, 7, 1.4, 38, 0.6), "#6E4528", sil=False)
+    for i, (pts, y, x) in enumerate((([(4, 10), (24, 10), (29, 14.5), (24, 19), (4, 19)], 14.5, 8),
+                                    ([(28, 22), (8, 22), (3, 26.5), (8, 31), (28, 31)], 26.5, 11))):
+        cid = f"planche{i}"
+        d.clip(cid, [_pts(pts)])
+        d.add(_pts(pts), bois)
+        d.add(rect(0, y + 2.7, 32, 3), sombre, sil=False, clip=cid)
+        d.add(rect(0, y - 4.5, 32, 1.2), clair, sil=False, clip=cid)
+        d.raw(line(f"M{x},{y - 1} L{x + 12},{y - 1} M{x + 1.5},{y + 1.2} L{x + 8.5},{y + 1.2}", "#7A4E2A", 0.9))
+        d.add(circle(16, y - 2.9, 0.55), "#6E4528", sil=False)
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "pied")
+
+
+def panneau_routier():
+    """Panneau « attention, chiens » : un triangle bordé de rouge sur son poteau de métal."""
+    w, h, px, py = 32, 48, 16, 45
+    d = Drawing(w, h)
+    d.add(rect(14.8, 20, 2.4, 25, 1), "#9AA0AA")
+    d.add(rect(16.1, 20, 1.1, 25, 0.5), "#6F757F", sil=False)
+    tri = [(16, 3), (28, 23), (4, 23)]
+    d.clip("tri", [_pts(tri)])
+    d.add(_pts(tri), "#D8362E")
+    d.add(_pts([(16, 3), (28, 23), (16, 23)]), "#B92A24", sil=False, clip="tri")
+    d.add(_pts([(16, 8), (24, 20.5), (8, 20.5)]), "#FFFFFF", sil=False)
+    d.add(_pts([(16, 8), (24, 20.5), (16, 20.5)]), "#ECEEF2", sil=False)
+    d.add(ellipse(15.5, 17.2, 3.2, 1.5), OUTLINE, sil=False)       # un chien
+    d.add(circle(19.2, 15.5, 1.3), OUTLINE, sil=False)
+    d.raw(line("M13,18 L13,19.6 M18,18 L18,19.6 M12.4,16.8 L11,15.2", OUTLINE, 0.8))
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "pied")
+
+
 CATALOGUE = {
     "conteneur": conteneur, "conteneur_bleu": lambda: conteneur("bleu"), "conteneur_vert": lambda: conteneur("vert"),
     "conteneurs_empiles": conteneurs_empiles,
@@ -560,6 +886,10 @@ CATALOGUE = {
     "pot_de_fleurs": pot_de_fleurs, "pot_de_geraniums": lambda: pot_de_fleurs("geranium"), "pot_de_fleurs_bleues": lambda: pot_de_fleurs("bleu"),
     "souche": souche, "tronc_couche": tronc_couche, "champignons": champignons, "bolets": lambda: champignons(True),
     "fougere": fougere, "grande_fougere": lambda: fougere(True),
+    "portique": portique, "peniche": peniche, "bitte": bitte, "heurtoir": heurtoir,
+    "toboggan": toboggan, "balancoire": balancoire, "nid_de_feuilles": nid_de_feuilles, "panier": panier,
+    "lampadaire": lampadaire, "cone_de_chantier": cone_de_chantier, "panneau_indicateur": panneau_indicateur,
+    "panneau_routier": panneau_routier,
 }
 # Décor de carte.json -> ses dessins (un par position, comme la nature) ; `n` reste le nom du décor et son obstacle.
 VARIANTES = {
@@ -572,6 +902,10 @@ VARIANTES = {
     "flower_pot": (["pot_de_fleurs", "pot_de_geraniums", "pot_de_fleurs_bleues"], [0, 1, 2]),
     "stump": (["souche"], [0]), "log": (["tronc_couche"], [0]), "mushrooms": (["champignons", "bolets"], [0, 0, 1]),
     "fern": (["fougere", "grande_fougere"], [0, 1]),
+    "crane": (["portique"], [0]), "barge": (["peniche"], [0]), "bollard": (["bitte"], [0]), "buffer_stop": (["heurtoir"], [0]),
+    "slide": (["toboggan"], [0]), "swing": (["balancoire"], [0]), "leaf_nest": (["nid_de_feuilles"], [0]), "dog_bed": (["panier"], [0]),
+    "lamppost": (["lampadaire"], [0]), "cone": (["cone_de_chantier"], [0]), "signpost": (["panneau_indicateur"], [0]),
+    "road_sign": (["panneau_routier"], [0]),
 }
 # Où un chat se réfugie sur un conteneur : points du cadre (game.js : REFUGES, MAP.perches)
 PERCHOIRS = {
@@ -584,7 +918,8 @@ PERCHOIRS = {
 # Christophe les a trouvés « très petits » (12 novembre 2026). L'obstacle du décor grandit d'autant (MAP.grow).
 ECH = {"conteneur": 1.5, "conteneur_bleu": 1.5, "conteneur_vert": 1.5, "conteneurs_empiles": 1.5,
        "table_de_terrasse": 1.35, "banc": 1.2,            # (un parasol plus haut qu'un villageois, un banc où s'asseoir)
-       "foin": 1.3, "foin_rond": 1.3, "tonneau_bleu": 1.35, "tonneau_rouge": 1.35}
+       "foin": 1.3, "foin_rond": 1.3, "tonneau_bleu": 1.35, "tonneau_rouge": 1.35, "portique": 1.5, "peniche": 1.4,
+       "lampadaire": 1.3, "toboggan": 1.3, "balancoire": 1.3}
 
 
 def agrandis():
@@ -609,8 +944,8 @@ nature.VARIANTES.update(VARIANTES)
 
 
 if __name__ == "__main__":
-    noms = list(CATALOGUE)
-    ims = [nature.image(n, 6) for n in noms]
+    noms = sorted(CATALOGUE, key=lambda n: nature.cadre(n)[2])             # du plus petit au plus grand
+    ims = [nature.image(n, 4) for n in noms]
     rangs, rang, larg = [], [], 0
     for im in ims:
         if rang and larg + im.width > 1880:

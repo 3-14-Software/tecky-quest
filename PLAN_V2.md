@@ -307,9 +307,15 @@ Fait le 12 novembre 2026, dans le jeu :
   à gauche du quai), un entrepôt, une palette, deux tonneaux, un lampadaire, un chat et un ballon de Léon.
   Captures : `lot4_port.png`, `lot4_terrasse.png`, `lot4_foret_mobilier.png`.
 
-Reste : les objets (os, lettres, ballons), les canards et les papillons, qui gardent leur petit ovale ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; les gros objets encore dans leur
-dessin de la v1 (portique, péniche, barque, camion, chariot, tracteur, jeux du parc, fontaine, clôtures,
-lampadaire) ; l'habillage des zones (dont : la forme des mares, encore rectangulaire ; un cerisier en
+- **Gros objets et suite du mobilier** (demande de Christophe : « il faut redessiner le nid de maman Piquette
+  aussi et vérifier qu'il ne reste pas d'autres objets du même type ») : portique du port (chevalets en A,
+  poutre-caisson, cabine, chariot, crochet), péniche (1,4), bitte, heurtoir, toboggan et balançoire (1,3), nid
+  de feuilles de Maman Piquette, panier d'Iris, lampadaire, cône, panneau indicateur, panneau routier. Le
+  lampadaire du quai est passé à gauche du portique. Planche de ce qui reste dans son dessin de la v1 :
+  `mobilier_reste_v1.png` (18 décors, à trancher avec Christophe).
+
+Reste : les objets (os, lettres, ballons), les canards et les papillons, qui gardent leur petit ovale ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; les engins garés (tracteur, chariot,
+camion) et les véhicules de la route, encore dans leur dessin de la v1 ; l'habillage des zones (dont : la forme des mares, encore rectangulaire ; un cerisier en
 fleurs au milieu des sapins de la forêt). L'éditeur de carte montre encore les anciens arbres (il lit
 `decor/tree`…), pas les variantes.
 
