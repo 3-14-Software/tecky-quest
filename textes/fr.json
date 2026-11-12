@@ -3,6 +3,16 @@
     "tunnel": "Le tunnel, c’est pour les voitures !",
     "carte": "Alice n’a pas pu aller si loin !"
   },
+  "episodes": {
+    "printemps": {
+      "nom": "Le printemps",
+      "note": "Tecky cherche Alice"
+    },
+    "ete": {
+      "nom": "L’été",
+      "note": "Tecky à la mer"
+    }
+  },
   "noms": {
     "tecky": "Tecky",
     "alice": "Alice",
@@ -284,7 +294,8 @@
     "reprendre": "Reprendre",
     "records": "Records en {mode}{facile} : {score} points · {temps}",
     "records_fait": " · {n} %",
-    "continuer_note": "{mode}{facile} · {indices} · {temps}",
+    "continuer_note": "{episode}{mode}{facile} · {indices} · {temps}",
+    "continuer_episode": "{nom} · ",
     "indices": {
       "one": "{n} indice sur 3",
       "other": "{n} indices sur 3"
@@ -516,6 +527,8 @@
   "titre": {
     "accroche": "Aide Tecky le teckel à retrouver Alice",
     "aide": "[updown] pour choisir, [ok] pour valider",
+    "aide_episodes": "[leftright] pour changer d'épisode, [updown] pour choisir, [ok] pour valider",
+    "episode": "{nom} · {note}",
     "images": " · images x{n}"
   },
   "defaite": {
@@ -533,6 +546,7 @@
     "balade": "Balade complétée",
     "aventure": "Aventure complétée",
     "record": "Record !",
+    "episode": "Nouvel épisode : {nom} !",
     "retour": {
       "tactile": "Touche l’écran pour revenir au menu",
       "touches": "[ok] pour revenir au menu"

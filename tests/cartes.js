@@ -1,9 +1,11 @@
 // plusieurs cartes : Tecky prend le tunnel de la route, arrive sur une deuxième carte, y marche, revient ; chaque carte
-// garde son état ; une partie enregistrée là-bas reprend là-bas (sauvegarde v3 ; une v2 se reprend dans le monde)
+// garde son état ; une partie enregistrée là-bas reprend là-bas (sauvegarde v3 ; une v2 se reprend dans le monde).
+// Se joue dans l'épisode de l'été, encore en chantier : c'est lui qui a la deuxième carte (au printemps, le tunnel
+// est fermé : tests/episodes.js)
 const fs = require('fs'), path = require('path');
 const base = fs.readFileSync(path.join(__dirname, 'sim.js'), 'utf8').split("setTimeout(() => {")[0];
 function main() {
-  run('audioOn(); pressed.ok = true'); step(1); advanceDialog();
+  run('episode = "ete"; audioOn(); pressed.ok = true'); step(1); advanceDialog();
   run('dogs.forEach(d => { d.x = d.hx; d.y = d.hy; }); cars = []; P.inv = 99;');
   ok(run('Object.keys(CARTES).join()') === 'monde,pre' && run('MAP.id') === 'monde' && run('MAP.ts') === 64 && run('MAP.w') === 96,
      'deux cartes ; la carte courante est celle du monde, et hérite des données du jeu (MAP.ts)');
@@ -46,12 +48,12 @@ function main() {
   ok(run('(() => { const a = arrowTarget(), [x, y] = arrivalAt(0); return a.x === x && a.y === y; })()'), 'la flèche et le flair ramènent au tunnel : l\'indice suivant n\'est pas ici');
   // partie enregistrée là-bas : elle reprend là-bas
   run('P.x = 700; P.y = 1100; saveGame(); var S = STORE.get(SAVE_KEY), chatAvant = S.ailleurs.monde.cat.slice();');
-  ok(run('S.v') === 3 && run('S.carte') === 'pre' && run('!!S.ailleurs.monde') && run('(() => { const m = S.ailleurs.monde, a = JSON.parse(avant); return m.items.length === nItems && JSON.stringify(m.dogs) === JSON.stringify(a.dogs) && JSON.stringify(m.dug) === JSON.stringify(a.dug); })()'),
+  ok(run('S.v') === 3 && run('S.ep') === 'ete' && run('S.carte') === 'pre' && run('!!S.ailleurs.monde') && run('(() => { const m = S.ailleurs.monde, a = JSON.parse(avant); return m.items.length === nItems && JSON.stringify(m.dogs) === JSON.stringify(a.dogs) && JSON.stringify(m.dug) === JSON.stringify(a.dug); })()'),
      'sauvegarde v3 : la carte courante, et l\'état du monde rangé sous « ailleurs »');
   run('toTitle();');
   ok(run('MAP.id') === 'monde' && run('state') === 'title' && run('EDGE_DECOR.length') > 300, 'retour à l\'écran titre : la carte du monde, sur la place du village');
   run('loadGame(STORE.get(SAVE_KEY), false);'); advanceDialog();
-  ok(run('MAP.id') === 'pre' && run('P.x') === 700 && run('P.y') === 1100 && run('score') === 321 && run('farm.state') === 'asked' && run('dogs.length') === 0,
+  ok(run('episode') === 'ete' && run('MAP.id') === 'pre' && run('P.x') === 700 && run('P.y') === 1100 && run('score') === 321 && run('farm.state') === 'asked' && run('dogs.length') === 0,
      'Continuer : la partie reprend sur la deuxième carte, là où elle a été enregistrée');
   // retour par le tunnel : le monde est comme il l'avait laissé
   run('{ const [x, y] = arrivalAt(0); P.x = x - 10; P.y = y; P.mode = "free"; cars = []; }');
@@ -62,10 +64,11 @@ function main() {
      'le monde est comme il l\'avait laissé : l\'os ramassé, le trésor déterré, le chien parti ; Pompon, qui le suivait, l\'a attendu');
   ok(run('Object.keys(elsewhere).join()') === 'pre' && run('elsewhere.pre.seen.includes("1")'), 'et la deuxième carte garde à son tour ce qu\'il y a vu');
   // une sauvegarde d'avant les cartes multiples (v2) se reprend dans le monde
-  run('saveGame(); var V2 = STORE.get(SAVE_KEY); V2.v = 2; delete V2.carte; delete V2.ailleurs; STORE.set(SAVE_KEY, V2); toTitle();');
+  run('saveGame(); var V2 = STORE.get(SAVE_KEY); V2.v = 2; delete V2.ep; delete V2.carte; delete V2.ailleurs; STORE.set(SAVE_KEY, V2); toTitle();');
   ok(run('!!loadSave()') && run('menu.items[0].id') === 'continue', 'une sauvegarde v2 est encore proposée (« Continuer »)');
   run('loadGame(loadSave(), false);'); advanceDialog();
-  ok(run('MAP.id') === 'monde' && run('items.length') === run('nItems') && run('Object.keys(elsewhere).length') === 0, 'elle reprend dans le monde, sans autre carte');
+  ok(run('episode') === 'printemps' && run('MAP.id') === 'monde' && run('items.length') === run('nItems') && run('Object.keys(elsewhere).length') === 0,
+     'elle reprend dans le monde, sans autre carte, dans le premier épisode');
   // nouvelle partie depuis une autre carte : toujours à la niche
   run('travel("pre", 0); newGame("aventure", true);'); advanceDialog();
   ok(run('MAP.id') === 'monde' && run('Math.abs(P.x - MAP.start[0]) < 1') && run('Object.keys(elsewhere).length') === 0 && run('items.length') === run('MAP.items.length'),

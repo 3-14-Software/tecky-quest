@@ -422,8 +422,82 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
    s'enfonce dans le noir ; capture `lot6_tunnel.png`).
 3. La notion d'épisode : une saison = ses cartes (mêmes terrains, autres placements, indices et quêtes), une
    palette, une météo. Elle repose sur le jalon : changer d'épisode, c'est changer de carte.
-4. Un premier nouvel épisode, pour mesurer ce qu'il coûte et ce qu'il dure (l'automne ou l'hiver).
-5. Lieux nouveaux (le lac ou la plage de l'été) et intérieurs.
+   **Décidé le 12 novembre 2026** : les épisodes s'enchaînent **l'un après l'autre** (finir le printemps ouvre
+   l'été ; l'écran titre propose ceux qui sont ouverts) ; Tecky cherche **Alice à chaque saison** (le cache-cache
+   devient leur jeu : elle se cache ailleurs et sème trois autres affaires) ; le premier nouvel épisode est
+   **l'été**. Étude des couleurs : `python3 saisons.py` → `reference/v2/saisons_etude.png` (le même coin du monde
+   aux quatre saisons, par le pipeline, en ne changeant que les palettes : 13 s par saison).
+   Découpage :
+   a. le moteur : `episodes.json` (pour chaque épisode : sa saison, ses cartes), l'épisode en cours dans la
+      partie et dans la sauvegarde, la progression (épisodes ouverts) gardée d'une partie à l'autre, le choix de
+      l'épisode sur l'écran titre, la victoire qui ouvre le suivant ;
+      **Fait le 12 novembre 2026.** `episodes.json` : le printemps (la carte du monde) et l'été (le monde et la
+      carte d'essai), ce dernier marqué « en chantier » : le jeu publié ne le propose pas, `?chantier` à la fin
+      de l'adresse le montre. Les épisodes s'ouvrent l'un après l'autre : gagner le précédent, dans n'importe
+      quel mode, ouvre le suivant — ce sont les records qui le disent, donc un joueur qui a déjà fini le
+      printemps trouvera l'été ouvert le jour où il sortira du chantier. Chaque épisode est une partie neuve
+      (trois os, score à zéro) et a ses records. La sauvegarde (toujours une seule partie en cours) nomme son
+      épisode. Écran titre : dès que deux épisodes sont ouverts, la ligne d'accroche devient le choix de
+      l'épisode (gauche / droite, ou un toucher) ; l'écran de victoire annonce « Nouvel épisode : L'été ! » et
+      le titre le propose ensuite. Un passage ne s'ouvre que vers une carte de l'épisode : **au printemps, le
+      tunnel est redevenu « pour les voitures »**. Captures : `reference/v2/lot6_episodes.png` ; test
+      `tests/episodes.js`. À trancher plus tard : Tecky garde-t-il ses os d'un épisode au suivant (aujourd'hui
+      non) ; les badges, écrits pour le printemps, se gagnent encore dans tout épisode.
+   b. les données d'un épisode : pour chaque carte, un fichier qui ne redit que ce qui change (objets, indices,
+      chiens, cachette d'Alice, quêtes), par-dessus la carte de base, pour ne pas recopier le terrain ;
+   c. les images d'une saison : tuiles et sprites de la nature redessinés avec sa palette (`saisons.py`),
+      chargés à côté de la page comme les images x4, pas dans la page ;
+   d. le contenu de l'été.
+4. **L'été**, premier nouvel épisode, pour mesurer ce qu'il coûte et ce qu'il dure.
+   **Histoire fixée avec Christophe le 12 novembre 2026 : « Tecky à la mer », sur la Côte Fleurie, en Normandie.**
+   - *Le départ* : devant la niche de Tecky, là où le printemps s'est terminé. La voiture des vacances attend sur
+     la route : **le papa d'Alice conduit une voiture de sport rouge** (celle de Christophe dans la vraie vie est
+     une berline sportive rouge : à dessiner dans cet esprit, sans marque ni logo) ; Tecky et Alice montent, la
+     voiture prend le tunnel. C'est la voiture
+     qui change de carte : **à pied, le tunnel redevient « pour les voitures »** (le passage en poussant dedans,
+     qui a servi au jalon, est à retirer).
+   - *La côte* (`reference/v2/ete_plan.png`), une carte neuve à la place de la carte d'essai : **la mer en bas**
+     (les façades du front de mer regardent vers nous), une plage en croissant bordée de planches, une rivière
+     qui descend jusqu'à la mer avec son pont (la Touques, entre Trouville et Deauville), le village de pêcheurs
+     et son bassin sur une rive, la ville et son casino sur l'autre, le port industriel à l'ouest (conteneurs,
+     portique : les dessins existent), les falaises et le phare à l'est, la campagne normande en haut (pommiers,
+     vaches).
+   - *Casser l'horizontale* (demande de Christophe : la carte du monde est faite de bandes) : la route ne
+     traverse plus la carte, elle sort du tunnel et **finit au parking** ; la côte est une baie, la rivière
+     coupe la carte de haut en bas, les rues du village et de la ville sont des rues à piétons. Une route qui
+     tourne demanderait de dessiner chaque véhicule de face, de dos et de trois quarts (ils n'existent que de
+     profil) : à garder pour plus tard. Au parking, les voitures entrent et sortent par un porche couvert,
+     comme elles le font au tunnel : rien de neuf à dessiner pour elles.
+   - *La recherche* : Alice se cache **dans le phare**, au bout des falaises. Ses trois affaires : son
+     **chapeau de paille** (au village de pêcheurs), sa **pelle de plage** (en ville), sa **tong** (sur la
+     plage : elle répond à la chaussure du printemps). La scène de fin : le phare qui s'allume au coucher du
+     soleil.
+   - *À jouer* : Tecky nage près du bord ; des **motos** parmi les véhicules, pour faire vacances (demande de
+     Christophe).
+   - *Les quêtes* (choisies par Christophe ; les noms sont des propositions à valider) :
+     1. **le maître-nageur** (Théo), sur la plage : trois jouets de plage sont partis au large ; Tecky nage les
+        chercher et les rapporte un par un dans sa gueule (les jouets d'Iris, sur l'eau : la leçon de natation) ;
+     2. **le château de sable** (Zoé, une enfant) : cinq coquillages enterrés dans le sable, à gratter (les os
+        dorés, en quête) ;
+     3. **les bouées du pêcheur** (Yvon), au bassin : les bouées de ses casiers ont dérivé ; Tecky les pousse à
+        la nage jusqu'au ponton (les ballons de Léon, sur l'eau) ;
+     4. **les mouettes voleuses**, au marché aux poissons : elles ont chipé les poissons de l'étal ; un
+        aboiement leur fait lâcher prise, Tecky rapporte les poissons ;
+     5. **les moutons du gardien du phare** (Anatole), sur la falaise : des moutons de pré salé à rassembler dans
+        leur enclos en aboyant (les poules de Gaston, en plus gros) ;
+     6. **le caniche de la dame** (Madame Hortense et Praline), devant le casino : perdu dans les jardins, il suit
+        Tecky jusqu'à elle (Pompon) ;
+     7. **le manège**, dans les jardins : pas une quête, une surprise comme Titine — aboyer le fait tourner en
+        musique.
+     Chacune reprend une mécanique du printemps avec une chose en plus (l'eau, le sable, la taille des bêtes) :
+     le moteur des quêtes est à rendre réutilisable plutôt qu'à recopier six fois.
+   - *Les adversaires* (mode aventure) : **les chiens en ville et au port**, comme au printemps ; **des crabes
+     sur la plage**, qui pincent si on leur marche dessus et s'enterrent quand Tecky aboie.
+   - *À dessiner* : la voiture de sport rouge, les motos, Tecky qui nage, le papa d'Alice, les six personnages
+     des quêtes, le caniche, les moutons, les mouettes, les crabes ; le phare, le casino, les cabines de plage,
+     le manège, les bateaux de pêche, l'étal de poissons, le porche du parking ; le sable, la mer et ses vagues,
+     les planches, la falaise ; les objets (chapeau, pelle, tong, coquillages, bouées, jouets de plage).
+5. Les autres saisons (automne, hiver), puis les intérieurs.
 6. Rejouer : cachettes tirées au sort, album d'autocollants.
 
 **Pas d'éclatement de la carte actuelle** (question de Christophe, 12 novembre 2026 : « n'aurait-on pas plus vite

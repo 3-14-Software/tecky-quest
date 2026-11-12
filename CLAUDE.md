@@ -19,6 +19,7 @@ pip install -r requirements.txt           # cairosvg, pillow, numpy (+ Node 18+ 
 python3 pack_web.py                       # web/index.html, web/tecky_quest_web/ (autonome), atlas, niveau, images x4
 python3 pack_web.py --sans-hd             # la même chose sans les images x4 (le jeu reste en x2)
 python3 editeur.py                        # éditeur de carte : http://127.0.0.1:8770/ (modifie carte.json)
+python3 episodes.py                       # vérifie episodes.json (les épisodes, leurs cartes)
 python3 music.py                          # contrôle des partitions ; écoute : web/musique.html (après pack_web.py)
 ./tests/run_all.sh                        # reconstruit puis lance tous les tests (doit finir avec exit=0)
 ./publish_docs.sh                         # copie la version autonome dans docs/ (GitHub Pages)
@@ -243,6 +244,29 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   est éclairé à la verticale sans que rien soit décollé ; au seuil de 5 px il ne reste que deux colonnes de la
   table de terrasse, à 3 px le liseré connu le long du mur qui fuit des maisons) : à relancer après
   tout nouveau décor.
+- **Saisons** (lot 6, étude) : `saisons.py` — une saison est d'abord une palette (feuillages `nature.FEUILLAGES`,
+  herbe `tiles.GRASS`, quelques terrains `tiles.TERRAINS`) ; `appliquer(saison)` la pose (en place : les modules
+  de dessin la lisent en dessinant ; toujours revenir au printemps, `appliquer()`), `python3 saisons.py` redessine
+  l'étude `reference/v2/saisons_etude.png`. Le jeu ne connaît encore que le printemps. Décisions de Christophe :
+  épisodes l'un après l'autre, Alice à chaque saison, l'été d'abord (découpage dans `PLAN_V2.md`, lot 6).
+- **Épisodes** (lot 6, le moteur ; 12 novembre 2026) : `episodes.json` (`episodes.py` : `charger()`,
+  `valider()`, `python3 episodes.py`) donne les épisodes dans l'ordre où ils s'ouvrent : `id`, `saison`, `cartes`
+  (un passage vers une carte qui n'en fait pas partie est fermé : `passageHere()`), `depart` (la carte de la
+  niche), `chantier` (pas encore jouable). Aujourd'hui : `printemps` (le monde seul : le tunnel y est « pour les
+  voitures ») et `ete` (le monde et `pre`), en chantier. `pack_web.py` les embarque (`EPISODES`). `game.js` :
+  `episode` = celui de la partie en cours et, sur l'écran titre, celui que le joueur a choisi ; `EP()` ses
+  données ; `epOpen()` : le premier, ou un épisode prêt dont le précédent a été gagné (`epWon()` lit les
+  records : pas d'autre donnée gardée ; n'importe quel mode ouvre le suivant) ; `openEpisodes()`, `lastOpen()`.
+  Un épisode en chantier n'est ni proposé ni ouvert, sauf avec `?chantier` à la fin de l'adresse (`CHANTIER`) :
+  le jeu publié n'a donc qu'un épisode et son écran titre n'a pas changé. Chaque épisode est une partie neuve et
+  a ses records (`recKey(mode, diff, ep)` : le premier garde les clés d'avant, les autres « ete:aventure »). La
+  sauvegarde nomme son épisode (`ep` ; sans lui, le premier : `epOfSave()`) ; si sa carte n'est plus de
+  l'épisode, la partie reprend à la niche. Écran titre : dès que deux épisodes sont ouverts, l'accroche devient
+  le choix de l'épisode (`drawEpisodePick()`, `stepEpisode()` : gauche / droite ; `episodeTap()` au toucher ;
+  textes `episodes.<id>.nom` / `.note`). La victoire qui ouvre un épisode l'annonce sous le tableau (`opened`,
+  « Nouvel épisode : L'été ! ») et le titre le propose ensuite. La saison (`EP().saison`) ne change encore rien
+  à l'image. Un nouvel épisode : une entrée dans `episodes.json`, ses deux textes. Dans un test, sortir l'été du
+  chantier : `EPISODES[1].chantier = false`. Tests : `episodes.js` ; `cartes.js` se joue en été.
 - **Plusieurs cartes** (lot 6, jalon « deux cartes », 12 novembre 2026). Le jeu a la carte du monde (`carte.json`,
   « monde » : toute l'aventure) et des **cartes annexes** (`cartes/<nom>.json`, `"annexe": true` ; aujourd'hui
   `cartes/pre.json`, 40 x 24, petite et vide : elle prouve le moteur). `carte.noms()`, `carte.chemin(nom)`. Une
@@ -250,7 +274,8 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   tout) ou vide, et en donne la liste (`absents`) ; `valider()` ne l'exige pas. On passe d'une carte à l'autre par
   un tunnel de la grande route : `"passages": [[n° du tunnel dans roadTunnels, carte, n° du tunnel d'arrivée]]`
   (le tunnel de l'est du monde mène à celui de l'ouest de `pre`, et retour ; `pack_web.py` refuse un passage
-  vers une carte ou un tunnel qui n'existe pas).
+  vers une carte ou un tunnel qui n'existe pas ; le passage n'est ouvert que dans un épisode qui a les deux
+  cartes : l'été).
   `pack_web.py` : `charger_carte(nom)` fait d'une carte la carte courante (ses variables de module : `MW`,
   `DECOR`, `EDGE`… ; « monde » à l'import, pour l'éditeur) ; `build_map()` rend ses données, `build_jeu()` celles
   du jeu, les mêmes partout (dessins, ombres, cadences) ; la page embarque `JEU` et `CARTES = { monde, pre }`. Les
@@ -541,7 +566,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - Sauvegarde (`STORE` : localStorage, repli en mémoire si refusé ; clés `tecky-quest-save` v3 (`SAVE_V` ; une v2 se reprend : mêmes champs, dans le monde) et `tecky-quest-records`) :
   `saveGame()` toutes les `SAVE_EVERY` (4) s de jeu si `safeToSave()` (aucun chien engagé à moins de 600 px), à chaque
   indice et trésor (fin de réplique), en quittant la page (`pagehide`, onglet caché) ; jamais KO ni après la victoire.
-  Contenu : la carte courante (`carte`) et l'état des autres (`ailleurs` : `elsewhere`), puis, à plat pour la carte
+  Contenu : l'épisode (`ep`), la carte courante (`carte`) et l'état des autres (`ailleurs` : `elsewhere`), puis, à plat pour la carte
   courante, mode, place, os, score, temps, indices, trésors, objets au sol, chiens restants (`d.id` = index dans
   `MAP.enemies`). `loadGame(s, rested)` : Continuer, ou reprise après KO (`rested` = vie pleine). La victoire efface la
   sauvegarde et met à jour les records du mode (`recordRun()` : meilleur score, meilleur temps, meilleure complétion

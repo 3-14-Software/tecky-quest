@@ -1107,6 +1107,7 @@ cv.addEventListener('pointerdown', e => {
   if (state === 'options') { optionsTap(gx, gy); return; }
   if (state === 'badges') { closeBadges(); return; }
   if (menu && (state === 'title' || state === 'over' || state === 'pause')) {   // menus : toucher une entrée la choisit
+    if (state === 'title' && episodeTap(gx, gy)) return;
     const i = menuHit(gx, gy);
     if (i >= 0) { menu.sel = i; pressed.ok = true; }
     else if (state === 'pause') pressed.pause = true;                    // ailleurs : on reprend
@@ -1778,6 +1779,28 @@ const START_BONES = 3, MAX_BONES = 8;
    moitié moins fortes (un demi-os), et un chien sur trois en moins (toujours les mêmes : d.id % 3 === 2). */
 let gameDiff = 'normal';
 const facile = () => gameDiff === 'facile';
+/* Épisodes : le jeu se joue en épisodes, un par saison (EPISODES, écrit par pack_web.py d'après episodes.json : id,
+   saison, cartes, depart). Ils s'ouvrent l'un après l'autre : le premier l'est toujours, un autre quand le précédent
+   a été gagné une fois, dans n'importe quel mode — ce sont les records qui le disent, il n'y a rien d'autre à
+   garder. Un épisode « en chantier » n'est ni proposé ni ouvert, sauf avec ?chantier dans l'adresse. `episode` :
+   celui de la partie en cours ; sur l'écran titre, celui que le joueur a choisi (stepEpisode). Chaque épisode est
+   une partie neuve (trois os) et a ses records (recKey). `opened` : l'épisode que la victoire vient d'ouvrir. */
+const CHANTIER = typeof location !== 'undefined' && /[?&]chantier\b/.test(location.search || '');
+let episode = EPISODES[0].id, opened = null;
+const EP = () => EPISODES.find(e => e.id === episode) || EPISODES[0];
+const epWon = e => ['aventure', 'balade'].some(m => ['normal', 'facile'].some(d => (recs[recKey(m, d, e.id)] || {}).wins > 0));
+function epOpen(e) {
+  const i = EPISODES.indexOf(e);
+  return i === 0 || ((!e.chantier || CHANTIER) && epOpen(EPISODES[i - 1]) && epWon(EPISODES[i - 1]));
+}
+const openEpisodes = () => EPISODES.filter(epOpen);
+const lastOpen = () => { const o = openEpisodes(); return o[o.length - 1].id; };
+const epOfSave = s => (EPISODES.find(e => e.id === s.ep) || EPISODES[0]).id;    // (sans épisode : une sauvegarde d'avant, le premier)
+function stepEpisode(d) {               // écran titre : l'épisode suivant ou précédent, parmi ceux qui sont ouverts
+  const o = openEpisodes(), i = o.findIndex(e => e.id === episode);
+  episode = o[(Math.max(0, i) + d + o.length) % o.length].id;
+  SFX.blip();
+}
 const ITEM = {
   bone: { heal: 2 }, sausage: { grow: true },
   medal: { pts: 100 }, squeaky: { pts: 50 }, ball: { pts: 20 },
@@ -1885,7 +1908,8 @@ function resetWorld() {
   fxs = []; pops = []; rings = []; dusts = []; leaves = []; leafTrees = null;
 }
 /* Passer d'une carte à l'autre, par un tunnel de la grande route (MAP.passages : [n° du tunnel, carte, n° du tunnel
-   d'arrivée] ; MAP.roadTunnels : [x, y du pied, miroir]). Tecky pousse contre le tunnel (edgeBump) : fondu, la carte
+   d'arrivée] ; MAP.roadTunnels : [x, y du pied, miroir] ; seulement vers une carte de l'épisode en cours : sinon le
+   tunnel est « pour les voitures »). Tecky pousse contre le tunnel (edgeBump) : fondu, la carte
    quittée garde son état (elsewhere : objets, chiens, poules, lettres… comme dans une sauvegarde), celle où il
    arrive retrouve le sien ou naît, et il ressort sur la route, devant la bouche du tunnel d'arrivée, à la hauteur
    où il est entré dans l'autre (au début il ressortait dans l'herbe, sous le tunnel : Christophe l'a vu tout de
@@ -1903,7 +1927,7 @@ function arrivalAt(i, dy) {
 }
 function passageHere() {                // le passage du tunnel contre lequel Tecky pousse, s'il y en a un
   const i = MAP.roadTunnels.findIndex(t => t[2] === (P.x > MAP.w * TS / 2));
-  return MAP.passages.find(q => q[0] === i) || null;
+  return MAP.passages.find(q => q[0] === i && EP().cartes.includes(q[1])) || null;     // (une carte de l'épisode)
 }
 function travel(vers, arrivee) {
   transition();
@@ -4275,7 +4299,7 @@ function applyMapState(s) {
 function saveGame() {
   if (essai || !P || P.mode === 'ko' || P.hp <= 0 || alice.found) return;
   STORE.set(SAVE_KEY, Object.assign({
-    v: SAVE_V, carte: MAP.id, ailleurs: Object.assign({}, elsewhere),
+    v: SAVE_V, ep: episode, carte: MAP.id, ailleurs: Object.assign({}, elsewhere),
     mode: gameMode, diff: gameDiff, at: Date.now(), x: r1(P.x), y: r1(P.y), dir: P.dir, hp: P.hp, hpMax: P.hpMax,
     score, time: r1(timePlayed), fled, treasures, clues: clues.slice(), sniffed: aliceSniffed, immune: barkImmuneSeen,
     farm: farm.state, post: post.state, rose: rose.state, fete: fete.state, jouets: jouets.state, piq: piq.state, bitten,
@@ -4291,9 +4315,18 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) { sav
 function loadGame(s, rested) {
   transition();
   gameDiff = s.diff === 'facile' ? 'facile' : 'normal';
-  useMap(CARTES[s.carte] ? s.carte : 'monde');       // la carte où la partie a été enregistrée
+  episode = epOfSave(s);
+  const id = s.carte || 'monde', la = !!CARTES[id] && EP().cartes.includes(id);
+  useMap(la ? id : EP().depart);                     // la carte où la partie a été enregistrée
   reset();
   elsewhere = Object.assign({}, s.ailleurs);
+  for (const k in elsewhere) if (!CARTES[k] || !EP().cartes.includes(k)) delete elsewhere[k];
+  if (!la) {              // cette carte n'est plus de l'épisode : la partie reprend à la niche, la carte comme Tecky l'avait laissée
+    const vide = {};
+    for (const k in mapState()) vide[k] = undefined;
+    s = Object.assign({}, s, vide, elsewhere[MAP.id], { x: MAP.start[0], y: MAP.start[1], dir: 'down' });
+    delete elsewhere[MAP.id];
+  }
   gameMode = s.mode === 'balade' ? 'balade' : 'aventure';
   Object.assign(P, { x: s.x, y: s.y, dir: s.dir || 'down', hpMax: s.hpMax, hp: rested ? s.hpMax : Math.max(1, s.hp) });
   score = s.score; timePlayed = s.time; fled = s.fled; treasures = s.treasures;
@@ -4315,7 +4348,7 @@ function newGame(mode, again) {
   transition();
   const cx = camX, cy = camY;
   gameDiff = opts.diff;
-  if (MAP.id !== 'monde') useMap('monde');           // une partie commence toujours à la niche
+  if (MAP.id !== EP().depart) useMap(EP().depart);   // une partie commence toujours à la niche, sur la carte de départ de l'épisode
   reset();
   gameMode = mode;
   if (!again) { camX = cx; camY = cy; }          // depuis l'écran titre, la caméra glisse du village jusqu'à la niche
@@ -4326,9 +4359,11 @@ function newGame(mode, again) {
 }
 
 let recs = {}, newRecord = { score: false, time: false, done: false }, winDone = 0;
-const recKey = (mode, diff) => mode + (diff === 'facile' ? '-facile' : '');     // records à part en facile
+// records à part en facile, et par épisode (le premier garde les clés d'avant les épisodes : « aventure », « balade-facile »)
+const recKey = (mode, diff, ep = episode) => (ep === EPISODES[0].id ? '' : ep + ':') + mode + (diff === 'facile' ? '-facile' : '');
 function recordRun() {
   const all = STORE.get(RECORDS_KEY) || {}, k = recKey(gameMode, gameDiff), r = all[k] || {}, t = Math.floor(timePlayed);
+  const avant = openEpisodes().length;
   winDone = completion();               // (calculée une fois : la scène de fin renvoie des chiens chez eux)
   newRecord = { score: !(r.score >= score), time: !(r.time <= t), done: !(r.done >= winDone) };
   if (newRecord.score) r.score = score;
@@ -4338,6 +4373,7 @@ function recordRun() {
   all[k] = r;
   STORE.set(RECORDS_KEY, all);
   recs = all;
+  opened = openEpisodes().length > avant ? lastOpen() : null;      // cette victoire ouvre l'épisode suivant
 }
 const fmtTime = t => txt('temps', { m: Math.floor(t / 60), s: String(Math.floor(t % 60)).padStart(2, '0') });
 function recordLine(mode) {
@@ -4353,11 +4389,13 @@ function recordLine(mode) {
 let menu = null;              // { items: [{ id, label, sub, mode }], sel, y0, w, h, gap }
 function openTitleMenu() {
   recs = STORE.get(RECORDS_KEY) || {};
+  if (!epOpen(EP())) episode = lastOpen();            // (progression effacée, épisode retourné en chantier)
   const s = loadSave(), items = [];
   if (s) {
     const n = s.clues.filter(Boolean).length;
     items.push({ id: 'continue', label: txt('menu.continuer'), mode: s.mode,
-      sub: txt('menu.continuer_note', { mode: txt('modes.' + s.mode), facile: s.diff === 'facile' ? txt('modes.facile') : '',
+      sub: txt('menu.continuer_note', { episode: openEpisodes().length > 1 ? txt('menu.continuer_episode', { nom: txt('episodes.' + epOfSave(s) + '.nom') }) : '',
+        mode: txt('modes.' + s.mode), facile: s.diff === 'facile' ? txt('modes.facile') : '',
         indices: n ? txt('menu.indices', { n }) : txt('menu.aucun_indice'), temps: fmtTime(s.time) }) });
   }
   items.push({ id: 'aventure', label: txt('menu.aventure'), sub: txt('menu.aventure_note'), mode: 'aventure' });
@@ -4417,6 +4455,7 @@ const essai = typeof ESSAI !== 'undefined' ? ESSAI : null;
 function startEssai() {
   gameDiff = opts.diff;
   if (essai[3] && CARTES[essai[3]] && essai[3] !== MAP.id) useMap(essai[3]);       // (une carte annexe, depuis l'éditeur)
+  episode = (EPISODES.find(e => e.cartes.includes(MAP.id)) || EPISODES[0]).id;      // le premier épisode qui a cette carte
   reset();
   gameMode = essai[2] === 'balade' ? 'balade' : 'aventure';
   Object.assign(P, { x: essai[0] * TS, y: essai[1] * TS });
@@ -4431,6 +4470,7 @@ function toTitle() {
   if (MAP.id !== 'monde') useMap('monde');           // l'écran titre : la place du village
   reset();
   gameMode = 'aventure';
+  if (opened) { episode = opened; opened = null; }   // la victoire a ouvert un épisode : c'est lui qui est proposé
   camX = camClampX(MAP.title[0] - VW / 2);   // caméra de l'écran titre : la place du village
   camY = camClampY(MAP.title[1] - VH / 2);
   state = 'title'; titleT = 0;
@@ -4586,6 +4626,7 @@ const RESET_NOTE = 2600;                        // ms d'affichage de « Progress
 function resetProgress() {
   STORE.del(SAVE_KEY); STORE.del(RECORDS_KEY); STORE.del(BADGES_KEY);
   badges = {}; recs = {}; newRecord = { score: false, time: false, done: false }; newBadges = [];
+  episode = EPISODES[0].id; opened = null;            // (les épisodes ouverts se lisent dans les records)
   resetAsk = null; resetDoneAt = performance.now();
   SFX.erase();
 }
@@ -5304,6 +5345,7 @@ function update(dt) {
       for (const d of ducks) updateDuck(d, dt);
       updateFarmer(dt);
       updateLeaves(dt);
+      if (openEpisodes().length > 1 && (pressed.left || pressed.right)) stepEpisode(pressed.right ? 1 : -1);
       const id = menuInput();
       if (id) chooseMenu(id);
       break;
@@ -5802,15 +5844,36 @@ function drawTitle() {
   veil(0.35);
   const bob = Math.sin(titleT * 2) * 8;
   drawSpr('hud/title_logo', 0, GW / 2, 250 + bob, { sc: 1.75 });
-  outlined(txt('titre.accroche'), GW / 2, 472, 38, '#FFF7E6');
+  if (openEpisodes().length > 1) drawEpisodePick();
+  else outlined(txt('titre.accroche'), GW / 2, 472, 38, '#FFF7E6');
   drawMenu(titleT);
   const r = recordLine(menu.items[menu.sel].mode);
   const last = menuBox(menu.items.length - 1);
   if (r) outlined(r, GW / 2, last.y + last.h + 46, 30, '#F2C14E');
-  if (!touchMode) text(txt('titre.aide'),
+  if (!touchMode) text(openEpisodes().length > 1 ? txt('titre.aide_episodes') : txt('titre.aide'),
     GW / 2, GH - 28, 26, '#E9DCC8', 'center', 500);
   // date de construction (pack_web), et « images x4 » quand le jeu lit les images nettes
   text(VERSION + (HD.k > 1 ? txt('titre.images', { n: 2 * HD.k }) : ''), GW - 28, GH - 28, 20, 'rgba(233, 220, 200, 0.75)', 'right', 500);
+}
+/* Le choix de l'épisode, à la place de l'accroche dès que deux épisodes sont ouverts : son nom et son sous-titre
+   entre deux flèches (gauche / droite au clavier et à la manette ; au toucher, la moitié gauche ou droite de la
+   ligne). */
+const EP_PICK = { y: 472, size: 38, h: 64, w: 1000, gap: 40, head: 13 };
+const episodeLabel = () => txt('titre.episode', { nom: txt('episodes.' + episode + '.nom'), note: txt('episodes.' + episode + '.note') });
+function drawEpisodePick() {
+  const E = EP_PICK, label = episodeLabel();
+  outlined(label, GW / 2, E.y, E.size, '#F2C14E');
+  const w = ctx.measureText(label).width / 2 + E.gap, k = Math.sin(titleT * 6) * 4, cy = E.y - E.size * 0.34;
+  for (const d of [-1, 1]) {
+    arrowHead(GW / 2 + d * (w + k), cy, d, E.head + 4, '#3A1E12');
+    arrowHead(GW / 2 + d * (w + k), cy, d, E.head, '#F2C14E');
+  }
+}
+function episodeTap(gx, gy) {
+  const E = EP_PICK;
+  if (openEpisodes().length < 2 || Math.abs(gx - GW / 2) > E.w / 2 || gy < E.y - E.h * 0.75 || gy > E.y + E.h * 0.25) return false;
+  stepEpisode(gx < GW / 2 ? -1 : 1);
+  return true;
 }
 /* entrées du menu : l'entrée choisie est claire, encadrée de deux os qui la montrent */
 function drawMenu(t) {
@@ -5843,6 +5906,8 @@ function drawEnd(win) {
   }
   const pw = 900, ph = 650, px = (GW - pw) / 2, py = (GH - ph) / 2;
   drawNine('hud/panel', px, py, pw, ph, 32);
+  if (opened && overT > 1.2)                           // cette victoire a ouvert l'épisode suivant (sous le tableau : les badges s'annoncent en haut)
+    outlined(txt('victoire.episode', { nom: txt('episodes.' + opened + '.nom') }), GW / 2, py + ph + 70 + Math.sin(overT * 3) * 4, 52, '#F2C14E');
   outlined(txt('victoire.titre'), GW / 2, py + 100, 64, '#F2C14E');
   drawSpr('hud/portrait_tecky', 2, GW / 2 - 130, py + 140);
   drawSpr('hud/portrait_alice', 2, GW / 2 + 34, py + 140);
@@ -5927,6 +5992,9 @@ function start() {
     loadHD();
     buildClouds();
     loadBadges();
+    recs = STORE.get(RECORDS_KEY) || {};
+    const s = loadSave();                              // l'épisode proposé : celui de la partie à continuer, sinon le dernier ouvert
+    episode = s ? epOfSave(s) : lastOpen();
     if (essai) startEssai(); else toTitle();
   });
   requestAnimationFrame(frame);

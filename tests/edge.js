@@ -46,8 +46,8 @@ function main() {
   step(100, 'held.up = true'); run('held.up = false');
   ok(run('P.y - 12 - BOUND.top') < 4.5 && run('pops.some(p => p.text === "Alice n’a pas pu aller si loin !")'), 'au bord nord aussi');
   // au bout de la grande route : il s'arrête devant la bouche du tunnel, sans y fourrer la tête, et l'explique
-  // (le tunnel de l'est mène à une autre carte : ici on le ferme ; le passage est dans tests/cartes.js)
-  run('MAP.passages = [];');
+  // (le tunnel de l'est a un passage vers une autre carte, mais elle n'est pas de l'épisode du printemps : il reste
+  // « pour les voitures » ; le passage est dans tests/cartes.js, l'épisode dans tests/episodes.js)
   for (const [x, key, side] of [[300, 'left', 'ouest'], [W - 300, 'right', 'est']]) {
     run(`cars = []; pops = []; P.edgeAt = -99; P.x = ${x}; P.y = 19.3 * 64; P.mode = "free";`);
     step(120, `held.${key} = true`); run(`held.${key} = false`);

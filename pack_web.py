@@ -29,6 +29,7 @@ import decor
 import chiens2
 import critters
 import ducks
+import episodes
 import npcs
 import port
 import spritelib
@@ -615,6 +616,9 @@ def main():
         for t, vers, arrivee in c["passages"]:
             if vers not in cartes or not 0 <= arrivee < len(cartes[vers]["roadTunnels"]):
                 raise SystemExit(f"carte « {nom} » : le passage du tunnel {t} mène à « {vers} », tunnel {arrivee}, qui n'existe pas")
+    pb = episodes.valider(episodes.charger())         # les épisodes : leurs cartes existent et se rejoignent
+    if pb:
+        raise SystemExit("episodes.json : " + " ; ".join(pb))
     charger_carte()
     m = cartes[carte.MONDE]
     atlas, meta = pack(collect())
@@ -639,6 +643,8 @@ def main():
             # les données du jeu, puis celles de chaque carte (game.js : MAP = la carte courante, qui hérite de JEU)
             "const JEU = " + json.dumps(build_jeu(), separators=(",", ":"), ensure_ascii=False) + ";\n"
             "const CARTES = " + json.dumps(cartes, separators=(",", ":"), ensure_ascii=False) + ";\n"
+            # les épisodes, dans l'ordre où ils s'ouvrent (game.js : episode, EP())
+            "const EPISODES = " + json.dumps(episodes.charger(), separators=(",", ":"), ensure_ascii=False) + ";\n"
             "const VERSION = " + json.dumps(version(), ensure_ascii=False) + ";\n")
     html = tpl.replace("/*__DATA__*/", data).replace("/*__GAME__*/", game)
     open(os.path.join(WEB, "index.html"), "w", encoding="utf-8").write(html)
