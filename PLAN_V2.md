@@ -320,7 +320,7 @@ Fait le 12 novembre 2026, dans le jeu :
   Planche `vehicules_v2.png`, capture `lot4_route.png`.
 
 - **Objets à ramasser** (demande de Christophe : « les collectibles détonnent un peu désormais ») : choix sur la
-  planche `objets_options.png` : posés au sol, à 85 %, avec leur ombre portée et un scintillement, au lieu de
+  planche `objets_options.png` : posés au sol, à 85 % (50 % depuis), avec leur ombre portée et un scintillement, au lieu de
   flotter au-dessus d'un ovale. Os, saucisse, médaille, canard, balle et os doré ont du relief ; les lettres de
   Marcel et les jouets d'Iris sont posés de même. Capture : `lot4_objets_poses.png`.
 - **Retours du 12 novembre** : compteurs du HUD nets (icônes à leur taille, au lieu d'un sprite agrandi) ; reflets
@@ -342,8 +342,23 @@ Fait le 12 novembre 2026, dans le jeu :
   opposé au soleil, d'autant plus loin qu'ils sont hauts (`flyShadow()`). Sur l'eau, les canards gardent leur
   reflet sombre : ce n'est pas une ombre au sol.
 
-Reste, avant de clore le lot 4 : le regarder dans le jeu en mouvement et dans Firefox (tout a été vérifié sur des
-captures fixes ; le coût des ombres fusionnées et des objets posés n'a pas été mesuré) ; les huit filets d'ombre
+- **Objets plus petits, jouets d'Iris** (12 novembre) : à 85 %, Christophe trouvait les objets à ramasser encore
+  trop gros ; planche `objets_tailles.png` (70, 60, 50 %) : **50 %**. Le canard d'Iris, trop proche du canard
+  pouic-pouic des trésors, devient un poulet en caoutchouc (planche `jouets_iris_options.png` : cochon, poulet,
+  poisson) ; l'anneau a le relief d'un boudin ; la corde, « un piercing », est une corde torsadée posée en S ; la
+  barrette perd le trait blanc qui la barrait. Capture : `lot4_objets_50.png`.
+- **Coût dans Firefox** (`tools/mesure_firefox.py`, sans fenêtre : il dessine avec le processeur, canevas de
+  1920 x 1080, images x4) : 6 à 13 ms par image de jour selon l'endroit, 9 à 17 le soir, pour 16,7 ms à 60 images
+  par seconde. Les ombres de ce qui bouge coûtent 0,3 à 1,5 ms de jour, jusqu'à 2,6 le soir. Le point dur est la
+  peinture d'un bloc de sol, 15 à 30 ms (herbe, rives, ombres portées) : en marchant, la caméra en atteignait
+  deux ou trois d'un coup, une image de 40 à 100 ms toutes les deux secondes. Une image qui n'a rien peint en
+  prépare maintenant un en avance (`prepareGround()`) : jamais plus d'un bloc par image, soit 30 à 50 ms au pire.
+  Il reste donc une image lente par bloc, et la tombée du soir repeint toujours les blocs de l'écran un par
+  image. Aller plus loin : des blocs quatre fois plus petits, à ne faire que si l'à-coup se voit dans un vrai
+  Firefox.
+
+Reste, avant de clore le lot 4 : le regarder dans le jeu en mouvement, dans un vrai Firefox (les mesures sont
+celles d'un Firefox sans fenêtre, les images vérifiées sont des captures fixes) ; les huit filets d'ombre
 que liste `tools/ombres_decollees.py` ; l'éditeur de carte, qui montre encore les anciens arbres et bâtiments.
 
 ### 5. Textes et anglais

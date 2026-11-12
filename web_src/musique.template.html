@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tecky Quest — salle d'écoute</title>
+<style>
+  body { font: 17px/1.5 system-ui, sans-serif; background: #FFF6E3; color: #3A1E12; max-width: 860px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 26px; margin: 8px 0; }
+  h2 { font-size: 19px; margin: 22px 0 6px; }
+  p { margin: 6px 0; }
+  .grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+  button { font: inherit; color: inherit; background: #FFE2A8; border: 3px solid #3A1E12; border-radius: 12px; padding: 8px 12px;
+    cursor: pointer; text-align: left; }
+  button small { display: block; font-size: 13px; opacity: 0.75; }
+  button.joue { background: #E8503A; color: #FFF6E3; }
+  button.attend { background: #F6B04A; }
+  .outils button { display: inline-block; margin: 4px 6px 4px 0; }
+  #etat { font-weight: 600; min-height: 1.5em; }
+  #barre { height: 14px; border: 3px solid #3A1E12; border-radius: 8px; background: #FFF; position: relative; overflow: hidden; }
+  #barre i { position: absolute; top: 0; bottom: 0; width: 2px; background: #3A1E12; opacity: 0.35; }
+  #barre b { position: absolute; top: 0; bottom: 0; left: 0; background: #E8503A; }
+  pre { background: #FFF; border: 2px solid #3A1E12; border-radius: 8px; padding: 8px; overflow-x: auto; font-size: 13px; }
+  label { margin-right: 14px; }
+</style>
+</head>
+<body>
+<h1>Tecky Quest — salle d'écoute</h1>
+<p>Les morceaux du jeu, joués par le séquenceur du jeu lui-même (page écrite par <code>pack_web.py</code> à partir de
+<code>music.py</code> et de <code>game.js</code>). Un clic sur une zone y « emmène Tecky » : le morceau en cours s'éteint,
+un court silence, puis celui de la zone commence, comme dans le jeu.</p>
+<h2>Les zones</h2>
+<div class="grille" id="zones"></div>
+<h2>Les autres</h2>
+<div class="grille" id="autres"></div>
+<h2>Écoute</h2>
+<p id="etat">Silence.</p>
+<div id="barre"><b></b></div>
+<p class="outils">
+  <label><input type="checkbox" id="debut"> toujours depuis le début, sans fondu</label>
+  <button id="stop">Silence</button>
+  <button id="mesure">Mesurer les niveaux</button>
+</p>
+<pre id="niveaux" hidden></pre>
+<script>
+/*__SONGS__*/
+let AC = null, muted = false, state = 'play', optReturn = 'title';
+const OPT_DEF = { music: 7 }, opts = { music: 7 };
+/*__MUSIC__*/
+const NOMS = {
+  niche: ['La niche, l\'écran titre', '« Promenade de Tecky », le thème'],
+  village: ['Le village', 'polka du marché'],
+  campagne: ['La campagne', 'au trot, en 12/8'],
+  ferme: ['La ferme, le verger', 'violon et banjo'],
+  foret: ['La grande forêt', 'flûte, harpe, écho'],
+  parc: ['Le parc des enfants', 'valse de boîte à musique'],
+  industrie: ['La zone industrielle', 'mécanique'],
+  berceuse: ['La scène de fin', 'berceuse : le thème, lent'],
+  win: ['Victoire', 'fanfare, jouée une fois'],
+  lose: ['Défaite', 'jouée une fois'],
+};
+const ZONES = ['niche', 'village', 'campagne', 'ferme', 'foret', 'parc', 'industrie'];
+const $ = id => document.getElementById(id), boutons = {};
+function audio() {
+  if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+  if (AC.state === 'suspended') AC.resume();
+}
+function jouer(id) {
+  audio();
+  const zone = ZONES.includes(id);
+  if (zone && Music.on && Music.cur === 'main' && !$('debut').checked) { Music.setZone(id); return; }
+  Music.stop();
+  if ($('debut').checked) Music.pos = {};
+  if (zone) Music.zone = id;
+  Music.start(zone ? 'main' : id === 'berceuse' ? 'end' : id);
+}
+for (const id in SONGS) {
+  const S = SONGS[id], b = document.createElement('button');
+  b.innerHTML = NOMS[id][0] + '<small>' + NOMS[id][1] + ' — ' + S.bpm + ' à la minute, ' + Math.round(S.total * S.spb) + ' s</small>';
+  b.onclick = () => jouer(id);
+  $(ZONES.includes(id) ? 'zones' : 'autres').appendChild(b);
+  boutons[id] = b;
+}
+$('stop').onclick = () => Music.stop();
+setInterval(() => {
+  const id = Music.on ? Music.track.id : null, S = Music.song;
+  for (const k in boutons) boutons[k].className = k === id ? 'joue' : Music.on && k === Music.want ? 'attend' : '';
+  const barre = $('barre');
+  if (!id) { $('etat').textContent = 'Silence.'; barre.firstChild.style.width = '0'; return; }
+  $('etat').textContent = NOMS[id][0] + ' — mesure ' + (Math.floor(Music.step / S.bar) + 1) + ' sur ' + S.total / S.bar +
+    (Music.swap ? ' — s\'éteint, puis : ' + NOMS[Music.want][0] : '');
+  if (barre.dataset.id !== id) {           // repères : les endroits où le jeu reprend le morceau
+    barre.dataset.id = id;
+    barre.querySelectorAll('i').forEach(i => i.remove());
+    for (const e of S.entries) { const i = document.createElement('i'); i.style.left = 100 * e / S.total + '%'; barre.appendChild(i); }
+  }
+  barre.firstChild.style.width = 100 * Math.min(1, Music.step / S.total) + '%';
+}, 100);
+
+/* Niveaux : chaque morceau rendu hors ligne par le même code, entier puis canal par canal (crête et niveau moyen, en
+   décibels, au volume du jeu). Sert à équilibrer les morceaux entre eux et à vérifier que rien ne sature. */
+async function rendre(id, canal) {
+  const S = SONGS[id], n = Math.ceil((S.total * S.spb + 1.2) * 44100);
+  AC = new OfflineAudioContext(1, n, 44100);
+  Music.waves = {}; Music.songs = null; Music.init();
+  Music.cur = id === 'win' || id === 'lose' ? id : 'main';
+  Music.pos = {};
+  Music.gain = AC.createGain(); Music.gain.gain.value = Music.level(); Music.gain.connect(AC.destination);
+  Music.open(id, 0.05);
+  for (let st = 0, t = 0.05; st < S.total; st++, t += S.spb)
+    for (const e of Music.song.byStep[st]) if (!canal || e[1] === canal) Music.play(e, t, S.spb);
+  const d = (await AC.startRendering()).getChannelData(0);
+  let peak = 0, sq = 0;
+  for (let i = 0; i < d.length; i++) { const a = Math.abs(d[i]); if (a > peak) peak = a; sq += a * a; }
+  const db = v => Math.round(200 * Math.log10(Math.max(v, 1e-6))) / 10;
+  return { peak: db(peak), rms: db(Math.sqrt(sq / d.length)) };
+}
+async function mesurer() {
+  const live = AC, out = {};
+  if (Music.on) Music.stop();
+  for (const id in SONGS) {
+    out[id] = { tout: await rendre(id) };
+    for (const c of ['lead', 'harm', 'arp', 'bass', 'pad', 'drums'])
+      if (SONGS[id].ev.some(e => e[1] === c)) out[id][c] = (await rendre(id, c)).rms;
+  }
+  AC = live; Music.waves = {}; Music.songs = null;
+  return out;
+}
+$('mesure').onclick = async () => {
+  const pre = $('niveaux');
+  pre.hidden = false; pre.textContent = 'Calcul…';
+  const m = await mesurer(), col = (s, n) => String(s === undefined ? '' : s).padStart(n);
+  pre.textContent = 'morceau      crête  moyen |   lead   harm    arp   bass    pad  drums   (dB)\n' + Object.keys(m).map(id =>
+    id.padEnd(10) + col(m[id].tout.peak, 8) + col(m[id].tout.rms, 7) + ' |' +
+    ['lead', 'harm', 'arp', 'bass', 'pad', 'drums'].map(c => col(m[id][c], 7)).join('')).join('\n');
+};
+</script>
+</body>
+</html>

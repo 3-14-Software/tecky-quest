@@ -15,7 +15,7 @@ function main() {
   };
   finale();
   ok(run('state') === 'ending' && run('Music.cur') === 'end' && run('Music.on'), 'fin du dialogue : la scène de fin, avec la berceuse');
-  ok(run('SONGS.berceuse.bpm') < run('SONGS.base.bpm') && run('SONGS.berceuse.ev.every(e => e[1] !== "drums")'),
+  ok(run('SONGS.berceuse.bpm') < run('SONGS.niche.bpm') && run('SONGS.berceuse.ev.every(e => e[1] !== "drums")'),
      'berceuse : plus lente, sans batterie');
   run('onLeave();');
   ok(run('state') === 'ending', 'pas de pause automatique pendant la fin');
@@ -46,11 +46,11 @@ function main() {
   ok(run('completion()') < 100 && run('completion()') >= 90, 'une quête de moins : ' + run('completion()') + ' %');
   run('Music.step = Music.song.total - 1;'); step(30);
   ok(run('Music.on') && run('Music.step') < 20, 'la berceuse boucle');
-  run('Music.zone = "parc";');          // (Alice retrouvée au parc : sa variation était la dernière jouée)
+  run('Music.zone = "parc";');          // (Alice retrouvée au parc : son morceau était le dernier joué)
   step(40); run('pressed.ok = true'); step(1);
   ok(run('state') === 'title' && run('Music.cur') === 'main' && run('!!fade.snap'), 'retour au menu (en fondu) : le thème');
-  ok(run('Music.zone') === run('TITLE_MUSIC') && run('Music.layers.length') === 1 && run('Music.layers[0].id') === run('TITLE_MUSIC'),
-     'celui de l’écran titre, pas la variation du parc');
+  ok(run('Music.zone') === run('TITLE_MUSIC') && run('Music.track.id') === run('TITLE_MUSIC'),
+     'celui de l’écran titre, pas le morceau du parc');
   run('var said = []; ctx.fillText = s => said.push(String(s)); render(); delete ctx.fillText;');
   ok(/^version du \d+(er)? \S+ 20\d\d, \d+ h \d\d$/.test(run('VERSION')) && run('said.includes(VERSION)'),
      'écran titre : la version (' + run('VERSION') + ')');

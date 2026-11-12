@@ -44,7 +44,7 @@ tecky-a2d3b9ad;Tecky;bulle;;;Une lettre ! 2 sur 5;Tecky ramasse une lettre
 tecky-bd9c5ece;Tecky;bulle;;;Une lettre ! 3 sur 5;Tecky ramasse une lettre
 tecky-aab64f47;Tecky;bulle;;;Une lettre ! 4 sur 5;Tecky ramasse une lettre
 tecky-d76d3ac0;Tecky;bulle;;;Une lettre ! 5 sur 5;Tecky ramasse une lettre
-tecky-1eabd6a0;Tecky;bulle;;;Le canard d’Iris !;Tecky prend un jouet d’Iris
+tecky-29ee3f0a;Tecky;bulle;;;Le poulet d’Iris !;Tecky prend un jouet d’Iris
 tecky-616f5b09;Tecky;bulle;;;L’anneau d’Iris !;Tecky prend un jouet d’Iris
 tecky-c2ae0d44;Tecky;bulle;;;La corde d’Iris !;Tecky prend un jouet d’Iris
 tecky-cefff293;Tecky;bulle;;;Oups !;Tecky aboie avec un jouet dans la gueule
@@ -156,7 +156,7 @@ leon-cd78e5a9;Léon;bulle;;;Bravo, champion ! Viens me voir !;"Léon : Tecky arr
 leon-80ab8ef2;Léon;bulle;;;Salut, champion !;Léon : Tecky arrive
 leon-760a9aca;Léon;bulle;;;Mes ballons !;Un ballon entre dans le filet
 iris-3c9a6f0f;Iris;dialogue;;joyeux;Tiens, mon petit Tecky ! Ça me fait plaisir de te voir. Alors, tu cherches ta petite Alice ?;Iris : demande
-iris-66bdd545;Iris;dialogue;;;Un bon chien ne perd jamais une piste. Pour t'entraîner, j'ai caché mes trois jouets dans les prés de la ferme : mon canard, mon anneau et ma corde.;Iris : demande
+iris-f1b51627;Iris;dialogue;;;Un bon chien ne perd jamais une piste. Pour t'entraîner, j'ai caché mes trois jouets dans les prés de la ferme : mon poulet, mon anneau et ma corde.;Iris : demande
 iris-bcc4cc11;Iris;dialogue;;;Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !;Iris : demande
 iris-9d48043d;Iris;dialogue;;;Encore 3 à trouver, mon petit. Ils sont dans les prés de la ferme. Et n'oublie pas : si tu aboies, tu les lâches !;Iris : rappel
 iris-fde8ea5e;Iris;dialogue;;;Encore 2 à trouver, mon petit. Ils sont dans les prés de la ferme. Et n'oublie pas : si tu aboies, tu les lâches !;Iris : rappel

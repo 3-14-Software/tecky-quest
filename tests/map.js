@@ -4,8 +4,16 @@ eval(base + `setTimeout(() => {
   run('audioOn(); pressed.ok = true'); step(1); advanceDialog();
   run('dogs = []; P.inv = 99;');
   ok(run('MAP.w') === 96 && run('MAP.h') === 64, 'carte de 96 x 64 tuiles');
-  ok(run('ground.size') >= 1 && run('ground.size') <= 4 && run('[...ground.values()].every(k => k.c.width === 1024 + 2 * CM && k.c.height === 1024 + 2 * CM)'),
+  ok(run('ground.size') >= 1 && run('ground.size') <= 12 && run('[...ground.values()].every(k => k.c.width === 1024 + 2 * CM && k.c.height === 1024 + 2 * CM)'),
      'sol pré-rendu à la demande : ' + run('ground.size') + ' blocs de 1024 px pour l\\'écran du début');
+  // blocs d'avance : une image qui n'a rien peint prépare un bloc dont la caméra s'approche, un seul, et pas plus loin
+  run('var vx = 18 * 64, vy = 24 * 64; sun = 0; resetGround(); drawGround(vx, vy); var b0 = ground.size; prepareGround(vx, vy); var b1 = ground.size;'
+    + ' drawGround(vx, vy); prepareGround(vx, vy); var b2 = ground.size; for (let i = 0; i < 8; i++) { drawGround(vx, vy); prepareGround(vx, vy); } var b3 = ground.size;');
+  ok(run('b1 === b0') && run('b2 === b0 + 1') && run('b3 === b0 + 2') && run('ground.has("0,1") && ground.has("0,2") && !ground.has("3,1") && !ground.has("1,0")'),
+     'blocs d\\'avance : rien dans l\\'image qui a peint l\\'écran (' + run('b0') + ' blocs), puis un par image, seulement ceux dont la caméra est à moins de ' + run('GROUND_AHEAD') + ' px');
+  run('sun = 2; drawGround(vx, vy); prepareGround(vx, vy);');
+  ok(run('[...ground.values()].filter(c => c.len === shadowLen()).length') === 1, 'pendant que le soleil descend, l\\'avance ne repeint pas les ombres : un bloc de l\\'écran par image, comme avant');
+  run('sun = 0; resetGround();');
   run('for (let y = -128; y < MAP.h * 64; y += 300) for (let x = -128; x < MAP.w * 64; x += 500) drawGround(x, y);');
   ok(run('ground.size') === run('GROUND_MAX'), 'toute la carte parcourue : jamais plus de ' + run('GROUND_MAX') + ' blocs gardés');
   const walkDown = (x, n) => { run('P.x = ' + x + '; P.y = 40.4*64; P.mode = "free";'); step(n, 'held.down = true'); run('held.down = false'); return run('P.y') / 64; };
@@ -133,7 +141,7 @@ eval(base + `setTimeout(() => {
   run('var ell = [], e0 = ctx.ellipse; ctx.ellipse = function (x, y) { ell.push([x, y]); }; flyShadow(100, 200, 80, 9, 3, 1); flyShadow(100, 200, 0, 9, 3, 1); ctx.ellipse = e0;');
   ok(run('ell[0][0] > 100 + 30 && ell[0][1] > 200 + 15 && ell[1][0] === 100 && ell[1][1] === 200'),
      'un papillon haut de 80 px a son ombre à droite et plus bas, comme les ombres portées ; posé, elle est sous lui');
-  // objets à ramasser, lettres, jouets : posés au sol à 85 %, avec leur ombre portée (drawPosed)
+  // objets à ramasser, lettres, jouets : posés au sol, réduits (POSED.sc), avec leur ombre portée (drawPosed)
   run('var poses = [], drawSpr2 = drawSpr; drawSpr = function (k, i, x, y, o) { poses.push([k, x, y, o || {}]); };'
     + ' drawPosed("item/bone", 0, 500, 700, MAP.itemBase.bone, 0.1, 0); drawPosed("item/medal", 0, 500, 700, MAP.itemBase.medal, 5, 30); drawSpr = drawSpr2;');
   ok(run('MAP.cast.includes("item") && MAP.cast.includes("port")') && run('Object.keys(MAP.itemBase).length') === 10 && run('MAP.toyBase.length') === 3

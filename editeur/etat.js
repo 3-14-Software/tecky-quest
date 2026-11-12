@@ -102,7 +102,7 @@
     penGate: 'Barrière de l’enclos', ballBox: 'Terrain des ballons', track: 'Voie de Titine',
   };
   const PERSONNAGES = ['farmer', 'postman', 'neighbor', 'leon', 'iris', 'piquette'];
-  const TOY_NAMES = ['canard', 'anneau', 'corde'];
+  const TOY_NAMES = ['poulet', 'anneau', 'corde'];
 
   // clé d'atlas d'un élément (carte.SPRITES)
   ED.sprite = (type, genre, i) => {

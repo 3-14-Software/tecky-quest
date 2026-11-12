@@ -583,13 +583,13 @@
     },
     {
       "voix": "tecky",
-      "fichier": "tecky-1eabd6a0",
+      "fichier": "tecky-29ee3f0a",
       "personnage": "Tecky",
       "type": "bulle",
       "appareil": "",
       "ton": "",
-      "texte": "Le canard d’Iris !",
-      "affiche": "Le canard d’Iris !",
+      "texte": "Le poulet d’Iris !",
+      "affiche": "Le poulet d’Iris !",
       "contexte": "Tecky prend un jouet d’Iris"
     },
     {
@@ -1815,13 +1815,13 @@
     },
     {
       "voix": "iris",
-      "fichier": "iris-66bdd545",
+      "fichier": "iris-f1b51627",
       "personnage": "Iris",
       "type": "dialogue",
       "appareil": "",
       "ton": "",
-      "texte": "Un bon chien ne perd jamais une piste. Pour t'entraîner, j'ai caché mes trois jouets dans les prés de la ferme : mon canard, mon anneau et ma corde.",
-      "affiche": "Un bon chien ne perd jamais une piste. Pour t'entraîner, j'ai caché mes trois jouets dans les prés de la ferme : mon canard, mon anneau et ma corde.",
+      "texte": "Un bon chien ne perd jamais une piste. Pour t'entraîner, j'ai caché mes trois jouets dans les prés de la ferme : mon poulet, mon anneau et ma corde.",
+      "affiche": "Un bon chien ne perd jamais une piste. Pour t'entraîner, j'ai caché mes trois jouets dans les prés de la ferme : mon poulet, mon anneau et ma corde.",
       "contexte": "Iris : demande"
     },
     {

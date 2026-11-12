@@ -19,8 +19,10 @@ pip install -r requirements.txt           # cairosvg, pillow, numpy (+ Node 18+ 
 python3 pack_web.py                       # web/index.html, web/tecky_quest_web/ (autonome), atlas, niveau, images x4
 python3 pack_web.py --sans-hd             # la même chose sans les images x4 (le jeu reste en x2)
 python3 editeur.py                        # éditeur de carte : http://127.0.0.1:8770/ (modifie carte.json)
+python3 music.py                          # contrôle des partitions ; écoute : web/musique.html (après pack_web.py)
 ./tests/run_all.sh                        # reconstruit puis lance tous les tests (doit finir avec exit=0)
 ./publish_docs.sh                         # copie la version autonome dans docs/ (GitHub Pages)
+python3 tools/mesure_firefox.py           # coût du rendu dans Firefox sans fenêtre (jeu servi sur le port 8765)
 ```
 
 Jeu en ligne : https://3-14-software.github.io/tecky-quest/ — publié par `.github/workflows/pages.yml` à chaque push touchant `docs/`.
@@ -162,17 +164,39 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   hauts-fonds clairs, eau moyenne, puis le fond (la couleur des tuiles pleines) ; ombre de la berge du haut et de
   gauche, écume en tirets le long de celle du bas et de droite (motif périodique : il se raccorde d'une tuile à
   l'autre). Les limites des bandes larges suivent le champ (continu entre tuiles), pas la distance approchée.
-- `music.py` : **source unique** de la musique (thème « Promenade de Tecky », 32 mesures, boucle ; fanfare de victoire et
-  musique de défaite, 3 mesures chacune à 140 BPM, même durée). Génère les données
-  `SONGS`/`WINSONG`/`LOSESONG` jouées par le séquenceur WebAudio du jeu (`Music.start('main' | 'win' | 'lose')`).
-  Variations du thème par zone (`STYLES`, `events(style)` : `_lead`, `_bass`, `_arp`, `_drums`) : même mélodie, mêmes
-  accords, même grille de phrases, tempo propre ; « base » (niche, campagne) = le thème d'origine.
-  Village plus entraînant (152), ferme country (136 : basse alternée, rouleaux de banjo, notes glissées = 6e champ),
-  forêt calme (108 : basse tenue, écho), parc boîte à musique (126, sans batterie), industrie mécanique (140) ; et la
-  berceuse de la fin (84, sans batterie, timbre `TIMBRE.end`).
+- `music.py` : **source unique** de la musique (v2 : **un morceau par zone**, dans son ton, à son tempo, avec ses
+  instruments). `songs()` → `SONGS` du jeu ; `python3 music.py` contrôle les partitions (notes des temps hors de
+  l'accord, hors de la gamme, étendue). Niche et écran titre : « Promenade de Tecky », le thème (do, 140 ; 32
+  mesures après 2 mesures d'entrée jouées une fois) ; village : polka (sol, 152) ; campagne : trot en 12/8 (fa) ;
+  ferme et verger : violon et banjo (la, 132, notes glissées = 6e champ) ; forêt : flûte, harpe, écho (la mineur,
+  96) ; parc : valse de boîte à musique (ré, 3/4, sans batterie) ; industrie : mécanique (mi mineur, 138) ;
+  `berceuse` de la fin (le thème, lent, à l'octave, sans batterie) ; `win`, `lose` (3 mesures à 140, jouées une
+  fois). Le premier motif du thème (mi sol do sol mi – ré mi) revient dans les autres morceaux : le garder.
+  Un `Morceau` = des `partie()` : accords (un par mesure, « C,D » = deux), mélodie écrite en texte (`voix()` :
+  autant de jetons que de temps dans la mesure, « - » tenue, « . » silence, « / » glissée), deuxième voix `harm`
+  (contre-chant écrit, ou `"tierces"` : sous la mélodie, dans l'accord), motifs d'une mesure pour `bass` (« q »
+  quinte, « 3 » tierce, « a » note d'approche), `arp`, `drums` (`bat()`), nappe `pad`, `fin` (remplace la fin de
+  la dernière mesure : roulement, toms), `crash`. Une reprise se joue arrangée autrement (tierces, batterie plus
+  fournie) plutôt qu'à l'identique. Canaux : lead, harm, arp, bass, pad, drums ; instruments `INST`, réglés par
+  morceau (onde, volume, tenue, note pincée `pl`, vibrato `vib`, passe-bas `lp`, `echo`) : ils font partie des
+  données (`SONGS[k].inst`), game.js n'a plus de `TIMBRE`. `bar` / `beat` : pas par mesure et par temps (12 et
+  3 : ternaire ; 12 et 4 : valse) ; `spb` : secondes par pas ; `loop` : où reprendre après le dernier pas (`null` :
+  joué une fois) ; `entries` : débuts de partie. Batterie : recettes `DRUMS` de game.js (kick, snare, hat, ohat,
+  crash, rim, toms, wood, metal).
+  **Salle d'écoute** : `web/musique.html` (écrite par `pack_web.ecoute()`, `web_src/musique.template.html` ; à
+  ouvrir depuis le disque, pas publiée) : les morceaux joués par le séquenceur du jeu (sa section « musique
+  chiptune », copiée telle quelle), le passage d'une zone à l'autre comme dans le jeu, et « Mesurer les niveaux »
+  (rendu hors ligne : crête et niveau moyen par morceau et par canal ; lent, une minute par morceau). Je ne peux
+  pas écouter : c'est Christophe qui juge à l'oreille, les niveaux et le contrôle des partitions sont mes seuls
+  garde-fous.
 - **Objets à ramasser** (`items.py` ; lettres de Marcel `npcs.letter_frames()` ; jouets d'Iris `port.toy_frames()`) :
   ils détonnaient dans le décor de la v2 (à plat, flottants au-dessus d'un ovale). Choix de Christophe sur
-  `reference/v2/objets_options.png` : **posés au sol, à 85 %, avec leur ombre portée**. Os, saucisse, médaille,
+  `reference/v2/objets_options.png` : **posés au sol, avec leur ombre portée**, réduits à **50 %** (`POSED.sc` ;
+  à 85 % d'abord, il les a trouvés encore trop gros à côté de Tecky : `reference/v2/objets_tailles.png`). Les
+  jouets d'Iris sont un poulet en caoutchouc (c'était un canard jaune, trop proche du canard pouic-pouic des
+  trésors : choix sur `reference/v2/jouets_iris_options.png`), un anneau et une corde torsadée posée en S
+  (`port.poulet()`, `anneau()`, `corde()` ; la corde d'avant, une tige entre deux boules, « ressemblait à un
+  piercing », et droite il l'a voulue « plus organique »). Os, saucisse, médaille,
   canard, balle, os doré, les trois indices, la lettre et les jouets d'Iris ont du relief (`items._dans()` : un croissant d'ombre, une plage claire) ; plus
   d'ovale, de rebond ni d'étoile dans le dessin (une image par objet, sauf le canard pouic-pouic et la lettre).
   Le jeu les pose avec `drawPosed()` (`POSED` : taille, hauteur du sol sous `it.y`, cadence du scintillement
@@ -265,7 +289,11 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - `web_src/game.js` : tout le moteur. Monde en pixels x2 (tuile = 64), caméra 960x540, interface 1920x1080 (`GW`/`GH`).
   Sol pré-rendu en blocs de 1024 px de canevas (`ground`, `groundChunk()`, `buildChunk()`, `groundTile()`, marge de
   la lisière comprise) : une seule image de la carte dépasserait la taille de canevas permise sur certains
-  téléphones. Un bloc n'est peint que quand la caméra l'atteint, et seuls les `GROUND_MAX` derniers sont gardés.
+  téléphones. Un bloc n'est peint que quand la caméra l'atteint ou s'en approche, et seuls les `GROUND_MAX`
+  derniers sont gardés. **Blocs d'avance** (`prepareGround()`, `GROUND_AHEAD`, `groundBuilt`) : peindre un bloc
+  coûte 15 à 30 ms à Firefox ; une image qui n'a rien peint prépare donc un bloc à moins de 128 px de l'écran,
+  pour que la caméra n'en atteigne plus deux ou trois d'un coup (pas toute la couronne autour de l'écran : deux
+  fois plus de blocs peints pour rien ; pas les ombres du soir tant que le soleil descend).
   Décors `FLAT` (pont, bac à sable) dessinés sous les personnages.
   **Nature** : `decorLook(n, x, y)` choisit le modèle d'un arbre, d'un sapin, d'un buisson d'après sa position
   (`MAP.variants`, `hash3`) ; `d.n` reste le nom du décor (obstacle `FOOT`, refuge, feuilles), `d.key` son sprite,
@@ -386,7 +414,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - Aboiement : touche dans un cône devant soi, jusqu'à `BARK` (Tecky, 300 px) ou `DOG_BARK` (doberman, 320 px).
   Une onde au sol (`addBarkRing` / `drawRings`, crème ou rouge) montre exactement cette zone : toujours passer par ces
   constantes pour changer une portée. Test : `tests/ring.js`.
-- Son : thème à 0,35 (`Music.level()`), fanfare de victoire et musique de défaite à 0,55 (jouées une seule fois) ;
+- Son : musique des zones à 0,35 (`Music.level()`), fanfare de victoire et musique de défaite à 0,55 (jouées une seule fois) ;
   bruitages multipliés par `SFX_VOL` (1,4). KO de Tecky → `Music.start('lose')` ; rejouer relance le thème.
 - Trésors (médaille 100, jouet pouic-pouic 50, balle 20) : jamais dans l'eau — `check_placement.js` le vérifie.
 - Indices (`CLUES` : barrette à la ferme, chaussure dans la forêt, doudou au parc) : chacun dit où chercher ensuite
@@ -533,14 +561,17 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - Zones (`ZONES` = `MAP.zones` : rectangles en tuiles, la première zone dont un rectangle contient le point, un bord
   posé sur le bord de la carte sans limite, la dernière couvre tout ; `zoneAt()`, `updateZone()` ; huit, dont « Le verger » au sud de la route, qui reprend la musique de
   la ferme : champ `music` d'une zone) : bandeau à l'arrivée (`banner`), étiquettes de la carte, ambiance sonore
-  (`Ambience`, `AMB_EVENTS`, `ambSound()` : oiseaux, coq, sonnette, cliquetis ; clapotis selon l'eau autour) et timbre
-  de la musique (`TIMBRE` et variation du thème `SONGS`, `Music.zone`). Changement (`MUSIC_ZONE`) : Tecky doit
-  rester `settle` (2 s) dans la zone (`tuneT` ; un passage éclair ne change rien), puis `Music.setZone()` le demande
-  (`Music.want`) et le séquenceur fait un fondu enchaîné pendant la dernière mesure d'une phrase (4 mesures) : une
-  couche de gain par zone (`Music.layers` : sa variation, ses instruments ; `fadeTo()`, `ramp()`), et le tempo glisse
-  de l'une à l'autre pendant ce fondu (`Music.glide`, `stepLen()`). Nouvelle partie, Continuer : fondu rapide (`cut`),
-  nouveau tempo tout de suite. L'écran titre joue toujours le thème d'origine (`TITLE_MUSIC`, remis par `toTitle()`
-  après une partie, la scène de fin ou une défaite). Test : `music.js`. La rivière n'est pas une zone : celles du nord et du sud vont jusqu'à son
+  (`Ambience`, `AMB_EVENTS`, `ambSound()` : oiseaux, coq, sonnette, cliquetis ; clapotis selon l'eau autour) et
+  musique (le morceau de la zone, `SONGS`, `Music.zone`). **Changement de morceau** (`MUSIC_ZONE`) : Tecky doit
+  rester `settle` (1,5 s) dans la zone (`tuneT` ; un passage éclair ne change rien), puis `Music.setZone()` : le
+  morceau en cours **s'éteint** (`ramp()`, fondu vers le silence de `out` s ; `Music.want`, `Music.swap`), et après
+  un silence (`gap`) celui de la nouvelle zone commence (`change()`, `open()`), à son début la première fois,
+  ensuite au début de la partie la plus proche de l'endroit où on l'avait quitté (`Music.pos`, `entries`) : on ne réentend pas
+  toujours les mêmes mesures en repassant dans une petite zone. Si Tecky revient pendant le fondu, le morceau
+  remonte tout de suite (`back`). Christophe a trouvé « très étranges » les fondus enchaînés d'avant (deux
+  variations superposées, tempo qui glisse), surtout avec des zones aussi petites : ne pas y revenir. Nouvelle
+  partie, Continuer : fondu rapide (`cut`). L'écran titre joue toujours le thème depuis son début
+  (`TITLE_MUSIC`, `toTitle()` vide `Music.pos`). Test : `music.js`. La rivière n'est pas une zone : celles du nord et du sud vont jusqu'à son
   milieu (y 43,6), pour que rien ne change en la longeant ou en passant le pont ; elle garde son étiquette sur la
   carte de la pause (`LANDMARKS` = `MAP.landmarks`). Test : `world.js`.
 - Carte de la pause (`drawPauseMap()`, `mapImg` pré-rendue au quart, `seenCells` : cases de 4 tuiles vues à l'écran,
@@ -596,11 +627,17 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - Le service worker de `docs/` est réseau d'abord avec repli cache : pas de version à incrémenter à chaque livraison.
 - Canvas simulé des tests (`sim.js`, `check_placement.js`) : il doit renvoyer un objet pour `createRadialGradient` /
   `createLinearGradient` (nuages, lumière) ; tout nouvel appel de canvas qui renvoie un objet doit y être ajouté.
+  De même pour le son : `FakeAC` de `sim.js` (`createDelay` pour l'écho) ; tout nouveau nœud audio doit y être ajouté.
 - **Performances (Firefox)** : Firefox dessine souvent le canvas avec le processeur. Rien de plein écran recalculé à
   chaque image : pas de dégradé ni de mode de fusion autre qu'un remplissage uni (la lumière pré-rend ses dégradés en
   petit, `buildLight()`) ; canvas plafonné à `MAX_PIXELS` (1920 x 1080), le navigateur agrandit au-delà (sinon
-  216 ms par image en 4K au coucher de soleil). Mesurer dans Firefox sans fenêtre : `firefox --headless` avec un
-  profil où `browser.dom.window.dump.enabled` est vrai, la page mesure `render()` et écrit le résultat avec `dump()`.
+  216 ms par image en 4K au coucher de soleil). Mesurer dans Firefox sans fenêtre : `python3 tools/mesure_firefox.py`
+  (`firefox --headless`, un profil où `browser.dom.window.dump.enabled` est vrai, canevas forcé à 1920 x 1080 ; la
+  page chronomètre `render()` lieu par lieu, de jour et le soir, puis en traversant la carte, et écrit le résultat
+  avec `dump()` ; `--detail` : les sprites les plus chers ; `--sans-avance` : sans `prepareGround()`). D'une mesure
+  à l'autre, les chiffres bougent de 30 à 40 % : comparer deux mesures faites à la suite, pas à une heure d'écart.
+  Lot 4 (12 novembre 2026) : 6 à 13 ms par image de jour, 9 à 17 le soir (la lumière : 3 à 6 ms ; les ombres de ce
+  qui bouge : 0,3 à 2,6 ms ; les nuages : jusqu'à 3 ms) ; le point dur est la peinture d'un bloc de sol.
   Images nettes : sur un canevas de 1920 x 1080 (échelle 2), Firefox va plus vite avec les images x4 (copie à
   l'identique : 6 à 12 ms par image) qu'en agrandissant les x2 (11 à 17 ms) ; à une échelle intermédiaire (1,33),
   réduire les x4 coûtait jusqu'à 45 % de plus, d'où le seuil `HD_MIN` (1,5). La fenêtre sans tête n'est pas en
@@ -608,7 +645,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - **Listes de carte.json et sauvegarde** : la sauvegarde retient chiens (`d.id`), trésors, petites bêtes, canards,
   lettres, poules de quête, ballons, jouets et petits hérissons par leur rang (`carte.INDEXEES`) : en ajouter à la fin,
   et ne pas en retirer au milieu sans augmenter `SAVE_V` (l'éditeur prévient). Tailles fixes (`carte.TAILLES`) : 5
-  lettres, 5 ballons, 3 jouets (canard, anneau, corde), 3 petits hérissons ; un seul de chaque indice ; un trésor au
+  lettres, 5 ballons, 3 jouets (poulet, anneau, corde), 3 petits hérissons ; un seul de chaque indice ; un trésor au
   centre d'une tuile (x,5 ; y,5). Le premier roquet reste assez loin de la niche (pas d'attaque dès la fin de l'intro).
   Le texte d'un panneau change : `node tools/export_voix.js` (l'éditeur le propose après « Vérifier »).
 - Placer un nouvel élément interactif : `check_placement.js` refuse la construction s'il chevauche une autre action
@@ -625,8 +662,9 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   arrondis, bâtiments (étals et poulailler compris), ombres portées de tout (décors, personnages, bêtes,
   véhicules) allongées le soir et fusionnées, sous-bois et champ, mobilier (`mobilier.py` : du pot de fleurs au
   portique du port), véhicules, objets à ramasser posés au sol, mares en haricot faits ; rives et
-  bords de chemin froissés, ombre de ce qui vole (`flyShadow()` : canards en vol, papillons) faits. Le lot 4 est
-  à relire dans le jeu en mouvement, et dans Firefox, avant de passer au lot 5. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
+  bords de chemin froissés, ombre de ce qui vole (`flyShadow()` : canards en vol, papillons), objets réduits à
+  50 %, jouets d'Iris refaits, coût mesuré dans Firefox sans fenêtre faits. Le lot 4 est
+  à relire dans le jeu en mouvement, dans un vrai Firefox, avant de passer au lot 5. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
   témoin dans `reference/v2/`) : des images fixes, que ni `game.js` ni `pack_web.py` n'utilisent encore (le décor
   de `nature.py` est dans le jeu depuis le lot 4). Les pistes générées par Christophe avec ChatGPT sont dans
   `reference/v2/chat_gpt/`.

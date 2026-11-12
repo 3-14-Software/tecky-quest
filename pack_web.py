@@ -558,6 +558,17 @@ def preview(m, atlas, meta, tileset):
     img.convert("RGB").resize((img.width // 2, img.height // 2), Image.LANCZOS).save(os.path.join(WEB, "map_preview.png"))
 
 
+def ecoute(game):
+    """web/musique.html, la salle d'écoute : les morceaux de music.py joués par le séquenceur de game.js (sa
+    section « musique chiptune »), pour les écouter un par un, essayer le passage d'une zone à l'autre et
+    mesurer leurs niveaux. À ouvrir depuis le disque ; elle n'est pas publiée."""
+    a = game.index("/* ------------------------------------------------------------------ musique chiptune */")
+    b = game.index("/* ------------------------------------------------------------------ ambiance sonore des zones */")
+    tpl = open(os.path.join(SRC, "musique.template.html"), encoding="utf-8").read()
+    page = tpl.replace("/*__SONGS__*/", "const SONGS = " + json.dumps(music.songs(), separators=(",", ":")) + ";")
+    open(os.path.join(WEB, "musique.html"), "w", encoding="utf-8").write(page.replace("/*__MUSIC__*/", game[a:b]))
+
+
 def main():
     os.makedirs(WEB, exist_ok=True)
     m = build_map()
@@ -576,14 +587,12 @@ def main():
             "const ATLAS = " + json.dumps(meta, separators=(",", ":")) + ";\n"
             # images nettes, à côté de la page (game.js : loadHD) ; null : construit sans elles
             "const HD_SRC = " + json.dumps(hd and {k: v for k, v in hd.items() if k != "files"}, separators=(",", ":")) + ";\n"
-            "const SONGS = " + json.dumps({k: dict(zip(("total", "ev"), music.events(k)), bpm=st["bpm"], bar=music.STEPS_PER_BAR)
-                                           for k, st in music.STYLES.items()}, separators=(",", ":")) + ";\n"
-            "const WINSONG = " + json.dumps(dict(zip(("total", "ev"), music.fanfare_events()), bpm=music.FANFARE_BPM, bar=music.STEPS_PER_BAR), separators=(",", ":")) + ";\n"
-            "const LOSESONG = " + json.dumps(dict(zip(("total", "ev"), music.defeat_events()), bpm=music.DEFEAT_BPM, bar=music.STEPS_PER_BAR), separators=(",", ":")) + ";\n"
+            "const SONGS = " + json.dumps(music.songs(), separators=(",", ":")) + ";\n"
             "const MAP = " + json.dumps(m, separators=(",", ":"), ensure_ascii=False) + ";\n"
             "const VERSION = " + json.dumps(version(), ensure_ascii=False) + ";\n")
     html = tpl.replace("/*__DATA__*/", data).replace("/*__GAME__*/", game)
     open(os.path.join(WEB, "index.html"), "w", encoding="utf-8").write(html)
+    ecoute(game)
     print("atlas", atlas.size, "| html", len(html) // 1024, "Ko")
     build_standalone(data, game, hd["files"] if hd else [])
     check_placement()

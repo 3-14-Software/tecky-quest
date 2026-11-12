@@ -33,7 +33,7 @@ ORDRE = ["format", "w", "h", "legende", "terrain", "details", "decor",
          "roadTunnels", "traffic", "calm", "zones", "landmarks"]
 
 # listes de taille fixe : « cinq lettres » et « cinq ballons » dans les dialogues (une couleur par ballon,
-# port.BALL_COLORS), les jouets d'Iris (port.TOYS : canard, anneau, corde, dans cet ordre), les places des petits
+# port.BALL_COLORS), les jouets d'Iris (port.TOYS : poulet, anneau, corde, dans cet ordre), les places des petits
 # hérissons auprès de leur maman (BABY.slots)
 TAILLES = {"letters": 5, "balls": 5, "toys": 3, "babies": 3}
 # listes dont la sauvegarde retient les éléments par leur rang : en ajouter à la fin, et ne pas en retirer au milieu
@@ -41,7 +41,7 @@ TAILLES = {"letters": 5, "balls": 5, "toys": 3, "babies": 3}
 INDEXEES = ["enemies", "dig", "critters", "ducks", "letters", "hens", "balls", "toys", "babies"]
 # les indices d'Alice (CLUES dans game.js) : exactement un de chaque, parmi les objets
 INDICES = ("hairclip", "shoe", "plush")
-# variations de la musique et ambiances d'une zone (TIMBRE dans game.js)
+# morceau (music.py : MORCEAUX) et ambiance d'une zone
 MUSIQUES = ("niche", "village", "campagne", "ferme", "industrie", "foret", "parc")
 # détails au sol déduits d'autres données (jamais dans « details »)
 DETAILS_DEDUITS = ("traces de pattes", "trou creusé (trésor)")

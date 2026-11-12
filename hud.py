@@ -669,8 +669,8 @@ def _ic_ballons(d):
 
 
 def _ic_iris(d):
-    """Le canard en caoutchouc d'Iris."""
-    port.rubber_duck(d, 0.5, -1)
+    """Le poulet en caoutchouc d'Iris."""
+    port.poulet(d, 0.5, -1)
 
 
 def _ic_herissons(d):

@@ -123,7 +123,6 @@ def hairclip(d):
         d.add(path(f"M{16 + s * 3},18 Q{16 + s * 7},12.5 {16 + s * 9.2},14.6 Q{16 + s * 10},18 {16 + s * 9.2},21.4 "
                    f"Q{16 + s * 7},23.5 {16 + s * 3},18 Z", tr), "#F9C6D9", sil=False)
     d.raw(line("M7,13.6 Q8.6,11.6 11,12.2 M21.6,12 Q23.6,11.4 25.2,13.2", "#FFFFFF", 0.9).replace("<path", f'<path transform="{tr}" opacity="0.8"'))
-    d.raw(line("M7.4,21.2 L24.6,21.2", "#FFFFFF", 0.5).replace("<path", f'<path transform="{tr}" opacity="0.7"'))
     d.add(circle(16, 18, 3, tr), "#C96A90")
     d.add(circle(15.5, 17.5, 2.6, tr), "#DE85A8", sil=False)
     d.add(circle(15.2, 17.2, 0.9, tr), "#FBE36A", sil=False)

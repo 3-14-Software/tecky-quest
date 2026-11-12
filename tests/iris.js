@@ -24,7 +24,7 @@ function main() {
   ok(run('used.includes("port/toy")'), 'compteur de jouets dans le HUD');
   // Tecky passe sur un jouet : il le prend dans sa gueule
   run('var T0 = toys[0]; P.x = T0.x; P.y = T0.y + 10; P.mode = "free"; pops = [];'); step(2);
-  ok(run('T0.carried') && run('carried() === T0') && run('pops.some(p => p.text === TOY_NAMES[0])'), 'il prend le canard dans sa gueule');
+  ok(run('T0.carried') && run('carried() === T0') && run('pops.some(p => p.text === TOY_NAMES[0])'), 'il prend le poulet dans sa gueule');
   run('updateCamera(10); used = []; drawSpr = function (k, f, x, y) { used.push([k, f, x, y]); return ds0.apply(this, arguments); }; render(); drawSpr = ds0;');
   ok(run('used.some(u => u[0] === "port/toy" && u[1] === 0 && Math.abs(u[2] - P.x - MOUTH[P.dir][0]) < 1)'), 'le jouet est dessiné dans sa gueule');
   // un seul à la fois
@@ -32,7 +32,7 @@ function main() {
   ok(run('!T1.carried') && run('T0.carried'), 'un seul jouet à la fois');
   // il aboie : il le lâche (« Oups ! »), et peut le reprendre
   run('P.x = iris.x + 400; P.y = iris.y + 150; P.dir = "down"; P.cdBark = 0; pressed.bark = true; pops = [];'); step(1);   // (loin des autres jouets)
-  ok(run('!T0.carried') && run('pops.some(p => p.text === "Oups !")') && run('dist(T0.x, T0.y, P.x, P.y)') < 80, 'il aboie : il lâche le canard devant lui');
+  ok(run('!T0.carried') && run('pops.some(p => p.text === "Oups !")') && run('dist(T0.x, T0.y, P.x, P.y)') < 80, 'il aboie : il lâche le poulet devant lui');
   ok(run('!waterAt(T0.x, T0.y)'), 'par terre, jamais dans l’eau');
   step(30);
   ok(!run('T0.carried'), 'il ne le reprend pas aussitôt');
@@ -40,7 +40,7 @@ function main() {
   ok(run('T0.carried'), 'mais ensuite, en repassant dessus');
   // il le donne à Iris en arrivant près de lui : une seule bulle (pas de salut en plus)
   run('P.x = iris.x + 60; P.y = iris.y + 70; P.mode = "free"; pops = []; var sc0 = score;'); step(2);
-  ok(run('T0.home') && !run('carried()') && run('score') === run('sc0 + IRIS.perToy') && run('iris.cheerT') > 0, 'Iris reçoit son canard (il remue la queue)');
+  ok(run('T0.home') && !run('carried()') && run('score') === run('sc0 + IRIS.perToy') && run('iris.cheerT') > 0, 'Iris reçoit son poulet (il remue la queue)');
   ok(run('pops.some(p => /Encore 2/.test(p.text))') && run('pops.filter(p => p.who === "iris").length') === 1, '« Bravo ! Encore 2 ! », et rien d’autre');
   // KO : il lâche le jouet
   run('P.x = T1.x; P.y = T1.y + 10;'); step(2);
@@ -52,7 +52,7 @@ function main() {
   run('P.x = T1.x; P.y = T1.y + 10;'); step(2);
   run('saveGame(); var sv = STORE.get(SAVE_KEY);');
   ok(run('sv.jouets') === 'asked' && run('sv.toys[0][2]') === 1 && run('sv.toys[1][2]') === 0 && Math.abs(run('sv.toys[1][0] - P.x')) < 1,
-     'sauvegardés (le canard rentré, l’anneau porté : par terre, aux pieds de Tecky)');
+     'sauvegardés (le poulet rentré, l’anneau porté : par terre, aux pieds de Tecky)');
   run('toTitle(); loadGame(STORE.get(SAVE_KEY), false);'); advanceDialog();
   ok(run('jouets.state') === 'asked' && run('toys[0].home') && !run('carried()') && run('toysLeft()') === 2, 'Continuer : tout est à sa place');
   // les deux derniers : Iris appelle, puis remercie (saucisse, points), badge

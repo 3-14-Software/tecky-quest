@@ -14,7 +14,7 @@ let now = 0;
 class FakeAC { constructor() { this.sampleRate = 44100; this.state = 'running'; this.destination = deep(); }
   get currentTime() { return now; }
   createBuffer(c, l) { return { getChannelData: () => new Float32Array(l) }; }
-  createOscillator() { nodes++; return deep(); } createGain() { return deep(); } createBiquadFilter() { return deep(); }
+  createOscillator() { nodes++; return deep(); } createGain() { return deep(); } createBiquadFilter() { return deep(); } createDelay() { return deep(); }
   createBufferSource() { nodes++; return deep(); } createPeriodicWave() { return {}; } resume() {} suspend() {} }
 let intervals = [];
 const g = {
@@ -73,8 +73,8 @@ setTimeout(() => {
   run('P.hp = 1; P.inv = 0; P.mode = "free"; P.x = B.x + 70; P.y = B.y;');
   { let k = 0; while (run('P.mode') !== 'ko' && k++ < 600) step(1); }
   ok(run('Music.on') && run('Music.cur') === 'lose', 'KO : la musique de défaite démarre');
-  ok(run('LOSESONG.total') === run('WINSONG.total') && run('LOSESONG.bpm') === run('WINSONG.bpm'),
-     'même durée que la fanfare (' + run('LOSESONG.total') + ' pas à ' + run('LOSESONG.bpm') + ' BPM)');
+  ok(run('SONGS.lose.total') === run('SONGS.win.total') && run('SONGS.lose.bpm') === run('SONGS.win.bpm'),
+     'même durée que la fanfare (' + run('SONGS.lose.total') + ' pas à ' + run('SONGS.lose.bpm') + ' BPM)');
   { const n1 = nodes; step(60 * 2); ok(nodes - n1 > 20, 'elle joue des notes (' + (nodes - n1) + ' nœuds en 2 s)'); }
   step(60 * 8);
   ok(run('state') === 'over', 'game over quand la vie tombe à 0 (état : ' + run('state') + ')');
