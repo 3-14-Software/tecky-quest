@@ -445,8 +445,24 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
       non) ; les badges, écrits pour le printemps, se gagnent encore dans tout épisode.
    b. les données d'un épisode : pour chaque carte, un fichier qui ne redit que ce qui change (objets, indices,
       chiens, cachette d'Alice, quêtes), par-dessus la carte de base, pour ne pas recopier le terrain ;
+      **Fait le 12 novembre 2026** : `cartes/<épisode>/<carte>.json`, la surcharge, ne redit que les clés qui
+      changent ; `null` retire (un personnage, une liste). Le jeu, la vérification des placements et l'éditeur
+      (choix « Épisode », qui n'enregistre que ce qui diffère) lisent la carte de l'épisode ; l'écran titre
+      montre le monde de l'épisode choisi. Première surcharge : `cartes/ete/monde.json`, le monde sans les
+      trois indices du printemps ni Alice (ils seront sur la côte). Reste pour le contenu : des indices propres
+      à chaque épisode (le jeu ne connaît que barrette, chaussure, doudou), et le moteur des quêtes réutilisable.
+      À savoir : pour l'été, la côte est une carte neuve, sans surcharge ; ce mécanisme servira surtout à
+      l'automne et à l'hiver, qui rejouent le monde avec d'autres placements ;
    c. les images d'une saison : tuiles et sprites de la nature redessinés avec sa palette (`saisons.py`),
       chargés à côté de la page comme les images x4, pas dans la page ;
+      **Fait le 12 novembre 2026 pour l'été** : `pack_web.py` redessine le tileset et l'atlas avec la palette de
+      la saison et ne garde que les sprites qui changent (21 : arbres, buissons, fourrés, haie, buttes des
+      tunnels) ; fichiers `saison_ete_*.png` à côté de la page (0,7 Mo, 1,7 Mo en images nettes) ; le jeu les
+      charge quand l'épisode change de saison, le monde se repeint, et le printemps revient sans attendre.
+      Vu dans le jeu, en x4 et en x2 (`reference/v2/lot6_ete_jeu.png`). Restent : l'automne et l'hiver (la
+      neige et les branches nues changent des formes : le moteur ne sait encore que changer des couleurs), les
+      cultures d'été du champ (aujourd'hui les mêmes plants sur un champ doré), et le choix des palettes par
+      Christophe ;
    d. le contenu de l'été.
 4. **L'été**, premier nouvel épisode, pour mesurer ce qu'il coûte et ce qu'il dure.
    **Histoire fixée avec Christophe le 12 novembre 2026 : « Tecky à la mer », sur la Côte Fleurie, en Normandie.**
@@ -455,7 +471,13 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      une berline sportive rouge : à dessiner dans cet esprit, sans marque ni logo) ; Tecky et Alice montent, la
      voiture prend le tunnel. C'est la voiture
      qui change de carte : **à pied, le tunnel redevient « pour les voitures »** (le passage en poussant dedans,
-     qui a servi au jalon, est à retirer).
+     qui a servi au jalon, est à retirer). **Confirmé par Christophe le 12 novembre 2026 : en été, la carte du
+     monde ne sert que le temps de cette cinématique**, qui emmène directement au parking de la plage ; on n'y
+     joue pas. Tout l'épisode se joue sur la côte : la partie d'été commence vraiment au parking (c'est là que
+     Tecky reprend la main, et que reprend une partie enregistrée), et rien ne ramène au monde avant la fin.
+     Conséquences : la surcharge `cartes/ete/monde.json` n'a plus à retirer les indices ni Alice (elle n'aura
+     qu'à poser la scène : Alice et la voiture devant la niche) ; les couleurs d'été du monde ne se voient que
+     pendant ces quelques secondes, c'est sur la côte qu'elles comptent et qu'il faudra les juger.
    - *La côte* (`reference/v2/ete_plan.png`), une carte neuve à la place de la carte d'essai : **la mer en bas**
      (les façades du front de mer regardent vers nous), une plage en croissant bordée de planches, une rivière
      qui descend jusqu'à la mer avec son pont (la Touques, entre Trouville et Deauville), le village de pêcheurs

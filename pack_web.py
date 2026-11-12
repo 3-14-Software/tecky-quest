@@ -4,6 +4,7 @@ Prépare la version web de Tecky Quest :
   web/atlas.png  + données de l'atlas (sprites x2, découpés au plus juste)
   web/tiles.png  tileset x2
   web/atlas_x4_N.png, web/tiles_x4.png  les mêmes images deux fois plus fines, chargées par le jeu sur grand écran
+  web/saison_<nom>_*.png  le tileset et les sprites redessinés aux couleurs d'une saison (build_saisons)
   web/index.html page du jeu (web_src/index.template.html + game.js + données)
   web/map_preview.png  aperçu du niveau (contrôle)
 
@@ -31,6 +32,7 @@ import critters
 import ducks
 import episodes
 import npcs
+import saisons
 import port
 import spritelib
 import herissons
@@ -125,15 +127,16 @@ def edge_decor(g, keep):
     return lisiere.decor(g, MW, MH, keep, forest, ROAD_TUNNELS)
 
 
-def charger_carte(nom=carte.MONDE):
+def charger_carte(nom=carte.MONDE, episode=None):
     """Fait de la carte `nom` la carte courante : ses listes (en tuiles) et ce qui s'en déduit (décors, pont, lisière).
-    Une carte annexe (cartes/<nom>.json) n'a que ce qu'elle déclare : carte.completer() met le reste hors de la carte."""
+    Une carte annexe (cartes/<nom>.json) n'a que ce qu'elle déclare : carte.completer() met le reste hors de la carte.
+    episode : la carte telle que cet épisode la joue (sa surcharge cartes/<épisode>/<nom>.json par-dessus)."""
     global NOM, CARTE, MW, MH, ITEMS, ENEMIES, DIG, SIGNS, HENS, DUCKS, COWS, CRITTERS, BUTTERFLIES, VILLAGERS
     global LETTERS, BALLS, TOYS, BABIES, TUNNELS, START, ALICE, TITLE, FARMER, POSTMAN, NEIGHBOR, POMPON
     global LEON, GOAL, IRIS, PIQUETTE, PEN, PEN_GATE, TRACK, CALM, ROAD_TUNNELS, ROAD, CROSSINGS, TRAFFIC
     global DETAILS, FLOWER_BEDS, DECOR, BRIDGES, EDGE
     NOM = nom
-    CARTE = carte.completer(carte.charger(carte.chemin(nom)))
+    CARTE = carte.completer(carte.charger_episode(nom, episode))
     MW, MH = CARTE["w"], CARTE["h"]
     ITEMS, ENEMIES, DIG, SIGNS = _T("items"), _T("enemies"), _T("dig"), _T("signs")
     HENS, DUCKS, COWS, CRITTERS, BUTTERFLIES, VILLAGERS = (_T(k) for k in ("hens", "ducks", "cows", "critters", "butterflies", "villagers"))
@@ -515,10 +518,10 @@ def source_stamp():
     return h.hexdigest()[:10]
 
 
-def pack_hd(entries, meta, height):
+def pack_hd(entries, meta, height, width=2048):
     """Atlas net : les images de collect(HD), chacune à la place et dans le cadre de sa jumelle de l'atlas x2 (la
     méta ne change pas), puis l'ensemble découpé en pages de PAGE pixels x2 de haut."""
-    big = Image.new("RGBA", (2048 * HD, height * HD), (0, 0, 0, 0))
+    big = Image.new("RGBA", (width * HD, height * HD), (0, 0, 0, 0))
     for key, ims, _, _ in entries:
         for i, im in enumerate(ims):
             x, y, w, h, dx, dy = meta[key]["f"][i]
@@ -549,6 +552,69 @@ def build_hd(meta, height):
     # ?v= : une page et ses images x4 vont ensemble (mêmes places dans l'atlas) ; jamais une vieille image en cache
     return {"k": HD, "page": PAGE, "atlas": [n + "?v=" + stamp for n in names[:-1]], "tiles": names[-1] + "?v=" + stamp,
             "files": names}
+
+
+SAISON_Y = 1 << 20     # y d'un cadre de saison dans ATLAS : celui de l'image de la saison, décalé d'autant (game.js : blit())
+SAISON_W = 1024        # largeur de l'image des sprites d'une saison, en pixels x2
+
+
+def build_saisons(base, meta, avec_hd):
+    """Les images des saisons que jouent les épisodes (episodes.json ; le printemps est dans la page) : le tileset
+    redessiné avec la palette de la saison (saisons.py), et les sprites qui en changent — trouvés en redessinant
+    tout l'atlas et en le comparant à celui du printemps (`base` : collect()). Fichiers à côté de la page :
+    saison_<nom>_tiles.png, saison_<nom>_atlas.png (ces sprites seuls, rangés à part) et, avec les images nettes,
+    leurs jumeaux x4. Rend { saison: ce que le jeu doit en savoir } (SAISONS de game.js : les adresses, et « meta »,
+    les entrées d'ATLAS à remplacer, y décalés de SAISON_Y) et la liste des fichiers. Rien n'est redessiné si les
+    sources n'ont pas changé (web/saisons.json)."""
+    stamp = source_stamp()
+    info = os.path.join(WEB, "saisons.json")
+    try:
+        old = json.load(open(info, encoding="utf-8"))
+    except (OSError, ValueError):
+        old = {}
+    out, fichiers, garde = {}, [], {}
+    printemps = {k: ims for k, ims, _, _ in base}
+    for nom in dict.fromkeys(e["saison"] for e in episodes.charger()):
+        if nom == "printemps":
+            continue
+        o = old.get(nom) or {}
+        if not (o.get("stamp") == stamp and o.get("hd") == avec_hd
+                and all(os.path.exists(os.path.join(WEB, n)) for n in o.get("files", []))):
+            saisons.appliquer(nom)
+            try:
+                change = [e for e in collect()
+                          if any(a.size != b.size or a.tobytes() != b.tobytes() for a, b in zip(e[1], printemps[e[0]]))]
+                img, m = pack(change, width=SAISON_W)
+                for k, v in m.items():                # mêmes cadres qu'au printemps : seules les couleurs changent
+                    if v["o"] != meta[k]["o"] or [f[2:] for f in v["f"]] != [f[2:] for f in meta[k]["f"]]:
+                        raise SystemExit(f"saison « {nom} » : le sprite {k} n'a plus la forme du printemps (ombres, "
+                                         "lignes de contact et perchoirs sont ceux du printemps)")
+                files = [f"saison_{nom}_tiles.png", f"saison_{nom}_atlas.png"]
+                tiles.tileset(S, composites=COMPOSITES).save(os.path.join(WEB, files[0]), optimize=True)
+                img.save(os.path.join(WEB, files[1]), optimize=True)
+                hd = None
+                if avec_hd:
+                    pages = pack_hd([e for e in collect(HD) if e[0] in m], m, img.height, SAISON_W)
+                    hd = [f"saison_{nom}_tiles_x{S * HD}.png"] + [f"saison_{nom}_atlas_x{S * HD}_{p}.png" for p in range(len(pages))]
+                    tiles.tileset(S * HD, composites=COMPOSITES).save(os.path.join(WEB, hd[0]), optimize=True)
+                    for n, im in zip(hd[1:], pages):
+                        im.save(os.path.join(WEB, n), optimize=True)
+            finally:
+                saisons.appliquer()                   # (toujours revenir au printemps)
+            for v in m.values():
+                for f in v["f"]:
+                    f[1] += SAISON_Y
+            o = {"stamp": stamp, "hd": avec_hd, "files": files + (hd or []), "x2": files, "x4": hd, "meta": m}
+            print(f"saison « {nom} » : {len(m)} sprites,", ", ".join(f"{n} {os.path.getsize(os.path.join(WEB, n)) // 1024} Ko" for n in o["files"]))
+        else:
+            print(f"saison « {nom} » : à jour")
+        garde[nom] = o
+        v = lambda n: n + "?v=" + stamp
+        out[nom] = {"tiles": v(o["x2"][0]), "atlas": v(o["x2"][1]), "meta": o["meta"],
+                    "hd": o["x4"] and {"tiles": v(o["x4"][0]), "atlas": [v(n) for n in o["x4"][1:]]}}
+        fichiers += o["files"]
+    json.dump(garde, open(info, "w", encoding="utf-8"))
+    return out, fichiers
 
 
 def preview(m, atlas, meta, tileset):
@@ -612,7 +678,14 @@ def main():
     for nom in carte.noms():                          # chaque carte du jeu ; puis retour à celle du monde
         charger_carte(nom)
         cartes[nom] = build_map()
-    for nom, c in cartes.items():
+    # les cartes changées par un épisode (cartes/<épisode>/<nom>.json) : la page n'en garde que ce qui diffère de
+    # la carte de base (game.js : SURCHARGES, carteOf())
+    surcharges = {}
+    for ep, nom in carte.surcharges():
+        charger_carte(nom, ep)
+        v = build_map()
+        surcharges.setdefault(ep, {})[nom] = {k: x for k, x in v.items() if x != cartes[nom][k]}
+    for nom, c in list(cartes.items()) + [(f"{nom} ({ep})", dict(cartes[nom], **d)) for ep, q in surcharges.items() for nom, d in q.items()]:
         for t, vers, arrivee in c["passages"]:
             if vers not in cartes or not 0 <= arrivee < len(cartes[vers]["roadTunnels"]):
                 raise SystemExit(f"carte « {nom} » : le passage du tunnel {t} mène à « {vers} », tunnel {arrivee}, qui n'existe pas")
@@ -621,12 +694,14 @@ def main():
         raise SystemExit("episodes.json : " + " ; ".join(pb))
     charger_carte()
     m = cartes[carte.MONDE]
-    atlas, meta = pack(collect())
+    base = collect()
+    atlas, meta = pack(base)
     atlas.save(os.path.join(WEB, "atlas.png"), optimize=True)
     tileset = tiles.tileset(S, composites=COMPOSITES)   # eau unie : le jeu anime ses vaguelettes
     tileset.save(os.path.join(WEB, "tiles.png"), optimize=True)
     preview(m, atlas, meta, tileset)
     hd = None if "--sans-hd" in sys.argv else build_hd(meta, atlas.height)
+    sais, sais_files = build_saisons(base, meta, hd is not None)
     tpl = open(os.path.join(SRC, "index.template.html"), encoding="utf-8").read()
     game = open(os.path.join(SRC, "game.js"), encoding="utf-8").read()
     import base64
@@ -636,6 +711,8 @@ def main():
             "const ATLAS = " + json.dumps(meta, separators=(",", ":")) + ";\n"
             # images nettes, à côté de la page (game.js : loadHD) ; null : construit sans elles
             "const HD_SRC = " + json.dumps(hd and {k: v for k, v in hd.items() if k != "files"}, separators=(",", ":")) + ";\n"
+            # les images des saisons, à côté de la page elles aussi (game.js : askSeason) ; le printemps est dans la page
+            "const SAISONS = " + json.dumps(sais, separators=(",", ":")) + ";\n"
             "const SONGS = " + json.dumps(music.songs(), separators=(",", ":")) + ";\n"
             # les textes du jeu, par langue (game.js : txt()) ; la source est textes/fr.json
             "const TEXTES = " + json.dumps({"fr": json.load(open(os.path.join(ROOT, "textes", "fr.json"), encoding="utf-8"))},
@@ -643,6 +720,8 @@ def main():
             # les données du jeu, puis celles de chaque carte (game.js : MAP = la carte courante, qui hérite de JEU)
             "const JEU = " + json.dumps(build_jeu(), separators=(",", ":"), ensure_ascii=False) + ";\n"
             "const CARTES = " + json.dumps(cartes, separators=(",", ":"), ensure_ascii=False) + ";\n"
+            # ce qu'un épisode change à une carte : { épisode: { carte: les données qui diffèrent } }
+            "const SURCHARGES = " + json.dumps(surcharges, separators=(",", ":"), ensure_ascii=False) + ";\n"
             # les épisodes, dans l'ordre où ils s'ouvrent (game.js : episode, EP())
             "const EPISODES = " + json.dumps(episodes.charger(), separators=(",", ":"), ensure_ascii=False) + ";\n"
             "const VERSION = " + json.dumps(version(), ensure_ascii=False) + ";\n")
@@ -650,7 +729,7 @@ def main():
     open(os.path.join(WEB, "index.html"), "w", encoding="utf-8").write(html)
     ecoute(game)
     print("atlas", atlas.size, "| html", len(html) // 1024, "Ko")
-    build_standalone(data, game, hd["files"] if hd else [])
+    build_standalone(data, game, (hd["files"] if hd else []) + sais_files)
     check_placement()
 
 
@@ -661,18 +740,19 @@ def check_placement():
     if not shutil.which("node"):
         print("(Node.js absent : vérification des placements ignorée)")
         return
-    for nom in carte.noms():                          # chaque carte : celle du monde, puis les annexes
-        r = subprocess.run(["node", os.path.join(SRC, "check_placement.js"), os.path.join(WEB, "index.html"), "--carte", nom],
-                           capture_output=True, text=True)
+    # chaque carte : celle du monde, puis les annexes ; puis chaque carte changée par un épisode
+    for ep, nom in [(None, n) for n in carte.noms()] + carte.surcharges():
+        r = subprocess.run(["node", os.path.join(SRC, "check_placement.js"), os.path.join(WEB, "index.html"), "--carte", nom]
+                           + (["--episode", ep] if ep else []), capture_output=True, text=True)
         print(r.stdout.strip() or r.stderr.strip())
         if r.returncode:
-            raise SystemExit(f"Corrige les placements signalés dans {os.path.relpath(carte.chemin(nom), ROOT)} "
+            raise SystemExit(f"Corrige les placements signalés dans {os.path.relpath(carte.surcharge(nom, ep) if ep else carte.chemin(nom), ROOT)} "
                              "(éditeur de carte : python3 editeur.py)")
 
 
 def build_standalone(data, game, hd_files=()):
-    """Version autonome à servir soi-même : plein écran, installable comme une app. hd_files : les images x4, copiées
-    à côté de la page."""
+    """Version autonome à servir soi-même : plein écran, installable comme une app. hd_files : les images x4 et
+    celles des saisons, copiées à côté de la page."""
     import base64
     import shutil
     out = os.path.join(WEB, "tecky_quest_web")
@@ -700,8 +780,8 @@ def build_standalone(data, game, hd_files=()):
     json.dump(manifest, open(os.path.join(out, "manifest.webmanifest"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
     for fn in ("sw.js", "serve.sh"):
         shutil.copy(os.path.join(SRC, fn), os.path.join(out, fn))
-    for fn in os.listdir(out):                         # images x4 d'une construction précédente
-        if "_x4" in fn and fn not in hd_files:
+    for fn in os.listdir(out):                         # images x4 et de saison d'une construction précédente
+        if ("_x4" in fn or fn.startswith("saison_")) and fn not in hd_files:
             os.remove(os.path.join(out, fn))
     for fn in hd_files:
         shutil.copy(os.path.join(WEB, fn), os.path.join(out, fn))

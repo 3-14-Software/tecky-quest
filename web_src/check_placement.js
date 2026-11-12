@@ -1,4 +1,5 @@
-// Usage : node web_src/check_placement.js web/index.html [--json | --infos] [--carte nom]
+// Usage : node web_src/check_placement.js web/index.html [--json | --infos] [--carte nom] [--episode id]
+// --episode : la carte telle que cet épisode la joue (sa surcharge cartes/<épisode>/<nom>.json par-dessus).
 // --carte : la carte à vérifier (« monde » sans cela) ; sur une carte annexe, Tecky part du tunnel par où il arrive,
 // et ce qu'elle n'a pas (Alice, personnages, enclos, filet…) n'est pas vérifié.
 // Vérifie que rien n'est posé dans l'eau ou dans un obstacle, que tout (objets, indices, trésors, panneaux,
@@ -10,6 +11,7 @@
 const vm = require('vm'), fs = require('fs');
 const MODE = process.argv.includes('--json') ? 'json' : process.argv.includes('--infos') ? 'infos' : 'texte';
 const CARTE = process.argv.includes('--carte') ? process.argv[process.argv.indexOf('--carte') + 1] : 'monde';
+const EPISODE = process.argv.includes('--episode') ? process.argv[process.argv.indexOf('--episode') + 1] : null;
 const html = fs.readFileSync(process.argv[2], 'utf8');
 const code = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'));
 const noop = () => {};
@@ -29,6 +31,10 @@ setTimeout(() => {
       portees: { parler: NPC.talk, panneau: REACH.sign, tresor: REACH.dig, objet: REACH.item, terrier: TUNNEL.reach,
         lettre: POST.pick, pompon: CAT.find, jouet: IRIS.pick, herisson: BABY.find, aboiement: BARK.range } })`));
     return;
+  }
+  if (EPISODE) {
+    if (!r(`EPISODES.some(e => e.id === ${JSON.stringify(EPISODE)})`)) { console.log('PROBLÈMES :\n  épisode inconnu : ' + EPISODE); process.exitCode = 1; return; }
+    r(`episode = ${JSON.stringify(EPISODE)}; if (${JSON.stringify(CARTE)} === 'monde') { useMap('monde'); reset(); }`);
   }
   if (CARTE !== 'monde') {              // carte annexe : on y arrive par son premier passage
     if (!r(`!!CARTES[${JSON.stringify(CARTE)}]`)) { console.log('PROBLÈMES :\n  carte inconnue : ' + CARTE); process.exitCode = 1; return; }
@@ -131,6 +137,6 @@ setTimeout(() => {
     return;
   }
   if (bad.length) { console.log('PROBLÈMES :\n  ' + bad.join('\n  ')); process.exitCode = 1; }
-  else if (CARTE !== 'monde') console.log('placements ok (carte « ' + CARTE + ' ») :', r('decor.length'), 'décors,', r('MAP.signs.length'), 'panneaux,', r('MAP.passages.length'), 'passage(s)');
+  else if (CARTE !== 'monde' || EPISODE) console.log('placements ok (carte « ' + CARTE + ' »' + (EPISODE ? ', épisode « ' + EPISODE + ' »' : '') + ') :', r('items.length'), 'objets,', r('dogs.length'), 'chiens,', r('decor.length'), 'décors,', r('MAP.signs.length'), 'panneaux,', r('MAP.passages.length'), 'passage(s)');
   else console.log('placements ok :', r('items.length'), 'objets,', r('digs.length'), 'trésors,', r('dogs.length'), 'chiens,', r('hens.length'), 'poules,', r('ducks.length'), 'canards,', r('letters.length'), 'lettres, départ, panneaux, terriers, personnages, Pompon et Alice');
 }, 20);

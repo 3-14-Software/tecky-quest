@@ -11,7 +11,9 @@ Le serveur n'écoute que sur cette machine (127.0.0.1). Au démarrage, il dessin
   /atlas.png, .json     les sprites du jeu ; /tiles.png : le tileset, sans les tuiles composées
   /tuile?c=NO,NE,SO,SE  une tuile composée (trois terrains ou plus), dessinée à la demande
   /infos.json           ce que la page doit savoir du jeu (terrains, genres, sprites, collisions…)
-  /carte.json           lecture (GET) et enregistrement (PUT, avec If-Match : refusé si le fichier a changé entre-temps)
+  /carte.json           lecture (GET) et enregistrement (PUT, avec If-Match : refusé si le fichier a changé entre-temps) ;
+                        ?carte=nom : une carte annexe ; &episode=id : la carte telle que cet épisode la joue (lue sous
+                        sa surcharge cartes/<id>/<nom>.json ; enregistrer n'écrit que ce qui diffère de la carte de base)
   /verifier (POST)      construit le jeu (pack_web.py), vérifie les placements et la liste des voix
   /voix (POST)          met à jour la liste des voix (node tools/export_voix.js)
   /essai (POST)         prépare web/essai.html : le jeu, Tecky posé à l'endroit choisi ; /essai.html le sert
@@ -34,6 +36,7 @@ WEB = os.path.join(ROOT, "web")
 sys.path.insert(0, ROOT)
 
 import carte  # noqa: E402
+import episodes  # noqa: E402
 import tiles  # noqa: E402
 
 TYPES = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
@@ -106,6 +109,8 @@ def infos():
         "variants": {n: [noms, tirage] for n, (noms, tirage) in pack_web.nature.VARIANTES.items()},
         # les cartes du jeu (carte.noms()) : celle du monde, puis les annexes ; la page en ouvre une (?carte=nom)
         "cartes": carte.noms(),
+        # les épisodes et leurs cartes : la page ouvre une carte telle qu'un épisode la joue (?carte=nom&episode=id)
+        "episodes": [{"id": e["id"], "cartes": e["cartes"]} for e in episodes.charger()],
     }
 
 
@@ -119,7 +124,8 @@ def a_jour():
     if not os.path.exists(out):
         return False
     t = os.path.getmtime(out)
-    src = [carte.chemin(n) for n in carte.noms()]
+    src = [carte.chemin(n) for n in carte.noms()] + [carte.surcharge(n, ep) for ep, n in carte.surcharges()]
+    src.append(episodes.FICHIER)
     src += [os.path.join(ROOT, "web_src", "game.js"), os.path.join(ROOT, "web_src", "index.template.html")]
     src += [os.path.join(ROOT, f) for f in os.listdir(ROOT) if f.endswith(".py")]
     return all(os.path.getmtime(f) <= t for f in src if os.path.exists(f))
@@ -143,13 +149,54 @@ def carte_demandee(q):
     return nom if nom in carte.noms() else carte.MONDE
 
 
-def verifier(d, nom=carte.MONDE):
+def episode_demande(q, nom):
+    """L'épisode d'une requête (?episode=id, ou « episode » dans le corps) : un épisode qui a la carte `nom`, sinon
+    None (la carte de base)."""
+    ep = q.get("episode") if isinstance(q, dict) else None
+    ep = ep[0] if isinstance(ep, list) else ep
+    return ep if any(e["id"] == ep and nom in e["cartes"] for e in episodes.charger()) else None
+
+
+def lire(nom, ep=None):
+    """Le fichier servi à la page et son empreinte : la carte de base, ou — pour un épisode — la carte sous sa
+    surcharge (l'empreinte couvre alors les deux fichiers : l'un ou l'autre a-t-il changé sur le disque ?)."""
+    base = open(carte.chemin(nom), "rb").read()
+    if not ep:
+        return base, etag(base)
+    f = carte.surcharge(nom, ep)
+    sur = open(f, "rb").read() if os.path.exists(f) else b""
+    c = carte.appliquer(json.loads(base), json.loads(sur)) if sur else json.loads(base)
+    return carte.texte(c).encode("utf-8"), etag(base + b"\0" + sur)
+
+
+def enregistrer_surcharge(c, nom, ep):
+    """Écrit ce que la carte c (celle de la page) change à la carte de base : cartes/<ep>/<nom>.json ; plus rien à
+    redire : le fichier est retiré. Renvoie les erreurs (vide : c'est écrit)."""
+    base = carte.charger(carte.chemin(nom), verifier=False)
+    s = carte.difference(c, base)
+    err = [f"{k} : un épisode ne change pas cette clé de la carte" for k in carte.FIXES if c.get(k) != base.get(k)]
+    err = err or carte.valider_surcharge(s, base)
+    if err:
+        return err
+    f = carte.surcharge(nom, ep)
+    if s:
+        os.makedirs(os.path.dirname(f), exist_ok=True)
+        carte.enregistrer(s, f)
+    elif os.path.exists(f):
+        os.remove(f)
+        if not os.listdir(os.path.dirname(f)):
+            os.rmdir(os.path.dirname(f))
+    return []
+
+
+def verifier(d, nom=carte.MONDE, ep=None):
     with BUILD:
         ok, out = construire()
         res = {"construction": out, "construit": ok, "problemes": [], "atteint": None, "voix": "", "voixAJour": True}
         if not ok:
             return res
-        code, pl = run(["node", "web_src/check_placement.js", "web/index.html", "--json", "--carte", nom], 300)
+        code, pl = run(["node", "web_src/check_placement.js", "web/index.html", "--json", "--carte", nom]
+                       + (["--episode", ep] if ep else []), 300)
         try:
             j = json.loads(pl.splitlines()[-1])
             res["problemes"], res["atteint"], res["resume"] = j["problemes"], j["atteint"], j["resume"]
@@ -171,14 +218,14 @@ def voix():
         return {"ok": code == 0, "sortie": vx}
 
 
-def essai(x, y, mode, nom=carte.MONDE):
+def essai(x, y, mode, nom=carte.MONDE, ep=None):
     with BUILD:
         ok, out = construire(force=False)
         if not ok:
             return {"ok": False, "sortie": out}
         html = open(os.path.join(WEB, "index.html"), encoding="utf-8").read()
         k = html.index("<script>") + len("<script>")
-        html = html[:k] + f"\nconst ESSAI = {json.dumps([round(x, 2), round(y, 2), mode, nom])};\n" + html[k:]
+        html = html[:k] + f"\nconst ESSAI = {json.dumps([round(x, 2), round(y, 2), mode, nom, ep])};\n" + html[k:]
         with open(os.path.join(WEB, "essai.html"), "w", encoding="utf-8") as f:
             f.write(html)
         return {"ok": True, "url": "/essai.html?t=" + str(int(time.time()))}
@@ -243,8 +290,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self.envoyer(400, {"erreur": "c=NO,NE,SO,SE (noms de terrains)"})
             return self.envoyer(200, d.tuile(cs), "image/png", {"Cache-Control": "max-age=3600"})
         if p == "/carte.json":
-            b = open(carte.chemin(carte_demandee(parse_qs(u.query))), "rb").read()
-            return self.envoyer(200, b, extra={"ETag": etag(b)})
+            q = parse_qs(u.query)
+            nom = carte_demandee(q)
+            b, e = lire(nom, episode_demande(q, nom))
+            return self.envoyer(200, b, extra={"ETag": e})
         if p == "/essai.html":
             f = os.path.join(WEB, "essai.html")
             if os.path.exists(f):
@@ -263,15 +312,22 @@ class Handler(BaseHTTPRequestHandler):
         if u.path != "/carte.json":
             return self.envoyer(404, {"erreur": "introuvable"})
         nom = carte_demandee(parse_qs(u.query))
-        fichier = carte.chemin(nom)
-        actuel = open(fichier, "rb").read()
-        if self.headers.get("If-Match") != etag(actuel):
+        ep = episode_demande(parse_qs(u.query), nom)
+        fichier = carte.surcharge(nom, ep) if ep else carte.chemin(nom)
+        actuel, empreinte = lire(nom, ep)
+        if self.headers.get("If-Match") != empreinte:
             return self.envoyer(409, {"erreur": os.path.basename(fichier) + " a changé sur le disque depuis son chargement (autre éditeur, "
                                                 "git…) : recharge la page pour repartir de la version du disque."})
         try:
             c = json.loads(self.corps().decode("utf-8"))
         except ValueError as e:
             return self.envoyer(400, {"erreur": f"JSON illisible : {e}"})
+        if ep:                                # la carte d'un épisode : n'écrire que ce qu'elle change à la carte de base
+            err = enregistrer_surcharge(c, nom, ep) if isinstance(c, dict) else ["un objet JSON"]
+            if err:
+                return self.envoyer(400, {"erreur": "carte refusée", "details": err})
+            b, e = lire(nom, ep)
+            return self.envoyer(200, {"ok": True, "change": b != actuel}, extra={"ETag": e})
         err = carte.valider(c) if isinstance(c, dict) else ["un objet JSON"]
         if not err and (c.get("annexe") is True) != (nom != carte.MONDE):
             err = ["« annexe » : la carte du monde ne l'est pas, les autres le sont"]
@@ -289,7 +345,7 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError:
             q = {}
         if p == "/verifier":
-            return self.envoyer(200, verifier(self.d, carte_demandee(q)))
+            return self.envoyer(200, verifier(self.d, carte_demandee(q), episode_demande(q, carte_demandee(q))))
         if p == "/voix":
             return self.envoyer(200, voix())
         if p == "/essai":
@@ -297,7 +353,8 @@ class Handler(BaseHTTPRequestHandler):
                 x, y = float(q["x"]), float(q["y"])
             except (KeyError, TypeError, ValueError):
                 return self.envoyer(400, {"erreur": "x, y en tuiles"})
-            return self.envoyer(200, essai(x, y, "balade" if q.get("mode") == "balade" else "aventure", carte_demandee(q)))
+            return self.envoyer(200, essai(x, y, "balade" if q.get("mode") == "balade" else "aventure", carte_demandee(q),
+                                            episode_demande(q, carte_demandee(q))))
         self.envoyer(404, {"erreur": "introuvable"})
 
 

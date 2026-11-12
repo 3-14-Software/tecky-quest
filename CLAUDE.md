@@ -244,11 +244,37 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   est éclairé à la verticale sans que rien soit décollé ; au seuil de 5 px il ne reste que deux colonnes de la
   table de terrasse, à 3 px le liseré connu le long du mur qui fuit des maisons) : à relancer après
   tout nouveau décor.
-- **Saisons** (lot 6, étude) : `saisons.py` — une saison est d'abord une palette (feuillages `nature.FEUILLAGES`,
-  herbe `tiles.GRASS`, quelques terrains `tiles.TERRAINS`) ; `appliquer(saison)` la pose (en place : les modules
-  de dessin la lisent en dessinant ; toujours revenir au printemps, `appliquer()`), `python3 saisons.py` redessine
-  l'étude `reference/v2/saisons_etude.png`. Le jeu ne connaît encore que le printemps. Décisions de Christophe :
-  épisodes l'un après l'autre, Alice à chaque saison, l'été d'abord (découpage dans `PLAN_V2.md`, lot 6).
+- **Saisons** (lot 6 ; 12 novembre 2026) : chaque épisode a la sienne (`episodes.json`, `EP().saison`).
+  `saisons.py` — une saison est d'abord une palette (feuillages `nature.FEUILLAGES`, herbe `tiles.GRASS`, quelques
+  terrains `tiles.TERRAINS`) ; `appliquer(saison)` la pose (en place : les modules de dessin la lisent en
+  dessinant ; toujours revenir au printemps, `appliquer()`), `python3 saisons.py` redessine l'étude
+  `reference/v2/saisons_etude.png`. **Images d'une saison** (`pack_web.build_saisons()`) : le printemps est dans
+  la page ; pour chaque autre saison d'un épisode, le tileset entier est redessiné avec sa palette, et tout
+  l'atlas aussi, comparé à celui du printemps : seuls les sprites qui changent (21 en été : arbres, buissons,
+  fourrés, haie, buttes des tunnels) sont rangés dans une image à part. Fichiers à côté de la page, comme les
+  images x4 : `saison_<nom>_tiles.png`, `saison_<nom>_atlas.png` et leurs jumeaux `_x4` (été : 0,7 Mo en x2,
+  1,7 Mo en x4), redessinés seulement si un module de dessin a changé (`web/saisons.json`), copiés dans la
+  version autonome et publiés par `publish_docs.sh`. La page embarque `SAISONS[nom]` : les adresses (`?v=`) et
+  `meta`, les entrées d'`ATLAS` à remplacer, dont les y sont décalés de `SAISON_Y` (2^20). Pour l'instant une
+  saison ne change que des couleurs : `build_saisons()` refuse un sprite qui n'a plus le cadre du printemps
+  (ombres, lignes de contact, perchoirs sont ceux du printemps) — à lever pour la neige de l'hiver.
+  `game.js` : `update()` demande la saison de l'épisode dès qu'elle change (`askSeason()`, `seasonAsked`) ;
+  `seasonFiles()` charge ses images (les nettes aussi quand `HD.k > 1` — pas `HD.on`, que le dessin de
+  l'interface éteint à chaque image), gardées dans `seasons` ; `setSeason()` remplace les entrées d'`ATLAS`
+  (`springFrames` : celles du printemps, rendues au retour), puis le sol et la carte de la pause se repeignent.
+  `blit()` et `blitCols()` reconnaissent un cadre de saison à son y (`>= SEASON_Y`) et le lisent dans l'image
+  de la saison (`season.img`, ou `season.pages` en images nettes) ; `groundTiles()` = le tileset du moment.
+  Règle : une saison posée a toujours ses images nettes quand le jeu lit les images nettes (`setHD()` retire
+  une saison qui ne les a pas, elle est redemandée ; `loadHD()` les charge d'avance). Tant que les images ne
+  sont pas là, ou si elles manquent, le monde garde les couleurs d'avant. Un sprite de saison n'a pas d'ombre
+  de `castShadow()` (il n'est pas dans la copie sombre de l'atlas : aujourd'hui ce ne sont que des décors, dont
+  l'ombre est peinte dans le sol). Les couleurs écrites dans `game.js` (plages de l'herbe `MEADOW`, du sous-bois
+  `WOOD`, fonds des mares `POND`) sont des voiles : elles n'ont pas eu besoin de changer en été ; les plants du
+  champ et les brins d'herbe gardent leur vert. L'éditeur de carte montre toujours le printemps. Captures :
+  `python3 v2/capture.py sortie.png "70,30,balade,monde,ete"` (`--x2` : sans images nettes) ;
+  `reference/v2/lot6_ete_jeu.png`. Tests : `saisons.js` (bascule, images nettes, fichiers absents),
+  `saisons.py` (fichiers : mêmes formes, mêmes cadres, x4 = x2). Décisions de Christophe : épisodes l'un après
+  l'autre, Alice à chaque saison, l'été d'abord (découpage dans `PLAN_V2.md`, lot 6).
 - **Épisodes** (lot 6, le moteur ; 12 novembre 2026) : `episodes.json` (`episodes.py` : `charger()`,
   `valider()`, `python3 episodes.py`) donne les épisodes dans l'ordre où ils s'ouvrent : `id`, `saison`, `cartes`
   (un passage vers une carte qui n'en fait pas partie est fermé : `passageHere()`), `depart` (la carte de la
@@ -267,6 +293,26 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   « Nouvel épisode : L'été ! ») et le titre le propose ensuite. La saison (`EP().saison`) ne change encore rien
   à l'image. Un nouvel épisode : une entrée dans `episodes.json`, ses deux textes. Dans un test, sortir l'été du
   chantier : `EPISODES[1].chantier = false`. Tests : `episodes.js` ; `cartes.js` se joue en été.
+  **Ce qu'un épisode change à une carte** (les données d'un épisode) : `cartes/<épisode>/<carte>.json`, la
+  surcharge, ne redit que les clés de la carte qui changent (objets, chiens, panneaux, place d'Alice… chaque clé
+  remplace celle de la carte de base, en entier) ; une clé à `null` est retirée : la carte n'a plus ce
+  personnage, cette liste, comme une carte annexe (`absents`). Aujourd'hui : `cartes/ete/monde.json` (le monde
+  sans les trois indices du printemps ni Alice dans sa cabane : en été, ils seront sur la côte ; la flèche mène
+  donc au tunnel). `carte.py` : `surcharge()`, `surcharges()`, `appliquer()`, `difference()` (l'inverse, pour
+  l'éditeur), `valider_surcharge()` (refuse une clé redite à l'identique, la taille de la carte, et vérifie la
+  carte posée avec `valider(…, variante=True)` : comme une carte annexe, elle peut ne pas tout avoir, et n'a pas
+  à porter les trois indices), `charger_episode(nom, episode)` ; `python3 carte.py` vérifie aussi les
+  surcharges. `pack_web.py` : `charger_carte(nom, episode)` ; la page n'embarque de chaque carte changée que les
+  données construites qui diffèrent (`SURCHARGES = { épisode: { carte: … } }` : 1 Ko pour l'été) ;
+  `check_placement.js --carte nom --episode id` vérifie chacune. `game.js` : `carteOf(id, ep)` pose la surcharge
+  par-dessus, `MAP.variante` la nomme (null : la carte de base), `onMap(id)` dit si la carte courante est bien
+  celle de l'épisode en cours — à tester avant `useMap()` partout où l'épisode peut avoir changé (`newGame()`,
+  `titleScene()` : l'écran titre montre le monde de l'épisode choisi, `stepEpisode()` le change sur place).
+  Éditeur : `?carte=monde&episode=ete`, ou le choix « Épisode » ; il ouvre la carte sous sa surcharge et
+  n'enregistre que ce qui diffère de la carte de base (`editeur.lire()`, `enregistrer_surcharge()` ; une
+  surcharge qui ne redit plus rien est retirée) ; retirer un personnage (`null`) se fait dans le fichier ;
+  « Essayer ici » passe l'épisode (`ESSAI[4]`). À venir avec le contenu : les indices propres à chaque épisode
+  (`CLUES` est encore celui du printemps). Tests : `tests/surcharges.py`, `episodes.js`.
 - **Plusieurs cartes** (lot 6, jalon « deux cartes », 12 novembre 2026). Le jeu a la carte du monde (`carte.json`,
   « monde » : toute l'aventure) et des **cartes annexes** (`cartes/<nom>.json`, `"annexe": true` ; aujourd'hui
   `cartes/pre.json`, 40 x 24, petite et vide : elle prouve le moteur). `carte.noms()`, `carte.chemin(nom)`. Une

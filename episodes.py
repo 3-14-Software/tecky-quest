@@ -5,7 +5,8 @@ episodes.json en donne la liste, dans l'ordre où ils s'ouvrent :
 
     id        son nom dans le jeu (sauvegarde, records, textes `episodes.<id>.nom` / `.note` de textes/fr.json)
     saison    printemps, ete, automne ou hiver (palette : saisons.py)
-    cartes    les cartes où il se joue (carte.noms()) ; un passage vers une carte qui n'en fait pas partie est fermé
+    cartes    les cartes où il se joue (carte.noms()) ; un passage vers une carte qui n'en fait pas partie est fermé ;
+              cartes/<id>/<carte>.json, s'il existe, dit ce que l'épisode change à cette carte (carte.py : surcharge)
     depart    celle où la partie commence (elle a la niche : `start`)
     chantier  vrai tant qu'il n'est pas jouable : le jeu ne le propose pas (sauf avec ?chantier dans l'adresse)
 
@@ -72,6 +73,13 @@ def valider(eps, cartes=None):
         for c in les:
             if c in cartes and c not in atteintes:
                 pb.append(f"épisode « {nom} » : aucun passage ne mène à la carte « {c} » depuis « {dep} »")
+    # les surcharges (cartes/<épisode>/<carte>.json) : d'un épisode qui existe, pour une de ses cartes
+    for ep, c in carte.surcharges():
+        e = next((e for e in eps if e.get("id") == ep), None)
+        if e is None:
+            pb.append(f"cartes/{ep}/{c}.json : pas d'épisode « {ep} »")
+        elif c not in (e.get("cartes") or []):
+            pb.append(f"cartes/{ep}/{c}.json : la carte « {c} » n'est pas de l'épisode « {ep} »")
     if eps and eps[0].get("chantier"):
         pb.append("le premier épisode ne peut pas être en chantier : c'est par lui que le jeu commence")
     return pb

@@ -58,7 +58,11 @@
      chose) et ne sont écrites que si elles ne le sont plus ; ses personnages, son enclos, sa voie absents ne se
      voient pas. */
   ED.nom = new URLSearchParams(location.search).get('carte') || 'monde';
-  ED.fichier = () => 'carte.json?carte=' + encodeURIComponent(ED.nom);
+  /* ?episode=id : la carte telle qu'un épisode la joue. Le serveur la donne sous sa surcharge (cartes/<id>/<nom>.json)
+     et, à l'enregistrement, n'écrit dans ce fichier que ce qui diffère de la carte de base ; ce que l'épisode a retiré
+     (un personnage, une liste) est absent, comme sur une carte annexe. */
+  ED.episode = new URLSearchParams(location.search).get('episode') || '';
+  ED.fichier = () => 'carte.json?carte=' + encodeURIComponent(ED.nom) + (ED.episode ? '&episode=' + encodeURIComponent(ED.episode) : '');
   const LISTES_VIDES = ['details', 'decor', 'items', 'dig', 'enemies', 'signs', 'tunnels', 'hens', 'ducks', 'cows', 'critters',
     'butterflies', 'villagers', 'letters', 'balls', 'toys', 'babies', 'roadTunnels', 'calm', 'landmarks'];
   let ouvertes = [];
@@ -67,7 +71,7 @@
     const r = await fetch(ED.fichier(), { cache: 'no-store' });
     ED.etag = r.headers.get('ETag');
     ED.c = await r.json();
-    ouvertes = ED.c.annexe ? LISTES_VIDES.filter(k => !(k in ED.c)) : [];
+    ouvertes = LISTES_VIDES.filter(k => !(k in ED.c));     // (carte annexe, ou liste retirée par un épisode)
     for (const k of ouvertes) ED.c[k] = [];
     sauve = JSON.stringify(ED.c);
     hist.length = futur.length = 0;

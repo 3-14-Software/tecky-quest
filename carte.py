@@ -25,6 +25,11 @@ FORMAT = 1
 MONDE = "monde"
 DOSSIER = os.path.join(ROOT, "cartes")
 HORS = -2000          # en tuiles : la place de ce qu'une carte n'a pas, loin de tout
+# Un épisode (episodes.json) peut changer une carte sans la recopier : cartes/<épisode>/<nom>.json, la surcharge, ne
+# redit que les clés qui changent (les objets, les chiens, la place d'Alice…) ; une clé à null est retirée de la carte
+# (plus d'Alice, plus de fermier : comme sur une carte annexe, completer() les met hors de la carte). Le terrain
+# reste celui de la carte de base tant que la surcharge ne le redit pas.
+FIXES = ("format", "annexe", "w", "h", "legende")       # ce qu'une surcharge ne change jamais
 
 # une lettre par terrain dans les lignes de « terrain » (une ligne par rangée de coins)
 LEGENDE = {".": "grass", "t": "dirt", "r": "road", "p": "paving", "b": "concrete", "s": "sidewalk", "~": "water",
@@ -115,6 +120,66 @@ def noms():
     return [MONDE] + autres
 
 
+def surcharge(nom, episode):
+    """Le fichier de la surcharge de la carte `nom` pour un épisode (qu'il existe ou non)."""
+    return os.path.join(DOSSIER, episode, nom + ".json")
+
+
+def surcharges():
+    """Les surcharges du dépôt : [(épisode, carte)], par ordre alphabétique."""
+    out = []
+    for ep in sorted(os.listdir(DOSSIER)) if os.path.isdir(DOSSIER) else []:
+        d = os.path.join(DOSSIER, ep)
+        if os.path.isdir(d):
+            out += [(ep, f[:-5]) for f in sorted(os.listdir(d)) if f.endswith(".json")]
+    return out
+
+
+def appliquer(c, s):
+    """La carte c changée par la surcharge s : chaque clé de s remplace celle de c, une clé à null est retirée."""
+    c = dict(c)
+    for k, v in s.items():
+        if v is None:
+            c.pop(k, None)
+        else:
+            c[k] = v
+    return c
+
+
+def difference(c, base):
+    """La surcharge qui fait passer de la carte `base` à la carte c : les clés qui changent, null pour celles que c
+    n'a plus (l'inverse d'appliquer(), pour l'éditeur)."""
+    s = {k: v for k, v in c.items() if k not in FIXES and _norme(v) != _norme(base.get(k))}
+    s.update({k: None for k in base if k not in c and k not in FIXES})
+    return s
+
+
+def valider_surcharge(s, base):
+    """Les erreurs d'une surcharge posée sur la carte `base` (vide : tout va bien)."""
+    if not isinstance(s, dict):
+        return ["un objet JSON"]
+    err = [f"{k} : une surcharge ne change pas cette clé" for k in s if k in FIXES]
+    err += [f"{k} : identique à la carte de base (à retirer de la surcharge)" for k, v in s.items()
+            if k in base and _norme(v) == _norme(base[k])]
+    err += [f"{k} : null retire une clé que la carte de base n'a pas" for k, v in s.items() if v is None and k not in base]
+    return err or valider(appliquer(base, s), variante=True)
+
+
+def charger_episode(nom, episode=None, verifier=True):
+    """La carte `nom` telle qu'un épisode la joue : la carte de base, changée par sa surcharge s'il y en a une."""
+    c = charger(chemin(nom), verifier)
+    f = surcharge(nom, episode) if episode else None
+    if not f or not os.path.exists(f):
+        return c
+    with open(f, encoding="utf-8") as fd:
+        s = json.load(fd)
+    if verifier:
+        err = valider_surcharge(s, c)
+        if err:
+            raise ValueError(f"{os.path.relpath(f, ROOT)} : " + " ; ".join(err[:12]))
+    return appliquer(c, s)
+
+
 # ce qu'une carte annexe peut ne pas avoir, et ce qui en tient lieu (hors de la carte, ou rien)
 _LISTES = ["details", "decor", "items", "dig", "enemies", "signs", "tunnels", "hens", "ducks", "cows", "critters",
            "butterflies", "villagers", "letters", "balls", "toys", "babies", "roadTunnels", "passages", "calm", "landmarks"]
@@ -164,8 +229,9 @@ def _pt(v):
     return isinstance(v, list) and len(v) == 2 and all(_num(a) for a in v)
 
 
-def valider(c, avec_genres=True):
-    """Liste des erreurs (vide si la carte est correcte)."""
+def valider(c, avec_genres=True, variante=False):
+    """Liste des erreurs (vide si la carte est correcte). variante : la carte d'un épisode (une carte de base sous
+    sa surcharge), qui peut avoir perdu des personnages ou les indices."""
     err = []
     if c.get("format") != FORMAT:
         return [f"format {c.get('format')!r} inconnu (attendu : {FORMAT})"]
@@ -185,7 +251,7 @@ def valider(c, avec_genres=True):
     annexe = c.get("annexe") is True
     if "annexe" in c and not annexe:
         err.append("annexe : true, ou rien (la carte du monde)")
-    la = lambda cle: not annexe or cle in c            # (une carte annexe n'a que ce qu'elle déclare)
+    la = lambda cle: not (annexe or variante) or cle in c     # (une carte annexe n'a que ce qu'elle déclare)
 
     def liste(cle, forme, nom):
         if not la(cle) or (cle == "passages" and cle not in c):
@@ -289,7 +355,7 @@ def valider(c, avec_genres=True):
             err.append(f"passages[{i}] : pas de tunnel n° {e[0]} sur cette carte")
     if annexe and not c.get("passages"):
         err.append("passages : une carte annexe a au moins un passage (sinon on n'y arrive jamais)")
-    if isinstance(c.get("items"), list) and not annexe:
+    if isinstance(c.get("items"), list) and not annexe and not variante:
         for n in INDICES:
             k = sum(1 for it in c["items"] if isinstance(it, list) and it and it[0] == n)
             if k != 1:
@@ -362,4 +428,22 @@ if __name__ == "__main__":
             raise SystemExit(fichier + " : pas au format normalisé (python3 carte.py le réécrit)")
         else:
             enregistrer(c, f)
+            print(fichier + " réécrit au format normalisé")
+    for ep, nom in surcharges():          # chaque surcharge d'épisode : pose une carte correcte, ne redit rien
+        f = surcharge(nom, ep)
+        fichier = os.path.relpath(f, ROOT)
+        if nom not in noms():
+            raise SystemExit(fichier + " : pas de carte « " + nom + " »")
+        with open(f, encoding="utf-8") as fd:
+            avant = fd.read()
+        s = json.loads(avant)
+        err = valider_surcharge(s, charger(chemin(nom), verifier=False))
+        if err:
+            raise SystemExit(fichier + " :\n  " + "\n  ".join(err))
+        if texte(s) == avant:
+            print(fichier + " : ok")
+        elif "--verifier" in sys.argv:
+            raise SystemExit(fichier + " : pas au format normalisé (python3 carte.py le réécrit)")
+        else:
+            enregistrer(s, f)
             print(fichier + " réécrit au format normalisé")

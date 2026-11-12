@@ -11,8 +11,12 @@ const GW = 1920, GH = 1080;             // repère de l'interface
    annexes où l'on passe par un tunnel de la grande route). MAP est la carte courante : ses données (sol, décors,
    placements) par-dessus celles du jeu (JEU : dessins, ombres, cadences), dont elle hérite — MAP.w comme MAP.ts.
    useMap(id), plus bas, en change. Ce qu'une carte annexe n'a pas (MAP.absents : Alice, un personnage, l'enclos, la
-   voie…) est posé loin hors de la carte : rien ne s'en approche jamais. */
-const carteOf = id => Object.assign(Object.create(JEU), CARTES[id]);
+   voie…) est posé loin hors de la carte : rien ne s'en approche jamais.
+   Un épisode peut changer une carte (SURCHARGES[épisode][carte] : seulement les données qui diffèrent, objets,
+   chiens, place d'Alice…) : carteOf(id, ep) les pose par-dessus, MAP.variante dit lesquelles (null : la carte de
+   base) et onMap(id) si la carte courante est bien celle-là, telle que l'épisode en cours la joue. */
+const variantOf = (id, ep) => (ep && SURCHARGES[ep] && SURCHARGES[ep][id]) || null;
+const carteOf = (id, ep) => Object.assign(Object.create(JEU), CARTES[id], variantOf(id, ep), { variante: variantOf(id, ep) });
 let MAP = carteOf('monde');
 const ici = k => !MAP.absents.includes(k);          // la carte courante a-t-elle ce personnage, l'enclos, la voie… ?
 const TS = MAP.ts;
@@ -78,11 +82,15 @@ function loadHD() {
   if (HD.asked || !wantHD()) return;
   HD.asked = true;
   const imgs = HD_SRC.atlas.concat([HD_SRC.tiles]).map(src => { const im = new Image(); im.src = src; return im; });
-  Promise.all(imgs.map(whenLoaded)).then(() => setHD(HD_SRC.k, HD_SRC.page, imgs.slice(0, -1), imgs[imgs.length - 1]))
-    .catch(() => {});                   // fichiers absents : on reste en x2
+  Promise.all(imgs.map(whenLoaded)).then(() => {
+    const go = () => setHD(HD_SRC.k, HD_SRC.page, imgs.slice(0, -1), imgs[imgs.length - 1]);
+    // (les images nettes de la saison affichée d'abord : sinon le monde repasserait un instant au printemps)
+    return season ? seasonFiles(season.nom, true).then(go, go) : go();
+  }).catch(() => {});                   // fichiers absents : on reste en x2
 }
 function setHD(k, page, pages, tiles) {
   Object.assign(HD, { k, page, pages, tiles, on: k > 1 });
+  if (season && !season.pages) { setSeason(null); seasonAsked = null; }     // (saison sans images nettes : redemandée, update())
   resetGround();                        // le sol se repeint à la nouvelle échelle, bloc par bloc
 }
 addEventListener('resize', loadHD);     // (passage en plein écran, fenêtre agrandie)
@@ -91,11 +99,55 @@ addEventListener('resize', loadHD);     // (passage en plein écran, fenêtre ag
    depuis l'atlas x2 ou, quand elles sont chargées, depuis la page nette qui la contient. part : ne copier que les
    `part` premiers pixels de sa largeur (jauge). */
 function blit(g, f, x, y, w, h, part) {
-  const sw = part === undefined ? f[2] : part;
-  if (!HD.on) { g.drawImage(atlas, f[0], f[1], sw, f[3], x, y, w, h); return; }
-  const k = HD.k, p = Math.floor(f[1] / HD.page);
-  g.drawImage(HD.pages[p], f[0] * k, (f[1] - p * HD.page) * k, sw * k, f[3] * k, x, y, w, h);
+  const sw = part === undefined ? f[2] : part, s = f[1] >= SEASON_Y, fy = s ? f[1] - SEASON_Y : f[1];
+  if (!HD.on) { g.drawImage(s ? season.img : atlas, f[0], fy, sw, f[3], x, y, w, h); return; }
+  const k = HD.k, p = Math.floor(fy / HD.page);
+  g.drawImage((s ? season.pages : HD.pages)[p], f[0] * k, (fy - p * HD.page) * k, sw * k, f[3] * k, x, y, w, h);
 }
+
+/* Saisons. Chaque épisode a la sienne (EP().saison). Le printemps est dans la page ; pour les autres, pack_web.py
+   écrit à côté de la page le tileset redessiné avec la palette de la saison et les sprites qui en changent (arbres,
+   buissons, fourrés, buttes des tunnels), rangés dans une image à part (SAISONS[nom] : adresses, images nettes, et
+   « meta », les entrées d'ATLAS à remplacer). Un cadre de saison se reconnaît à son y, décalé de SEASON_Y : blit()
+   le lit alors dans l'image de la saison. update() demande la saison de l'épisode dès qu'elle change (askSeason) ;
+   ses images posées, le sol se repeint. Tant qu'elles ne sont pas là, ou si elles manquent (page seule ouverte
+   depuis le disque), le monde garde les couleurs d'avant. Une saison posée a toujours ses images nettes quand le
+   jeu lit les images nettes (setHD, askSeason). */
+const SEASON_Y = 1 << 20;
+const seasons = {};           // les saisons déjà chargées : { nom, img, tiles, pages, tilesHD }
+let season = null, seasonAsked = 'printemps', springFrames = {};
+function loadImages(srcs) {
+  const imgs = srcs.map(src => { const im = new Image(); im.src = src; return im; });
+  return Promise.all(imgs.map(whenLoaded)).then(() => imgs);
+}
+function seasonFiles(nom, hd) {         // les images de la saison (les nettes aussi si hd) : une promesse de son entrée de `seasons`
+  const S = SAISONS[nom], c = seasons[nom] || (seasons[nom] = { nom });
+  if (!c.p2) c.p2 = loadImages([S.atlas, S.tiles]).then(([a, t]) => { c.img = a; c.tiles = t; }, e => { c.p2 = null; throw e; });
+  if (hd && !c.p4) c.p4 = !S.hd ? Promise.reject(new Error(nom)) :
+    loadImages(S.hd.atlas.concat([S.hd.tiles])).then(ims => { c.tilesHD = ims.pop(); c.pages = ims; }, e => { c.p4 = null; throw e; });
+  return Promise.all([c.p2, hd ? c.p4 : null]).then(() => c);
+}
+function askSeason() {
+  const nom = seasonAsked = EP().saison;
+  if (typeof SAISONS === 'undefined' || !SAISONS[nom]) { setSeason(null); return; }     // le printemps : les images de la page
+  if (season && season.nom === nom) return;
+  // (HD.k, pas HD.on : le dessin de l'interface éteint HD.on jusqu'à l'image suivante)
+  seasonFiles(nom, HD.k > 1).then(c => {
+    if (seasonAsked !== nom) return;                   // (le joueur a déjà changé d'épisode)
+    if (HD.k > 1 && !c.pages) askSeason(); else setSeason(c);  // (les images nettes sont arrivées entre-temps : il faut les siennes)
+  }).catch(() => {});                                  // fichiers absents : les couleurs d'avant
+}
+function setSeason(c) {
+  if (season === c) return;
+  for (const k in springFrames) ATLAS[k] = springFrames[k];
+  springFrames = {};
+  season = c;
+  if (c) for (const k in SAISONS[c.nom].meta) { springFrames[k] = ATLAS[k]; ATLAS[k] = SAISONS[c.nom].meta[k]; }
+  resetGround();                                       // le sol (tuiles, ombres des décors) se repeint aux couleurs de la saison
+  mapImg = null;                                       // la carte de la pause aussi
+}
+// le tileset du moment : celui de la saison, en x2 ou en images nettes
+const groundTiles = () => HD.k === 1 ? (season ? season.tiles : tilesImg) : (season ? season.tilesHD : HD.tiles);
 
 /* ------------------------------------------------------------------ utilitaires */
 /* Textes. Ils sont tous dans textes/fr.json (embarqué par pack_web.py : TEXTES[langue]) ; le code ne connaît que
@@ -182,7 +234,7 @@ function buildShadowAtlas() {
 }
 function castShadow(g, s, f, x, y, o) {
   const a = o.alpha === undefined ? 1 : o.alpha;
-  if (a <= 0.01) return;
+  if (a <= 0.01 || f[1] >= SEASON_Y) return;           // (un sprite de saison n'est pas dans la copie sombre de l'atlas)
   const len = sunAt(SHADOW.len, clamp(sun, 0, 4)), lift = o.lift || 0;
   const X = Math.round(x * scale) / scale, Y = Math.round((y + lift) * scale) / scale;
   const kx = (o.flip ? -1 : 1) * (o.sc || 1), ky = (o.sc || 1) * (o.sy || 1);
@@ -1392,9 +1444,10 @@ const SHADOW = { sx: MAP.shadow[0], sy: MAP.shadow[1], color: 'rgb(22, 50, 60)',
 const shadowLen = () => Math.round(sunAt(SHADOW.len, clamp(sun, 0, 4)) / SHADOW.step) * SHADOW.step;
 function blitCols(g, f, c0, c1, x, y) {       // les colonnes c0..c1 d'une image de l'atlas, posées en (x, y)
   const n = c1 - c0;
-  if (!HD.on) { g.drawImage(atlas, f[0] + c0, f[1], n, f[3], x, y, n, f[3]); return; }
-  const k = HD.k, p = Math.floor(f[1] / HD.page);
-  g.drawImage(HD.pages[p], (f[0] + c0) * k, (f[1] - p * HD.page) * k, n * k, f[3] * k, x, y, n, f[3]);
+  const s = f[1] >= SEASON_Y, fy = s ? f[1] - SEASON_Y : f[1];
+  if (!HD.on) { g.drawImage(s ? season.img : atlas, f[0] + c0, fy, n, f[3], x, y, n, f[3]); return; }
+  const k = HD.k, p = Math.floor(fy / HD.page);
+  g.drawImage((s ? season.pages : HD.pages)[p], (f[0] + c0) * k, (fy - p * HD.page) * k, n * k, f[3] * k, x, y, n, f[3]);
 }
 function groundShadows(g, x0, y0, w, k, len, mask) {
   let o = null, og = null;
@@ -1446,7 +1499,7 @@ function groundChunk(ci, cj) {            // le bloc (ci, cj) de la grille : pei
   else {
     const n = chunkTiles();
     groundBuilt++;
-    ch = buildChunk(ci * n, cj * n, n, HD.k === 1 ? tilesImg : HD.tiles, HD.k, len, true);
+    ch = buildChunk(ci * n, cj * n, n, groundTiles(), HD.k, len, true);
     if (ground.size >= GROUND_MAX) ground.delete(ground.keys().next().value);
   }
   ground.set(key, ch);
@@ -1539,7 +1592,7 @@ function drawWater(vx, vy, time) {
 
 function drawHole(x, y) {
   const idx = MAP.hole, k = HD.k, s = TS * k;
-  ctx.drawImage(k === 1 ? tilesImg : HD.tiles, (idx % 16) * s, Math.floor(idx / 16) * s, s, s, x - TS / 2, y - TS / 2 - 6, TS, TS);
+  ctx.drawImage(groundTiles(), (idx % 16) * s, Math.floor(idx / 16) * s, s, s, x - TS / 2, y - TS / 2 - 6, TS, TS);
 }
 
 /* ------------------------------------------------------------------ collisions */
@@ -1799,6 +1852,7 @@ const epOfSave = s => (EPISODES.find(e => e.id === s.ep) || EPISODES[0]).id;    
 function stepEpisode(d) {               // écran titre : l'épisode suivant ou précédent, parmi ceux qui sont ouverts
   const o = openEpisodes(), i = o.findIndex(e => e.id === episode);
   episode = o[(Math.max(0, i) + d + o.length) % o.length].id;
+  if (!onMap('monde')) titleScene();     // le monde de cet épisode derrière le menu
   SFX.blip();
 }
 const ITEM = {
@@ -1835,11 +1889,13 @@ let dusts = [], leaves = [], leafTrees = null, clouds = [], sun = 0, saveT = 0;
 let score = 0, timePlayed = 0, fled = 0, treasures = 0, dialog = null, dialogReturn = 'play', aliceSniffed = false;
 let hintText = null, digHint = null, playHint = null, tunnelHint = null, talkHint = null, overT = 0, titleT = 0;
 
-/* Change de carte courante (CARTES[id]) : ce qui se calcule une fois par carte est refait (lisière, zones, lieux),
+/* Change de carte courante (CARTES[id], telle que l'épisode en cours la joue) : ce qui se calcule une fois par carte
+   est refait (lisière, zones, lieux),
    ce qui se construit à la demande est oublié (sol, eau, carte de la pause, grille du parcours à pied, flaques,
    arbres qui perdent leurs feuilles). Les habitants de la carte sont l'affaire de reset() ou de resetWorld(). */
+const onMap = id => MAP.id === id && MAP.variante === variantOf(id, episode);
 function useMap(id) {
-  MAP = carteOf(id);
+  MAP = carteOf(id, episode);
   EDGE_DECOR = edgeDecor(); EDGE_SOLIDS = edgeSolids();
   ZONES = zonesOf(); LANDMARKS = MAP.landmarks;
   buildGround();
@@ -4186,7 +4242,7 @@ function buildMapImg() {
   const g = c.getContext('2d');
   g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
   for (let cy = 0; cy < MAP.h; cy += 16) for (let cx = 0; cx < MAP.w; cx += 16) {      // (au quart : le tileset x2 suffit)
-    const ch = buildChunk(cx, cy, 16, tilesImg, 1);
+    const ch = buildChunk(cx, cy, 16, season ? season.tiles : tilesImg, 1);
     g.drawImage(ch.c, ch.x * k, ch.y * k, ch.w * k, ch.h * k);
   }
   const sorted = decor.slice().sort((a, b) => (FLAT.has(b.n) - FLAT.has(a.n)) || a.y - b.y);
@@ -4194,7 +4250,8 @@ function buildMapImg() {
     const s = ATLAS[d.key];
     if (!s) continue;
     const f = s.f[0];
-    g.drawImage(atlas, f[0], f[1], f[2], f[3], (d.x + f[4] - s.o[0]) * k, (d.y + f[5] - s.o[1]) * k, f[2] * k, f[3] * k);
+    const sais = f[1] >= SEASON_Y;                 // (un décor aux couleurs de la saison : dans son image)
+    g.drawImage(sais ? season.img : atlas, f[0], sais ? f[1] - SEASON_Y : f[1], f[2], f[3], (d.x + f[4] - s.o[0]) * k, (d.y + f[5] - s.o[1]) * k, f[2] * k, f[3] * k);
   }
   mapImg = c;
 }
@@ -4348,7 +4405,7 @@ function newGame(mode, again) {
   transition();
   const cx = camX, cy = camY;
   gameDiff = opts.diff;
-  if (MAP.id !== EP().depart) useMap(EP().depart);   // une partie commence toujours à la niche, sur la carte de départ de l'épisode
+  if (!onMap(EP().depart)) useMap(EP().depart);      // une partie commence toujours à la niche, sur la carte de départ de l'épisode
   reset();
   gameMode = mode;
   if (!again) { camX = cx; camY = cy; }          // depuis l'écran titre, la caméra glisse du village jusqu'à la niche
@@ -4390,6 +4447,7 @@ let menu = null;              // { items: [{ id, label, sub, mode }], sel, y0, w
 function openTitleMenu() {
   recs = STORE.get(RECORDS_KEY) || {};
   if (!epOpen(EP())) episode = lastOpen();            // (progression effacée, épisode retourné en chantier)
+  if (!onMap('monde')) titleScene();
   const s = loadSave(), items = [];
   if (s) {
     const n = s.clues.filter(Boolean).length;
@@ -4454,8 +4512,10 @@ function chooseMenu(id) {
 const essai = typeof ESSAI !== 'undefined' ? ESSAI : null;
 function startEssai() {
   gameDiff = opts.diff;
-  if (essai[3] && CARTES[essai[3]] && essai[3] !== MAP.id) useMap(essai[3]);       // (une carte annexe, depuis l'éditeur)
-  episode = (EPISODES.find(e => e.cartes.includes(MAP.id)) || EPISODES[0]).id;      // le premier épisode qui a cette carte
+  const id = essai[3] && CARTES[essai[3]] ? essai[3] : 'monde';                     // (une carte annexe, depuis l'éditeur)
+  // l'épisode demandé (essai[4]), sinon le premier qui a cette carte
+  episode = (EPISODES.find(e => e.id === essai[4]) || EPISODES.find(e => e.cartes.includes(id)) || EPISODES[0]).id;
+  if (!onMap(id)) useMap(id);
   reset();
   gameMode = essai[2] === 'balade' ? 'balade' : 'aventure';
   Object.assign(P, { x: essai[0] * TS, y: essai[1] * TS });
@@ -4463,16 +4523,20 @@ function startEssai() {
   state = 'play';
   Music.start();
 }
+// le décor de l'écran titre : la place du village, dans le monde tel que l'épisode choisi le joue
+function titleScene() {
+  if (!onMap('monde')) useMap('monde');
+  reset();
+  camX = camClampX(MAP.title[0] - VW / 2);
+  camY = camClampY(MAP.title[1] - VH / 2);
+}
 // l'écran titre joue toujours le thème d'origine (« base »), quelle que soit la zone de la partie quittée
 const TITLE_MUSIC = 'niche';
 function toTitle() {
   transition();
-  if (MAP.id !== 'monde') useMap('monde');           // l'écran titre : la place du village
-  reset();
-  gameMode = 'aventure';
   if (opened) { episode = opened; opened = null; }   // la victoire a ouvert un épisode : c'est lui qui est proposé
-  camX = camClampX(MAP.title[0] - VW / 2);   // caméra de l'écran titre : la place du village
-  camY = camClampY(MAP.title[1] - VH / 2);
+  titleScene();
+  gameMode = 'aventure';
   state = 'title'; titleT = 0;
   openTitleMenu();
   if (Music.on && Music.cur !== 'main') Music.stop();     // la berceuse de la fin, la musique de défaite
@@ -5328,6 +5392,7 @@ function updateCamera(dt) {
 }
 
 function update(dt) {
+  if (seasonAsked !== EP().saison) askSeason();        // l'épisode a changé de saison : ses images
   updateFade(dt);
   if (pressed.mute) { muted = !muted; Music.refresh(); }
   updateToasts(dt);

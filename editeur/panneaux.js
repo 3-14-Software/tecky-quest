@@ -83,7 +83,7 @@
     $('etat').classList.toggle('modifie', ED.modifie);
     $('annuler').disabled = !ED.peutAnnuler();
     $('retablir').disabled = !ED.peutRetablir();
-    document.title = (ED.modifie ? '● ' : '') + 'Carte — Tecky Quest';
+    document.title = (ED.modifie ? '● ' : '') + 'Carte ' + ED.nom + (ED.episode ? ' (' + ED.episode + ')' : '') + ' — Tecky Quest';
   };
 
   /* ------------------------------------------------------------------ calques */
@@ -289,7 +289,7 @@
     if (ED.modifie && !(await P.enregistrer())) return;
     occupe('Construction du jeu et vérification des placements…');
     try {
-      const r = await fetch('verifier', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ carte: ED.nom }) }).then(r => r.json());
+      const r = await fetch('verifier', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ carte: ED.nom, episode: ED.episode }) }).then(r => r.json());
       if (r.jeu) { ED.I.jeu = r.jeu; ED.change(); }
       P.atteint = r.atteint;
       $('acces').disabled = !r.atteint;
@@ -304,7 +304,7 @@
     if (ED.modifie && !(await P.enregistrer())) { if (w) w.close(); return; }
     occupe('Construction du jeu…');
     try {
-      const r = await fetch('essai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ x, y, mode, carte: ED.nom }) }).then(r => r.json());
+      const r = await fetch('essai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ x, y, mode, carte: ED.nom, episode: ED.episode }) }).then(r => r.json());
       if (r.ok) { if (w) w.location = r.url; else window.open(r.url, '_blank'); }
       else { if (w) w.close(); afficherProblemes({ titre: 'La construction du jeu a échoué', sortie: r.sortie }); }
     } finally { occupe(null); }
@@ -354,7 +354,17 @@
     const sel = $('cartes');
     for (const n of I.cartes) sel.append(h('option', { value: n, selected: n === ED.nom }, n === 'monde' ? 'monde (carte.json)' : n));
     sel.onchange = () => { if (!ED.modifie || confirm('Des modifications ne sont pas enregistrées. Changer de carte quand même ?')) location.search = '?carte=' + encodeURIComponent(sel.value); else sel.value = ED.nom; };
-    document.title = 'Carte ' + ED.nom + ' — Tecky Quest';
+    // le choix de l'épisode : la carte de base, ou la carte telle qu'un épisode la joue (?episode=id)
+    const eps = I.episodes.filter(e => e.cartes.includes(ED.nom)), se = $('episodes');
+    if (!eps.some(e => e.id === ED.episode)) ED.episode = '';
+    se.append(h('option', { value: '', selected: !ED.episode }, 'carte de base'));
+    for (const e of eps) se.append(h('option', { value: e.id, selected: e.id === ED.episode }, e.id));
+    se.onchange = () => {
+      if (!ED.modifie || confirm('Des modifications ne sont pas enregistrées. Changer d\'épisode quand même ?'))
+        location.search = '?carte=' + encodeURIComponent(ED.nom) + (se.value ? '&episode=' + encodeURIComponent(se.value) : '');
+      else se.value = ED.episode;
+    };
+    if (ED.episode) $('enregistrer').title = 'Enregistrer ce que l\'épisode « ' + ED.episode + ' » change à cette carte : cartes/' + ED.episode + '/' + ED.nom + '.json (Ctrl+S)';
     O = ED.outils; V = ED.vue;
     const cv = $('carte');
     V.init(cv, { atlas, tiles });
