@@ -560,51 +560,70 @@ def container_stack():
 
 
 def truck():
-    """Camion de livraison de profil, tourné vers la droite : caisse peinte de ballons, cabine rouge, deux roues."""
+    """Camion de livraison de profil, tourné vers la droite : caisse peinte de ballons, cabine rouge, deux roues.
+    De la famille des véhicules de la route (vehicles.py) : dessus au soleil, bas à l'ombre, passages de roue."""
+    from vehicles import _wheel, _clair
     d = Drawing(112, 64)
     d.under.append('<rect x="6" y="55" width="100" height="7" rx="3.5" fill="#000" opacity="0.2"/>')
-    d.add(rect(4, 8, 70, 40, 2), "#F3EEE4")
-    d.add(rect(4, 8, 70, 5, 2), "#FFFFFF", sil=False)
+    caisse, cabine = rect(4, 8, 70, 40, 2), path("M74,16 L94,16 Q100,16 103,24 L106,32 L106,47 L74,47 Z")
+    d.clip("camion", [caisse, cabine, rect(4, 45, 102, 5, 1)])
+    d.add(caisse, "#F3EEE4")
+    d.add(rect(4, 8, 70, 4.4), "#FFFFFF", sil=False, clip="camion")                 # le toit de la caisse
+    d.add(rect(4, 38, 70, 8), "#DDD6C8", sil=False, clip="camion")                  # le bas, à l'ombre
+    d.raw(line("M7,13.6 L71,13.6", "#DDD6C8", 0.6))
     for cx, cy, col in ((18, 27, "#E24B4B"), (32, 23, "#F2C14E"), (46, 28, "#4A90D9"), (60, 24, "#5DBB63")):
         d.raw(line(f"M{cx},{cy + 7} Q{cx - 3},{cy + 12} {cx + 1},{cy + 17}", "#8C9098", 0.8))
         d.add(ellipse(cx, cy, 6, 7), col, sil=False, edge=True)
         d.add(ellipse(cx - 2, cy - 3, 1.6, 2.2), "#FFFFFF", sil=False, opacity=0.6)
     d.add(rect(4, 45, 102, 5, 1), "#4A4F57")
-    d.add(path("M74,16 L94,16 Q100,16 103,24 L106,32 L106,47 L74,47 Z"), "#D7332B")
+    d.add(cabine, "#D7332B")
+    d.add(rect(74, 16, 30, 2.2), _clair("#D7332B"), sil=False, clip="camion")       # le toit de la cabine
+    d.add(rect(74, 38, 33, 9), "#A82520", sil=False, clip="camion")
     d.add(path("M79,20 L93,20 Q97,20 99,26 L100.5,31 L79,31 Z"), "#9FD3F0", sil=False, edge=True)
     d.raw(line("M83,22 L89,29 M87,21 L93,28", "#FFFFFF", 1.0))
-    d.add(rect(74, 36, 32, 2, 0), "#A82520", sil=False)
-    d.add(circle(104, 41, 1.6), "#F7D154", sil=False, edge=True)
+    d.raw(line("M77,19 L77,44", "#A82520", 0.8))
+    d.add(rect(81, 34, 4, 1.4, 0.7), _clair("#D7332B"), sil=False)                  # poignée
+    d.add(rect(99.4, 28.6, 3.2, 2.4, 1), "#D7332B", sil=False, edge=True)           # rétroviseur
+    d.add(circle(104, 41, 1.7), "#FFF1B8", sil=False, edge=True)
+    d.add(rect(103, 45, 5, 3.4, 1.2), "#C4C8D0")                                    # pare-chocs
     for cx in (22, 90):
-        d.add(circle(cx, 50, 8), "#3A3A42")
-        d.add(circle(cx, 50, 4), "#C9CDD4", sil=False, edge=True)
-        d.add(circle(cx, 50, 1.4), "#8C9098", sil=False)
+        d.add(circle(cx, 50, 10), "#26262C", sil=False, clip="camion")
+        _wheel(d, cx, 50, 8, 20)
     return d
 
 
 def forklift():
-    """Chariot élévateur jaune de profil, fourche à gauche : mât, toit de protection, siège, contrepoids."""
+    """Chariot élévateur jaune de profil, fourche à gauche : mât, toit de protection, siège, contrepoids ; le dessus
+    au soleil, le bas à l'ombre."""
+    from vehicles import _wheel
+    jaune, ocre, acier, noir = "#F2C14E", "#D3A22C", "#5C6168", "#3A3A42"
     d = Drawing(56, 56)
     d.under.append('<rect x="3" y="49" width="50" height="6" rx="3" fill="#000" opacity="0.2"/>')
-    d.add(rect(1, 44, 17, 3, 0.8), "#3A3A42")                    # fourche
-    d.add(rect(11, 8, 4, 39, 1), "#5C6168")                      # mât
+    d.add(rect(1, 44, 17, 3, 0.8), noir)                         # fourche
+    d.add(rect(1, 44, 17, 1, 0.5), "#6A6F7A", sil=False)
+    d.add(rect(11, 8, 4, 39, 1), acier)                          # mât
+    d.add(rect(11.6, 9, 1, 37, 0.5), "#8A9099", sil=False)
     d.add(rect(15.5, 8, 3, 39, 1), "#4A4F57")
-    d.add(rect(9, 30, 4, 17, 0.8), "#3A3A42")                    # tablier de la fourche
-    d.add(rect(21, 6, 2.6, 24, 1), "#3A3A42")                    # toit de protection
-    d.add(rect(41, 6, 2.6, 24, 1), "#3A3A42")
+    d.add(rect(9, 30, 4, 17, 0.8), noir)                         # tablier de la fourche
+    d.add(rect(21, 6, 2.6, 24, 1), noir)                         # toit de protection
+    d.add(rect(41, 6, 2.6, 24, 1), noir)
     d.add(rect(19, 4, 27, 3.5, 1), "#4A4F57")
-    d.add(rect(19, 26, 34, 18, 3), "#F2C14E")                    # caisse
-    d.add(rect(43, 22, 11, 23, 3), "#D9A92F")                    # contrepoids
-    d.add(rect(19, 26, 34, 3, 2), "#FFFFFF", sil=False, opacity=0.3)
-    d.add(rect(29, 16, 10, 11, 2.5), "#3A3A42")                  # siège
-    d.raw(line("M25,24 L28,15", "#3A3A42", 1.6))                 # volant
-    d.add(ellipse(28.5, 14.5, 3, 1.2), "#3A3A42", sil=False)
+    d.add(rect(19.6, 4.4, 25.8, 1, 0.5), "#7A808A", sil=False)
+    caisse, poids = rect(19, 26, 34, 18, 3), rect(43, 22, 11, 23, 3)
+    d.clip("chariot", [caisse, poids])
+    d.add(caisse, jaune)
+    d.add(poids, ocre)
+    d.add(rect(19, 26, 24, 2.6), "#FBE39A", sil=False, clip="chariot")     # le dessus au soleil
+    d.add(rect(43, 22, 11, 2.4), "#E8BC48", sil=False, clip="chariot")
+    d.add(rect(29, 16, 10, 11, 2.5), noir)                       # siège
+    d.add(rect(30, 17, 2, 9, 1), "#5A5A64", sil=False)
+    d.raw(line("M25,24 L28,15", noir, 1.6))                      # volant
+    d.add(ellipse(28.5, 14.5, 3, 1.2), noir, sil=False)
     for k in range(4):                                           # bandes de sécurité
-        d.add(poly([(21 + k * 6, 40), (24 + k * 6, 40), (27 + k * 6, 44), (24 + k * 6, 44)]), "#2B2B33",
-              sil=False)
+        d.add(poly([(21 + k * 6, 40), (24 + k * 6, 40), (27 + k * 6, 44), (24 + k * 6, 44)]), "#2B2B33", sil=False, clip="chariot")
     for cx in (25, 45):
-        d.add(circle(cx, 46, 6.5), "#3A3A42")
-        d.add(circle(cx, 46, 3), "#C9CDD4", sil=False, edge=True)
+        d.add(circle(cx, 46, 8), "#26262C", sil=False, clip="chariot")
+        _wheel(d, cx, 46, 6.5, 40)
     return d
 
 
@@ -919,40 +938,49 @@ def chicken_coop():
 
 
 def tractor(body="#D7332B", body_dk="#A82520"):
-    """Tracteur de profil, tourné vers la droite : grande roue arrière, petite roue avant, cabine."""
+    """Tracteur de profil, tourné vers la droite : grande roue arrière à crampons, petite roue avant, cabine vitrée ;
+    le capot et le toit au soleil, le bas à l'ombre."""
+    from vehicles import _clair
+    clair = _clair(body)
     d = Drawing(64, 48)
     d.under.append('<rect x="4" y="41" width="56" height="6" rx="3" fill="#000" opacity="0.2"/>')
-    # pot d'échappement (derrière le capot)
-    d.add(rect(40, 8, 3, 16, 1), "#5C6168")
+    d.add(rect(40, 8, 3, 16, 1), "#5C6168")                             # pot d'échappement
+    d.add(rect(40.5, 9, 0.9, 14, 0.4), "#8A9099", sil=False)
     d.add(rect(39, 6.5, 5, 3, 1), "#4A4F57")
-    # cabine : toit + montants + vitres
-    d.add(rect(5, 3, 26, 4, 1.5), body_dk)
+    d.add(rect(5, 3, 26, 4, 1.5), body_dk)                              # cabine : toit, montants, vitres
+    d.add(rect(6, 3.5, 24, 1.3, 0.6), body, sil=False)
     d.add(rect(8, 6, 21, 18, 1), "#9FD3F0")
     d.add(rect(8, 6, 3, 18, 0), body, sil=False)
     d.add(rect(26, 6, 3, 18, 0), body, sil=False)
-    d.raw(line("M13,10 L18,15 M15,8 L22,15", "#FFFFFF", 1.1))         # reflet
-    # capot
-    d.add(path("M26,20 L54,20 Q58,20 58,24 L58,34 L26,34 Z"), body)
-    d.add(rect(26, 20, 32, 3, 1), "#FFFFFF", sil=False, opacity=0.25)
-    for y in (25, 28, 31):                                              # grille avant
-        d.raw(line(f"M54,{y} L57.5,{y}", body_dk, 0.9))
-    d.add(circle(57.5, 22.8, 1.5), "#F7D154", sil=False, edge=True)    # phare
-    # bas de caisse / châssis
-    d.add(rect(8, 24, 26, 12, 1), body)
+    d.add(rect(11, 6, 15, 2), "#7FBBDD", sil=False)
+    d.raw(line("M13,11 L18,16 M15,9 L22,16", "#FFFFFF", 1.1))           # reflet
+    capot = "M26,20 L54,20 Q58,20 58,24 L58,34 L26,34 Z"
+    d.clip("capot", [path(capot)])
+    d.add(path(capot), body)
+    d.add(rect(26, 20, 32, 2.6), clair, sil=False, clip="capot")
+    d.add(rect(26, 29.4, 32, 5), body_dk, sil=False, clip="capot")
+    for y in (24.6, 26.4, 28.2):                                        # grille avant
+        d.raw(line(f"M53.4,{y} L57.5,{y}", body_dk, 0.8))
+    d.add(circle(57.3, 22.8, 1.6), "#FFF1B8", sil=False, edge=True)     # phare
+    d.add(rect(8, 24, 26, 12, 1), body)                                 # bas de caisse, châssis
     d.add(rect(8, 33, 50, 3, 0.5), "#4A4F57")
-    # garde-boue de la grande roue
-    d.add(path("M4,32 Q4,17 18,17 Q32,17 32,32 L28,32 Q28,21 18,21 Q8,21 8,32 Z"), body_dk)
-    # grande roue arrière
-    d.add(circle(18, 32, 12), "#3A3A42")
+    d.add(path("M4,32 Q4,17 18,17 Q32,17 32,32 L28,32 Q28,21 18,21 Q8,21 8,32 Z"), body_dk)   # garde-boue
+    d.raw(line("M6.4,27 Q8,19.4 17,19", clair, 0.9))
+    d.add(circle(18, 32, 12), "#3A3A42")                                # grande roue arrière
     for k in range(12):
         a = k * math.pi / 6
-        x0, y0 = 18 + 10.4 * math.cos(a), 32 + 10.4 * math.sin(a)
-        x1, y1 = 18 + 12 * math.cos(a), 32 + 12 * math.sin(a)
-        d.raw(line(f"M{x0:.2f},{y0:.2f} L{x1:.2f},{y1:.2f}", "#25252B", 1.4))
+        x0, y0 = 18 + 10.2 * math.cos(a), 32 + 10.2 * math.sin(a)
+        x1, y1 = 18 + 12 * math.cos(a + 0.12), 32 + 12 * math.sin(a + 0.12)
+        d.raw(line(f"M{x0:.2f},{y0:.2f} L{x1:.2f},{y1:.2f}", "#25252B", 1.5))
+    d.raw(line("M10.4,24.6 A10.6,10.6 0 0 1 25.6,24.6", "#5E5E68", 0.8))
     d.add(circle(18, 32, 6.5), "#F2C14E", sil=False, edge=True)
-    d.add(circle(18, 32, 2.4), "#C99B35", sil=False, edge=True)
-    # petite roue avant
-    d.add(circle(49, 37, 7), "#3A3A42")
+    d.add(circle(18, 32, 4.6), "#E0AE3A", sil=False)
+    for k in range(5):
+        a = k * 2 * math.pi / 5 + 0.3
+        d.add(circle(18 + 3.2 * math.cos(a), 32 + 3.2 * math.sin(a), 0.6), "#8A6A1E", sil=False)
+    d.add(circle(18, 32, 1.8), "#C99B35", sil=False, edge=True)
+    d.add(circle(49, 37, 7), "#3A3A42")                                 # petite roue avant
+    d.raw(line("M44.6,32.6 A6.2,6.2 0 0 1 53.4,32.6", "#5E5E68", 0.8))
     d.add(circle(49, 37, 3.6), "#F2C14E", sil=False, edge=True)
     d.add(circle(49, 37, 1.3), "#C99B35", sil=False)
     return d

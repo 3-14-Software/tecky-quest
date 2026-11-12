@@ -123,8 +123,13 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   redessiné n'a plus son ancien dessin dans l'atlas (`pack_web.collect()`). Planche : `python3 mobilier.py`.
   Restent dans leur dessin de `decor.py` (planche `reference/v2/mobilier_reste_v1.png`) : terrier, pommes
   tombées, vélo, échelle, clôtures, grillages, voie ferrée, barque, bac à sable, filet de Léon, épouvantail,
-  fontaine (animée : le catalogue ne sait qu'une image par sprite), pont, et les trois engins garés (tracteur,
-  chariot, camion), de profil comme les véhicules de la route.
+  fontaine (animée : le catalogue ne sait qu'une image par sprite), pont : gardés tels quels.
+  **Véhicules** (`vehicles.py` : voitures, camionnette, bus ; `decor.py` : tracteur, chariot élévateur, camion
+  garés) : redessinés pour la v2 sans changer ni cadre, ni silhouette, ni roues (le jeu ne voit rien). Ils
+  restent de profil, et la lumière vient d'en haut (dessus clairs `_clair()`, bas de caisse à l'ombre, passages
+  de roue `_passage()`) : elle reste juste quand le véhicule roule vers la gauche, en miroir — une lumière de
+  gauche ou une vue de trois quarts ne le seraient pas. Du monde derrière les vitres (`_tete()` : conducteurs,
+  boulanger en toque, passagers du bus). Planche : `reference/v2/vehicules_v2.png`.
   **Ombres** : la ligne de contact (`Sprite.sol`) passe un peu au-dessus du bas des murs (`CONTACT`), pour que
   l'ombre parte de dessous le contour : posée juste sous le mur, elle laissait un liseré clair entre le bâtiment
   et son ombre. Christophe tient aux ombres détaillées (les jours entre les pieds du poulailler, sous le store
@@ -589,7 +594,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `chiens2.py`) faits ; lot 4 (paysage) en cours : nature, ombres portées, herbe, eau, lisière, bords
   arrondis, bâtiments (étals et poulailler compris), ombres portées de tout (décors, personnages, bêtes,
   véhicules) allongées le soir et fusionnées, sous-bois et champ, mobilier (`mobilier.py` : du pot de fleurs au
-  portique du port) faits ; restent les véhicules (garés et sur la route), l'habillage des zones. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
+  portique du port) et véhicules faits ; reste l'habillage des zones. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
   témoin dans `reference/v2/`) : des images fixes, que ni `game.js` ni `pack_web.py` n'utilisent encore (le décor
   de `nature.py` est dans le jeu depuis le lot 4). Les pistes générées par Christophe avec ChatGPT sont dans
   `reference/v2/chat_gpt/`.

@@ -314,8 +314,12 @@ Fait le 12 novembre 2026, dans le jeu :
   lampadaire du quai est passé à gauche du portique. Planche de ce qui reste dans son dessin de la v1 :
   `mobilier_reste_v1.png` (18 décors, à trancher avec Christophe).
 
-Reste : les objets (os, lettres, ballons), les canards et les papillons, qui gardent leur petit ovale ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; les engins garés (tracteur, chariot,
-camion) et les véhicules de la route, encore dans leur dessin de la v1 ; l'habillage des zones (dont : la forme des mares, encore rectangulaire ; un cerisier en
+- **Véhicules** : voitures, camionnette de boulangerie et bus de la route, tracteur, chariot élévateur et camion
+  garés, redessinés sans changer leurs cadres : lumière d'en haut (juste aussi en miroir), passages de roue,
+  jantes, pare-chocs, rétroviseurs, et du monde derrière les vitres (conducteurs, boulanger, passagers du bus).
+  Planche `vehicules_v2.png`, capture `lot4_route.png`.
+
+Reste : les objets (os, lettres, ballons), les canards et les papillons, qui gardent leur petit ovale ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; l'habillage des zones (dont : la forme des mares, encore rectangulaire ; un cerisier en
 fleurs au milieu des sapins de la forêt). L'éditeur de carte montre encore les anciens arbres (il lit
 `decor/tree`…), pas les variantes.
 
