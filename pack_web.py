@@ -218,6 +218,7 @@ def build_map():
         "w": MW, "h": MH, "ts": TS, "ground": ground, "over": over, "water": water,
         "hole": ovrow + OV["trou creusé (trésor)"],
         "shore": tiles.tile_index("water", 0),        # la rangée des tuiles eau / herbe (la 16e : l'eau pleine)
+        "tileAlt": tiles.alternees(),                 # bords naturels : rangée du tileset -> rangées de ses variantes
         "wood": tiles.tile_index("forest", 15),       # le sous-bois plein (game.js : woodDetails())
         "fieldRow": tiles.tile_index("field", 0),     # la rangée des tuiles champ / herbe (fieldDetails())
         "furrows": [y * TS // tiles.T for y in tiles.SILLONS],          # les crêtes des buttes, en px dans la tuile
@@ -522,8 +523,14 @@ def preview(m, atlas, meta, tileset):
     o = e["r"] * TS                       # la marge de la lisière, autour de la carte
     img = Image.new("RGBA", (MW * TS + 2 * o, MH * TS + 2 * o))
     tile = lambda idx: tileset.crop(((idx % 16) * TS, (idx // 16) * TS, (idx % 16 + 1) * TS, (idx // 16 + 1) * TS))
+    alt = tiles.alternees()
+
+    def look(idx, tx, ty):                # comme tileLook() de game.js : une variante du bord, tirée de la position
+        a, bits = alt.get(idx // 16), idx % 16
+        v = int(hash3(tx, ty, 61) * (len(a) + 1)) if a and 0 < bits < 15 else 0
+        return a[v - 1] * 16 + bits if v else idx
     for i, idx in enumerate(m["ground"]):
-        img.paste(tile(idx), ((i % MW) * TS + o, (i // MW) * TS + o))
+        img.paste(tile(look(idx, i % MW, i // MW)), ((i % MW) * TS + o, (i // MW) * TS + o))
         if m["over"][i]:
             img.alpha_composite(tile(m["over"][i]), ((i % MW) * TS + o, (i // MW) * TS + o))
     for tx, ty, idx in e["ring"]:

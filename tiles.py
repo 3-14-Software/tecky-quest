@@ -234,15 +234,37 @@ def _ease(t):
     return t * t * (3 - 2 * t)
 
 
-def _field(bits, n, light=False):
+TREMBLE = 0.06               # bords naturels : de combien le champ est froissé (0 : des bords tirés à la règle)
+NATURELS = ("dirt", "water", "forest", "field")       # chemins de terre, rives, sous-bois, champ ; pas la voirie
+
+
+FROISSES = 3                 # nombre de froissements différents : la tuile de base et FROISSES - 1 variantes
+
+
+def _froisse(n, variante=0):
+    """Le froissement des bords naturels (chemins, rives) : une ondulation du champ, nulle et à plat sur les quatre
+    bords de la tuile, pour que le contour s'y raccorde toujours à celui de la tuile voisine, d'équerre. Sans lui,
+    rives et chemins étaient lisses mais droits comme des règles. Plusieurs variantes, que le jeu tire de la position
+    de la tuile (game.js : tileLook()) : la même ondulation répétée à chaque tuile faisait une dentelle."""
+    x = (np.arange(n) + 0.5) / n
+    X, Y = np.meshgrid(x, x)
+    onde = (np.sin(2 * np.pi * X + 0.6) + np.sin(2 * np.pi * Y + 2.1) + 0.2 * np.sin(4 * np.pi * (X + Y)),
+            -np.sin(2 * np.pi * X + 2.0) - np.sin(2 * np.pi * Y + 0.3) + 0.2 * np.sin(4 * np.pi * (X - Y) + 1.0),
+            0.9 * np.sin(2 * np.pi * X + 4.4) + 0.9 * np.sin(2 * np.pi * Y + 3.6) + 0.5 * np.cos(2 * np.pi * (X + Y)))[variante]
+    return np.sin(np.pi * X) ** 2 * np.sin(np.pi * Y) ** 2 * onde
+
+
+def _field(bits, n, light=False, tremble=0.0, variante=0):
     """Champ des 4 coins (interpolation adoucie : _ease) et distance signée approx. au contour 0.5 (en px
-    sur-échantillonnés).
+    sur-échantillonnés). tremble : froissement du champ (_froisse), pour un bord naturel.
     light : rend aussi l'éclairage du bord (-1..1 : positif là où l'intérieur est à l'ombre du bord, c'est-à-dire
     le long des bords du haut et de gauche) et le champ lui-même (0..1, continu d'une tuile à sa voisine)."""
     nw, ne, sw, se = [(bits >> i) & 1 for i in range(4)]
     u = _ease((np.arange(n) + 0.5) / n)
     U, V = np.meshgrid(u, u)
     v = nw * (1 - U) * (1 - V) + ne * U * (1 - V) + sw * (1 - U) * V + se * U * V
+    if tremble and bits not in (0, 15):
+        v = v + tremble * _froisse(n, variante)
     gy, gx = np.gradient(v)
     g = np.sqrt(gx ** 2 + gy ** 2)
     dist = (v - 0.5) / np.maximum(g, 1e-6)
@@ -258,10 +280,10 @@ def _blend(out, color, alpha):
     out[..., :3] = out[..., :3] * (1 - a) + np.array(hexrgb(color)) * a
 
 
-def _shore(out, bits, below, scale):
+def _shore(out, bits, below, scale, tremble=0.0, variante=0):
     """Rive et hauts-fonds de l'eau (SHORE) autour des coins `bits`, par-dessus `out` où l'eau est déjà posée."""
     n, k = T * scale * SS, scale * SS
-    dist, lum, v = _field(bits, n, light=True)
+    dist, lum, v = _field(bits, n, light=True, tremble=tremble, variante=variante)
     d = dist / k                                      # en px 1x
     band = lambda a, b: (d >= a) & (d < b)
     if below in BANKS:
@@ -285,7 +307,7 @@ def _shore(out, bits, below, scale):
     _blend(out, col, band(a, b) * np.clip(-lum * 6 - 0.6, 0, 1) * (motif > 0.55) * op)
 
 
-def _layer(out, terrain, bits, below, scale, seed=0, marking=None):
+def _layer(out, terrain, bits, below, scale, seed=0, marking=None, variante=0):
     """Pose `terrain` sur `out` (tableau sur-échantillonné) dans les coins `bits`, avec le style de la paire
     (terrain, below) : liseré et contour ; pour l'eau, la rive et les hauts-fonds (_shore)."""
     n = T * scale * SS
@@ -293,11 +315,12 @@ def _layer(out, terrain, bits, below, scale, seed=0, marking=None):
     spec = dict(TERRAINS[terrain])
     spec.update(PAIR_STYLE.get((terrain, below), {}))
     ter = np.array(TEX[terrain](scale, seed, marking) if terrain == "road" else TEX[terrain](scale, seed))
-    dist = _field(bits, n)
+    tremble = TREMBLE if terrain in NATURELS and (terrain != "water" or below in BANKS) else 0     # (pas le long d'un quai)
+    dist = _field(bits, n, tremble=tremble, variante=variante)
     inside = dist >= 0
     out[inside] = ter[inside]
     if spec.get("shore"):
-        _shore(out, bits, below, scale)
+        _shore(out, bits, below, scale, tremble, variante)
     else:
         edge = (dist >= spec["out_w"] * k) & (dist < (spec["out_w"] + spec["edge_w"]) * k)
         out[edge] = hexrgb(spec["edge"]) + (255,)
@@ -309,10 +332,11 @@ def _finish(out, scale):
     return Image.fromarray(out.astype(np.uint8)).resize((T * scale, T * scale), Image.LANCZOS)
 
 
-def transition(terrain, bits, scale, seed=0, marking=None, lower="grass"):
-    """Tuile de transition : `terrain` (dessus) dans les coins `bits`, `lower` ailleurs."""
+def transition(terrain, bits, scale, seed=0, marking=None, lower="grass", variante=0):
+    """Tuile de transition : `terrain` (dessus) dans les coins `bits`, `lower` ailleurs. variante : un autre
+    froissement de son bord, s'il est naturel (_froisse)."""
     out = np.array(TEX[lower](scale, seed))
-    _layer(out, terrain, bits, lower, scale, seed, marking)
+    _layer(out, terrain, bits, lower, scale, seed, marking, variante)
     return _finish(out, scale)
 
 
@@ -487,13 +511,22 @@ ROW0 = ["(vide)", "herbe", "herbe + brins", "herbe + fleurs", "herbe + cailloux"
         "terre var. 1", "terre var. 2", "route var. 1", "route var. 2",
         "pavés var. 1", "béton var. 1", "béton var. 2"]
 OVERLAY_ROW = 1 + len(PAIRS)
-COMPOSITE_BASE = (OVERLAY_ROW + 1) * COLS      # tuiles composées, après la ligne des détails
+# Variantes des transitions à bord naturel (un autre froissement, mêmes coins) : FROISSES - 1 rangées par paire,
+# après la ligne des détails. La carte ne les connaît pas : le jeu les choisit en peignant le sol (MAP.tileAlt).
+ALTERNEES = [p for p in PAIRS if p[0] in NATURELS and (p[0] != "water" or p[1] in BANKS)]
+ALT_ROW = OVERLAY_ROW + 1
+COMPOSITE_BASE = (ALT_ROW + len(ALTERNEES) * (FROISSES - 1)) * COLS      # tuiles composées, après les variantes
+
+
+def alternees():
+    """rangée d'une paire dans le tileset -> les rangées de ses variantes."""
+    return {1 + PAIRS.index(p): [ALT_ROW + i * (FROISSES - 1) + v for v in range(FROISSES - 1)] for i, p in enumerate(ALTERNEES)}
 
 
 def tileset(scale, composites=()):
     """composites : coins (NO, NE, SO, SE) des tuiles composées, ajoutées à partir de l'index COMPOSITE_BASE."""
     ts = T * scale
-    rows = 2 + len(PAIRS) + (len(composites) + COLS - 1) // COLS
+    rows = COMPOSITE_BASE // COLS + (len(composites) + COLS - 1) // COLS
     sheet = Image.new("RGBA", (COLS * ts, rows * ts), (0, 0, 0, 0))
     row0 = [None] + [grass_tile(scale, v) for v in range(4)]
     row0 += [road_marking(scale, m) for m in ("dash_h", "dash_v", "zebra_h", "zebra_v")]
@@ -507,6 +540,11 @@ def tileset(scale, composites=()):
             sheet.paste(transition(up, bits, scale, seed=bits, lower=lo), (bits * ts, (1 + r) * ts))
     for i in range(len(OVERLAYS)):
         sheet.paste(overlay(scale, i), (i * ts, OVERLAY_ROW * ts))
+    for r, alts in alternees().items():
+        up, lo = PAIRS[r - 1]
+        for v, row in enumerate(alts):
+            for bits in range(1, 15):
+                sheet.paste(transition(up, bits, scale, seed=bits, lower=lo, variante=v + 1), (bits * ts, row * ts))
     for i, cs in enumerate(composites):
         j = COMPOSITE_BASE + i
         sheet.paste(composite(cs, scale, seed=composite_seed(cs)), ((j % COLS) * ts, (j // COLS) * ts))

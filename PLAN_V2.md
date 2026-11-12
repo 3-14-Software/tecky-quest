@@ -335,9 +335,16 @@ Fait le 12 novembre 2026, dans le jeu :
   dans `decor.py` sont relookés sur place (clôtures, grillages, voie ferrée, vélo, échelle, pommes, terrier,
   barque, bac à sable, filet, épouvantail, fontaine, pont). Planche : `relooke_24.png`.
 
-Reste : les canards et les papillons, qui gardent leur petit ovale ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; l'habillage des zones (dont : la forme des mares, encore rectangulaire ; un cerisier en
-fleurs au milieu des sapins de la forêt). L'éditeur de carte montre encore les anciens arbres (il lit
-`decor/tree`…), pas les variantes.
+- **Rives et bords de chemin** : les bords naturels sont froissés (`tiles._froisse()`), avec trois ondulations du
+  même bord que le jeu tire de la position de la tuile (`tileLook()`) ; la voirie reste droite. Capture :
+  `lot4_rives.png`.
+- **Ce qui vole** : l'ombre des canards en vol et des papillons a la teinte des ombres portées et tombe du côté
+  opposé au soleil, d'autant plus loin qu'ils sont hauts (`flyShadow()`). Sur l'eau, les canards gardent leur
+  reflet sombre : ce n'est pas une ombre au sol.
+
+Reste, avant de clore le lot 4 : le regarder dans le jeu en mouvement et dans Firefox (tout a été vérifié sur des
+captures fixes ; le coût des ombres fusionnées et des objets posés n'a pas été mesuré) ; les huit filets d'ombre
+que liste `tools/ombres_decollees.py` ; l'éditeur de carte, qui montre encore les anciens arbres et bâtiments.
 
 ### 5. Textes et anglais
 

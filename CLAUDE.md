@@ -150,6 +150,14 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   bords de la tuile : un contour les traverse toujours d'équerre, la courbe d'un angle repart dans l'axe du bord
   droit voisin. Avec une interpolation linéaire, il y avait une cassure à chaque angle de mare, de chemin, de
   place (Christophe l'a vue tout de suite) : ne pas y revenir. `waterVal()` de game.js fait le même calcul.
+  **Bords froissés** (`_froisse()`, `TREMBLE`, `NATURELS`) : les bords naturels (chemins de terre, rives, sous-bois,
+  champ ; pas la voirie ni l'eau le long d'un quai) ne sont plus tirés à la règle : le champ des coins est ondulé,
+  l'ondulation nulle et à plat sur les quatre bords de la tuile pour que les contours se raccordent toujours.
+  `FROISSES` (3) froissements du même bord : la tuile de base et deux variantes (`ALTERNEES`, `ALT_ROW`, rangées
+  ajoutées avant `COMPOSITE_BASE`). La carte ne connaît que la tuile de base ; le jeu tire la variante de la
+  position en peignant le sol (`tileLook()`, `MAP.tileAlt` ; `pack_web.preview()` fait de même) : la même
+  ondulation répétée à chaque tuile faisait une dentelle le long de la rivière. `waterVal()` n'est pas froissé
+  (l'écart, 3 px, est sous la marge `WATER_EDGE`).
   **Eau** (`_shore()`, `SHORE`, `BANKS`) : sur la rive de terre, lèvre d'herbe, sable, sable mouillé ; dans l'eau,
   hauts-fonds clairs, eau moyenne, puis le fond (la couleur des tuiles pleines) ; ombre de la berge du haut et de
   gauche, écume en tirets le long de celle du bas et de droite (motif périodique : il se raccorde d'une tuile à
@@ -616,8 +624,9 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `chiens2.py`) faits ; lot 4 (paysage) en cours : nature, ombres portées, herbe, eau, lisière, bords
   arrondis, bâtiments (étals et poulailler compris), ombres portées de tout (décors, personnages, bêtes,
   véhicules) allongées le soir et fusionnées, sous-bois et champ, mobilier (`mobilier.py` : du pot de fleurs au
-  portique du port), véhicules, objets à ramasser posés au sol, mares en haricot faits ; reste des
-  rives et des bords de chemin moins droits (et les canards, les papillons, qui gardent leur ovale). Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
+  portique du port), véhicules, objets à ramasser posés au sol, mares en haricot faits ; rives et
+  bords de chemin froissés, ombre de ce qui vole (`flyShadow()` : canards en vol, papillons) faits. Le lot 4 est
+  à relire dans le jeu en mouvement, et dans Firefox, avant de passer au lot 5. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
   témoin dans `reference/v2/`) : des images fixes, que ni `game.js` ni `pack_web.py` n'utilisent encore (le décor
   de `nature.py` est dans le jeu depuis le lot 4). Les pistes générées par Christophe avec ChatGPT sont dans
   `reference/v2/chat_gpt/`.

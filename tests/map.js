@@ -124,6 +124,15 @@ eval(base + `setTimeout(() => {
      'Tecky et une voiture ont leur ombre portée, dessinée avant les sprites (' + run('portees.length') + ' ombres à l\\'écran)');
   ok(run('portees.every(p => MAP.cast.includes(p[0].split("/")[0]))') && run('!MAP.cast.includes("decor") && !MAP.cast.includes("duck") && !MAP.cast.includes("fx")'),
      'seulement les personnages, les bêtes, les véhicules et les objets posés au sol (pas les décors, les canards ni les effets)');
+  // bords naturels froissés : variantes tirées de la position, mêmes coins (tileLook) ; la voirie reste droite
+  run('var vus = new Set(), memes = true, eau = MAP.shore; for (let tx = 0; tx < 40; tx++) { const v = tileLook(eau + 12, tx, 41); vus.add(v >> 4); memes = memes && (v & 15) === 12 && v === tileLook(eau + 12, tx, 41); }');
+  ok(run('vus.size') === 3 && run('memes') && run('tileLook(MAP.shore + 15, 3, 3) === MAP.shore + 15') && run('tileLook(1, 3, 3) === 1')
+     && run('Object.keys(MAP.tileAlt).length') === 5 && run('!MAP.tileAlt[tileLookRoute >> 4]'.replace('tileLookRoute', '(2 * 16 + 3)')),
+     'rives et chemins : trois froissements du même bord, tirés de la position ; ni l\\'eau pleine, ni l\\'herbe, ni la route n\\'en ont');
+  // ce qui vole : une ombre de la teinte des ombres portées, du côté opposé au soleil
+  run('var ell = [], e0 = ctx.ellipse; ctx.ellipse = function (x, y) { ell.push([x, y]); }; flyShadow(100, 200, 80, 9, 3, 1); flyShadow(100, 200, 0, 9, 3, 1); ctx.ellipse = e0;');
+  ok(run('ell[0][0] > 100 + 30 && ell[0][1] > 200 + 15 && ell[1][0] === 100 && ell[1][1] === 200'),
+     'un papillon haut de 80 px a son ombre à droite et plus bas, comme les ombres portées ; posé, elle est sous lui');
   // objets à ramasser, lettres, jouets : posés au sol à 85 %, avec leur ombre portée (drawPosed)
   run('var poses = [], drawSpr2 = drawSpr; drawSpr = function (k, i, x, y, o) { poses.push([k, x, y, o || {}]); };'
     + ' drawPosed("item/bone", 0, 500, 700, MAP.itemBase.bone, 0.1, 0); drawPosed("item/medal", 0, 500, 700, MAP.itemBase.medal, 5, 30); drawSpr = drawSpr2;');

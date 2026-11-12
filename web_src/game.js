@@ -797,6 +797,16 @@ function groundTile(tx, ty) {              // [tuile, détail] du sol, dans la c
 }
 /* Peint le bloc de n x n tuiles dont le coin est la tuile (cx, cy), depuis le tileset img, à k pixels de canevas par
    pixel de monde. Rend { c, x, y, w, h, k } : le canevas, sa place et sa taille dans le monde, son échelle. */
+/* Bords naturels (chemins de terre, rives, sous-bois, champ) : leurs tuiles ont des variantes, le même bord froissé
+   autrement (tiles.py : _froisse(), MAP.tileAlt = rangée du tileset -> rangées de ses variantes). Le jeu en tire
+   une de la position de la tuile en peignant le sol : la carte et tout ce qui lit ses indices (rives, champ) n'en
+   savent rien. Sans elles, la même ondulation se répétait à chaque tuile le long d'une rive. */
+function tileLook(idx, tx, ty) {
+  const a = MAP.tileAlt[idx >> 4], bits = idx & 15;
+  if (!a || !bits || bits === 15) return idx;
+  const v = Math.floor(hash3(tx, ty, 61) * (a.length + 1));
+  return v ? a[v - 1] * 16 + bits : idx;
+}
 function buildChunk(cx, cy, n, img, k, len, mask) {
   const c = document.createElement('canvas'), s = TS * k;
   c.width = c.height = (n * TS + 2 * CM) * k;
@@ -806,7 +816,7 @@ function buildChunk(cx, cy, n, img, k, len, mask) {
   for (let ty = cy - 1; ty < cy + n + 1; ty++) for (let tx = cx - 1; tx < cx + n + 1; tx++) {
     const t = groundTile(tx, ty);
     if (!t) continue;
-    put(t[0], tx, ty);
+    put(tileLook(t[0], tx, ty), tx, ty);
     if (t[1]) put(t[1], tx, ty);
   }
   const x0 = cx * TS - CM, y0 = cy * TS - CM, w = n * TS + 2 * CM;
@@ -2233,6 +2243,16 @@ function updateDuck(d, dt) {
       return;
     }
   }
+}
+/* L'ombre au sol de ce qui vole (canards, papillons) : une tache de la teinte des ombres portées, du côté opposé au
+   soleil et d'autant plus loin que la bête est haute (SHADOW : même sens, même longueur le soir). Avant : un ovale
+   noir juste dessous, d'un autre soleil que le reste du décor. (x, y) : le point du sol sous la bête. */
+function flyShadow(x, y, alt, rx, ry, k) {
+  const len = sunAt(SHADOW.len, clamp(sun, 0, 4));
+  ctx.save();
+  ctx.globalAlpha = SHADOW.alpha * k; ctx.fillStyle = SHADOW.color;
+  ctx.beginPath(); ctx.ellipse(x + alt * SHADOW.sx * len, y + alt * SHADOW.sy * len, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
 }
 function drawDuck(d) {
   drawSpr(d.kind + '/' + d.anim, duckFrame(d)[0], d.x, d.y - d.h, { flip: d.flip });
@@ -4955,20 +4975,10 @@ function drawWorld() {
   drawTrail();
   drawDust();
   drawRings();   // ondes d'aboiement, au sol sous les personnages
-  for (const d of ducks) if (d.h > 0 && vis(d.x, d.y, 60)) {           // ombres des canards en vol
-    ctx.save();
-    ctx.globalAlpha = 0.2 * (1 - Math.min(0.6, d.h / 200));
-    ctx.fillStyle = '#000';
-    ctx.beginPath(); ctx.ellipse(d.x, d.y, 18, 5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  }
-  for (const b of butterflies) if (vis(b.x, b.y, 60)) {             // ombres des papillons, plus pâles en altitude
-    ctx.save();
-    ctx.globalAlpha = 0.2 * (1 - Math.min(0.7, b.alt / 110));
-    ctx.fillStyle = '#000';
-    ctx.beginPath(); ctx.ellipse(b.x, b.y, Math.max(4, 9 - b.alt * 0.05), 3, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  }
+  for (const d of ducks) if (d.h > 0 && vis(d.x, d.y, 60))             // ombres des canards en vol
+    flyShadow(d.x, d.y, d.h, 18, 5, 0.8 * (1 - Math.min(0.6, d.h / 200)));
+  for (const b of butterflies) if (vis(b.x, b.y, 60))               // ombres des papillons, plus pâles en altitude
+    flyShadow(b.x, b.y, b.alt, Math.max(4, 9 - b.alt * 0.05), 3, 0.75 * (1 - Math.min(0.7, b.alt / 110)));
 
   const list = [];
   const now = performance.now() / 1000;            // décors animés (fontaine) : MAP.decorFps
