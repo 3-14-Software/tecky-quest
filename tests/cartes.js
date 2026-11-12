@@ -17,11 +17,16 @@ function main() {
   step(60, 'held.left = true; cars = [];'); run('held.left = false;');
   ok(run('MAP.id') === 'monde' && run('pops.some(p => p.text === txt("bord.tunnel"))'), 'tunnel sans passage : « ' + run('txt("bord.tunnel")') + ' »');
   // celui de l'est mène ailleurs : Tecky pousse dedans
-  run('P.x = T1[0] - 60; P.y = T1[1] - 100; P.mode = "free"; pops = [];');
+  // contre la butte, à côté de la route : rien ne se passe
+  run('P.x = T1[0] - 60; P.y = T1[1] + 30; P.mode = "free"; pops = [];');
+  step(60, 'held.right = true; cars = [];'); run('held.right = false;');
+  ok(run('MAP.id') === 'monde' && run('pops.length') === 0, 'contre la butte du tunnel, hors de la route : on ne passe pas');
+  run('P.x = T1[0] - 60; P.y = MAP.traffic.road[0] + 70; P.mode = "free"; pops = []; var yEntree = P.y - MAP.traffic.road[0];');
   step(45, 'held.right = true; if (MAP.id === "monde") cars = [];'); run('held.right = false;');
   ok(run('MAP.id') === 'pre' && run('state') === 'play' && run('MAP.w') === 40 && run('MAP.h') === 24, 'Tecky pousse dans le tunnel de l\'est : il est sur la deuxième carte (40 x 24)');
-  ok(run('(() => { const [x, y, d] = arrivalAt(0); return P.x - x >= 0 && P.x - x < 200 && Math.abs(P.y - y) < 40 && d === "right"; })()') && run('!blockedFeet(P.x, P.y, 16)'),
-     'il ressort au pied du tunnel de l\'ouest, sur un sol praticable');
+  ok(run('(() => { const [x, , d] = arrivalAt(0), [r0, r1] = MAP.traffic.road; return P.x - x >= 0 && P.x - x < 200 && P.y > r0 && P.y < r1 && d === "right"; })()') && run('!blockedFeet(P.x, P.y, 16)'),
+     'il ressort sur la route, devant la bouche du tunnel de l\'ouest');
+  ok(Math.abs(run('P.y - MAP.traffic.road[0]') - run('yEntree')) < 30, 'à la hauteur où il est entré : ' + Math.round(run('yEntree')) + ' px sous le bord de la chaussée, ' + Math.round(run('P.y - MAP.traffic.road[0]')) + ' à la sortie');
   ok(run('score') === 321 && run('farm.state') === 'asked' && run('treasures') === 1 && run('P.hp') > 0, 'la partie continue : score, quêtes et trésors le suivent');
   ok(run('dogs.length') === 0 && run('items.length') === 0 && run('npcList().length') === 0 && run('decor.length') > 10 && run('butterflies.length') === 2
      && run('cars.length') === 2 && run('alice.hidden') && !run('ici("alice")') && !run('ici("track")') && run('ici("traffic")'),
@@ -49,7 +54,7 @@ function main() {
   ok(run('MAP.id') === 'pre' && run('P.x') === 700 && run('P.y') === 1100 && run('score') === 321 && run('farm.state') === 'asked' && run('dogs.length') === 0,
      'Continuer : la partie reprend sur la deuxième carte, là où elle a été enregistrée');
   // retour par le tunnel : le monde est comme il l'avait laissé
-  run('{ const [x, y] = arrivalAt(0); P.x = x - 40; P.y = y - 100; P.mode = "free"; cars = []; }');
+  run('{ const [x, y] = arrivalAt(0); P.x = x - 10; P.y = y; P.mode = "free"; cars = []; }');
   step(45, 'held.left = true; if (MAP.id === "pre") cars = [];'); run('held.left = false;');
   ok(run('MAP.id') === 'monde' && run('P.x') > run('MAP.w * TS - 300') && run('P.dir') === 'left', 'il repasse le tunnel : de retour dans le monde, côté est');
   ok(run('items.length') === run('nItems') && run('dogs.length') === run('nDogs') && run('digs[2].dug') && run('digs.filter(g => g.dug).length') === 1

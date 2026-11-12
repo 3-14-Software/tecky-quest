@@ -416,7 +416,10 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
    là-bas reprend là-bas et qu'une sauvegarde v2 se reprend dans le monde ; batterie complète verte ; vu dans le
    jeu (`reference/v2/lot6_deux_cartes.png`) et dans l'éditeur (`?carte=pre`). Restent pour plus tard : des
    portes (intérieurs), les passages modifiables dans l'éditeur, et faire suivre Pompon ou un copain d'une carte
-   à l'autre.
+   à l'autre. Retouches du même jour, à la demande de Christophe : Tecky ressort sur la route, devant le tunnel,
+   à la hauteur où il est entré (il ressortait dans l'herbe) ; le tunnel est redessiné (`tunnel_options.png`,
+   option B : arc de pierres sur deux socles, plus de barre en travers, bouche en transparence où la voiture
+   s'enfonce dans le noir ; capture `lot6_tunnel.png`).
 3. La notion d'épisode : une saison = ses cartes (mêmes terrains, autres placements, indices et quêtes), une
    palette, une météo. Elle repose sur le jalon : changer d'épisode, c'est changer de carte.
 4. Un premier nouvel épisode, pour mesurer ce qu'il coûte et ce qu'il dure (l'automne ou l'hiver).

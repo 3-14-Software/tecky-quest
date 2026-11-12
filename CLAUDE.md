@@ -141,7 +141,11 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `butterflies.py` (papillons, vus de dessus), `lisiere.py` (le bord de la carte : `decor()`, le placement de la
   lisière, et `tunnel()`, le tunnel de la route, un `nature.Sprite` en calques : butte, pierres, touffes ;
   `tunnel(est=True)` = le même, éclairé de la droite, que le jeu pose en miroir au bord est : la lumière vient
-  toujours d'en haut à gauche), `items.py`, `decor.py`, `tiles.py`, `hud.py` :
+  toujours d'en haut à gauche ; `_portail()` : un arc de pierres sur deux socles, choisi par Christophe sur
+  `reference/v2/tunnel_options.png` ; la butte est entaillée à la place de la bouche, et une ombre en dégradé y
+  couvre la vraie route et la voiture qui entre — elle s'enfonce dans le noir au lieu d'être coupée net ; ne pas
+  remettre de bande de pierre en travers de l'ouverture : les voitures passaient dessous, « visuellement
+  incohérent »), `items.py`, `decor.py`, `tiles.py`, `hud.py` :
   dessins et animations. `tiles.py` : tileset Wang/marching squares de 16 tuiles par transition (bits NO=1, NE=2, SO=4, SE=8),
   tuile 0 vide, 16 colonnes, `PAIRS`, `PRIORITY`, `resolve()`. Là où trois terrains se rencontrent (ou deux sans
   paire), `needs_composite()` : la version web pose une tuile composée (`composite()` : chaque terrain par-dessus le
@@ -259,8 +263,10 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   la carte courante. **Voyage** : Tecky pousse contre un tunnel qui a un passage (`edgeBump()`, `passageHere()`) →
   `travel(carte, tunnel)` : fondu, la carte quittée range son état dans `elsewhere[id]` (`mapState()` : objets,
   trésors, chiens, poules, lettres, Pompon, ballons, jouets, hérissons, cases vues), `useMap()`, `resetWorld()`,
-  la carte d'arrivée retrouve le sien (`applyMapState()`), Tecky ressort au pied du tunnel (`arrivalAt()`,
-  `PASSAGE`), sauvegarde. Ce qui le suivait (Pompon, hérissons, copains) l'attend ; un jouet d'Iris porté reste
+  la carte d'arrivée retrouve le sien (`applyMapState()`), Tecky ressort **sur la route, devant la bouche du
+  tunnel, à la hauteur où il est entré** (`arrivalAt(i, dy)`, `PASSAGE` ; au début il ressortait dans l'herbe sous
+  le tunnel : « les entrées-sorties ne sont pas alignées »), les voitures toutes proches sont envoyées plus loin,
+  sauvegarde. On n'entre que par la chaussée : contre la butte, à côté, rien ne se passe. Ce qui le suivait (Pompon, hérissons, copains) l'attend ; un jouet d'Iris porté reste
   devant le tunnel. Sur une carte qui n'a ni l'indice suivant ni Alice, la flèche et le flair ramènent au
   tunnel (`arrowTarget()`). Les badges qui comptent ce que porte la carte (bêtes, canards, os dorés,
   explorateur, copains) ne se gagnent que dans le monde : une carte vide les donnerait tous. Écran titre et

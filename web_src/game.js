@@ -1663,7 +1663,10 @@ function edgeBump(dt, ix, iy, ox, oy) {
   // au bout de la grande route (ou juste à côté de la butte du tunnel)
   const [r0, r1] = MAP.traffic.road, tunnel = outX && P.y > r0 - EDGE.tunnelY && P.y < r1 + EDGE.tunnelY;
   const pass = tunnel && state === 'play' && P.mode === 'free' && passageHere();
-  if (pass) { travel(pass[1], pass[2]); return; }    // ce tunnel mène à une autre carte
+  if (pass) {                                        // ce tunnel mène à une autre carte : on y entre par la route
+    if (P.y > r0 + 8 && P.y < r1 + 8) travel(pass[1], pass[2]);
+    return;
+  }
   if (timePlayed - P.edgeAt < EDGE.again) return;
   P.edgeT = 0; P.edgeAt = timePlayed;
   addWordPop(tunnel ? txt('bord.tunnel') : txt('bord.carte'), P.x, P.y - 120, 'tecky');
@@ -1884,13 +1887,19 @@ function resetWorld() {
 /* Passer d'une carte à l'autre, par un tunnel de la grande route (MAP.passages : [n° du tunnel, carte, n° du tunnel
    d'arrivée] ; MAP.roadTunnels : [x, y du pied, miroir]). Tecky pousse contre le tunnel (edgeBump) : fondu, la carte
    quittée garde son état (elsewhere : objets, chiens, poules, lettres… comme dans une sauvegarde), celle où il
-   arrive retrouve le sien ou naît, et il ressort sur le bas-côté, dos au tunnel. Ce qui le suivait (Pompon, les
+   arrive retrouve le sien ou naît, et il ressort sur la route, devant la bouche du tunnel d'arrivée, à la hauteur
+   où il est entré dans l'autre (au début il ressortait dans l'herbe, sous le tunnel : Christophe l'a vu tout de
+   suite) ; les voitures toutes proches sont envoyées plus loin devant lui. On n'entre que par la route : contre la
+   butte, à côté, rien ne se passe. Ce qui le suivait (Pompon, les
    petits hérissons, un copain) l'attend là où il était ; un jouet d'Iris porté reste au pied du tunnel. */
-const PASSAGE = { out: 110, down: 16 };
+const PASSAGE = { out: 76, top: 26, bottom: 6, clear: 380 };   // out : devant la butte (FOOT.tunnel) ; top, bottom : marges dans la chaussée
 let elsewhere = {};                     // l'état des cartes où Tecky n'est pas : { id: mapState() }
-function arrivalAt(i) {                 // où Tecky ressort du tunnel n° i de la carte courante : [x, y, direction]
-  const [tx, ty, flip] = MAP.roadTunnels[i];
-  return [tx + (flip ? -1 : 1) * PASSAGE.out, ty + PASSAGE.down, flip ? 'left' : 'right'];
+// où Tecky ressort du tunnel n° i de la carte courante : [x, y, direction] ; dy : sa hauteur dans la chaussée (depuis
+// son bord du haut) quand il est entré dans l'autre tunnel — sans elle, le milieu de la voie du bas
+function arrivalAt(i, dy) {
+  const [tx, , flip] = MAP.roadTunnels[i], [r0, r1] = MAP.traffic.road;
+  const y = clamp(r0 + (dy === undefined ? (r1 - r0) * 0.72 : dy), r0 + PASSAGE.top, r1 - PASSAGE.bottom);
+  return [tx + (flip ? -1 : 1) * PASSAGE.out, y, flip ? 'left' : 'right'];
 }
 function passageHere() {                // le passage du tunnel contre lequel Tecky pousse, s'il y en a un
   const i = MAP.roadTunnels.findIndex(t => t[2] === (P.x > MAP.w * TS / 2));
@@ -1898,14 +1907,16 @@ function passageHere() {                // le passage du tunnel contre lequel Te
 }
 function travel(vers, arrivee) {
   transition();
+  const dy = P.y - MAP.traffic.road[0];
   elsewhere[MAP.id] = mapState();
   useMap(vers);
   resetWorld();
   if (elsewhere[vers]) { applyMapState(elsewhere[vers]); delete elsewhere[vers]; }
   if (ici('alice') && nextClue() === 3) revealAlice();
-  const [x, y, dir] = arrivalAt(arrivee);
+  const [x, y, dir] = arrivalAt(arrivee, dy);
   Object.assign(P, { x, y, dir, mode: 'free', kx: 0, ky: 0, edgeT: 0 });
   P.setAnim('idle');
+  for (const c of cars) if (Math.abs(c.x - x) < PASSAGE.clear) c.x = x + c.dir * (PASSAGE.clear + c.T.len);   // (pas de voiture sur lui en sortant)
   camX = camClampX(P.x - VW / 2); camY = camClampY(P.y - VH / 2);
   saveGame();
 }

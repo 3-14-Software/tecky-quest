@@ -27,49 +27,58 @@ def tunnel(est=False):
     w, h = 72, 216
     # --- la butte : une herbe un peu plus soutenue que le pré, un flanc tourné vers la carte
     b = Drawing(w, h)
-    b.under.append(f'<path d="M60,58 L68,62 Q73,128 68,194 L60,198 Z" fill="{OMBRE}" opacity="0.3"/>')
+    # (pas d'ombre posée devant la bouche : c'était une bande sombre aux bords nets, juste devant la voiture qui entre,
+    # « comme un cheveu sur la soupe » ; l'ombre du tunnel est le dégradé de la bouche, qui part de rien : _portail())
     b.under.append(f'<path d="M4,213 C20,220 56,220 70,214 L70,210 L4,210 Z" fill="{OMBRE}" opacity="0.3"/>')
-    hill = path("M0,12 C10,4 26,2 40,6 C54,10 64,18 66,32 C67,40 64,46 62,50 L62,206 C66,207 68,211 64,214 L0,214 Z")
+    # (entaillée à la place de la bouche : la route, et la voiture qui entre, se voient au travers de son ombre)
+    hill = path("M0,12 C10,4 26,2 40,6 C54,10 64,18 66,32 C67,40 64,46 62,50 L63,56 A20,72 0 0 0 63,200 L62,206 "
+                "C66,207 68,211 64,214 L0,214 Z")
     b.clip("tunnel_hill", [hill])
     b.add(hill, "#74BF62")
     b.add(path("M50,0 C64,12 72,30 64,48 L62,52 L62,214 L53,214 C55,150 55,80 53,40 C52,24 52,10 50,0 Z"),
           "#93D67A" if est else "#57A04F", sil=False, clip="tunnel_hill")
     if not est:                                                  # le haut de la butte, face au soleil
         b.add(path("M0,14 C12,6 28,4 42,9 C32,9 16,13 0,24 Z"), "#93D67A", sil=False, clip="tunnel_hill")
-    for x, y in ((14, 40), (30, 66), (22, 150), (36, 178), (10, 100), (44, 92), (40, 160), (32, 120)):   # brins d'herbe
+    for x, y in ((14, 40), (30, 66), (22, 150), (34, 182), (10, 100), (38, 86), (36, 164), (30, 120)):   # brins d'herbe
         b.raw(line(f"M{x - 2},{y} Q{x - 1.4},{y - 2.2} {x - 1},{y - 3.4} M{x},{y} L{x + 0.2},{y - 4.2} "
                    f"M{x + 2},{y} Q{x + 1.6},{y - 2} {x + 1.4},{y - 3}", "#4C9A4C", 1.0))
     # --- la bouche : un arc de pierres ; dedans, la route s'enfonce dans le noir
     p = Drawing(w, h)
-    mouth = path("M63,56 A20,72 0 0 0 63,200 Z")
-    arc = path("M63,46 A27,82 0 0 0 63,210 Z")
-    p.clip("tunnel_arc", [arc])
-    p.add(arc, "#C2BAAB")
-    p.add(rect(30, 40, 40, 62), "#D9D2C5", sil=False, clip="tunnel_arc")                    # pierres du haut, au soleil
-    p.add(rect(30, 160, 40, 56), "#A8A092", sil=False, clip="tunnel_arc")                   # celles du bas, à l'ombre
-    p.add(mouth, "#2B1E17", sil=False)
-    p.clip("tunnel_mouth", [mouth])
-    p.add(rect(52, 64, 12, 128), "#3E4048", sil=False, clip="tunnel_mouth")                 # la route, dans l'ombre
-    p.add(rect(52, 64, 12, 2.4), "#7A7D86", sil=False, clip="tunnel_mouth")                 # ses bordures
-    p.add(rect(52, 189.6, 12, 2.4), "#7A7D86", sil=False, clip="tunnel_mouth")
-    p.add(rect(56, 127, 7, 2), "#8D9098", sil=False, clip="tunnel_mouth")                   # ligne du milieu
-    p.add(path("M63,74 A12,54 0 0 0 63,182 Z"), "#1C130E", sil=False)                     # le fond, tout noir
-    p.raw(line("M63,56 A20,72 0 0 0 63,200", "#6A6257", 0.9))                              # arête de la voûte
-    for k in range(1, 12):                                                                 # joints des pierres
-        a = math.pi / 2 + k * math.pi / 12
-        x0, y0 = 63 + 20 * math.cos(a), 128 + 72 * math.sin(a)
-        x1, y1 = 63 + 27 * math.cos(a), 128 + 82 * math.sin(a)
-        p.raw(line(f"M{x0:.1f},{y0:.1f} L{x1:.1f},{y1:.1f}", "#7E766B", 0.9))
-    p.add(rect(60, 42, 6, 172, 2), "#D6CFC2")                                              # dessus du mur de tête
-    p.add(rect(63.4, 43, 2.2, 170, 1), "#B5AD9F", sil=False)
-    for y in range(50, 212, 12):
-        p.raw(line(f"M61,{y} L65,{y}", "#9A9286", 0.8))
+    _portail(p)
     # --- la butte est boisée, comme la lisière : des touffes en haut et en bas, par-dessus son contour
     t = Drawing(w, h)
     nature._touffes(t, [(48, 15, 8.5), (30, 9, 9.5), (60, 29, 7)], "buisson", "th")
     nature._touffes(t, [(22, 205, 8.5), (60, 208, 7), (41, 206, 9.5)], "buisson", "tb")
     return nature.Sprite([(b, "#2F6B3A", nature.TRAIT), (p, "#5E574C", nature.TRAIT),
                           (t, nature.FEUILLAGES["buisson"][3], nature.TRAIT)], w, h, (56, 208))
+
+
+def _portail(p):
+    """La bouche du tunnel : un arc de pierres taillées dont les deux pieds reposent sur un socle. Dedans, pas de
+    route peinte : la butte est entaillée, et une ombre de plus en plus dense (un dégradé, du bord de la bouche vers
+    le fond) couvre la vraie route et la voiture qui entre — elle s'enfonce dans le noir au lieu d'être coupée net
+    (demande de Christophe : « de la transparence au niveau de la zone sombre »). Rien ne barre plus l'ouverture : il
+    y avait là une bande de pierre, « le dessus du mur de tête », sous laquelle les voitures passaient."""
+    cx, cy = 63, 128
+    arc = path(f"M{cx},40 A31,88 0 0 0 {cx},216 L{cx},200 A20,72 0 0 1 {cx},56 Z")           # l'anneau seul, sans la bouche
+    p.clip("tunnel_arc", [arc])
+    p.add(arc, "#C2BAAB")
+    p.add(rect(28, 36, 40, 62), "#DAD3C6", sil=False, clip="tunnel_arc")                    # pierres du haut, au soleil
+    p.add(rect(28, 160, 40, 60), "#A49C8E", sil=False, clip="tunnel_arc")                   # celles du bas, à l'ombre
+    for k in range(1, 12):                                                                 # joints des claveaux
+        a = math.pi / 2 + k * math.pi / 12
+        x0, y0 = cx + 20 * math.cos(a), cy + 72 * math.sin(a)
+        x1, y1 = cx + 31 * math.cos(a), cy + 88 * math.sin(a)
+        p.raw(line(f"M{x0:.1f},{y0:.1f} L{x1:.1f},{y1:.1f}", "#7E766B", 0.9))
+    p.defs.append(f'<linearGradient id="tunnel_nuit" gradientUnits="userSpaceOnUse" x1="{cx}" y1="0" x2="{cx - 17}" y2="0">'
+                  '<stop offset="0" stop-color="#17100C" stop-opacity="0"/>'
+                  '<stop offset="0.45" stop-color="#17100C" stop-opacity="0.62"/>'
+                  '<stop offset="1" stop-color="#17100C" stop-opacity="1"/></linearGradient>')
+    p.raw(f'<path d="M{cx},56 A20,72 0 0 0 {cx},200 Z" fill="url(#tunnel_nuit)"/>')         # la nuit du tunnel
+    p.raw(line(f"M{cx},56 A20,72 0 0 0 {cx},200", "#6A6257", 0.9))                         # arête de la voûte
+    for y0, haut, ton in ((38, 12, "#DAD3C6"), (205, 9, "#A49C8E")):                       # les socles, aux deux pieds de l'arc
+        p.add(rect(58.5, y0, 8.5, haut, 1.6), ton)
+        p.raw(line(f"M59.5,{y0 + haut / 2} L66,{y0 + haut / 2}", "#7E766B", 0.8))
 
 
 DECOR = {   # nom : fonction qui rend un nature.Sprite ; dessinés dans l'atlas sous decor/<nom>, à leur taille
