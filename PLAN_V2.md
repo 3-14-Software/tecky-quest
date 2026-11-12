@@ -312,14 +312,26 @@ Fait le 12 novembre 2026, dans le jeu :
   poutre-caisson, cabine, chariot, crochet), péniche (1,4), bitte, heurtoir, toboggan et balançoire (1,3), nid
   de feuilles de Maman Piquette, panier d'Iris, lampadaire, cône, panneau indicateur, panneau routier. Le
   lampadaire du quai est passé à gauche du portique. Planche de ce qui reste dans son dessin de la v1 :
-  `mobilier_reste_v1.png` (18 décors, à trancher avec Christophe).
+  `reste_a_relooker.png` (à trancher avec Christophe).
 
 - **Véhicules** : voitures, camionnette de boulangerie et bus de la route, tracteur, chariot élévateur et camion
   garés, redessinés sans changer leurs cadres : lumière d'en haut (juste aussi en miroir), passages de roue,
   jantes, pare-chocs, rétroviseurs, et du monde derrière les vitres (conducteurs, boulanger, passagers du bus).
   Planche `vehicules_v2.png`, capture `lot4_route.png`.
 
-Reste : les objets (os, lettres, ballons), les canards et les papillons, qui gardent leur petit ovale ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; l'habillage des zones (dont : la forme des mares, encore rectangulaire ; un cerisier en
+- **Objets à ramasser** (demande de Christophe : « les collectibles détonnent un peu désormais ») : choix sur la
+  planche `objets_options.png` : posés au sol, à 85 %, avec leur ombre portée et un scintillement, au lieu de
+  flotter au-dessus d'un ovale. Os, saucisse, médaille, canard, balle et os doré ont du relief ; les lettres de
+  Marcel et les jouets d'Iris sont posés de même. Capture : `lot4_objets_poses.png`.
+- **Retours du 12 novembre** : compteurs du HUD nets (icônes à leur taille, au lieu d'un sprite agrandi) ; reflets
+  du sable de la péniche dans le tas ; relief des gros ballons de Léon (image à part, qui ne tourne pas) ;
+  ombres collées aux objets à socle rond (`nature.assise()`) et aux objets sur pieds (`mobilier._marches()`),
+  avec un outil qui les mesure (`tools/ombres_decollees.py`). Capture : `lot4_compteurs_ballon.png`.
+- **Habillage** : les quatre mares ne sont plus des rectangles (formes de haricot, `carte.json`) ; le cerisier en
+  fleurs de la forêt est devenu un chêne.
+
+Reste : ce que liste la planche `reste_a_relooker.png` (15 décors, les trois indices, la lettre, les jouets
+d'Iris, Titine) ; les canards et les papillons, qui gardent leur petit ovale ; des bords de chemin et de rive moins réguliers (ils sont lisses, mais droits) ; l'habillage des zones (dont : la forme des mares, encore rectangulaire ; un cerisier en
 fleurs au milieu des sapins de la forêt). L'éditeur de carte montre encore les anciens arbres (il lit
 `decor/tree`…), pas les variantes.
 

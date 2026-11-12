@@ -121,7 +121,8 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   1,3, tonneaux 1,35, banc 1,2 ; le halo d'un lampadaire suit `MAP.grow.lamppost`. `MAP.grow` agrandit aussi
   `RAILS` (pieds du portique) ; `PERCHOIRS` : où un chat se pose sur un conteneur (`MAP.perches`). Un décor
   redessiné n'a plus son ancien dessin dans l'atlas (`pack_web.collect()`). Planche : `python3 mobilier.py`.
-  Restent dans leur dessin de `decor.py` (planche `reference/v2/mobilier_reste_v1.png`) : terrier, pommes
+  Restent dans leur dessin de `decor.py` (planche numérotée `reference/v2/reste_a_relooker.png`, avec les
+  indices, la lettre, les jouets d'Iris et Titine, pas relookés non plus) : terrier, pommes
   tombées, vélo, échelle, clôtures, grillages, voie ferrée, barque, bac à sable, filet de Léon, épouvantail,
   fontaine (animée : le catalogue ne sait qu'une image par sprite), pont : gardés tels quels.
   **Véhicules** (`vehicles.py` : voitures, camionnette, bus ; `decor.py` : tracteur, chariot élévateur, camion
@@ -160,6 +161,26 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   Village plus entraînant (152), ferme country (136 : basse alternée, rouleaux de banjo, notes glissées = 6e champ),
   forêt calme (108 : basse tenue, écho), parc boîte à musique (126, sans batterie), industrie mécanique (140) ; et la
   berceuse de la fin (84, sans batterie, timbre `TIMBRE.end`).
+- **Objets à ramasser** (`items.py` ; lettres de Marcel `npcs.letter_frames()` ; jouets d'Iris `port.toy_frames()`) :
+  ils détonnaient dans le décor de la v2 (à plat, flottants au-dessus d'un ovale). Choix de Christophe sur
+  `reference/v2/objets_options.png` : **posés au sol, à 85 %, avec leur ombre portée**. Os, saucisse, médaille,
+  canard, balle et os doré ont du relief (`items._dans()` : un croissant d'ombre, une plage claire) ; plus
+  d'ovale, de rebond ni d'étoile dans le dessin (une image par objet, sauf le canard pouic-pouic et la lettre).
+  Le jeu les pose avec `drawPosed()` (`POSED` : taille, hauteur du sol sous `it.y`, cadence du scintillement
+  `fx/glint`) ; `MAP.itemBase` / `MAP.toyBase` (`pack_web.bases()`) = où le dessin s'assoit ; les familles
+  « item » et « port » sont dans `MAP.cast`. Les sprites restent centrés dans leur cadre : le HUD ne bouge pas.
+  Les gros ballons de Léon tournent : leur relief est une image à part, `ballon/relief`, posée dessus sans
+  tourner. **Compteurs du HUD** : jamais un sprite du jeu agrandi (flou : vu sur les petits hérissons) ; les
+  icônes `icone/hedgehog`, `icone/hen`, `icone/cat_white` sont le même dessin rendu à la taille du compteur
+  (`pack_web.icone()`).
+- **Ombres collées à l'objet** (Christophe : « des ombres qui ont un espace avant leur objet ») : une ombre part
+  de la ligne de contact ; pour « contour », cette ligne est `nature.assise()`, la rangée où le bord droit de la
+  silhouette cesse de s'écarter (le bout d'un socle rond), pas son point le plus bas, sinon un coin de sol reste
+  éclairé à droite. Ce qui tient sur des pieds à des profondeurs différentes (banc, chevalets du portique et de
+  la balançoire, toboggan, heurtoir) a une ligne en marches d'escalier (`mobilier._marches()`).
+  `python3 tools/ombres_decollees.py [seuil]` couche chaque ombre comme le jeu et liste celles qui se décollent
+  (au seuil de 5 px il ne reste que des filets d'une ou deux colonnes au bord des marches) : à relancer après
+  tout nouveau décor.
 - **La carte est une donnée** : `carte.json` (en tuiles ; `carte.py` : `charger()`, `valider()`, `enregistrer()`, format
   stable, une entrée par ligne ; `python3 carte.py --verifier` dans `run_all.sh`). Terrain = 65 lignes de 97 coins (une
   lettre par terrain, `LEGENDE`), `details` (détails au sol, tuile entière ; « fleurs » = massifs, perchoirs des
@@ -594,7 +615,8 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `chiens2.py`) faits ; lot 4 (paysage) en cours : nature, ombres portées, herbe, eau, lisière, bords
   arrondis, bâtiments (étals et poulailler compris), ombres portées de tout (décors, personnages, bêtes,
   véhicules) allongées le soir et fusionnées, sous-bois et champ, mobilier (`mobilier.py` : du pot de fleurs au
-  portique du port) et véhicules faits ; reste l'habillage des zones. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
+  portique du port), véhicules, objets à ramasser posés au sol, mares en haricot faits ; restent ce
+  que liste `reference/v2/reste_a_relooker.png` et des rives moins droites. Les études graphiques sont dans `v2/` (`python3 v2/temoin.py` écrit l'écran
   témoin dans `reference/v2/`) : des images fixes, que ni `game.js` ni `pack_web.py` n'utilisent encore (le décor
   de `nature.py` est dans le jeu depuis le lot 4). Les pistes générées par Christophe avec ChatGPT sont dans
   `reference/v2/chat_gpt/`.

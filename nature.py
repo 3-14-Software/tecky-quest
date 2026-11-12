@@ -539,6 +539,25 @@ def sol_cultures():
     return out
 
 
+def assise(plein):
+    """La rangée où une silhouette (tableau de booléens) est assise sur le sol, vue du côté où tombe son ombre : en
+    remontant depuis son point le plus bas, la première rangée où son bord droit cesse de s'écarter (il devient un
+    flanc). Pour un bas droit, c'est la dernière rangée. Pour un bas arrondi (le socle d'une bitte, le fond d'un pot
+    ou d'un tonneau, un buisson), c'est plus haut, au bout du socle : couchée à partir du point le plus bas, l'ombre
+    laissait un coin de sol éclairé entre elle et l'objet, à droite (vu par Christophe : « des ombres qui ont un
+    espace avant leur objet »). Ce qui est sous cette rangée se couche sous l'objet, caché. Jamais plus haut que
+    20 % de la hauteur."""
+    import numpy as np
+    rangs = np.where(plein.any(axis=1))[0]
+    haut, bas = int(rangs[0]), int(rangs[-1])
+    droite = lambda y: int(np.where(plein[y])[0][-1]) if plein[y].any() else -1
+    fin = bas - max(2, int((bas - haut) * 0.2))
+    for y in range(bas, fin, -1):
+        if droite(y - 2) <= droite(y):
+            return y + 1
+    return fin + 1
+
+
 def bandes_image(im, ox, oy, sol, echelle):
     """Ligne de contact d'une image (RGBA, marge PAD comprise, à `echelle` pixels par unité, origine en (ox, oy)
     unités) : là où elle touche le sol. Liste de points [u, b] en pixels de l'image à partir de son origine, de
@@ -560,8 +579,7 @@ def bandes_image(im, ox, oy, sol, echelle):
     if sol == "pied":
         return [[round(c0), 0], [round(c1), 0]]
     if sol == "contour":
-        bas = int(np.where(plein.any(axis=1))[0][-1]) - y0
-        return [[round(c0), round(bas)], [round(c1), round(bas)]]
+        return [[round(c0), round(assise(plein) - y0)], [round(c1), round(assise(plein) - y0)]]
     pts = [[x * echelle + m - x0, y * echelle + m - y0] for x, y in sol]
     pts[0][0], pts[-1][0] = min(pts[0][0], c0), max(pts[-1][0], c1)         # (à plat au-delà des bouts)
     return [[round(u, 1), round(v, 1)] for u, v in pts]

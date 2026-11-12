@@ -913,21 +913,15 @@ def _letter(d, flap=0.0):
 
 
 def letter_frames():
-    """4 SVG 32 x 32 : la lettre perdue qui frémit au vent (petite rotation, le rabat se soulève, léger rebond)
-    au-dessus de son ombre, avec l'éclat de brillance des objets. Origine conseillée (16, 16), comme item/*."""
+    """4 SVG 32 x 32 : la lettre perdue, posée au sol, qui frémit au vent (petite rotation, le rabat se soulève).
+    Plus d'ovale ni d'étoile : le jeu la pose avec son ombre portée et un scintillement, comme les objets
+    (game.js : drawPosed()). Origine conseillée (16, 16), comme item/*."""
     out = []
     for i in range(4):
-        t = i / 4 * 2 * math.pi
-        a = 5 * math.sin(t)
-        bob = -1.2 + 0.9 * math.cos(t)
-        k = 1 - 0.18 * (-bob / 2.1)
+        a = 5 * math.sin(i / 4 * 2 * math.pi)
         d = Drawing(LW, LH)
-        d.under.append(f'<ellipse cx="16" cy="29.5" rx="{9 * k:.2f}" ry="{1.8 * k:.2f}" fill="#000" opacity="0.2"/>')
         _letter(d, flap=[0.0, 0.6, 1.0, 0.4][i])
-        if i == 2:
-            d.raw(f'<polygon points="{" ".join(f"{x:.1f},{y:.1f}" for x, y in _star(27.5, 6.5, 3.0, 1.05))}" '
-                  f'fill="#FFFFFF" stroke="{OUTLINE}" stroke-width="0.5"/>')
-        out.append(d.svg(f"translate(0 {bob:.2f}) rotate({a:.1f} 16 17.5)"))
+        out.append(d.svg(f"rotate({a:.1f} 16 17.5)"))
     return out
 
 

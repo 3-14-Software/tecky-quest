@@ -122,8 +122,19 @@ eval(base + `setTimeout(() => {
   ok(run('portees.some(p => p[0].startsWith("tecky/") && p[3])') && run('portees.some(p => p[0] === "vehicle/car_red")')
      && run('ordre.indexOf("tecky") > ordre.lastIndexOf("ombre")') && run('ctx === mainCtx'),
      'Tecky et une voiture ont leur ombre portée, dessinée avant les sprites (' + run('portees.length') + ' ombres à l\\'écran)');
-  ok(run('portees.every(p => MAP.cast.includes(p[0].split("/")[0]))') && run('!MAP.cast.includes("decor") && !MAP.cast.includes("item") && !MAP.cast.includes("duck")'),
-     'seulement les personnages, les bêtes et les véhicules (pas les décors, les objets ni les canards)');
+  ok(run('portees.every(p => MAP.cast.includes(p[0].split("/")[0]))') && run('!MAP.cast.includes("decor") && !MAP.cast.includes("duck") && !MAP.cast.includes("fx")'),
+     'seulement les personnages, les bêtes, les véhicules et les objets posés au sol (pas les décors, les canards ni les effets)');
+  // objets à ramasser, lettres, jouets : posés au sol à 85 %, avec leur ombre portée (drawPosed)
+  run('var poses = [], drawSpr2 = drawSpr; drawSpr = function (k, i, x, y, o) { poses.push([k, x, y, o || {}]); };'
+    + ' drawPosed("item/bone", 0, 500, 700, MAP.itemBase.bone, 0.1, 0); drawPosed("item/medal", 0, 500, 700, MAP.itemBase.medal, 5, 30); drawSpr = drawSpr2;');
+  ok(run('MAP.cast.includes("item") && MAP.cast.includes("port")') && run('Object.keys(MAP.itemBase).length') === 10 && run('MAP.toyBase.length') === 3
+     && run('Object.values(MAP.itemBase).concat(MAP.toyBase).every(b => b > 4 && b < 32)'),
+     'objets, lettre et jouets : chacun sait où est le bas de son dessin (' + run('JSON.stringify(MAP.itemBase)') + ')');
+  ok(run('poses[0][0] === "item/bone" && poses[0][3].sc === POSED.sc && Math.abs(poses[0][2] + poses[0][3].lift - 700) < 0.01')
+     && run('poses[1][0] === "fx/glint"') && run('poses[2][0] === "item/medal" && Math.abs(poses[2][2] + poses[2][3].lift - 700) < 0.01 && poses[2][3].lift > 30'),
+     'un objet est posé au sol (son ombre part de là, même pendant un bond) et scintille de temps en temps');
+  ok(run('ATLAS["item/bone"].f.length') === 1 && run('ATLAS["item/squeaky"].f.length') === 6 && run('ATLAS["item/letter"].f.length') === 4,
+     'plus de rebond dans le dessin : une image par objet, sauf le canard pouic-pouic (6) et la lettre qui frémit (4)');
   run('portees = []; P.hop = 20; drawWorld(); P.hop = 0;');
   ok(run('portees.find(p => p[0].startsWith("tecky/"))[2]') === 20, 'un saut : l\\'ombre reste au sol (la hauteur du saut lui est passée)');
   run('portees = []; P.alpha = 0; drawWorld(); P.alpha = 1;');

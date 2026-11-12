@@ -43,7 +43,7 @@ function main() {
   ok(run('state') === 'dialog' && run('dialog.lines[0].who') === 'neighbor' && /Pompon/.test(run('dialog.lines[0].text')), 'C : elle demande de l’aide');
   advanceDialog();
   ok(run('rose.state') === 'asked' && run('neighborMark()') === 1, 'quête acceptée');
-  const cat = () => JSON.stringify(run('JSON.stringify(hudCounters().filter(c => c[0] === "cat_white/idle").map(c => c[4] + "/" + c[5]))'));
+  const cat = () => JSON.stringify(run('JSON.stringify(hudCounters().filter(c => c[0] === "icone/cat_white").map(c => c[4] + "/" + c[5]))'));
   ok(cat() === JSON.stringify('["0/1"]'), 'compteur du chat : 0/1');
   run('P.x = pompon.x + 100; P.y = pompon.y;'); step(2);
   ok(run('state') === 'dialog' && /Te voilà, Pompon/.test(run('dialog.lines[0].text')), 'Tecky retrouve Pompon');

@@ -155,7 +155,7 @@ function castShadow(g, s, f, x, y, o) {
   const X = Math.round(x * scale) / scale, Y = Math.round((y + lift) * scale) / scale;
   const kx = (o.flip ? -1 : 1) * (o.sc || 1), ky = (o.sc || 1) * (o.sy || 1);
   const cx = SHADOW.sx * len, cy = SHADOW.sy * len;                // la hauteur, couchée vers la droite et vers le bas
-  const lx = f[4] - s.o[0], ly = f[5] - s.o[1] - lift;
+  const lx = f[4] - s.o[0], ly = f[5] - s.o[1] - lift / (ky || 1);   // (lift est en pixels du monde, pas du sprite)
   g.save();
   g.globalAlpha = a;
   g.translate(X, Y);
@@ -2610,6 +2610,7 @@ function drawBall(b) {
   ctx.beginPath(); ctx.ellipse(b.x, b.y - 2, 22, 7, 0, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
   drawSpr('port/balloon', b.i, b.x, b.y - BALL.r - b.z, { angle: b.rot });
+  drawSpr('ballon/relief', 0, b.x, b.y - BALL.r - b.z);        // l'ombre et le reflet ne tournent pas avec lui
 }
 function leonMark() { return fete.state === 'done' ? -1 : fete.state === 'asked' && ballsLeft() ? 1 : 0; }
 function leonGreet() {
@@ -2713,17 +2714,26 @@ function updateToys(dt) {
     break;
   }
 }
+/* Objets à ramasser, lettres de Marcel et jouets d'Iris : posés au sol (choix de Christophe sur
+   reference/v2/objets_options.png : ils flottaient au-dessus d'un ovale et détonnaient dans le décor de la v2), à
+   85 %, avec leur ombre portée (familles « item » et « port » de MAP.cast) et un scintillement de temps en temps.
+   (x, y) : le point du sol ; base : de combien le dessin descend sous son origine (MAP.itemBase, MAP.toyBase) ;
+   t : son horloge (négative : pas de scintillement) ; up : la hauteur d'un bond (l'ombre reste au sol). */
+const POSED = { sc: 0.85, ground: 20, every: 1.4, glint: 0.45 };
+function drawPosed(key, f, x, y, base, t, up) {
+  const b = (base || 0) * POSED.sc, u = up || 0;
+  drawSpr(key, f, x, y - b - u, { sc: POSED.sc, lift: b + u });
+  const g = t < 0 ? 1 : (t % POSED.every) / POSED.glint;
+  if (g < 1) drawSpr('fx/glint', Math.floor(g * ATLAS['fx/glint'].f.length), x + 16, y - 2 * b - u + 6);
+}
 function drawToy(t) {
   if (t.carried) {
     if (P.alpha === 0) return;
     const [mx, my] = MOUTH[P.dir];
-    drawSpr('port/toy', t.i, P.x + mx, P.y + my, { sc: 0.7, flip: P.dir === 'right' });
+    drawSpr('port/toy', t.i, P.x + mx, P.y + my, { sc: 0.7, flip: P.dir === 'right', lift: -my });
     return;
   }
-  ctx.save(); ctx.globalAlpha = 0.18; ctx.fillStyle = '#000';
-  ctx.beginPath(); ctx.ellipse(t.x, t.y, 15, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-  const bob = t.home ? 0 : Math.sin(t.t * 3) * 2;
-  drawSpr('port/toy', t.i, t.x, t.y - 16 + bob, { sc: 0.85 });
+  drawPosed('port/toy', t.i, t.x, t.y, MAP.toyBase[t.i], t.home ? -1 : t.t);     // (rendu à Iris : il ne scintille plus)
 }
 function irisMark() { return jouets.state === 'done' ? -1 : jouets.state === 'asked' && toysLeft() ? 1 : 0; }
 function irisGreet() {
@@ -4967,10 +4977,9 @@ function drawWorld() {
   for (const d of EDGE_DECOR) if (vis(d.x, d.y, d.n === 'tunnel' ? 460 : 280))     // la lisière, au bord de la carte
     list.push({ y: d.y, draw: () => drawSpr(d.key, 0, d.x, d.y, d.flip ? { flip: true } : undefined) });
   for (const it of items) if (vis(it.x, it.y, 80)) {
-    const i = Math.floor(it.t * 8);
-    let dy = 0;
-    if (it.pop !== undefined && it.t < 0.5) dy = -Math.sin(it.t / 0.5 * Math.PI) * 60;
-    list.push({ y: it.y + 24, draw: () => drawSpr('item/' + it.n, i, it.x, it.y + dy) });
+    const i = Math.floor(it.t * 8), g = it.y + POSED.ground;
+    const up = it.pop !== undefined && it.t < 0.5 ? Math.sin(it.t / 0.5 * Math.PI) * 60 : 0;
+    list.push({ y: g, draw: () => drawPosed('item/' + it.n, i, it.x, g, MAP.itemBase[it.n], it.t + it.x * 0.013, up) });
   }
   for (const d of dogs) if (vis(d.x, d.y, 120)) list.push({ y: d.y, draw: () => d.draw(Math.max(0, 1 - d.fade)) });
   for (const h of hens) if (vis(h.x, h.y, 60)) list.push({ y: h.y, draw: () => h.draw() });
@@ -4980,7 +4989,7 @@ function drawWorld() {
     drawSpr('vehicle/' + v.name, Math.floor(v.t * 4), v.x, v.y, { flip: v.dir < 0 }) });
   if (!alice.hidden && vis(alice.x, alice.y, 120)) list.push({ y: alice.y, draw: () => alice.draw() });
   for (const n of npcList()) if (vis(n.x, n.y, 140)) list.push({ y: n.y, draw: () => drawNpc(n) });
-  for (const l of letters) if (!l.got && vis(l.x, l.y, 60)) list.push({ y: l.y + 20, draw: () => drawSpr('item/letter', Math.floor(l.t * 6), l.x, l.y) });
+  for (const l of letters) if (!l.got && vis(l.x, l.y, 60)) list.push({ y: l.y + POSED.ground, draw: () => drawPosed('item/letter', Math.floor(l.t * 6), l.x, l.y + POSED.ground, MAP.itemBase.letter, l.t + l.x * 0.013) });
   if (vis(pompon.x, pompon.y, 60)) list.push({ y: pompon.y, draw: drawPompon });
   for (const b of babies) if (vis(b.x, b.y, 60)) list.push({ y: b.y, draw: () => drawBaby(b) });
   for (const b of balls) if (vis(b.x, b.y, 80)) list.push({ y: b.y, draw: () => drawBall(b) });
@@ -5208,12 +5217,12 @@ function counterBox(i) {
 function hudCounters() {
   const c = [];
   if (treasures > 0) c.push(['item/goldbone', 42, 28, 0.8, treasures, MAP.dig.length]);
-  if (farm.state === 'asked') c.push(['hen/idle/right', 46, 58, 1.3, questHens().length - hensLeft(), questHens().length]);
+  if (farm.state === 'asked') c.push(['icone/hen', 46, 58, 1, questHens().length - hensLeft(), questHens().length]);
   if (post.state === 'asked') c.push(['item/letter', 50, 36, 0.8, letters.length - lettersLeft(), letters.length]);
-  if (rose.state === 'asked') c.push(['cat_white/idle', 46, 58, 1.2, pompon.mode === 'lost' ? 0 : 1, 1]);
+  if (rose.state === 'asked') c.push(['icone/cat_white', 46, 58, 1, pompon.mode === 'lost' ? 0 : 1, 1]);
   if (fete.state === 'asked') c.push(['port/balloon', 42, 35, 0.8, balls.length - ballsLeft(), balls.length]);
   if (jouets.state === 'asked') c.push(['port/toy', 42, 35, 0.8, toys.length - toysLeft(), toys.length]);
-  if (piq.state === 'asked') c.push(['hedgehog/idle', 44, 58, 2.6, babies.length - babiesLeft(), babies.length]);
+  if (piq.state === 'asked') c.push(['icone/hedgehog', 44, 58, 1, babies.length - babiesLeft(), babies.length]);
   return c;
 }
 function drawHUD() {

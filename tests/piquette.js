@@ -21,7 +21,7 @@ function main() {
   advanceDialog();
   ok(run('piq.state') === 'asked' && run('piquetteMark()') === 1, 'quête acceptée, bulle « ? »');
   run('var used = [], ds0 = drawSpr; drawSpr = function (k) { used.push(k); return ds0.apply(this, arguments); }; drawHUD(); drawSpr = ds0;');
-  ok(run('used.includes("hedgehog/idle")'), 'compteur de petits dans le HUD');
+  ok(run('used.includes("icone/hedgehog")'), 'compteur de petits dans le HUD');
   // Tecky trouve deux petits : ils le suivent, l'un derrière l'autre
   run('P.x = babies[0].x - 60; P.y = babies[0].y + 10; pops = [];'); step(2);
   ok(run('babies[0].mode') === 'follow' && run('pops.some(p => p.text === "Couic !")'), 'trouvé : il suit Tecky (« Couic ! »)');

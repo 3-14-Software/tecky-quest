@@ -28,7 +28,7 @@ function main() {
   advanceDialog();
   ok(run('farm.state') === 'asked' && run('farmerMark()') === 1, 'quête acceptée, bulle « ? »');
   run('used = []; drawSpr = function (k) { used.push(k); return ds0.apply(this, arguments); }; drawHUD(); drawSpr = ds0;');
-  ok(run('used.includes("hen/idle/right")'), 'compteur de poules dans le HUD');
+  ok(run('used.includes("icone/hen")'), 'compteur de poules dans le HUD');
   run('P.y = farmer.y + 400'); step(2);
   run('used = []; drawSpr = function (k) { used.push(k); return ds0.apply(this, arguments); }; render(); drawSpr = ds0;');
   ok(run('used.includes("hud/talk")'), 'de loin, on voit sa bulle');

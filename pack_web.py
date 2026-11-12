@@ -31,6 +31,7 @@ import critters
 import ducks
 import npcs
 import port
+import spritelib
 import herissons
 import farmer
 import hens
@@ -273,6 +274,7 @@ def build_map():
         "variants": {n: [noms, tirage] for n, (noms, tirage) in nature.VARIANTES.items()},
         # ombres portées : le décalage d'un point par unité de hauteur, et la ligne de contact de chaque sprite
         "shadow": list(nature.OMBRE), "sols": sols(),
+        "itemBase": bases()[0], "toyBase": bases()[1],   # objets posés au sol : le bas de leur dessin
         "cast": portees(),                            # familles de sprites à ombre portée (personnages, bêtes, véhicules)
         "perches": {**batiments.perchoirs(S), **mobilier.perchoirs(S)},   # où un chat se réfugie : toits, conteneurs
         # décors agrandis (bâtiments, camion, tracteur, chariot) : leur obstacle (FOOT) grandit d'autant
@@ -297,8 +299,28 @@ def sans_ovale(svg):
 
 def portees():
     """Familles de sprites qui ont une ombre portée dans le jeu (le début de leur clé dans l'atlas)."""
-    return (["tecky", "alice", "alice1", "farmer", "hedgehog", "vehicle"] + list(chiens2.CHIENS) + list(npcs.KINDS)
+    return (["tecky", "alice", "alice1", "farmer", "hedgehog", "vehicle", "item", "port"] + list(chiens2.CHIENS) + list(npcs.KINDS)
             + list(villageois.KINDS) + list(critters.KINDS) + list(cows.KINDS) + list(hens.COLORS))
+
+
+def icone(svg, ancien, nouveau):
+    """Le même dessin à une autre réduction (contour compensé de même)."""
+    a, w = f"scale({ancien})", f'stroke-width="{spritelib.OUTLINE_W / ancien}"'
+    assert a in svg and w in svg, (a, w)
+    return svg.replace(a, f"scale({nouveau})").replace(w, f'stroke-width="{spritelib.OUTLINE_W / nouveau}"')
+
+
+def bases():
+    """Objets posés au sol (game.js : drawPosed()) : de combien le bas de chaque dessin descend sous son origine, en
+    pixels du jeu. Rend (objets et lettre, jouets d'Iris dans l'ordre de port.TOYS)."""
+    import numpy as np
+
+    def bas(svg, oy):                     # (l'assise de l'objet, pas son point le plus bas : nature.assise())
+        return nature.assise(np.asarray(render_svg(svg, 32, 32, S, PAD).getchannel("A")) > 128) - oy
+    m = PAD * S
+    out = {n: bas(items.item_frames(n)[0], 32 + m) for n in items.ITEMS}
+    out["letter"] = bas(npcs.letter_frames()[0], 32 + m)
+    return out, [bas(sv, 16 * S + m) for sv in port.toy_frames()]
 
 
 def collect(r=1):
@@ -346,6 +368,12 @@ def collect(r=1):
     out.append(("item/letter", [render_svg(sv, 32, 32, R, PAD) for sv in npcs.letter_frames()], (32 + M, 32 + M), True))
     out.append(("port/balloon", [render_svg(sv, 32, 32, R, PAD) for sv in port.balloon_frames()], (16 * S + M, 16 * S + M), True))
     out.append(("port/toy", [render_svg(sv, 32, 32, R, PAD) for sv in port.toy_frames()], (16 * S + M, 16 * S + M), True))
+    out.append(("ballon/relief", [render_svg(sv, 32, 32, R, PAD) for sv in port.balloon_relief()], (16 * S + M, 16 * S + M), True))
+    # icônes des compteurs du HUD : le dessin du jeu à la taille du compteur (agrandir le sprite, réduit pour le
+    # jeu, le rendait flou : vu par Christophe sur le compteur des petits hérissons)
+    for n, sv, k0, k in (("hedgehog", herissons.frames("idle")[0], herissons.SCALE, 1.04), ("hen", hens.frames("hen", "idle")[0], hens.SCALE, 0.86),
+                         ("cat_white", critters.frames("cat_white", "idle")[0], critters.SCALE["cat"], 0.89)):
+        out.append((f"icone/{n}", [render_svg(icone(sans_ovale(sv), k0, k), 32, 32, R, PAD)], (16 * S + M, 28 * S + M), True))
     for a in herissons.ANIMS:                           # les bébés hérissons, de profil, pieds en (16, 28)
         out.append((f"hedgehog/{a}", [render_svg(sans_ovale(sv), 32, 32, R, PAD) for sv in herissons.frames(a)], (16 * S + M, 28 * S + M), True))
     for kind in critters.KINDS:                         # écureuil, chats : de profil vers la droite, pieds en (16, 28)

@@ -43,6 +43,17 @@ def _dans(d, cle, xml):
     d.raw(f'<g clip-path="url(#{cle})">{xml}</g>')
 
 
+def _marches(marches, py):
+    """Ligne de contact en marches d'escalier, pour ce qui tient sur des pieds à des profondeurs différentes (un
+    banc, un chevalet) : [(x, de combien le sol est plus haut que l'origine à partir de ce x), …, (x de la fin, None)].
+    Les pieds du fond touchent le sol plus haut à l'écran : couchée à partir de l'origine, leur ombre commençait
+    plus bas qu'eux, décollée."""
+    pts = []
+    for (x, h), (x2, _) in zip(marches, marches[1:]):
+        pts += [(x, py - h), (x2, py - h)]
+    return pts
+
+
 def _sol_boite(x0, x1, yb, prof):
     """Ligne de contact d'un pavé : le bas de la face, puis du flanc qui fuit."""
     return [(x0, yb - CONTACT), (x1, yb - CONTACT), _p(x1, yb - CONTACT, prof)]
@@ -289,7 +300,9 @@ def banc():
         d.raw(line(f"M{a[0]:.2f},{a[1]:.2f} L{b[0]:.2f},{b[1]:.2f}", "#C9995C", 0.6))
     d.add(rect(x0, ys, x1 - x0, 2), sombre)                                             # son chant
     flasque(x1, FER[0])
-    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "pied")
+    f = P * FUITE[1]
+    sol = _marches([(x0 - 1, 0), (x0 + 2.6, f), (x0 + 6.4, f / 2), (x1 - 0.6, 0), (x1 + 2.6, f), (x1 + 6.4, None)], py)
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), sol)
 
 
 def boite_aux_lettres():
@@ -379,7 +392,7 @@ def table_de_terrasse():
         if i:
             d.raw(line(f"M{px},{top} Q{(px + ax) / 2 - (px - ax) * 0.08:.2f},{(top + ay) / 2 - 3.4:.2f} {ax:.2f},{ay:.2f}", "#8E2A22", 0.5))
     d.add(circle(px, top - 0.6, 1.5), "#F2C14E")
-    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "pied")
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "contour")
 
 
 def haie():
@@ -446,13 +459,13 @@ def champignons(bolets=False):
     d = Drawing(w, h)
     if bolets:
         brun = ("#B8713F", "#8C5129", "#DB9A62")
-        _amanite(d, 20.5, 27, 5.6, 6.5, (), brun, "a")
-        _amanite(d, 10.5, 27.4, 6.8, 8.6, (), brun, "b")
-        _amanite(d, 26.4, 27.8, 3.2, 3.6, (), brun, "c")
+        _amanite(d, 20.5, 27.6, 5.6, 6.5, (), brun, "a")
+        _amanite(d, 10.5, 27.6, 6.8, 8.6, (), brun, "b")
+        _amanite(d, 26.4, 27.6, 3.2, 3.6, (), brun, "c")
     else:
-        _amanite(d, 23, 27.2, 5, 6, ((-0.4, -0.4, 0.17), (0.3, -0.62, 0.15)), cle="a")
-        _amanite(d, 13, 26.6, 7.2, 9.2, ((-0.45, -0.35, 0.17), (0.15, -0.68, 0.15), (0.5, -0.28, 0.13), (-0.05, -0.2, 0.1)), cle="b")
-        _amanite(d, 6.6, 27.8, 3.6, 4, ((-0.1, -0.55, 0.2),), cle="c")
+        _amanite(d, 23, 27.4, 5, 6, ((-0.4, -0.4, 0.17), (0.3, -0.62, 0.15)), cle="a")
+        _amanite(d, 13, 27.4, 7.2, 9.2, ((-0.45, -0.35, 0.17), (0.15, -0.68, 0.15), (0.5, -0.28, 0.13), (-0.05, -0.2, 0.1)), cle="b")
+        _amanite(d, 6.6, 27.4, 3.6, 4, ((-0.1, -0.55, 0.2),), cle="c")
     return Sprite([(d, BOIS, nature.TRAIT)], w, h, (px, py), "contour")
 
 
@@ -605,7 +618,9 @@ def portique():
     d.add(rect(101.5, 63, 16, 7.5, 1.6), "#D8362E")                                        # la moufle
     d.add(rect(103, 64.2, 13, 1.6, 0.8), "#F0786E", sil=False)
     d.add(path("M108.3,70.5 L110.7,70.5 L110.7,75 Q110.7,80.5 105.6,79.4 L105.2,77.2 Q107.8,77.8 108.3,75 Z"), ACIER[0])
-    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "pied")
+    f, m = D * FUITE[1], D / 2 * FUITE[1]                  # le sol sous les pieds du fond, sous la poutre
+    sol = _marches([(5.5, 0), (20, f), (36.5, m), (171.5, 0), (186, f), (202.5, None)], py)
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), sol)
 
 
 def balancoire():
@@ -623,7 +638,8 @@ def balancoire():
         d.raw(line(f"M{x - 3.4},11 L{x - 4},44.6 M{x + 4.6},11 L{x + 5.4},43.2", "#8E949E", 0.9))
         d.add(_pts([(x - 5.4, 45), (x + 4.6, 45), (x + 7.2, 43.1), (x - 2.8, 43.1)]), couleur)
         d.add(rect(x - 5.4, 45, 10, 1.9, 0.6), _fonce(couleur, 0.8))
-    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "pied")
+    f = 20 * FUITE[1]
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), _marches([(4, 0), (10.5, f), (18, f / 2), (44, 0), (50.5, f), (58, None)], py))
 
 
 def _bezier(P, n=24):
@@ -667,7 +683,7 @@ def toboggan():
     arceau = f"M16.4,{yp - 1.6} L16.4,{yp - 9} Q16.4,{yp - 12.4} {16.4 + fx:.2f},{yp - 12.4 + fy:.2f} L{26 + fx:.2f},{yp - 12.4 + fy:.2f}"
     d.raw(line(arceau, OUTLINE, 3.2))                                                       # la main courante
     d.raw(line(arceau, "#F2C14E", 1.5))
-    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "pied")
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), _marches([(4, 0), (27.4, -fy), (31.6, -fy / 2), (62, None)], py))
 
 
 def heurtoir():
@@ -682,7 +698,7 @@ def heurtoir():
     for k in range(4):
         d.add(_pts([(0.6 + k * 8, yt), (4.6 + k * 8, yt), (9.2 + k * 8, 22.5), (5.2 + k * 8, 22.5)]), "#D8362E", sil=False, clip="fh")
     d.add(_pts([_p(27, yt + 3, 0), _p(27, yt + 3, 4), _p(27, yt + 6, 4), _p(27, yt + 6, 0)]), "#A82520", sil=False)
-    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "pied")
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), _marches([(3, 0), (23.2, 3.6), (31, None)], py))
 
 
 def bitte():
@@ -724,7 +740,7 @@ def peniche():
     d.add(path(tas), "#E8CF9C")
     d.add(path("M47,15.4 Q58,18.6 66,23.6 L61,30 L45,30 Z"), "#CDB07A", sil=False, clip="sable")
     d.add(path("M89,16.4 Q104,20.6 114,27.6 L113,30 L95,30 Z"), "#CDB07A", sil=False, clip="sable")
-    d.raw(line("M34,22 q4,-4.6 9,-6 M74,20.4 q5,-3.6 10,-4", "#F6E6BE", 1.0))
+    _dans(d, "sable", line("M35,25.6 q4,-4.6 9,-6 M75,23.6 q5,-3.4 10,-3.8", "#F6E6BE", 1.0))      # (dans le tas, pas au-dessus)
     d.raw(line("M24,29 L112,29.6", "#3A3F4A", 1.3))
     d.add(rect(9.4, 22.6, 2.6, 4.4, 0.8), ACIER[0])                                        # bitte de proue
     _boite_p(d, "k", 126, 156, 30, 15, 3, 8, "#F6F0E4", "#CFC6B4", "#FFFFFF")              # la timonerie
@@ -820,7 +836,7 @@ def lampadaire():
     d.add(_pts([(16.4, 10.6), (22.6, 10.6), (19.6, 5), (16.2, 5)]), sombre, sil=False)
     d.raw(line("M11.2,9.4 L13.2,5.8", clair, 0.7))
     d.add(rect(14.4, 2.2, 3.2, 3.4, 1.4), base)
-    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "pied")
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "contour")
 
 
 def cone_de_chantier():

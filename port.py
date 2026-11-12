@@ -22,7 +22,6 @@ def beach_ball(d, cx, cy, r, color):
         x1, y1 = cx + r * math.cos(a1), cy + r * math.sin(a1)
         d.add(path(f"M{cx},{cy} L{x0:.2f},{y0:.2f} A{r},{r} 0 0 1 {x1:.2f},{y1:.2f} Z"), "#FFFFFF", sil=False)
     d.add(circle(cx, cy, r * 0.22), color, sil=False, edge=True)
-    d.add(ellipse(cx - r * 0.42, cy - r * 0.46, r * 0.24, r * 0.15), "#FFFFFF", sil=False, opacity=0.75)
 
 
 def balloon_frames():
@@ -33,6 +32,17 @@ def balloon_frames():
         beach_ball(d, 16, 16, 13, col)
         out.append(d.svg())
     return out
+
+
+def balloon_relief():
+    """Le relief d'un ballon : un croissant d'ombre en bas à droite, un reflet en haut à gauche. Une image à part,
+    que le jeu pose sur le ballon sans la faire tourner avec lui (game.js : drawBall()) : la lumière ne roule pas."""
+    d = Drawing(32, 32)
+    d.raw('<path fill-rule="evenodd" d="M3,16 a13,13 0 1,0 26,0 a13,13 0 1,0 -26,0 Z '
+          'M0.6,13.4 a12.8,12.8 0 1,0 25.6,0 a12.8,12.8 0 1,0 -25.6,0 Z" fill="#1F2A44" opacity="0.3"/>')
+    d.add(ellipse(10.4, 9.8, 3.8, 2.3, "rotate(-35 10.4 9.8)"), "#FFFFFF", sil=False, opacity=0.8)
+    d.add(circle(7.4, 14.4, 0.9), "#FFFFFF", sil=False, opacity=0.6)
+    return [d.svg()]
 
 
 TOYS = ["duck", "ring", "rope"]

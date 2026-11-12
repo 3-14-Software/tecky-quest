@@ -22,12 +22,25 @@ def star_pts(cx, cy, r1, r2, n=4, rot=0):
 
 
 # ------------------------------------------------------------------ dessins
-def bone(d):
+# Version 2 (lot 4) : les mêmes objets, avec du relief. La lumière vient d'en haut à gauche, comme pour le décor : une
+# plage claire en haut à gauche, un croissant d'ombre en bas à droite (_dans() : une forme bornée à la silhouette).
+def _dans(d, cid, forme, couleur, opacity=None):
+    op = f' opacity="{opacity}"' if opacity is not None else ""
+    d.raw(f'<g clip-path="url(#{cid})"{op}>' + forme.replace('fill="%F%"', f'fill="{couleur}"') + "</g>")
+
+
+def bone(d, fond="#F6EBD3", ombre="#D6C39B", clair="#FFFFFF", cle="os"):
     tr = "rotate(-25 16 16)"
-    for x, y in ((9, 13.4), (9, 18.6), (23, 13.4), (23, 18.6)):
-        d.add(circle(x, y, 3, tr), "#F3E7CF")
-    d.add(rect(8.5, 13.5, 15, 5, 2, tr), "#F3E7CF")
-    d.add(rect(10, 16.6, 12, 1.6, 0.8, tr), "#D9C8A2", sil=False)
+    formes = [circle(x, y, 3, tr) for x, y in ((9, 13.4), (9, 18.6), (23, 13.4), (23, 18.6))] + [rect(8.5, 13.5, 15, 5, 2, tr)]
+    d.clip(cle, formes)
+    for f in formes:
+        d.add(f, fond)
+    _dans(d, cle, rect(4, 17.2, 24, 8, 0, tr), ombre)                       # le dessous, à l'ombre
+    for x in (9, 23):                                                       # (les boules du bas : un croissant seulement)
+        _dans(d, cle, circle(x - 0.5, 17.9, 2.3, tr), fond)
+    _dans(d, cle, rect(10.5, 14.2, 11, 1.3, 0.6, tr), clair, 0.85)
+    for x in (9, 23):
+        _dans(d, cle, ellipse(x - 0.9, 12.3, 1.3, 0.8, tr), clair, 0.85)
 
 
 def sausage(d):
@@ -35,11 +48,15 @@ def sausage(d):
     a0, a1 = math.radians(222), math.radians(318)
     arc = lambda r: [(cx + r * math.cos(a0 + (a1 - a0) * i / 16), cy + r * math.sin(a0 + (a1 - a0) * i / 16)) for i in range(17)]
     outer, inner = arc(R + t), arc(R - t)
-    d.add(poly(outer + list(reversed(inner))), "#C4513A")
-    for a in (a0, a1):
-        d.add(circle(cx + R * math.cos(a), cy + R * math.sin(a), t), "#C4513A")
-    hl = arc(R + 1.2)
-    d.raw(line("M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in hl[3:14]), "#E88467", 1.4))
+    formes = [poly(outer + list(reversed(inner)))] + [circle(cx + R * math.cos(a), cy + R * math.sin(a), t) for a in (a0, a1)]
+    d.clip("saucisse", formes)
+    for f in formes:
+        d.add(f, "#C8553D")
+    _dans(d, "saucisse", poly(arc(R - 0.9) + list(reversed(arc(R - t - 1)))), "#9E3A28")      # le dessous
+    _dans(d, "saucisse", circle(cx + R * math.cos(a1) + 0.9, cy + R * math.sin(a1) + 1.3, t), "#9E3A28", 0.7)
+    hl = arc(R + 1.5)
+    d.raw(line("M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in hl[3:13]), "#EE9278", 1.5))
+    d.raw(line("M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in hl[4:7]), "#FBC4B2", 0.8))
     for a, s in ((a0, -1), (a1, 1)):
         x, y = cx + (R) * math.cos(a) + s * 2.6, cy + R * math.sin(a) + 1.4
         d.add(ellipse(x, y, 1.3, 1), "#8A3322")
@@ -48,31 +65,47 @@ def sausage(d):
 def medal(d):
     d.add(poly([(9, 2), (14, 2), (18, 13), (14, 14)]), "#D7332B")
     d.add(poly([(23, 2), (18, 2), (14, 13), (18, 14)]), "#2E6FD1")
-    d.add(circle(16, 20, 7.5), "#F2C14E")
+    d.add(poly([(11.6, 2), (14, 2), (18, 13), (16.2, 13.5)]), "#A82520", sil=False)             # le pli du ruban
+    d.add(poly([(20.4, 2), (18, 2), (14.6, 11.4), (16, 13)]), "#23579F", sil=False)
+    disque = circle(16, 20, 7.5)
+    d.clip("medaille", [disque])
+    d.add(disque, "#C98F1E")
+    _dans(d, "medaille", circle(15, 19, 7.4), "#F2C14E")
     d.add(circle(16, 20, 5.3), "#E0A92E", sil=False)
+    _dans(d, "medaille", circle(15.3, 19.3, 5.1), "#EDB93C")
     for x, y in ((13.3, 17.6), (15.2, 16.4), (16.8, 16.4), (18.7, 17.6)):
         d.add(circle(x, y, 0.95), "#9C6A12", sil=False)
     d.add(ellipse(16, 21.2, 2.7, 2.1), "#9C6A12", sil=False)
-    d.add(ellipse(13.5, 16.5, 1.6, 0.9, "rotate(-35 13.5 16.5)"), "#FFF1B8", sil=False, opacity=0.8)
+    d.raw(line("M10.4,18.4 A6.2,6.2 0 0 1 14.6,14.2", "#FFF1B8", 1.1))
 
 
 def duck(d, squash=0.0):
     tr = f"translate(16 26) scale({1 + squash * 0.15:.3f} {1 - squash * 0.2:.3f}) translate(-16 -26)"
-    d.add(ellipse(17.5, 20, 8.5, 5.8, tr), "#FFD34D")
-    d.add(circle(12, 12.8, 4.8, tr), "#FFD34D")
+    corps, tete = ellipse(17.5, 20, 8.5, 5.8, tr), circle(12, 12.8, 4.8, tr)
+    d.clip("canard", [corps, tete])
+    d.add(corps, "#FFD34D")
+    d.add(tete, "#FFD34D")
+    _dans(d, "canard", ellipse(18.6, 23.4, 8.6, 4, tr), "#EFAE22")                               # le ventre, à l'ombre
+    _dans(d, "canard", ellipse(16.6, 19.8, 8, 4.4, tr), "#FFD34D")
     d.add(ellipse(7, 14, 2.8, 1.3 + squash * 0.8, tr), "#F28C28")
+    d.add(ellipse(7.2, 14.6, 2.4, 0.6 + squash * 0.5, tr), "#D06F14", sil=False)
     d.add(ellipse(20, 19.4, 4.2, 2.6, f"{tr} rotate(-10 20 19.4)"), "#F0B429", sil=False)
+    d.raw(line("M16.4,19.6 Q20,22.6 23.8,19.6", "#D99A1C", 0.7).replace("<path", f'<path transform="{tr}"'))
     d.add(circle(11.2, 11.8, 0.95, tr), OUTLINE, sil=False)
     d.add(circle(11.5, 11.5, 0.3, tr), "#FFFFFF", sil=False)
-    d.add(ellipse(15, 22.5, 3, 1.2, tr), "#FFE58F", sil=False)
+    d.add(ellipse(11, 9.6, 2.2, 1, f"{tr} rotate(-25 11 9.6)"), "#FFE99A", sil=False)
+    d.add(ellipse(15, 16.6, 3.2, 1.1, f"{tr} rotate(8 15 16.6)"), "#FFE99A", sil=False)
 
 
 def ball(d, spin=0.0):
-    d.add(circle(16, 17, 7.5), "#CFE84A")
-    d.raw(f'<g transform="rotate({spin:.1f} 16 17)">' +
+    rond = circle(16, 17, 7.5)
+    d.clip("balle", [rond])
+    d.add(rond, "#A9C932")
+    _dans(d, "balle", circle(14.8, 15.8, 7.3), "#CFE84A")
+    d.raw('<g clip-path="url(#balle)">' + f'<g transform="rotate({spin:.1f} 16 17)">' +
           line("M10.2,12.8 Q15,17 10.2,21.2", "#FFFFFF", 1.3) +
-          line("M21.8,12.8 Q17,17 21.8,21.2", "#FFFFFF", 1.3) + "</g>")
-    d.add(ellipse(13.2, 13.6, 2, 1.2, "rotate(-35 13.2 13.6)"), "#EDF7A6", sil=False, opacity=0.8)
+          line("M21.8,12.8 Q17,17 21.8,21.2", "#FFFFFF", 1.3) + "</g></g>")
+    d.add(ellipse(13.2, 13.4, 2.2, 1.3, "rotate(-35 13.2 13.4)"), "#F2FAB8", sil=False, opacity=0.9)
 
 
 # --- indices semés par Alice (couleurs de sa tenue : rose de la jupe, jaune du t-shirt)
@@ -121,13 +154,8 @@ def plush(d):
 
 def goldbone(d):
     """Os doré : le trésor enterré sous les traces de pattes."""
-    tr = "rotate(-25 16 16)"
-    for x, y in ((8.6, 13.2), (8.6, 18.8), (23.4, 13.2), (23.4, 18.8)):
-        d.add(circle(x, y, 3.3, tr), "#F2C14E")
-    d.add(rect(8.2, 13.2, 15.6, 5.6, 2, tr), "#F2C14E")
-    d.add(rect(10, 16.9, 12, 1.6, 0.8, tr), "#D99A26", sil=False)
-    d.add(rect(11, 13.9, 8, 1.4, 0.7, tr), "#FFF1B8", sil=False)
-    d.add(circle(8.2, 12.4, 1.1, tr), "#FFF7D6", sil=False)
+    bone(d, "#F2C14E", "#D0921F", "#FFF4C4", "or")
+    d.add(circle(8.2, 12.4, 1.1, "rotate(-25 16 16)"), "#FFF7D6", sil=False)
 
 
 ITEMS = {   # nom : (fonction de dessin, rôle)
@@ -144,28 +172,21 @@ ITEMS = {   # nom : (fonction de dessin, rôle)
 CLUES = ("hairclip", "shoe", "plush")   # dans l'ordre du jeu
 
 
-def item_frames(name, n=6):
+def item_frames(name):
+    """Les images d'un objet. Il est posé au sol (choix de Christophe sur reference/v2/objets_options.png) : plus
+    d'ovale, de rebond ni d'étoile dans le dessin ; le jeu le pose à 85 %, avec son ombre portée et un scintillement
+    (game.js : drawPosed()). Une seule image, sauf le canard pouic-pouic, qui s'écrase de temps en temps."""
     fn = ITEMS[name][0]
     out = []
-    for i in range(n):
-        t = i / n * 2 * math.pi
-        bob = -2.2 * (0.5 + 0.5 * math.sin(t))
-        k = 1 - 0.25 * (0.5 + 0.5 * math.sin(t))
+    for i in range(6 if name == "squeaky" else 1):
         d = Drawing(IW, IH)
-        d.under.append(f'<ellipse cx="16" cy="29.5" rx="{8 * k:.2f}" ry="{1.8 * k:.2f}" fill="#000" opacity="0.2"/>')
         if name == "squeaky":
             fn(d, squash=[0, 0, 0, 1, 0.4, 0][i])
             if i in (3, 4):
                 d.raw(line("M3,6 L5,8 M6,3 L7,6 M1.5,10 L4.5,10.5", OUTLINE, 1.0))
-        elif name == "ball":
-            fn(d, spin=i * 60)
         else:
             fn(d)
-        if i in (2, 3):
-            s = 3.2 if i == 2 else 2.2
-            d.raw(f'<polygon points="{" ".join(f"{x:.1f},{y:.1f}" for x, y in star_pts(26, 6, s, s * 0.35))}" '
-                  f'fill="#FFFFFF" stroke="{OUTLINE}" stroke-width="0.5"/>')
-        out.append(d.svg(f"translate(0 {bob:.2f})"))
+        out.append(d.svg())
     return out
 
 
