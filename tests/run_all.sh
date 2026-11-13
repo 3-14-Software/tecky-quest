@@ -7,7 +7,7 @@ python3 episodes.py                  # episodes.json : des cartes qui existent e
 python3 pack_web.py
 python3 tests/regen.py
 fail=0
-for t in sim immune threat read ring clues berger map nettete hens traffic butterflies save balade pad glyphs effects farm cows villagers hud leon iris train piquette tunnel edge world music sfx ducks textes cartes episodes voyage hortense saisons rest options quests badges weather calm ending obstacles fence fence_scan placement editeur_sol; do
+for t in sim immune threat read ring clues berger map nettete hens traffic butterflies save balade pad glyphs effects farm cows villagers hud leon iris train piquette tunnel edge world music sfx ducks textes cartes episodes voyage hortense anatole saisons rest options quests badges weather calm ending obstacles fence fence_scan placement editeur_sol; do
   echo "== $t"
   out=$(node tests/$t.js 2>&1) || fail=1
   echo "$out" | grep -E "ÉCHEC|^PB |problèmes [1-9]|Error" && fail=1 || true

@@ -40,11 +40,12 @@ const VOICES = {
   papa: ['Papa', 'le papa d’Alice : la quarantaine, voix chaleureuse et tranquille, celle d’un papa en vacances'],
   hortense: ['Madame Hortense', 'la dame au caniche, devant le casino : élégante, voix chantante, un peu précieuse'],
   poodle: ['Praline', 'le caniche de Madame Hortense : petits jappements aigus'],
+  anatole: ['Anatole', 'le gardien du phare, vieux marin : voix grave et rocailleuse, bonhomme'],
 };
 // répliques dont le texte est calculé (pas une chaîne écrite en dur) : chacune doit être produite ci-dessous ; si ce
 // nombre change, une réplique calculée a été ajoutée ou retirée dans game.js : adapter ce fichier
 const DYNAMIC_SITES = 24;
-const DYNAMIC_POPS = 10;          // de même pour les bulles (texte calculé : comptes, noms des jouets, mot passé à dropToy)
+const DYNAMIC_POPS = 9;          // de même pour les bulles (texte calculé : comptes, noms des jouets, mot passé à dropToy)
 const NPC_VARS = { farmer: 'farmer', postman: 'postman', neighbor: 'neighbor', leon: 'leon', iris: 'iris', piquette: 'piquette' };
 // répliques relevées dans le code (écrites en dur, dites en cours de route) : contexte selon la fonction qui les dit
 const WHERE = { doBark: 'Premier aboiement sur le doberman', updatePompon: 'Tecky retrouve Pompon',
@@ -89,6 +90,19 @@ function main() {
     ask('Gaston : rappel', `farm.state = "asked"; questHens().forEach((h, i) => h.penned = i >= ${n}); talkFarmer();`);
   ask('Gaston : merci', 'questHens().forEach(h => h.penned = true); talkFarmer();');
   ask('Gaston : après la quête', 'farm.state = "done"; talkFarmer();');
+  // (la même quête sur la côte de l'été : Anatole, le gardien du phare, et ses moutons)
+  run('farmer.look = "anatole"; MAP.roles = { farmer: "anatole" };');
+  ask('Anatole : demande', 'farm.state = "new"; questHens().forEach(h => h.penned = false); talkFarmer();');
+  for (let n = 5; n >= 1; n--)
+    ask('Anatole : rappel', `farm.state = "asked"; questHens().forEach((h, i) => h.penned = i >= ${n}); talkFarmer();`);
+  ask('Anatole : merci', 'questHens().forEach(h => h.penned = true); talkFarmer();');
+  ask('Anatole : après la quête', 'farm.state = "done"; talkFarmer();');
+  ask('Anatole : Tecky arrive', 'farm.state = "new"; farmerGreet();');
+  for (let n = 5; n >= 0; n--) ask('Anatole : Tecky arrive', `farm.state = "asked"; questHens().forEach((h, i) => h.penned = i >= ${n}); farmerGreet();`);
+  ask('Anatole : Tecky arrive', 'farm.state = "done"; farmerGreet();');
+  ask('Anatole : ses moutons rentrent sans lui', 'npcShout(farmer, fmTxt("oh"));');
+  ask('Un mouton rentre dans l’enclos', '["rentree", "toutes"].forEach(k => addWordPop(flockTxt(k), 0, 0, "info"));');
+  run('farmer.look = "farmer"; MAP.roles = {}; farm.state = "new"; questHens().forEach(h => h.penned = false);');
   for (let got = 0; got <= 4; got++)
     ask('Marcel : demande', `post.state = "new"; letters.forEach((l, i) => l.got = i < ${got}); talkPostman();`);
   for (let n = 5; n >= 1; n--)

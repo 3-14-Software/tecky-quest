@@ -570,7 +570,25 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      maîtresse (une saucisse, des points). C'est la quête de Pompon, rejouée avec d'autres acteurs : la carte
      distribue les rôles (`roles`), le moteur ne change pas — la voie pour les cinq autres. Noms et
      répliques à valider (`textes/fr.json` : `hortense`, `caniche`).
-   - *À dessiner* : les motos, Tecky qui nage, les cinq autres personnages
+   - *Deuxième quête, faite le 13 novembre 2026* : les moutons d'Anatole, le gardien du phare. Son enclos est
+     en haut du plateau ; cinq moutons sont éparpillés sur la lande, Tecky les ramène en aboyant derrière eux
+     (la quête des poules, avec d'autres acteurs). Dessins : Anatole (ciré jaune, casquette de marin), les
+     moutons (`reference/v2/moutons.png`). Répliques à valider (`textes/fr.json` : `anatole`, `moutons`).
+   - **Ce qui reste à reprendre sur l'été** (liste tenue à jour : tout ce que j'ai signalé comme limite en
+     livrant un morceau doit finir ici, ou être fait — Christophe, 13 novembre 2026 : « à chaque fois tu me
+     listes des limites : vas-tu revenir dessus ensuite ? »). *Raccourcis à corriger* : les
+     cailloux de la lande se répètent toutes les six tuiles, c'est visible autour du phare ; le porche du parking ne se déplace pas dans
+     l'éditeur (`traffic.fin` dans le fichier) ; les badges du printemps (chat, poules) ne se gagnent pas avec
+     les quêtes de la côte, qui n'ont pas les leurs ; les musiques et l'ambiance sonore de la côte sont
+     empruntées au printemps (pas de mouettes, pas de vagues). *À vérifier avec Christophe, faute de pouvoir
+     écouter ou voir* : le bêlement des moutons (`SFX.baa`), le jappement de Praline, le phare, le casino et
+     le manège allumés la nuit en dehors de la scène de fin. *Corrigés le 13 novembre 2026* : Praline a ses propres poses de caniche ; plus de tache sombre dans
+     l'embouchure ; la voiture du départ s'enfonce dans le tunnel de l'est avant d'arriver sur la côte ; les
+     moutons ont leur bêlement. *Reports assumés* : la tenue d'été d'Alice et sa
+     tong perdue ; les quatre autres quêtes ; le manège qui tourne en musique ; la nage ; l'habillage du
+     sable et les vagues ; les crabes ; les motos ; les voitures garées ; le bassin du village, petit et fermé ;
+     le casino qui déborde de sa place ; noms des zones et répliques à valider.
+   - *À dessiner* : les motos, Tecky qui nage, les quatre autres personnages
      des quêtes, le caniche, les moutons, les mouettes, les crabes ; les voitures garées ; les vagues de la
      mer ; les objets (chapeau, pelle, tong, coquillages, bouées, jouets de plage). (Faits le 13 novembre
      2026 : le phare, le casino, les cabines de plage, le manège, les bateaux de pêche, la poissonnerie.)

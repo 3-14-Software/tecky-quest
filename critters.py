@@ -28,17 +28,18 @@ KINDS = {   # couleurs par espèce / variante
     "cat_white": dict(fur="#FBF8F3", dark="#D9D3CB", stripe=None, belly="#FFFFFF", eye="#6DB8EA",
                       ear="#F4A3A8", nose="#EE97A8", whisker="#ABA49B",
                       patch="#9D9BA8", patch_dk="#7D7B88", collar="#F2729E", bell="#F2C14E"),
-    # Praline, le caniche abricot de Madame Hortense (la côte de l'été) : les poses des chats, mais une tête de
-    # caniche (toutou : houppette à nœud rose, museau, oreilles tombantes), un collier rose, un pompon au bout de
-    # la queue (_poodle_head, _cat_tail)
+    # Praline, le caniche abricot de Madame Hortense (la côte de l'été) : une espèce à part, avec ses propres poses
+    # (_poodle_stand, _poodle_sit…) — haute sur pattes, la crinière et les pompons de la coupe « lion », la houppette
+    # à nœud rose, le museau, les oreilles tombantes, le pompon au bout de la queue. (Elle avait d'abord été posée
+    # sur les poses des chats, feulement compris : un bout de ficelle que Christophe a refusé.)
     "poodle": dict(fur="#EEC79A", dark="#D0A06A", stripe=None, belly="#F9E3C4", eye="#2A1E1A", ear="#D0A06A",
                    nose="#2B2B33", whisker="#F9E3C4", collar="#F2729E", bow="#F2729E", toutou=True),
 }
-SPECIES = {"squirrel": "squirrel", "cat": "cat", "cat_black": "cat", "cat_white": "cat", "poodle": "cat"}   # les chats partagent les poses (le caniche aussi)
+SPECIES = {"squirrel": "squirrel", "cat": "cat", "cat_black": "cat", "cat_white": "cat", "poodle": "poodle"}   # les chats partagent leurs poses ; le caniche a les siennes
 # Ils sont dessinés grands puis réduits autour de l'origine (16, 28) ; le contour garde la même épaisseur que les
 # autres sprites. Leur taille se juge à côté de Tecky (34 x 22 unités depuis la v2) : un chat est un peu plus petit
 # que lui, un écureuil bien plus petit qu'un chat. À 1 et 0,85, ils le dépassaient (Christophe : « étrange »).
-SCALE = {"squirrel": 0.55, "cat": 0.74}
+SCALE = {"squirrel": 0.55, "cat": 0.74, "poodle": 0.8}        # (un caniche nain : un peu plus haut qu'un chat)
 
 
 # ================================================================== outils
@@ -379,8 +380,6 @@ def _cat_head(d, C, hx, hy, tr="", ears=0.0, eye="open", mouth=0.0):
     """Tête de profil vers la droite, centre (hx, hy). ears : 0 dressées -> 1 couchées en arrière ;
     eye : 'open', 'blink', 'angry' ; mouth : 0 fermée -> 1 grande ouverte (feulement)."""
     er = -ears * 62
-    if C.get("toutou"):
-        return _poodle_head(d, C, hx, hy, tr, ears, eye, mouth)
     if C.get("collar"):   # cou et collier (chat de la voisine) : bande en travers du cou, sous la tête
         neck = ellipse(hx - 1.7, hy + 4.4, 3.1, 3.4, tr)
         d.add(neck, C["fur"])
@@ -609,8 +608,6 @@ def _cat_hiss(C, k=0):
     """Dos rond en arche, poils hérissés, queue dressée et gonflée, bouche ouverte (« Pfff ! »).
     Le caniche, lui, ne feule pas : il jappe (_poodle_yap) — Christophe : « pourquoi le caniche feule en dressant
     ses poils comme un chat ? »."""
-    if C.get("toutou"):
-        return _poodle_yap(C, k)
     d = Drawing(W, H)
     up = 0.7 * k
     puff = 0.8 + 0.35 * k
@@ -660,13 +657,90 @@ def _cat_hiss(C, k=0):
     return d
 
 
+# ================================================================== LE CANICHE
+def _poodle_legs(d, C, pairs, near):
+    """Deux pattes fines (hanche -> pied) et leur pompon à la cheville ; near : celles du premier plan."""
+    for (hx, hy), (fx, fy) in pairs:
+        _limb(d, hx, hy, fx, fy, 1.9 if near else 1.8, C["fur"] if near else C["dark"])
+        d.add(circle(fx - 0.2, fy - 2.4, 2.0 if near else 1.8), C["belly"] if near else C["fur"])
+
+
+def _poodle_stand(C, cx=15.0, cy=17.2, tilt=0.0, hop=0.0, legs=None, head=(0.0, 0.0, 0.0), ears=0.0, eye="open",
+                  mouth=0.0, tail=((-1.2, -4.2), (-0.8, -8.0), (1.0, -10.2)), shadow=None):
+    """Le caniche debout, de profil vers la droite : haut sur pattes, le dos droit, la crinière sur le poitrail, un
+    pompon sur la hanche, la queue dressée. legs : 4 pieds (x, y), avant-loin, arrière-loin, arrière-proche,
+    avant-proche ; head : (dx, dy, rotation) ; tail : points de passage, relatifs à sa base."""
+    d = Drawing(W, H)
+    cy -= hop
+    sh = shadow or (cx + 1.5, 8.4)
+    _shadow(d, sh[0], G, sh[1])
+    R = lambda x, y: _rot(x, y, cx, cy, tilt)
+    btr = f"rotate({tilt:.1f} {cx:.2f} {cy:.2f})" if tilt else ""
+    ep, ha = R(cx + 3.9, cy + 1.6), R(cx - 4.1, cy + 1.6)                       # l'épaule, la hanche
+    f1, h1, h2, f2 = legs
+    _poodle_legs(d, C, [((ep[0] + 1.0, ep[1]), f1), ((ha[0] + 1.0, ha[1]), h1)], False)
+    bx, by = R(cx - 6.0, cy - 2.2)                                              # la queue
+    _cat_tail(d, C, _spline([(bx, by)] + [(bx + px, by + py) for px, py in tail], 4), 1.5, 1.3)
+    d.add(ellipse(cx, cy, 6.6, 3.7, btr), C["fur"])                             # le corps, tondu
+    d.add(circle(*R(cx - 4.6, cy + 0.2), 3.3), C["belly"])                      # le pompon de la hanche
+    for dx, dy, r in ((4.4, -0.2, 4.6), (2.2, -2.2, 3.4), (5.6, 2.2, 3.0)):     # la crinière
+        d.add(circle(*R(cx + dx, cy + dy), r), C["belly"])
+    _poodle_legs(d, C, [(ha, h2), (ep, f2)], True)
+    hx, hy = R(cx + 8.4, cy - 6.4)
+    hx, hy = hx + head[0], hy + head[1]
+    _poodle_head(d, C, hx, hy, f"rotate({head[2]:.1f} {hx - 2:.2f} {hy + 3:.2f})" if head[2] else "", ears=ears, eye=eye, mouth=mouth)
+    return d
+
+
+def _poodle_sit(C, sweep=0.0, blink=False):
+    """Assis de profil, bien droit, la queue qui frétille (sweep : -1..1)."""
+    d = Drawing(W, H)
+    _shadow(d, 15.0, G, 8.0)
+    _cat_tail(d, C, _spline([(9.8, 23.4), (7.4, 21.4), (6.4 - sweep * 1.2, 18.2), (6.8 - sweep * 2.4, 15.4)], 4), 1.5, 1.3)
+    _poodle_legs(d, C, [((20.2, 19.6), (20.8, G))], False)
+    d.add(circle(12.6, 23.6, 4.7), C["fur"])                                    # la croupe
+    d.add(ellipse(16.6, 19.8, 3.7, 5.4, "rotate(16 16.6 19.8)"), C["fur"])      # le buste
+    d.add(circle(11.0, 22.4, 3.0), C["belly"])                                  # le pompon de la hanche
+    for dx, dy, r in ((18.2, 17.0, 4.4), (16.4, 15.2, 3.2), (19.4, 19.6, 2.8)): # la crinière
+        d.add(circle(dx, dy, r), C["belly"])
+    d.add(ellipse(15.6, 27.2, 2.9, 1.1), C["fur"])                              # le pied arrière, son pompon
+    d.add(circle(13.6, 26.2, 2.0), C["belly"])
+    _poodle_legs(d, C, [((18.6, 20.4), (19.0, G))], True)
+    _poodle_head(d, C, 21.6, 11.6, eye="blink" if blink else "open")
+    return d
+
+
+def _poodle_walk(C, phase=0.0):
+    """Le petit trot du caniche : pattes en diagonale, la tête haute, la queue qui bat."""
+    a, b = phase, phase + math.pi
+
+    def foot(x, ph):
+        return (x + 2.4 * math.cos(ph), G - max(0.0, math.sin(ph)) * 2.2)
+    bob = 0.5 * abs(math.sin(phase))
+    sway = math.sin(phase) * 0.9
+    return _poodle_stand(C, hop=bob, legs=[foot(20.0, b), foot(11.8, a), foot(10.6, b), foot(18.8, a)], head=(0, -bob * 0.4, -3),
+                         tail=[(-1.2, -4.2), (-0.8 + sway * 0.5, -8.0), (1.0 + sway, -10.2)])
+
+
+def _poodle_run(C, k=0):
+    """Galop bondissant en 4 temps : étiré, réception des pattes avant, rassemblé, poussée des pattes arrière."""
+    K = [  # tilt, hop, pieds (avant-loin, arrière-loin, arrière-proche, avant-proche)
+        (-3, 2.4, [(25.6, 24.6), (5.6, 25.4), (6.8, 24.6), (26.8, 25.6)]),
+        (7, 1.0, [(22.4, G), (8.4, 23.4), (9.6, 22.8), (24.0, G - 0.4)]),
+        (1, 0.2, [(17.2, G - 0.6), (14.2, G), (12.6, G - 0.2), (18.6, G)]),
+        (-8, 1.8, [(21.6, 23.0), (8.8, G), (10.4, G - 0.3), (23.0, 22.0)]),
+    ]
+    tilt, hop, legs = K[k]
+    return _poodle_stand(C, cy=17.8, tilt=tilt, hop=hop, legs=legs, head=(0.2, 0.8, 4), ears=0.5,
+                         tail=[(-2.6, -2.2), (-4.6, -5.0), (-5.2, -8.2)], shadow=(15.5, 9.0 - hop * 0.6))
+
+
 def _poodle_yap(C, k=0):
-    """Le caniche répond à un aboiement : debout, bien campé sur ses pattes, la queue en l'air, il jappe en
-    sautillant (k = 1 : en l'air, la gueule grande ouverte). Ni dos rond ni poils hérissés : c'est un chien."""
-    return _cat_stand(C, cx=14.6, cy=20.6, hop=1.8 * k, tilt=-4 - 3 * k,
-                      legs=[(22.2, G - 1.6 * k), (8.6, G), (10.4, G), (20.4, G - 1.6 * k)],
-                      head=(0.6, -0.8 - 0.8 * k, -10 - 4 * k), mouth=0.45 + 0.5 * k,
-                      tail=[(-1.6, -4.6), (-1.0, -8.8), (1.2 + k, -11.0)], shadow=(15.6, 8.6 - k))
+    """Le caniche répond à un aboiement : debout, bien campé sur ses pattes, il jappe en sautillant (k = 1 : en
+    l'air, la gueule grande ouverte). Ni dos rond ni poils hérissés : c'est un chien."""
+    return _poodle_stand(C, hop=1.8 * k, tilt=-4 - 3 * k,
+                         legs=[(21.4, G - 1.6 * k), (10.8, G), (9.4, G), (19.8, G - 1.6 * k)],
+                         head=(0.6, -0.6 - 0.8 * k, -10 - 4 * k), mouth=0.45 + 0.5 * k, shadow=(15.6, 8.6 - k))
 
 
 # ================================================================== animations
@@ -693,11 +767,21 @@ ANIMS = {   # espèce : {nom : (poses, fps, boucle)} ; chaque pose = dict(mode=.
         "jump": ([dict(mode="jump", k=0), dict(mode="jump", k=1)], 8, False),
         "hiss": ([dict(mode="hiss", k=0), dict(mode="hiss", k=1)], 6, True),
     },
+    # (le caniche : les animations que le jeu attend du compagnon d'une quête — « hiss » est sa réaction à un
+    # aboiement de Tecky : lui, il jappe)
+    "poodle": {
+        "idle": ([dict(mode="sit", sweep=-1.0), dict(mode="sit", sweep=0.0), dict(mode="sit", sweep=1.0, blink=True),
+                  dict(mode="sit", sweep=0.0)], 7, True),
+        "walk": ([dict(mode="walk", phase=k * math.pi / 2) for k in range(4)], 11, True),
+        "run": ([dict(mode="run", k=k) for k in range(4)], 14, True),
+        "hiss": ([dict(mode="yap", k=0), dict(mode="yap", k=1)], 7, True),
+    },
 }
 
 _DRAW = {
     "squirrel": {"sit": _sq_sit, "run": _sq_run, "climb": _sq_climb},
     "cat": {"sit": _cat_sit, "walk": _cat_walk, "run": _cat_run, "jump": _cat_jump, "hiss": _cat_hiss},
+    "poodle": {"sit": _poodle_sit, "walk": _poodle_walk, "run": _poodle_run, "yap": _poodle_yap},
 }
 
 

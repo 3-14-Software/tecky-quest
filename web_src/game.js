@@ -610,6 +610,10 @@ const SOUNDS = {
     tone([118 * k, 150 * k, 122 * k], 0.8, 'triangle', 0.009, { a: 0.14, h: 0.5 });
     ding(1150, 0.2, 0.012, 0.08);
   },
+  baa(k) {                             // « bêêê » : une voix nasillarde qui chevrote (les moutons d'Anatole, sur la côte)
+    cry([330 * k, 352 * k, 300 * k], 0.62, 0.06, [[[640, 590], 4, 1], [[1900, 1750], 5, 0.6], [2750, 6, 0.22]],
+      { a: 0.05, h: 0.45, vib: [9, 65], fk: Math.sqrt(k) });
+  },
   meow(k) {                            // « miaou »
     cry([520 * k, 780 * k, 470 * k], 0.4, 0.11, [[[850, 1900, 950], 3, 1], [[2300, 3100, 2000], 4, 0.5]], { a: 0.05, h: 0.3 });
   },
@@ -1377,7 +1381,7 @@ function chunkPut(g, x0, y0, k) {            // rend la fonction qui pose l'imag
    - des galets (« sol/galet ») sur le sable de la berge (POND.sand).
    shorePoint() ramène un point tiré dans la tuile sur une ligne de niveau de l'eau. Ni nénuphars ni galets le
    long d'un quai (tuiles eau / herbe seulement : MAP.shore). */
-const POND = { cell: 3, deep: 'rgba(52, 132, 204, 0.3)', group: 4, groups: 0.45, many: 0.75, few: 0.06, lily: [0.77, 0.9],
+const POND = { sea: 3, cell: 3, deep: 'rgba(52, 132, 204, 0.3)', group: 4, groups: 0.45, many: 0.75, few: 0.06, lily: [0.77, 0.9],
   pebbles: 0.32, sand: 0.418 };
 const WATER_FULL = MAP.shore + 15;
 const shoreTile = (tx, ty) => { const t = groundTile(tx, ty); return !!t && t[0] > MAP.shore && t[0] < WATER_FULL; };
@@ -1407,6 +1411,14 @@ function lilyAt(tx, ty) {                 // le nénuphar de la tuile (tx, ty) :
   lilies.set(key, l);
   return l;
 }
+// la mer est-elle à moins de `d` tuiles de la tuile (bx, by) ? (MAP.sea : ses coins ; vide sur une carte sans mer)
+function seaNear(bx, by, d) {
+  if (!MAP.sea.length) return false;
+  const W = MAP.w + 1;
+  for (let y = Math.max(0, Math.floor(by - d)); y <= Math.min(MAP.h, Math.ceil(by + d)); y++)
+    for (let x = Math.max(0, Math.floor(bx - d)); x <= Math.min(MAP.w, Math.ceil(bx + d)); x++) if (MAP.sea[y * W + x]) return true;
+  return false;
+}
 function waterDetails(g, cx, cy, n, x0, y0, k) {
   if (!meadowBlob) buildBlob();
   const C = POND.cell;
@@ -1417,6 +1429,7 @@ function waterDetails(g, cx, cy, n, x0, y0, k) {
       let ok = true;
       for (let ty = Math.floor(by - ry); ok && ty <= Math.floor(by + ry); ty++)
         for (let tx = Math.floor(bx - r); ok && tx <= Math.floor(bx + r); tx++) ok = fullWater(tx, ty);
+      if (ok && seaNear(bx, by, r + POND.sea)) ok = false;       // (pas dans l'embouchure : une tache dans l'eau qui se fond dans la mer)
       if (ok) g.drawImage(meadowBlob.deep, ((bx - r) * TS - x0) * k, ((by - ry) * TS - y0) * k, 2 * r * TS * k, 2 * ry * TS * k);
     }
   const put = chunkPut(g, x0, y0, k);
@@ -2055,6 +2068,7 @@ const WHO = {
   piquette: { get name() { return txt('noms.piquette'); }, portrait: 'hud/portrait_piquette' },
   papa: { get name() { return txt('noms.papa'); }, portrait: 'hud/portrait_papa' },       // le papa d'Alice (l'été)
   hortense: { get name() { return txt('noms.hortense'); }, portrait: 'hud/portrait_hortense' },   // la dame au caniche (l'été)
+  anatole: { get name() { return txt('noms.anatole'); }, portrait: 'hud/portrait_anatole' },      // le gardien du phare (l'été)
   info:  { name: '', portrait: null },
 };
 // une réplique demandée pendant un dialogue passe à la suite (ex. : le fermier parle, et Tecky ramasse la barrette)
@@ -2066,7 +2080,7 @@ function say(lines, onEnd) {
 }
 /* Le babil d'une réplique : chaque personnage a sa voix (hauteur) ; Tecky et Iris, des chiens, font de petits
    « wouf » ; un texte d'information fait « tic ». Rien sur un espace ni un signe de ponctuation. */
-const VOICE = { tecky: 1.15, alice: 1.7, farmer: 0.8, postman: 1.05, neighbor: 1.35, leon: 0.95, iris: 0.8, piquette: 1.5, papa: 0.9, hortense: 1.25 };
+const VOICE = { tecky: 1.15, alice: 1.7, farmer: 0.8, postman: 1.05, neighbor: 1.35, leon: 0.95, iris: 0.8, piquette: 1.5, papa: 0.9, hortense: 1.25, anatole: 0.75 };
 function talkSound(L, i) {
   const k = VOICE[L.who];
   if (!k) SFX.blip();
@@ -2393,7 +2407,7 @@ function newHen([kind, x, y, quest]) {
 }
 function scareHen(h, fromX, fromY, t) {
   if (h.mode === 'flee' && h.timer >= t) return;
-  if (h.mode !== 'flee' && timePlayed - lastCluck > 0.15) { lastCluck = timePlayed; SFX.cluck(1, h); }
+  if (h.mode !== 'flee' && timePlayed - lastCluck > 0.15) { lastCluck = timePlayed; henCry(h); }
   const dx = h.x - fromX, dy = h.y - fromY, l = Math.max(1, Math.hypot(dx, dy));
   h.mode = 'flee'; h.timer = t; h.fleeT = t; h.vx = dx / l; h.vy = dy / l;
   if (h.quest && !h.penned) funnelHen(h);
@@ -2863,6 +2877,13 @@ function drawDuck(d) {
 const FARM = { reward: 200, perHen: 20, funnel: 190, get roadY() { return MAP.farmRoadY; } };   // roadY : la grande route, en dessous
 let farm = { state: 'new' };          // new (pas encore parlé) | asked | done
 let farmer = null;
+// La même quête se rejoue ailleurs avec d'autres acteurs (MAP.roles) : sur la côte de l'été, Anatole, le gardien du
+// phare (look « anatole »), a perdu ses moutons (genre « sheep » de la liste hens) sur le plateau. fmTxt() et
+// flockTxt() donnent les textes de la distribution (mêmes clés sous « farmer » / « anatole », « poules » / « moutons »).
+const fmTxt = (k, p) => farmer.look === 'anatole' ? txt('anatole.' + k, p) : txt('farmer.' + k, p);
+const flockTxt = k => MAP.roles.farmer ? txt('moutons.' + k) : txt('poules.' + k);
+const flockKey = () => (questHens()[0] || {}).kind === 'sheep' ? 'sheep' : 'hen';
+const henCry = h => h.kind === 'sheep' ? SFX.baa(1, h) : SFX.cluck(1, h);
 // intérieur de l'enclos (pieds des poules) : [x0, y0, x1, y1]
 const penRect = () => [MAP.pen[0] + 14, MAP.pen[1] + 12, MAP.pen[2] - 14, MAP.pen[3] - 18];
 const gatePoint = () => [(MAP.penGate[0] + MAP.penGate[1]) / 2, MAP.pen[3]];
@@ -2885,9 +2906,9 @@ function keepHen(h) {
     h.penned = true; h.hx = h.x; h.hy = h.y;
     score += FARM.perHen;
     addPop('+' + FARM.perHen, h.x - 20, h.y - 50);
-    addWordPop(hensLeft() ? txt('poules.rentree') : txt('poules.toutes'), h.x, h.y - 74, 'info');
-    SFX.cluck(1, h);
-    if (!hensLeft()) { farmer.waveT = 2.5; npcShout(farmer, farm.state === 'asked' ? txt('farmer.bravo') : txt('farmer.oh')); }
+    addWordPop(hensLeft() ? flockTxt('rentree') : flockTxt('toutes'), h.x, h.y - 74, 'info');
+    henCry(h);
+    if (!hensLeft()) { farmer.waveT = 2.5; npcShout(farmer, farm.state === 'asked' ? fmTxt('bravo') : fmTxt('oh')); }
   }
 }
 /* kind : le rôle du personnage dans le jeu (sa quête : NPC_DO, npcList) ; look : celui qui le tient sur cette carte
@@ -2897,10 +2918,10 @@ function newNpc(kind, [x, y], pitch, look) {
   solids.push([x - 16, y - 12, x + 16, y]);
   return { kind, look: look || kind, x, y, t: 0, anim: 'idle', near: false, waveT: 0, cheerT: 0, pitch };
 }
-const newFarmer = () => newNpc('farmer', MAP.farmer, 0.8);
+const newFarmer = () => newNpc('farmer', MAP.farmer, MAP.roles.farmer ? 0.75 : 0.8, MAP.roles.farmer);
 const farmThanks = () => [
-  { who: 'farmer', face: 2, text: txt('farmer.merci.0') },
-  { who: 'farmer', face: 0, text: txt('farmer.merci.1') },
+  { who: farmer.look, face: 2, text: fmTxt('merci.0') },
+  { who: farmer.look, face: 0, text: fmTxt('merci.1') },
 ];
 function finishFarm() {
   farm.state = 'done';
@@ -2915,29 +2936,29 @@ function farmerMark() {          // « ! » : une demande, ou des remerciements 
   return farm.state === 'asked' && hensLeft() ? 1 : 0;
 }
 function farmerGreet() {
-  if (farm.state === 'new') npcShout(farmer, txt('farmer.appel'));
+  if (farm.state === 'new') npcShout(farmer, fmTxt('appel'));
   else if (farm.state === 'asked') {
     const n = hensLeft();
-    npcShout(farmer, !n ? txt('farmer.bravo') : txt('farmer.encore', { n }));
-  } else { npcShout(farmer, txt('farmer.bonjour')); farmer.waveT = 1.5; }
+    npcShout(farmer, !n ? fmTxt('bravo') : fmTxt('encore', { n }));
+  } else { npcShout(farmer, fmTxt('bonjour')); farmer.waveT = 1.5; }
 }
 function talkFarmer() {
   if (farm.state === 'done') {
     farmer.waveT = 2;
-    say([{ who: 'farmer', face: 2, text: txt('farmer.apres') }]);
+    say([{ who: farmer.look, face: 2, text: fmTxt('apres') }]);
     return;
   }
   if (!hensLeft()) { say(farmThanks(), finishFarm); return; }
   if (farm.state === 'asked') {
     const n = hensLeft();
-    say([{ who: 'farmer', face: 0, text: txt('farmer.rappel', { n }) }]);
+    say([{ who: farmer.look, face: 0, text: fmTxt('rappel', { n }) }]);
     return;
   }
   farm.state = 'asked';
   say([
-    { who: 'farmer', face: 0, text: txt('farmer.demande.0') },
-    { who: 'farmer', face: 0, text: txt('farmer.demande.1') },
-    { who: 'tecky', face: FACE.fier, text: txt('farmer.demande.2') },
+    { who: farmer.look, face: 0, text: fmTxt('demande.0') },
+    { who: farmer.look, face: 0, text: fmTxt('demande.1') },
+    { who: 'tecky', face: FACE.fier, text: fmTxt('demande.2') },
   ], saveGame);
 }
 function updateNpcAnim(n, dt) {       // parle, se réjouit, salue, s'inquiète ou attend
@@ -4358,7 +4379,7 @@ function drawPauseMap() {
     if (clues[i] && it) drawSpr('hud/arrow_icon', CLUE_ICON[n], mx(it[1]), my(it[2]), { sc: 1.1 });
   });
   if (!alice.hidden && ici('alice')) drawSpr('hud/arrow_icon', 3, mx(alice.x), my(alice.y) - 10, { sc: 1.2 });
-  if (farm.state === 'asked' && ici('pen')) drawSpr('hen/idle/right', 0, mx((MAP.pen[0] + MAP.pen[2]) / 2), my(MAP.pen[3]) + 6, { sc: 0.7 });
+  if (farm.state === 'asked' && ici('pen')) drawSpr(flockKey() + '/idle/right', 0, mx((MAP.pen[0] + MAP.pen[2]) / 2), my(MAP.pen[3]) + 6, { sc: flockKey() === 'sheep' ? 0.45 : 0.7 });
   if (fete.state === 'asked' && ici('goal')) drawSpr('port/balloon', 0, mx(MAP.goal[0]), my(MAP.goal[1]) - 10, { sc: 0.55 });
   // personnages déjà vus qui ont quelque chose à dire : leur « ! » (demande, remerciements) ou « ? » (quête en cours)
   const bob = Math.sin(performance.now() / 260) * 3;
@@ -4672,7 +4693,7 @@ function checkBadges() {
   const monde = MAP.id === 'monde';     // (une carte annexe sans bêtes ni trésors les donnerait tous d'un coup)
   if (monde && balade() && dogs.length && dogs.every(d => d.friend)) unlockBadge('copains');
   if (monde && treasures >= MAP.dig.length) unlockBadge('os_dores');
-  if (farm.state === 'done') unlockBadge('poules');
+  if (farm.state === 'done' && !MAP.roles.farmer) unlockBadge('poules');     // (les poules de Gaston : pas les moutons de la côte)
   if (post.state === 'done') unlockBadge('facteur');
   if (rose.state === 'done' && !MAP.roles.pompon) unlockBadge('chat');      // (Pompon : pas le caniche de la côte)
   if (fete.state === 'done') unlockBadge('ballons');
@@ -5494,6 +5515,16 @@ function startTrip() {
 }
 // passe au noir, fait `then`, puis revient
 function tripFade(then) { trip.fade = 1; trip.then = then; }
+// au noir : l'autre bout de la grande route ; la voiture arrive devant le tunnel qui mène à la carte du voyage
+// (celui de l'est : les véhicules ne sont dessinés que roulant vers la droite ; sinon, on passe tout de suite)
+function tripTunnel() {
+  const q = MAP.passages.find(p => p[1] === EP().voyage), t = q && MAP.roadTunnels[q[0]];
+  if (!t || !t[2]) { tripCoast(); return; }
+  const half = VEHICLE.sport.len / 2;
+  camX = camClampX(MAP.w * TS);                        // (calée contre le bord est : la bouche du tunnel à droite)
+  Object.assign(trip.car, { x: camX - half - 20, v: TRIP.car });
+  trip.step = 'tunnel';
+}
 // au noir : la côte ; la voiture sort du tunnel
 function tripCoast() {
   useMap(EP().voyage); resetWorld();
@@ -5502,7 +5533,6 @@ function tripCoast() {
   Object.assign(trip.car, { name: 'sport', x: -half - 20, y: MAP.traffic.lanes[1], v: TRIP.car });
   trip.papa = null; trip.step = 'arrivee';
   camX = camClampX(trip.car.x - VW * 0.45); camY = camClampY((r0 + r1) / 2 - 20 - VH / 2);
-  SFX.tunnel();
 }
 // au noir : tout le monde est descendu ; Alice et Tecky sur le parking
 function tripParking() {
@@ -5557,9 +5587,12 @@ function updateTrip(dt) {
       SFX.honk(VEHICLE.sport.pitch, c);
       break;
     }
-    case 'route':                                        // la voiture s'en va ; hors de l'écran, le noir, puis la côte
+    case 'route':                                        // la voiture s'en va ; hors de l'écran, le noir, puis le tunnel
       c.v = Math.min(T.car, c.v + T.accel * dt);
-      if (c.x - half > camX + VW + 30 && !e.fade) tripFade(tripCoast);
+      if (c.x - half > camX + VW + 30 && !e.fade) tripFade(tripTunnel);
+      break;
+    case 'tunnel':                                       // au bout de la grande route : elle s'enfonce dans le tunnel
+      if (c.x - half > MAP.w * TS + EDGE.cam + 10 && !e.fade) { SFX.tunnel(); tripFade(tripCoast); }
       break;
     case 'arrivee':                                      // elle sort du tunnel et roule jusqu'au porche du parking
       camX = camClampX(Math.max(camX, c.x - VW * 0.45));
@@ -6004,7 +6037,8 @@ function counterBox(i) {
 function hudCounters() {
   const c = [];
   if (treasures > 0) c.push(['item/goldbone', 42, 28, 0.8, treasures, MAP.dig.length]);
-  if (farm.state === 'asked') c.push(['icone/hen', 46, 58, 1, questHens().length - hensLeft(), questHens().length]);
+  if (farm.state === 'asked') c.push(flockKey() === 'sheep' ? ['sheep/idle/right', 46, 58, 0.5, questHens().length - hensLeft(), questHens().length]
+    : ['icone/hen', 46, 58, 1, questHens().length - hensLeft(), questHens().length]);
   if (post.state === 'asked') c.push(['item/letter', 50, 36, 0.8, letters.length - lettersLeft(), letters.length]);
   if (rose.state === 'asked') c.push(['icone/' + pompon.kind, 46, 58, 1, pompon.mode === 'lost' ? 0 : 1, 1]);
   if (fete.state === 'asked') c.push(['port/balloon', 42, 35, 0.8, balls.length - ballsLeft(), balls.length]);

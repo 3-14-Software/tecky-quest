@@ -55,7 +55,7 @@ ORDRE = ["format", "annexe", "w", "h", "legende", "terrain", "details", "decor",
 # Les rôles qu'une carte distribue autrement (game.js : MAP.roles) : une quête du printemps rejouée avec d'autres
 # acteurs. Sur la côte, le rôle de Mamie Rose (neighbor) est tenu par Madame Hortense, celui de Pompon par Praline,
 # son caniche. { rôle : les acteurs permis }
-ROLES = {"neighbor": ("hortense",), "pompon": ("poodle",)}
+ROLES = {"neighbor": ("hortense",), "pompon": ("poodle",), "farmer": ("anatole",)}
 
 # listes de taille fixe : « cinq lettres » et « cinq ballons » dans les dialogues (une couleur par ballon,
 # port.BALL_COLORS), les jouets d'Iris (port.TOYS : poulet, anneau, corde, dans cet ordre), les places des petits
@@ -113,7 +113,7 @@ def genres():
         "decor": [n for n in decor.DECOR if n not in DECORS_DEDUITS],
         "items": [n for n in items.ITEMS if n != "goldbone"],
         "enemies": list(chiens2.CHIENS),
-        "hens": list(hens.COLORS),
+        "hens": list(hens.COLORS) + ["sheep"],            # (les moutons d'Anatole, sur la côte : moutons.py)
         "ducks": list(ducks.KINDS),
         "cows": list(cows.KINDS),
         "critters": [k for k in critters.KINDS if k not in ("cat_white", "poodle")],      # (le chat blanc, c'est Pompon ; le caniche, Praline)

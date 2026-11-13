@@ -41,6 +41,7 @@ import hens
 import hud
 import items
 import lisiere
+import moutons
 import tecky2
 import vehicles
 import music
@@ -242,6 +243,8 @@ def build_map():
             for x in range(x0, x1 + 1):
                 g[y][x] = "bridge"           # n'est plus de l'eau pour les collisions (le sol a déjà été choisi)
     water = [1 if g[y][x] in tiles.EAUX else 0 for y in range(MH + 1) for x in range(MW + 1)]      # (eau douce et mer)
+    # la mer (rien si la carte n'en a pas) : le jeu n'y pose pas les fonds sombres de l'eau douce, ni à ses abords
+    sea = [1 if g[y][x] == "sea" else 0 for y in range(MH + 1) for x in range(MW + 1)]
     # la falaise : les coins de craie, où l'on ne marche pas (game.js : cliffAt()) ; rien si la carte n'en a pas
     cliff = [1 if g[y][x] == "chalk" else 0 for y in range(MH + 1) for x in range(MW + 1)]
     # le plateau (la lande et l'escalier qui y monte) : on ne franchit son bord que par l'escalier (rimAt())
@@ -250,7 +253,7 @@ def build_map():
     px = lambda v: round(v * TS, 1)
     hors = px(carte.HORS)
     m = {
-        "w": MW, "h": MH, "ground": ground, "over": over, "water": water, "cliff": cliff if any(cliff) else [],
+        "w": MW, "h": MH, "ground": ground, "over": over, "water": water, "sea": sea if any(sea) else [], "cliff": cliff if any(cliff) else [],
         "plateau": plateau if any(plateau) else [], "stairs": stairs if any(stairs) else [],
         "decor": [[n, px(x), px(y)] for n, x, y in DECOR],
         # lisière (lisiere.py) : sol de la marge autour de la carte (tx, ty, tuile) et ses décors (nom, x, y, miroir)
@@ -291,7 +294,9 @@ def build_map():
         "alice": [px(ALICE[0]), px(ALICE[1])],
         "title": [px(TITLE[0]), px(TITLE[1])],
         "signs": [[px(x), px(y), t] for x, y, t in SIGNS],
-        "farmRoadY": px(ROAD - 0.7) if ROAD is not None else hors,     # les poules ne descendent jamais plus bas (la grande route)
+        # les poules ne descendent jamais plus bas que la grande route — quand l'enclos est au nord de celle-ci
+        # (sans route, ou l'enclos ailleurs : pas de limite)
+        "farmRoadY": px(ROAD - 0.7) if ROAD is not None and PEN[3] <= ROAD else 10 ** 7,
         "ballBox": CARTE["ballBox"],                  # en tuiles : là où roulent les ballons de Léon
         # zones (en tuiles) : la première dont un rectangle contient le point ; un bord de rectangle posé sur le bord
         # de la carte n'a pas de limite (game.js : zoneAt) ; music : variation du thème, sinon celle de son id
@@ -359,7 +364,7 @@ def sans_ovale(svg):
 def portees():
     """Familles de sprites qui ont une ombre portée dans le jeu (le début de leur clé dans l'atlas)."""
     return (["tecky", "alice", "alice1", "farmer", "hedgehog", "vehicle", "item", "port"] + list(chiens2.CHIENS) + list(npcs.KINDS)
-            + list(villageois.KINDS) + list(critters.KINDS) + list(cows.KINDS) + list(hens.COLORS))
+            + list(villageois.KINDS) + list(critters.KINDS) + list(cows.KINDS) + list(hens.COLORS) + ["sheep"])
 
 
 def icone(svg, ancien, nouveau):
@@ -432,7 +437,7 @@ def collect(r=1):
     # jeu, le rendait flou : vu par Christophe sur le compteur des petits hérissons)
     for n, sv, k0, k in (("hedgehog", herissons.frames("idle")[0], herissons.SCALE, 1.04), ("hen", hens.frames("hen", "idle")[0], hens.SCALE, 0.86),
                          ("cat_white", critters.frames("cat_white", "idle")[0], critters.SCALE["cat"], 0.89),
-                         ("poodle", critters.frames("poodle", "idle")[0], critters.SCALE["cat"], 0.89)):
+                         ("poodle", critters.frames("poodle", "idle")[0], critters.SCALE["poodle"], 0.89)):
         out.append((f"icone/{n}", [render_svg(icone(sans_ovale(sv), k0, k), 32, 32, R, PAD)], (16 * S + M, 28 * S + M), True))
     for a in herissons.ANIMS:                           # les bébés hérissons, de profil, pieds en (16, 28)
         out.append((f"hedgehog/{a}", [render_svg(sans_ovale(sv), 32, 32, R, PAD) for sv in herissons.frames(a)], (16 * S + M, 28 * S + M), True))
@@ -454,6 +459,9 @@ def collect(r=1):
         for anim in hens.ANIMS:
             out.append((f"{kind}/{anim}/right", [render_svg(sans_ovale(s), 32, 32, R, PAD) for s in hens.frames(kind, anim)],
                         (16 * S + M, 28 * S + M), True))
+    for anim in moutons.ANIMS:                          # les moutons d'Anatole : des poules en plus gros (cadre 48 x 40)
+        out.append((f"sheep/{anim}/right", [render_svg(sans_ovale(s), moutons.W, moutons.H, R, PAD) for s in moutons.frames(anim)],
+                    (24 * S + M, moutons.G * S + M), True))
     for n in items.ITEMS:
         out.append((f"item/{n}", [render_svg(s, 32, 32, R, PAD) for s in items.item_frames(n)], (32 + M, 32 + M), True))
     for n, (fn, size, _) in items.EFFECTS.items():

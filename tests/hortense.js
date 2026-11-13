@@ -5,8 +5,8 @@ const base = fs.readFileSync(path.join(__dirname, 'sim.js'), 'utf8').split("setT
 function main() {
   run('EPISODES[1].chantier = false; audioOn(); episode = "ete"; newGame("balade", true);'); advanceDialog();
   run('cars = []; dogs = []; P.inv = 99;');
-  ok(run('MAP.id') === 'cote' && run('JSON.stringify(MAP.roles)') === '{"neighbor":"hortense","pompon":"poodle"}' && run('JSON.stringify(CARTES.monde.roles)') === '{}'
-     && run('neighbor.kind') === 'neighbor' && run('neighbor.look') === 'hortense' && run('pompon.kind') === 'poodle' && run('npcList().length') === 1,
+  ok(run('MAP.id') === 'cote' && run('MAP.roles.neighbor') === 'hortense' && run('MAP.roles.pompon') === 'poodle' && run('JSON.stringify(CARTES.monde.roles)') === '{}'
+     && run('neighbor.kind') === 'neighbor' && run('neighbor.look') === 'hortense' && run('pompon.kind') === 'poodle' && run('npcList().includes(neighbor)'),
      'sur la côte, le rôle de Mamie Rose est tenu par Madame Hortense, celui de Pompon par Praline, son caniche');
   ok(['hortense/idle', 'hortense/talk', 'hortense/worry', 'poodle/idle', 'poodle/walk', 'poodle/run', 'poodle/hiss', 'icone/poodle', 'hud/portrait_hortense']
        .every(k => run(`!!ATLAS[${JSON.stringify(k)}]`)) && run('WHO.hortense.name') === 'Madame Hortense' && run('calmAt(neighbor.x, neighbor.y)'),
@@ -38,7 +38,7 @@ function main() {
   advanceDialog(); run('checkBadges();');
   ok(run('rose.state') === 'done' && run('score') === run('sc0 + POST.reward') && run('items.length') === run('n0 + 1') && run('items[items.length - 1].n') === 'sausage'
      && run('JSON.stringify(badges)') === run('b0'), 'quête finie : des points, une saucisse ; le badge « Ami des chats » reste celui de Pompon');
-  ok(run('questsHere().length') === 1 && run('questsHere()[0]()') === true, 'pour la complétion, seule compte la quête de cette carte');
+  ok(run('questsHere().length') === 2 && run('questsHere().filter(q => q()).length') === 1 && run('QUESTS_DONE.length') === 6, 'pour la complétion, seules comptent les quêtes de cette carte (deux, dont celle-ci, finie)');
   run('saveGame(); var S = loadSave();');
   ok(run('S.rose') === 'done' && run('S.cat[2]') === 'home', 'sauvegardé comme la quête de Pompon (rose, cat)');
   // au printemps, rien n'a changé

@@ -95,6 +95,10 @@
     "poodle": {
       "nom": "Praline",
       "voix": "le caniche de Madame Hortense : petits jappements aigus"
+    },
+    "anatole": {
+      "nom": "Anatole",
+      "voix": "le gardien du phare, vieux marin : voix grave et rocailleuse, bonhomme"
     }
   },
   "repliques": [
@@ -470,7 +474,7 @@
       "ton": "fier",
       "texte": "Ouaf ! Je m'en occupe !",
       "affiche": "Ouaf ! Je m'en occupe !",
-      "contexte": "Gaston : demande"
+      "contexte": "Gaston : demande ; Anatole : demande"
     },
     {
       "voix": "tecky",
@@ -1189,6 +1193,28 @@
     },
     {
       "voix": "info",
+      "fichier": "info-f84c40f8",
+      "personnage": "Narrateur",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Rentré !",
+      "affiche": "Rentré !",
+      "contexte": "Un mouton rentre dans l’enclos"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-db496eac",
+      "personnage": "Narrateur",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tous rentrés !",
+      "affiche": "Tous rentrés !",
+      "contexte": "Un mouton rentre dans l’enclos"
+    },
+    {
+      "voix": "info",
       "fichier": "info-22143be5",
       "personnage": "Narrateur",
       "type": "bulle",
@@ -1219,6 +1245,28 @@
       "texte": "Tous dans le filet !",
       "affiche": "Tous dans le filet !",
       "contexte": "Un ballon entre dans le filet"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-1a3f43f6",
+      "personnage": "Narrateur",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "rentree",
+      "affiche": "rentree",
+      "contexte": "dans keepHen()"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-867fcbd9",
+      "personnage": "Narrateur",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "toutes",
+      "affiche": "toutes",
+      "contexte": "dans keepHen()"
     },
     {
       "voix": "info",
@@ -1439,6 +1487,61 @@
       "texte": "Oh ! Mes poules !",
       "affiche": "Oh ! Mes poules !",
       "contexte": "Une poule rentre dans l’enclos"
+    },
+    {
+      "voix": "farmer",
+      "fichier": "farmer-a20cec43",
+      "personnage": "Gaston",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "bravo",
+      "affiche": "bravo",
+      "contexte": "dans keepHen()"
+    },
+    {
+      "voix": "farmer",
+      "fichier": "farmer-67343942",
+      "personnage": "Gaston",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "oh",
+      "affiche": "oh",
+      "contexte": "dans keepHen()"
+    },
+    {
+      "voix": "farmer",
+      "fichier": "farmer-1dd20585",
+      "personnage": "Gaston",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "appel",
+      "affiche": "appel",
+      "contexte": "dans farmerGreet()"
+    },
+    {
+      "voix": "farmer",
+      "fichier": "farmer-a237244d",
+      "personnage": "Gaston",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "encore",
+      "affiche": "encore",
+      "contexte": "dans farmerGreet()"
+    },
+    {
+      "voix": "farmer",
+      "fichier": "farmer-53142120",
+      "personnage": "Gaston",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "bonjour",
+      "affiche": "bonjour",
+      "contexte": "dans farmerGreet()"
     },
     {
       "voix": "postman",
@@ -3078,6 +3181,215 @@
       "texte": "Wif wif !",
       "affiche": "Wif wif !",
       "contexte": "Praline"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-61129aed",
+      "personnage": "Anatole",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Bonjour, moussaillon ! Je suis Anatole, le gardien du phare. Le vent a ouvert la barrière, et mes moutons se sont éparpillés sur la falaise !",
+      "affiche": "Bonjour, moussaillon ! Je suis Anatole, le gardien du phare. Le vent a ouvert la barrière, et mes moutons se sont éparpillés sur la falaise !",
+      "contexte": "Anatole : demande"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-08067118",
+      "personnage": "Anatole",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tu veux bien les ramener dans l'enclos ? Aboie derrière eux pour les pousser vers la barrière ouverte, au sud.",
+      "affiche": "Tu veux bien les ramener dans l'enclos ? Aboie derrière eux pour les pousser vers la barrière ouverte, au sud.",
+      "contexte": "Anatole : demande"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-e0c8b60d",
+      "personnage": "Anatole",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il en reste 5 dehors ! Aboie derrière eux pour les pousser vers la barrière ouverte, au sud de l'enclos.",
+      "affiche": "Il en reste 5 dehors ! Aboie derrière eux pour les pousser vers la barrière ouverte, au sud de l'enclos.",
+      "contexte": "Anatole : rappel"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-6d2c0c70",
+      "personnage": "Anatole",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il en reste 4 dehors ! Aboie derrière eux pour les pousser vers la barrière ouverte, au sud de l'enclos.",
+      "affiche": "Il en reste 4 dehors ! Aboie derrière eux pour les pousser vers la barrière ouverte, au sud de l'enclos.",
+      "contexte": "Anatole : rappel"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-6927aacf",
+      "personnage": "Anatole",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il en reste 3 dehors ! Aboie derrière eux pour les pousser vers la barrière ouverte, au sud de l'enclos.",
+      "affiche": "Il en reste 3 dehors ! Aboie derrière eux pour les pousser vers la barrière ouverte, au sud de l'enclos.",
+      "contexte": "Anatole : rappel"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-4c726d42",
+      "personnage": "Anatole",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il en reste 2 dehors ! Aboie derrière eux pour les pousser vers la barrière ouverte, au sud de l'enclos.",
+      "affiche": "Il en reste 2 dehors ! Aboie derrière eux pour les pousser vers la barrière ouverte, au sud de l'enclos.",
+      "contexte": "Anatole : rappel"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-edf99527",
+      "personnage": "Anatole",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Plus qu'un ! Aboie derrière lui pour le pousser vers la barrière ouverte, au sud de l'enclos.",
+      "affiche": "Plus qu'un ! Aboie derrière lui pour le pousser vers la barrière ouverte, au sud de l'enclos.",
+      "contexte": "Anatole : rappel"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-098feb97",
+      "personnage": "Anatole",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Tous mes moutons sont rentrés ! Tu ferais un fameux chien de berger, Tecky.",
+      "affiche": "Tous mes moutons sont rentrés ! Tu ferais un fameux chien de berger, Tecky.",
+      "contexte": "Anatole : merci"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-11507e24",
+      "personnage": "Anatole",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tiens, voilà une bonne saucisse pour toi. Et bon vent pour retrouver ta petite Alice !",
+      "affiche": "Tiens, voilà une bonne saucisse pour toi. Et bon vent pour retrouver ta petite Alice !",
+      "contexte": "Anatole : merci"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-46b75738",
+      "personnage": "Anatole",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Merci encore pour mes moutons, Tecky ! Bon vent pour retrouver Alice.",
+      "affiche": "Merci encore pour mes moutons, Tecky ! Bon vent pour retrouver Alice.",
+      "contexte": "Anatole : après la quête"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-30235b52",
+      "personnage": "Anatole",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Ohé, petit chien ! Par ici !",
+      "affiche": "Ohé, petit chien ! Par ici !",
+      "contexte": "Anatole : Tecky arrive"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-c5899728",
+      "personnage": "Anatole",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 5 moutons !",
+      "affiche": "Encore 5 moutons !",
+      "contexte": "Anatole : Tecky arrive"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-f92a4987",
+      "personnage": "Anatole",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 4 moutons !",
+      "affiche": "Encore 4 moutons !",
+      "contexte": "Anatole : Tecky arrive"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-7ab0a996",
+      "personnage": "Anatole",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 3 moutons !",
+      "affiche": "Encore 3 moutons !",
+      "contexte": "Anatole : Tecky arrive"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-a29c807d",
+      "personnage": "Anatole",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 2 moutons !",
+      "affiche": "Encore 2 moutons !",
+      "contexte": "Anatole : Tecky arrive"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-b1ba4df9",
+      "personnage": "Anatole",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 1 mouton !",
+      "affiche": "Encore 1 mouton !",
+      "contexte": "Anatole : Tecky arrive"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-742270de",
+      "personnage": "Anatole",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Bravo ! Viens me voir !",
+      "affiche": "Bravo ! Viens me voir !",
+      "contexte": "Anatole : Tecky arrive"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-2cdd7c97",
+      "personnage": "Anatole",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Bonjour, Tecky !",
+      "affiche": "Bonjour, Tecky !",
+      "contexte": "Anatole : Tecky arrive"
+    },
+    {
+      "voix": "anatole",
+      "fichier": "anatole-fdb2e190",
+      "personnage": "Anatole",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Oh ! Mes moutons !",
+      "affiche": "Oh ! Mes moutons !",
+      "contexte": "Anatole : ses moutons rentrent sans lui"
     }
   ]
 }

@@ -20,8 +20,10 @@ function main() {
   advanceDialog();
   ok(run('state') === 'trip' && jusqua('trip.aboard', 600) && run('alice.hidden') && run('trip.car.name') === 'sport' && run('trip.papa') === null,
      'tout le monde monte : la voiture a ses passagers, plus personne à côté');
+  ok(jusqua('trip.step === "tunnel"', 600) && run('MAP.id') === 'monde' && run('camX') > run('MAP.w * TS - VW') && run('trip.car.x') < run('camX'),
+     'la voiture s\'en va ; au noir, l\'autre bout de la route : elle arrive devant le tunnel de l\'est');
   ok(jusqua('MAP.id === "cote"', 900) && run('state') === 'trip' && run('trip.step') === 'arrivee' && run('trip.car.x') < 0,
-     'la voiture s\'en va ; au noir, la côte : elle sort du tunnel');
+     'elle s\'enfonce dans le tunnel ; au noir, la côte : elle en ressort');
   ok(jusqua('state === "dialog"', 1500) && run('dialog.lines[0].who') === 'alice' && run('trip.car') === null
      && run('Math.abs(P.x - MAP.start[0]) < 1 && Math.abs(P.y - MAP.start[1]) < 1') && run('!alice.hidden') && run('villagers.some(v => v.kind === "papa")'),
      'elle roule jusqu\'au porche et y entre ; sur le parking, Alice : « ' + run('dialog.lines[0].text') + ' »');

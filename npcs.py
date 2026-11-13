@@ -42,7 +42,7 @@ from spritelib import Drawing, circle, ellipse, rect, path, poly, leg, line, OUT
 W, H = 48, 64
 G = 60.0                      # ligne des pieds
 HK = 1.08                     # agrandissement de la tête (style chibi), autour du menton — comme Gaston
-KINDS = ("postman", "neighbor", "leon", "iris", "piquette", "papa", "hortense")
+KINDS = ("postman", "neighbor", "leon", "iris", "piquette", "papa", "hortense", "anatole")
 FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-côté conseillé
     "postman": (24, 18.5, 15.5),      # casquette, visage, moustache et menton (comme Gaston)
     "neighbor": (24, 21.5, 15.5),     # chignon, lunettes, menton (elle est plus petite : tout est 3 unités plus bas)
@@ -51,9 +51,10 @@ FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-
     "piquette": (24, 30.6, 14.0),     # la maman hérisson : piquants, fleur, museau
     "papa": (24, 19.6, 15.0),         # le papa d'Alice : cheveux ras, visage, bouc
     "hortense": (24, 20.4, 15.8),     # Madame Hortense : capeline, visage, collier
+    "anatole": (24, 18.5, 15.5),      # Anatole, le gardien du phare : casquette de marin, moustache blanche
 }
 PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6", "leon": "#FDE3C2", "iris": "#DDE9F6", "piquette": "#F6E3EC",
-               "papa": "#F7E6C8", "hortense": "#D9F0F2"}   # fond du médaillon (Gaston : "#CFE8B0")
+               "papa": "#F7E6C8", "hortense": "#D9F0F2", "anatole": "#FBEFC4"}   # fond du médaillon (Gaston : "#CFE8B0")
 
 PAL = {
     "postman": dict(skin="#F5C8A6", skin_dk="#E2A986", nose="#EA9C82", blush="#F28A8A",
@@ -74,6 +75,18 @@ PAL = {
                      slipper="#EE8FAE", slipper_dk="#D06C8E", pompom="#FFF4F7",
                      pearl="#FFFDF8", lens="#E3F4FB",
                      eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#9ED8F5"),
+    # Anatole, le gardien du phare et berger des moutons de la falaise (la côte de l'été) : le modèle du facteur
+    # (_postman), sans sacoche ni cravate — ciré jaune, casquette de marin, cheveux et moustache blancs, bottes
+    "anatole": dict(skin="#F2C4A2", skin_dk="#DDA382", nose="#E8977C", blush="#F08A7E",
+                    hair="#F3F0EA", hair_dk="#B9B2A8",
+                    cap="#2C3E6E", cap_dk="#1E2B50", cap_lt="#46609A", visor="#1A2340", visor_lt="#4A5C8C",
+                    jacket="#F2C230", jacket_dk="#C9981C", jacket_lt="#FBE07A", band="#2C3E6E", band_dk="#1E2B50",
+                    shirt="#FFFFFF", tie="#2C3E6E", pen="#D7332B",
+                    pants="#3A4A6E", pants_dk="#28365A",
+                    shoe="#2F3A2E", shoe_lt="#56644F",
+                    leather="#A8683A", leather_dk="#7E4A25", leather_lt="#C7864F", brass="#F2C14E",
+                    paper="#FFFAF0", paper_dk="#D8C8A6", paper2="#DCEBFA",
+                    eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#9ED8F5"),
     # Madame Hortense, la dame au caniche du casino (la côte de l'été) : le modèle de Mamie Rose (_neighbor), en
     # plus grande, veste turquoise, jupe crème, escarpins rouges, capeline à ruban, collier de perles
     "hortense": dict(skin="#F7D2B8", skin_dk="#E3B093", nose="#EDA088", blush="#F28A8E",
@@ -430,8 +443,11 @@ def _papa(p, tenue="jean", lunettes=False):
 
 
 # ================================================================== LE FACTEUR
-def _postman(p):
-    c = dict(PAL["postman"], sleeve=PAL["postman"]["jacket"], cuff=PAL["postman"]["jacket_dk"])
+def _postman(p, qui="postman"):
+    """Le facteur Marcel ; qui="anatole" : Anatole, le gardien du phare, sur le même modèle (ni sacoche, ni
+    cravate, ni stylo : un ciré jaune, une casquette de marin)."""
+    gardien = qui == "anatole"
+    c = dict(PAL[qui], sleeve=PAL[qui]["jacket"], cuff=PAL[qui]["jacket_dk"])
     d = Drawing(W, H)
     L = p["lift"]
     Y = lambda v: v + p["bob"] - L          # buste (respire, saute)
@@ -459,24 +475,30 @@ def _postman(p):
     d.raw(line(f"M24,{Y(33.4):.2f} L24,{Y(45.6):.2f}", c["jacket_dk"], 0.8))
     # col de chemise et cravate
     d.add(poly([(20.2, Y(28.9)), (27.8, Y(28.9)), (24, Y(33.8))]), c["shirt"], sil=False, edge=True)
-    d.add(poly([(23.1, Y(30.2)), (24.9, Y(30.2)), (25.1, Y(32.6)), (24, Y(33.6)), (22.9, Y(32.6))]), c["tie"],
-          sil=False, edge=True)
-    # poche de poitrine (à droite de l'image) et son stylo rouge
-    d.add(rect(28.9, Y(31.0), 1.5, 3.4, 0.7), c["pen"], sil=False, edge=True)
-    d.add(rect(27.4, Y(33.4), 4.8, 1.5, 0.6), c["jacket_dk"], sil=False, edge=True)
+    if not gardien:
+        d.add(poly([(23.1, Y(30.2)), (24.9, Y(30.2)), (25.1, Y(32.6)), (24, Y(33.6)), (22.9, Y(32.6))]), c["tie"],
+              sil=False, edge=True)
+        # poche de poitrine (à droite de l'image) et son stylo rouge
+        d.add(rect(28.9, Y(31.0), 1.5, 3.4, 0.7), c["pen"], sil=False, edge=True)
+        d.add(rect(27.4, Y(33.4), 4.8, 1.5, 0.6), c["jacket_dk"], sil=False, edge=True)
+    else:                                                                       # les boutons du ciré
+        for y in (35.0, 40.6):
+            d.add(circle(25.4, Y(y), 0.8), c["band"], sil=False)
 
-    # bandoulière (de son épaule droite à la sacoche), enveloppes qui dépassent, sacoche
-    d.add(_seg(18.0, Y(29.2), 26.6, Y(42.0), 2.3), c["leather_dk"], sil=False, edge=True)
-    d.add(rect(29.3, Y(38.6), 4.6, 3.4, 0.4, f"rotate(9 31.6 {Y(40.3):.2f})"), c["paper2"], sil=False, edge=True)
-    etr = f"rotate(-13 27.8 {Y(40.0):.2f})"
-    d.add(rect(24.9, Y(37.7), 5.8, 4.4, 0.4, etr), c["paper"], sil=False, edge=True)
-    d.raw(f'<g transform="{etr}">' + line(f"M25.3,{Y(38.1):.2f} L27.8,{Y(40.0):.2f} L30.3,{Y(38.1):.2f}", c["paper_dk"], 0.6)
-          + "</g>")
-    d.add(rect(24.6, Y(40.8), 10.4, 7.6, 1.6), c["leather"], edge=True)
-    d.add(rect(24.3, Y(40.5), 11.0, 4.6, 1.6), c["leather_lt"], edge=True)                     # rabat
-    d.raw(line(f"M25.5,{Y(43.9):.2f} L34.1,{Y(43.9):.2f}", c["leather"], 0.5).replace("/>", ' stroke-dasharray="0.9 0.7"/>'))
-    d.add(rect(28.6, Y(44.2), 2.6, 2.0, 0.5), c["brass"], sil=False, edge=True)                 # boucle
-    d.add(rect(29.4, Y(44.8), 1.0, 0.8, 0.2), c["leather_dk"], sil=False)
+    if not gardien:
+        # bandoulière (de son épaule droite à la sacoche), enveloppes qui dépassent, sacoche
+        d.add(_seg(18.0, Y(29.2), 26.6, Y(42.0), 2.3), c["leather_dk"], sil=False, edge=True)
+        d.add(rect(29.3, Y(38.6), 4.6, 3.4, 0.4, f"rotate(9 31.6 {Y(40.3):.2f})"), c["paper2"], sil=False, edge=True)
+        etr = f"rotate(-13 27.8 {Y(40.0):.2f})"
+        d.add(rect(24.9, Y(37.7), 5.8, 4.4, 0.4, etr), c["paper"], sil=False, edge=True)
+        d.raw(f'<g transform="{etr}">' + line(f"M25.3,{Y(38.1):.2f} L27.8,{Y(40.0):.2f} L30.3,{Y(38.1):.2f}", c["paper_dk"], 0.6)
+              + "</g>")
+        d.add(rect(24.6, Y(40.8), 10.4, 7.6, 1.6), c["leather"], edge=True)
+        d.add(rect(24.3, Y(40.5), 11.0, 4.6, 1.6), c["leather_lt"], edge=True)                     # rabat
+        d.raw(line(f"M25.5,{Y(43.9):.2f} L34.1,{Y(43.9):.2f}", c["leather"], 0.5).replace("/>", ' stroke-dasharray="0.9 0.7"/>'))
+        d.add(rect(28.6, Y(44.2), 2.6, 2.0, 0.5), c["brass"], sil=False, edge=True)                 # boucle
+        d.add(rect(29.4, Y(44.8), 1.0, 0.8, 0.2), c["leather_dk"], sil=False)
+
 
     # bras
     def rest(s, sx):
@@ -940,7 +962,7 @@ def _neighbor(p, qui="neighbor"):
 
 # ================================================================== animations
 _DRAW = {"postman": _postman, "neighbor": _neighbor, "leon": _leon, "iris": _iris, "piquette": _piquette, "papa": _papa,
-         "hortense": lambda p: _neighbor(p, "hortense")}
+         "hortense": lambda p: _neighbor(p, "hortense"), "anatole": lambda p: _postman(p, "anatole")}
 
 _WAVE = [P(wave=1, wave_a=-28, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2),
          P(wave=1, wave_a=4, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2)]
@@ -1003,6 +1025,7 @@ ANIMS = {   # PNJ : {nom : (poses, fps, boucle)}
 }
 
 
+ANIMS["anatole"] = ANIMS["postman"]          # (mêmes gestes que Marcel)
 ANIMS["hortense"] = ANIMS["neighbor"]        # (mêmes gestes que Mamie Rose : elle s'inquiète, les mains aux joues)
 
 

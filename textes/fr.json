@@ -23,7 +23,8 @@
     "iris": "Iris",
     "piquette": "Maman Piquette",
     "papa": "Papa",
-    "hortense": "Madame Hortense"
+    "hortense": "Madame Hortense",
+    "anatole": "Anatole"
   },
   "intro": {
     "partie": "Ouaf ! Alice est partie jouer… et elle n'est pas rentrée !",
@@ -669,5 +670,33 @@
       "Elle a filé pendant que j'achetais une glace… Elle adore les jardins, derrière le casino.",
       "Ouaf ! Je vous la ramène !"
     ]
+  },
+  "moutons": {
+    "rentree": "Rentré !",
+    "toutes": "Tous rentrés !"
+  },
+  "anatole": {
+    "bravo": "Bravo ! Viens me voir !",
+    "oh": "Oh ! Mes moutons !",
+    "merci": [
+      "Tous mes moutons sont rentrés ! Tu ferais un fameux chien de berger, Tecky.",
+      "Tiens, voilà une bonne saucisse pour toi. Et bon vent pour retrouver ta petite Alice !"
+    ],
+    "appel": "Ohé, petit chien ! Par ici !",
+    "bonjour": "Bonjour, Tecky !",
+    "apres": "Merci encore pour mes moutons, Tecky ! Bon vent pour retrouver Alice.",
+    "demande": [
+      "Bonjour, moussaillon ! Je suis Anatole, le gardien du phare. Le vent a ouvert la barrière, et mes moutons se sont éparpillés sur la falaise !",
+      "Tu veux bien les ramener dans l'enclos ? Aboie derrière eux pour les pousser vers la barrière ouverte, au sud.",
+      "Ouaf ! Je m'en occupe !"
+    ],
+    "encore": {
+      "one": "Encore {n} mouton !",
+      "other": "Encore {n} moutons !"
+    },
+    "rappel": {
+      "one": "Plus qu'un ! Aboie derrière lui pour le pousser vers la barrière ouverte, au sud de l'enclos.",
+      "other": "Il en reste {n} dehors ! Aboie derrière eux pour les pousser vers la barrière ouverte, au sud de l'enclos."
+    }
   }
 }

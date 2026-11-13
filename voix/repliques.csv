@@ -32,7 +32,7 @@ tecky-c4335d8f;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 9 su
 tecky-2e44a8fb;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 10 sur 12;Os doré déterré
 tecky-4b38b1aa;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 11 sur 12;Os doré déterré
 tecky-d21bf16d;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 12 sur 12;Os doré déterré
-tecky-0dd8f6c5;Tecky;dialogue;;fier;Ouaf ! Je m'en occupe !;Gaston : demande
+tecky-0dd8f6c5;Tecky;dialogue;;fier;Ouaf ! Je m'en occupe !;"Gaston : demande ; Anatole : demande"
 tecky-4a58d3aa;Tecky;dialogue;;joyeux;Ouaf ! Je vais les chercher !;Marcel : demande
 tecky-5ce738ae;Tecky;dialogue;;fier;Ouaf ! Je te le ramène !;Mamie Rose : demande
 tecky-01da17b2;Tecky;dialogue;;fier;Ouaf ! Je vous la ramène !;Madame Hortense : demande
@@ -98,9 +98,13 @@ info-5bc555b7;Narrateur;dialogue;;;Le village de pêcheurs est juste en bas. Pou
 info-593f648b;Narrateur;dialogue;;;Le pont de la rivière. En face : la ville, son casino et ses jardins.;Panneau
 info-10155f6a;Narrateur;dialogue;;;Sentier des falaises. Le phare est tout au bout. Attention au bord !;Panneau
 info-84a34e45;Narrateur;dialogue;;;Les Planches : la promenade du bord de mer. La jetée est à l'embouchure de la rivière.;Panneau
+info-f84c40f8;Narrateur;bulle;;;Rentré !;Un mouton rentre dans l’enclos
+info-db496eac;Narrateur;bulle;;;Tous rentrés !;Un mouton rentre dans l’enclos
 info-22143be5;Narrateur;bulle;;;Rentrée !;Une poule rentre dans l’enclos
 info-4ea3be7e;Narrateur;bulle;;;Toutes rentrées !;Une poule rentre dans l’enclos
 info-1128d67e;Narrateur;bulle;;;Tous dans le filet !;Un ballon entre dans le filet
+info-1a3f43f6;Narrateur;bulle;;;rentree;dans keepHen()
+info-867fcbd9;Narrateur;bulle;;;toutes;dans keepHen()
 info-c9157c1f;Narrateur;bulle;;;But !;Un ballon entre dans le filet
 farmer-45e0e1b7;Gaston;dialogue;;;Bonjour, petit teckel ! Une petite fille est passée par ici tout à l'heure… Mais pardon, mes poules se sont sauvées !;Gaston : demande
 farmer-5b8f35be;Gaston;dialogue;;;Tu voudrais bien les ramener dans l'enclos ? Aboie derrière elles pour les pousser vers la barrière ouverte, au sud.;Gaston : demande
@@ -121,6 +125,11 @@ farmer-f38e2826;Gaston;bulle;;;Encore 1 poule !;Gaston : Tecky arrive
 farmer-742270de;Gaston;bulle;;;Bravo ! Viens me voir !;"Gaston : Tecky arrive ; Une poule rentre dans l’enclos"
 farmer-2cdd7c97;Gaston;bulle;;;Bonjour, Tecky !;Gaston : Tecky arrive
 farmer-81eae6bd;Gaston;bulle;;;Oh ! Mes poules !;Une poule rentre dans l’enclos
+farmer-a20cec43;Gaston;bulle;;;bravo;dans keepHen()
+farmer-67343942;Gaston;bulle;;;oh;dans keepHen()
+farmer-1dd20585;Gaston;bulle;;;appel;dans farmerGreet()
+farmer-a237244d;Gaston;bulle;;;encore;dans farmerGreet()
+farmer-53142120;Gaston;bulle;;;bonjour;dans farmerGreet()
 postman-7c73240a;Marcel;dialogue;;inquiet;Bonjour, petit chien ! Un coup de vent a fait s'envoler mes lettres, juste au début de ma tournée…;Marcel : demande
 postman-c5986551;Marcel;dialogue;;;Il y en a cinq, dans le village et autour. Si tu les trouves, rapporte-les-moi, s'il te plaît !;Marcel : demande
 postman-c1caf73f;Marcel;dialogue;;;Tu en as déjà trouvé 1 ? Bravo ! Il y en a cinq en tout, autour du village. Rapporte-les-moi, s'il te plaît !;Marcel : demande
@@ -270,3 +279,22 @@ hortense-df3ab805;Madame Hortense;bulle;;;Praline ! Viens me voir, Tecky !;Madam
 poodle-c91bf5a6;Praline;bulle;;;Wif !;Praline
 poodle-e31c1e94;Praline;bulle;;;Wif ?;Praline
 poodle-13cecb30;Praline;bulle;;;Wif wif !;Praline
+anatole-61129aed;Anatole;dialogue;;;Bonjour, moussaillon ! Je suis Anatole, le gardien du phare. Le vent a ouvert la barrière, et mes moutons se sont éparpillés sur la falaise !;Anatole : demande
+anatole-08067118;Anatole;dialogue;;;Tu veux bien les ramener dans l'enclos ? Aboie derrière eux pour les pousser vers la barrière ouverte, au sud.;Anatole : demande
+anatole-e0c8b60d;Anatole;dialogue;;;Il en reste 5 dehors ! Aboie derrière eux pour les pousser vers la barrière ouverte, au sud de l'enclos.;Anatole : rappel
+anatole-6d2c0c70;Anatole;dialogue;;;Il en reste 4 dehors ! Aboie derrière eux pour les pousser vers la barrière ouverte, au sud de l'enclos.;Anatole : rappel
+anatole-6927aacf;Anatole;dialogue;;;Il en reste 3 dehors ! Aboie derrière eux pour les pousser vers la barrière ouverte, au sud de l'enclos.;Anatole : rappel
+anatole-4c726d42;Anatole;dialogue;;;Il en reste 2 dehors ! Aboie derrière eux pour les pousser vers la barrière ouverte, au sud de l'enclos.;Anatole : rappel
+anatole-edf99527;Anatole;dialogue;;;Plus qu'un ! Aboie derrière lui pour le pousser vers la barrière ouverte, au sud de l'enclos.;Anatole : rappel
+anatole-098feb97;Anatole;dialogue;;joyeux;Tous mes moutons sont rentrés ! Tu ferais un fameux chien de berger, Tecky.;Anatole : merci
+anatole-11507e24;Anatole;dialogue;;;Tiens, voilà une bonne saucisse pour toi. Et bon vent pour retrouver ta petite Alice !;Anatole : merci
+anatole-46b75738;Anatole;dialogue;;joyeux;Merci encore pour mes moutons, Tecky ! Bon vent pour retrouver Alice.;Anatole : après la quête
+anatole-30235b52;Anatole;bulle;;;Ohé, petit chien ! Par ici !;Anatole : Tecky arrive
+anatole-c5899728;Anatole;bulle;;;Encore 5 moutons !;Anatole : Tecky arrive
+anatole-f92a4987;Anatole;bulle;;;Encore 4 moutons !;Anatole : Tecky arrive
+anatole-7ab0a996;Anatole;bulle;;;Encore 3 moutons !;Anatole : Tecky arrive
+anatole-a29c807d;Anatole;bulle;;;Encore 2 moutons !;Anatole : Tecky arrive
+anatole-b1ba4df9;Anatole;bulle;;;Encore 1 mouton !;Anatole : Tecky arrive
+anatole-742270de;Anatole;bulle;;;Bravo ! Viens me voir !;Anatole : Tecky arrive
+anatole-2cdd7c97;Anatole;bulle;;;Bonjour, Tecky !;Anatole : Tecky arrive
+anatole-fdb2e190;Anatole;bulle;;;Oh ! Mes moutons !;Anatole : ses moutons rentrent sans lui

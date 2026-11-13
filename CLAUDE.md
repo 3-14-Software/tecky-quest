@@ -267,7 +267,9 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   partir de l'arrière de la voiture). Étapes de `updateTrip()` : `descente` (Alice et Tecky descendent le
   chemin de la niche jusqu'à la voiture garée sur la voie du bas, `tripWalk()`), les répliques du départ
   (`tripDepartLines()`), `embarque` (chacun disparaît à la portière, la voiture passe de `sport_vide` à
-  `sport`), `route`, le noir (`tripFade(tripCoast)` : `useMap(voyage)`, la voiture sort du tunnel),
+  `sport`), `route`, le noir, `tunnel` (`tripTunnel()` : la caméra à l'autre bout de la grande route, la
+  voiture s'enfonce dans le tunnel qui mène à la carte du voyage), le noir (`tripCoast` : `useMap(voyage)`,
+  la voiture sort du tunnel),
   `arrivee` (la caméra la suit jusqu'au porche), `garee`, le noir (`tripParking`), les répliques de
   l'arrivée (`tripArrivalLines()` : Alice propose le cache-cache), `cache` (elle file), puis `tripDone()` :
   Tecky a la main en `MAP.start` de la carte du voyage (le parking), la partie est enregistrée. Un bouton
@@ -282,8 +284,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `MAP.villagerFps.papa`). Textes : `voyage.<qui>.depart` / `.arrivee`. `tools/export_voix.js` produit ces
   répliques (voix « Papa »). `tests/voyage.js` ; `cartes.js` et `episodes.js` retirent le voyage de
   l'épisode (`delete EPISODES[1].voyage`) pour éprouver les passages à pied et les surcharges, qui restent
-  dans le moteur. Pas encore fait : un vrai trajet jusqu'au tunnel dans le monde (la voiture sort de l'écran
-  et c'est le noir).
+  dans le moteur.
   **Indices, cachette et fin par épisode** (13 novembre 2026) : `episodes.json` → `indices` (trois objets de
   `items.py`, dans l'ordre ; sans ce champ, ceux du printemps). L'été : `hat` (le chapeau de paille, au
   village de pêcheurs), `spade` (la pelle, dans les jardins de la ville), `flipflop` (la tong, sur la plage),
@@ -312,14 +313,27 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   (`rose`, `pompon`, `CAT`, `talkNeighbor()`… inchangés) avec `"neighbor": "hortense"` et `"pompon": "poodle"` :
   Madame Hortense (`npcs._neighbor(p, "hortense")` : le modèle de Mamie Rose en plus grande, capeline, veste
   turquoise, collier ; portrait `hud/portrait_hortense`) attend devant le casino, en zone calme ; Praline
-  (`critters` « poodle » : les poses des chats, `_poodle_head()`, houppette à nœud rose, pompon au bout de la
-  queue ; icône `icone/poodle`) est dans les jardins. Textes : mêmes clés sous `hortense` que sous `neighbor`
+  (`critters` « poodle », une espèce à part avec ses poses : `_poodle_stand()`, `_poodle_sit()`,
+  `_poodle_walk()`, `_poodle_run()`, `_poodle_yap()` — haute sur pattes, crinière, pompons aux chevilles, à la
+  hanche et au bout de la queue, houppette à nœud rose ; elle jappe quand Tecky aboie ; icône `icone/poodle`) est dans les jardins. Textes : mêmes clés sous `hortense` que sous `neighbor`
   (`nbTxt(k)`), sous `caniche` que sous `chat` (`petTxt(k)`), `tecky.praline` ; `petWho()`, `petCry()`. Le
   badge « Ami des chats » reste celui de Pompon ; la complétion ne compte que les quêtes de la carte où l'on
   joue (`questsHere()`, `QUEST_GIVER`). Sauvegarde : les champs de la quête de Pompon (`rose`, `cat`). Voix :
   `tools/export_voix.js` joue les deux distributions (`DYNAMIC_SITES` = 24). Test : `hortense.js`. Pour la
   quête suivante : ajouter ses acteurs à `carte.ROLES`, leurs dessins, leurs textes sous les mêmes clés, et
-  un `xxTxt()` comme `nbTxt()`. Premier jet posé par
+  un `xxTxt()` comme `nbTxt()`.
+  Deuxième quête : **les moutons d'Anatole** = la quête des poules (`farm`, `hens`, `pen`, `penGate`,
+  `talkFarmer()`… inchangés) avec `"farmer": "anatole"` et des moutons dans la liste `hens` de la carte
+  (genre `sheep`). Anatole, le gardien du phare (`npcs._postman(p, "anatole")` : le modèle du facteur sans
+  sacoche ni cravate, ciré jaune, casquette de marin, moustache blanche), est près de son enclos, en haut du
+  plateau, en zone calme ; cinq moutons (`moutons.py` : cadre 48 x 40, pieds en (24, 36), les animations des
+  poules aux mêmes noms — `peck` = il broute, `flap` = il détale ; sprites `sheep/<anim>/right`, famille à
+  ombre) sont éparpillés sur la lande, un sixième est dans l'enclos. Textes : mêmes clés sous `anatole` que
+  sous `farmer` (`fmTxt(k, params)`), sous `moutons` que sous `poules` (`flockTxt(k)`) ; `flockKey()` (le
+  sprite du compteur et de la carte de la pause), `henCry()` (ils bêlent : `SFX.baa`, une voix nasillarde qui chevrote ; d'abord c'était le meuglement des vaches joué aigu, clochette comprise — un raccourci que Christophe a relevé). Le badge des
+  poules reste celui de Gaston. `MAP.farmRoadY` n'est une limite que si l'enclos est au nord de la grande
+  route (sinon 10^7 : sur la côte, les moutons ne sont pas retenus à la hauteur de la route). Voix :
+  `DYNAMIC_POPS` = 9. Test : `anatole.js`. Premier jet posé par
   `v2/cote_carte.py`, **gelé depuis** : Christophe retouche la carte dans l'éditeur, c'est
   `cartes/cote.json` qui fait foi (le script refuse d'écraser une carte qui existe ; ses listes ne sont plus
   à jour ; `python3 v2/cote_carte.py --apercu` redessine l'aperçu à partir du fichier). Rien ne dépend de
@@ -340,7 +354,8 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
     `PLAGE`) ; là où la rivière traverse la plage, du sable mouillé. À l'embouchure, la mer se fond sur l'eau
     douce sans rive (`_layer()` : mer sur eau), et la carte y avance l'eau douce en langue dans la mer (une
     ligne droite se voyait). L'habillage de l'eau par le jeu (nénuphars, galets, fonds sombres :
-    `MAP.shore`) ne concerne que l'eau douce. Le bassin du village est de la mer.
+    `MAP.shore`) ne concerne que l'eau douce, et ses fonds sombres ne sont pas posés à moins de `POND.sea`
+    tuiles de la mer (`MAP.sea`, `seaNear()` : ils faisaient une tache dans l'embouchure). Le bassin du village est de la mer.
   - **Le pont en travers** (`decor.bridge_h()`, décor `bridge_h`) : le pont de bois du monde, dans l'autre
     sens, pour une rivière qui descend du nord au sud ; 224 x 96 (sept tuiles sur trois), tablier de deux
     tuiles, garde-corps au nord et au sud (`RAILS.bridge_h`), à plat (`FLAT`), sans ombre portée. Il se pose
