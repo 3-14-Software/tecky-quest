@@ -626,6 +626,26 @@ const SOUNDS = {
   },
   squeak(k) { tone([1900 * k, 2700 * k, 2200 * k], 0.09, 'sine', 0.05, { a: 0.008 }); tone([3800 * k, 5200 * k], 0.06, 'sine', 0.01); },   // hérisson : « couic »
   /* ---- l'ambiance (jouée par ambSound) */
+  gull(k) {                            // une mouette : un long cri qui retombe, puis des « kia-kia-kia » de plus en plus bas
+    const n = 2 + Math.floor(Math.random() * 3);
+    cry([940 * k, 1340 * k, 1040 * k], 0.44, 0.022, [[[1700, 2150, 1800], 4, 1], [3300, 5, 0.5]], { a: 0.05, h: 0.5, vib: [7, 28] });
+    for (let i = 0; i < n; i++)
+      cry([1160 * k, 1400 * k, (1000 - i * 40) * k], 0.15, 0.02 * (1 - i * 0.12), [[2000, 4, 1], [3300, 5, 0.5]], { at: 0.52 + i * 0.2, a: 0.02, h: 0.4 });
+  },
+  rigging() {                          // les drisses qui tintent contre les mâts, au gré de la houle
+    const f = 1900 + Math.random() * 500, n = 3 + Math.floor(Math.random() * 4);
+    let at = 0;
+    for (let i = 0; i < n; i++) {
+      ding(f * (i % 2 ? 1.06 : 1), 0.22, 0.0085 * (0.6 + Math.random() * 0.4), at);
+      noise(0.02, 0.012, 5200, { at, q: 3 });
+      at += 0.16 + Math.random() * 0.3;
+    }
+  },
+  gust() {                             // une rafale sur la falaise : un souffle qui enfle, siffle un peu et retombe
+    const d = 1.8 + Math.random() * 1.2;
+    noise(d, 0.02, [320, 760, 420], { a: d * 0.45, h: 0.2, q: 0.6 });
+    noise(d * 0.8, 0.005, [1500, 2600, 1700], { at: d * 0.15, a: d * 0.35, h: 0.2, q: 4 });
+  },
   tweet() {                            // gazouillis : quelques notes aiguës qui glissent
     const base = 2600 + Math.random() * 1600, n = 2 + Math.floor(Math.random() * 4), up = Math.random() < 0.5;
     let at = 0;
@@ -685,6 +705,49 @@ for (const n in SOUNDS) SFX[n] = (p, from) => {
   sfxOut = out; sfxTune = TUNED[n] ? sfxKey() : 1 + (Math.random() * 2 - 1) * SOUND.vary;
   try { SOUNDS[n](p || 1); } finally { sfxOut = null; sfxTune = 1; }
 };
+
+/* ---- les sons continus de l'ambiance (Ambience, plus bas ; ils sont ici pour que la salle d'écoute les ait aussi) */
+/* Volumes des sons continus (water, rain, fountain) : un fond, bien en dessous de la musique et des bruitages. À 0,09
+   et 0,07, le clapotis et la pluie étaient aussi forts que la musique d'alors (Christophe : « bien trop forts ») ; la pluie, un
+   souffle dans les aigus, s'entend plus que le reste : baissée deux fois.
+   Le ressac (surf) : la mer s'entend de plus loin que l'eau douce (surfR), et son volume respire comme une vague. */
+const AMB = { water: 0.03, waterR: [140, 300], rain: 0.012, fountain: 0.025, fountainR: [110, 560], frog: 0.12,
+  surf: 0.022, surfR: [180, 420, 760], swell: 7.5 };
+/* Un son continu : un bruit en boucle dans un ou plusieurs filtres [type, fréquence, étroitesse, volume]. Eau : bruit
+   grave et doux, passe-bas ; pluie : bruit blanc autour des aigus (le crépitement) ; fontaine : deux bandes, le filet
+   d'eau et son éclaboussure, qui ondulent ; ressac : le grondement de la vague et le chuintement de l'écume.
+   -> le nœud de volume (à 0 : c'est Ambience.set() qui le règle). */
+const AMB_LOOPS = { water: [['lowpass', 700, 1, 1]], rain: [['bandpass', 2600, 0.5, 1]],
+  fountain: [['bandpass', 1700, 1.4, 1], ['highpass', 5200, 0.7, 0.35]], surf: [['lowpass', 520, 0.7, 1], ['bandpass', 2100, 0.5, 0.28]] };
+function ambLoop(kind) {
+  const len = AC.sampleRate * 2, buf = AC.createBuffer(1, len, AC.sampleRate), d = buf.getChannelData(0);
+  let b = 0;
+  for (let i = 0; i < len; i++) {
+    const r = Math.random() * 2 - 1;
+    if (kind === 'water') { b = (b + r * 0.08) * 0.985; d[i] = b * 3; } else d[i] = r;
+  }
+  const src = AC.createBufferSource(), g = AC.createGain();
+  src.buffer = buf; src.loop = true; g.gain.value = 0;
+  for (const [type, freq, q, k] of AMB_LOOPS[kind]) {
+    const f = AC.createBiquadFilter(), fg = AC.createGain();
+    f.type = type; f.frequency.value = freq; f.Q.value = q; fg.gain.value = k;
+    src.connect(f); f.connect(fg); fg.connect(g);
+    if (kind === 'fountain') {       // le filet d'eau n'est jamais régulier
+      const l = AC.createOscillator(), lg = AC.createGain();
+      l.frequency.value = type === 'bandpass' ? 0.9 : 2.3; lg.gain.value = freq * 0.18;
+      l.connect(lg); lg.connect(f.frequency); l.start();
+    }
+  }
+  g.connect(AC.destination); src.start();
+  return g;
+}
+/* La respiration du ressac au temps t (0..1) : la vague enfle lentement, déferle, puis se retire plus vite ; une
+   vague sur trois ou quatre est plus forte. */
+function surfSwell(t) {
+  const u = (t / AMB.swell) % 1;
+  const v = u < 0.6 ? Math.pow(u / 0.6, 2) : 1 - Math.pow((u - 0.6) / 0.4, 0.7);
+  return (0.18 + 0.82 * v) * (0.72 + 0.28 * Math.sin(t * 0.27));
+}
 
 /* ------------------------------------------------------------------ musique chiptune */
 /* Les morceaux viennent de music.py (SONGS) : un par zone, dans son ton, à son tempo, avec ses instruments (inst) ;
@@ -915,14 +978,10 @@ const Music = {
 /* ------------------------------------------------------------------ ambiance sonore des zones */
 /* Petits sons selon la zone où se trouve Tecky (voir ZONES) : oiseaux (surtout en forêt et au parc, trois chants et
    le coucou), caquètements et coq à la ferme, sonnette de vélo au village, ferraille et corne de péniche à la zone
-   industrielle. Le soir (lampadaires allumés), les oiseaux se taisent : grillons partout, chouette en forêt et au
+   industrielle ; sur la côte, mouettes, drisses qui tintent au port, rafales sur la falaise. Le soir (lampadaires allumés), les oiseaux se taisent : grillons partout, chouette en forêt et au
    parc, grenouilles près de l'eau. Chacun vient d'un côté de l'écran tiré au hasard. En continu : un clapotis dont le
-   volume suit la quantité d'eau autour de Tecky (rivière, étang, mare), le glouglou de la fontaine quand il s'en
-   approche, la pluie. Seulement en jeu (coupé en pause et pendant les dialogues). */
-/* Volumes des sons continus (water, rain, fountain) : un fond, bien en dessous de la musique et des bruitages. À 0,09
-   et 0,07, le clapotis et la pluie étaient aussi forts que la musique d'alors (Christophe : « bien trop forts ») ; la pluie, un
-   souffle dans les aigus, s'entend plus que le reste : baissée deux fois. */
-const AMB = { water: 0.03, waterR: [140, 300], rain: 0.012, fountain: 0.025, fountainR: [110, 560], frog: 0.12 };
+   volume suit la quantité d'eau douce autour de Tecky (rivière, étang, mare), le ressac de la mer, le glouglou de
+   la fontaine quand il s'en approche, la pluie. Seulement en jeu (coupé en pause et pendant les dialogues). */
 // zone : [son, intervalle min (s), max, quand] ; quand : 'jour', 'soir' (lampadaires allumés), rien = tout le temps
 const AMB_NIGHT = [['cricket', 1.6, 4.5, 'soir'], ['frog', 5, 12, 'soir']];
 const AMB_EVENTS = {
@@ -932,6 +991,14 @@ const AMB_EVENTS = {
   village: [['bike', 18, 32, 'jour'], ['bird', 7, 13, 'jour']], industrie: [['clank', 5, 11], ['horn', 40, 80]],
   ferme: [['cluck', 3.5, 8, 'jour'], ['rooster', 28, 50, 'jour'], ['bird', 8, 14, 'jour']],
   verger: [['bird', 3, 7, 'jour'], ['cluck', 9, 18, 'jour']],
+  // la côte de l'été : les mouettes partout où l'on voit la mer, les drisses des bateaux, les rafales sur la falaise
+  cote: [['bird', 5, 10, 'jour'], ['gull', 12, 26, 'jour']],
+  port: [['gull', 4, 10, 'jour'], ['rigging', 6, 14], ['clank', 9, 20], ['horn', 40, 80]],
+  pecheurs: [['gull', 5, 12, 'jour'], ['rigging', 5, 12], ['bird', 12, 22, 'jour']],
+  ville: [['bird', 5, 11, 'jour'], ['gull', 14, 30, 'jour'], ['bike', 22, 40, 'jour'], ['owl', 16, 30, 'soir']],
+  falaises: [['gust', 7, 16], ['gull', 5, 12, 'jour']],
+  plage: [['gull', 3.5, 9, 'jour']],
+  bocage: [['bird', 4, 9, 'jour'], ['cuckoo', 30, 60, 'jour']],
 };
 function ambSound(name) {
   const from = { x: camX + Math.random() * VW, y: camY + VH / 2 };     // de quelque part dans le paysage
@@ -940,14 +1007,15 @@ function ambSound(name) {
     const h = hens.find(h => dist(h.x, h.y, P.x, P.y) < 600);
     if (!h) return false;
     SFX.coo(1, h);
-  } else if (name === 'frog') {        // seulement au bord de l'eau
+  } else if (name === 'frog') {        // seulement au bord de l'eau douce (Ambience.wet ne compte pas la mer)
     if (Ambience.wet < AMB.frog) return false;
     SFX.frog(0.85 + Math.random() * 0.4, from);
-  } else SFX[name](1, from);
+  } else if (name === 'gull') SFX.gull(0.85 + Math.random() * 0.35, { x: from.x, y: camY + Math.random() * VH });    // (chacune sa voix)
+  else SFX[name](1, from);
   return true;
 }
 const Ambience = {
-  timers: {}, loops: {}, sets: {}, phase: 0, played: 0, level: 0, rainLevel: 0, fountLevel: 0, wet: 0,
+  timers: {}, loops: {}, sets: {}, phase: 0, played: 0, level: 0, rainLevel: 0, fountLevel: 0, surfLevel: 0, wet: 0, salt: 0,
   update(dt) {
     if (!AC) return;
     const z = zone ? zone.id : 'niche', soir = lampsOn();
@@ -965,13 +1033,23 @@ const Ambience = {
     let n = 0, w = 0;
     for (const r of AMB.waterR) for (let i = 0; i < 8; i++) {
       const a = i * Math.PI / 4;
-      n++; if (waterAt(P.x + Math.cos(a) * r, P.y + Math.sin(a) * r)) w++;
+      const x = P.x + Math.cos(a) * r, y = P.y + Math.sin(a) * r;
+      n++; if (waterAt(x, y) && !seaAt(x, y)) w++;                     // (l'eau douce : la mer a son ressac)
     }
     this.wet = w / n;
     this.phase += dt;
     const lap = 0.75 + 0.25 * Math.sin(this.phase * 1.7) * Math.sin(this.phase * 0.63);
     this.level = this.wet * AMB.water * lap * vol;
     this.set('water', this.level, 0.3);
+    // ressac : part de mer sur trois cercles plus larges (elle s'entend de loin), au rythme des vagues
+    let m = 0, sea = 0;
+    if (MAP.sea.length) for (const r of AMB.surfR) for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI / 4;
+      m++; if (seaAt(P.x + Math.cos(a) * r, P.y + Math.sin(a) * r)) sea++;
+    }
+    this.salt = m ? sea / m : 0;
+    this.surfLevel = this.salt * AMB.surf * surfSwell(this.phase) * vol;
+    this.set('surf', this.surfLevel, 0.25);
     // pluie : un souffle aigu, selon l'averse
     this.rainLevel = weather.kind !== 'rain' ? 0 : weather.k * AMB.rain * vol;
     this.set('rain', this.rainLevel, 0.4);
@@ -989,33 +1067,9 @@ const Ambience = {
       this.sets[kind] = level; this.loops[kind].gain.setTargetAtTime(level, AC.currentTime, tau);
     }
   },
-  /* Sons continus : un bruit en boucle dans un filtre. Eau : bruit grave et doux, passe-bas ; pluie : bruit blanc
-     autour des aigus (le crépitement) ; fontaine : deux bandes, le filet d'eau et son éclaboussure, qui ondulent. */
-  start(kind) {
-    const len = AC.sampleRate * 2, buf = AC.createBuffer(1, len, AC.sampleRate), d = buf.getChannelData(0);
-    let b = 0;
-    for (let i = 0; i < len; i++) {
-      const r = Math.random() * 2 - 1;
-      if (kind === 'water') { b = (b + r * 0.08) * 0.985; d[i] = b * 3; } else d[i] = r;
-    }
-    const src = AC.createBufferSource(), g = AC.createGain();
-    src.buffer = buf; src.loop = true; g.gain.value = 0;
-    for (const [type, freq, q, k] of { water: [['lowpass', 700, 1, 1]], rain: [['bandpass', 2600, 0.5, 1]],
-      fountain: [['bandpass', 1700, 1.4, 1], ['highpass', 5200, 0.7, 0.35]] }[kind]) {
-      const f = AC.createBiquadFilter(), fg = AC.createGain();
-      f.type = type; f.frequency.value = freq; f.Q.value = q; fg.gain.value = k;
-      src.connect(f); f.connect(fg); fg.connect(g);
-      if (kind === 'fountain') {       // le filet d'eau n'est jamais régulier
-        const l = AC.createOscillator(), lg = AC.createGain();
-        l.frequency.value = type === 'bandpass' ? 0.9 : 2.3; lg.gain.value = freq * 0.18;
-        l.connect(lg); lg.connect(f.frequency); l.start();
-      }
-    }
-    g.connect(AC.destination); src.start();
-    this.loops[kind] = g;
-  },
+  start(kind) { this.loops[kind] = ambLoop(kind); },
   quiet() {
-    this.level = 0; this.rainLevel = 0; this.fountLevel = 0;
+    this.level = 0; this.rainLevel = 0; this.fountLevel = 0; this.surfLevel = 0;
     for (const k in this.loops) if (this.sets[k] !== 0) { this.sets[k] = 0; this.loops[k].gain.setTargetAtTime(0, AC.currentTime, 0.2); }
   },
 };
@@ -1161,7 +1215,7 @@ cv.addEventListener('pointerdown', e => {
   if (touchMode && canFullscreen() && !fsElement() && (state === 'play' || state === 'pause') &&
       gx > FS_BTN.x && gx < FS_BTN.x + FS_BTN.w && gy > FS_BTN.y && gy < FS_BTN.y + FS_BTN.h) { goFullscreen(); return; }
   if (state === 'options') { optionsTap(gx, gy); return; }
-  if (state === 'badges') { closeBadges(); return; }
+  if (state === 'badges') { badgesTap(gx, gy); return; }
   if (menu && (state === 'title' || state === 'over' || state === 'pause')) {   // menus : toucher une entrée la choisit
     if (state === 'title' && episodeTap(gx, gy)) return;
     const i = menuHit(gx, gy);
@@ -1240,6 +1294,7 @@ function buildChunk(cx, cy, n, img, k, len, mask) {
   groundDetails(g, cx, cy, n, x0, y0, k);
   woodDetails(g, cx, cy, n, x0, y0, k);
   fieldDetails(g, cx, cy, n, x0, y0, k);
+  heathDetails(g, cx, cy, n, x0, y0, k);
   waterDetails(g, cx, cy, n, x0, y0, k);
   const m = groundShadows(g, x0, y0, w, k, len || 1, mask);
   return { c, x: x0, y: y0, w, h: w, k, len, m };
@@ -1332,6 +1387,49 @@ function woodDetails(g, cx, cy, n, x0, y0, k) {
         const a = hash3(tx, ty, 152 + j) * 6.283, d = 4 + 13 * Math.sqrt(hash3(tx, ty, 158 + j));
         put('sol/fleur', hash3(tx, ty, 164 + j) < 0.8 ? 0 : 3, X + 32 + Math.cos(a) * d, Y + 32 + Math.sin(a) * d * 0.8);
       }
+  }
+}
+/* Les cailloux de la lande (le plateau de la falaise), semés une fois dans le sol comme l'habillage de l'herbe et
+   tirés de la position : rien ne se répète d'un bout à l'autre du plateau. Par petits groupes (un gros caillou
+   parfois, des moyens, du gravier autour), plus quelques graviers isolés ; « sol/caillou », MAP.pebbles : gros,
+   moyens, graviers -> [première image, nombre]. Un caillou n'est posé que là où tout est de la lande pleine autour
+   de lui : jamais sur le liséré de pierres du bord, ni sur une marche. */
+const HEATH = { cell: 2, group: 0.8, big: 0.45, more: [1, 4], wide: 24, deep: 14, lone: 0.22, margin: [11, 8] };
+function heathTile(tx, ty) {               // la tuile est de la lande pleine (ses quatre coins, sans escalier)
+  if (!MAP.plateau.length) return false;
+  const W1 = MAP.w + 1, c = (a, b) => clamp(b, 0, MAP.h) * W1 + clamp(a, 0, MAP.w);
+  for (const i of [c(tx, ty), c(tx + 1, ty), c(tx, ty + 1), c(tx + 1, ty + 1)])
+    if (!MAP.plateau[i] || (MAP.stairs.length && MAP.stairs[i])) return false;
+  return true;
+}
+function heathFree(x, y) {                 // de la lande pleine tout autour du point (x, y)
+  const [mx, my] = HEATH.margin;
+  for (const dx of [-mx, mx]) for (const dy of [-my, my])
+    if (!heathTile(Math.floor((x + dx) / TS), Math.floor((y + dy) / TS))) return false;
+  return true;
+}
+function heathDetails(g, cx, cy, n, x0, y0, k) {
+  if (!MAP.plateau.length) return;
+  const put = chunkPut(g, x0, y0, k), C = HEATH.cell, P = MAP.pebbles;
+  const stone = (kind, h, x, y) => ({ i: P[kind][0] + Math.floor(h * P[kind][1]), x, y });
+  for (let gy = Math.floor((cy - 2) / C); gy <= Math.floor((cy + n + 2) / C); gy++)
+    for (let gx = Math.floor((cx - 2) / C); gx <= Math.floor((cx + n + 2) / C); gx++) {
+      if (hash3(gx, gy, 201) >= HEATH.group) continue;
+      const bx = (gx + hash3(gx, gy, 202)) * C * TS, by = (gy + hash3(gx, gy, 203)) * C * TS;
+      const list = [];
+      if (hash3(gx, gy, 204) < HEATH.big) list.push(stone(0, hash3(gx, gy, 205), bx, by));
+      const m = HEATH.more[0] + Math.floor(hash3(gx, gy, 206) * (HEATH.more[1] - HEATH.more[0] + 1));
+      for (let j = 0; j < m; j++) {
+        const a = hash3(gx, gy, 210 + j) * 6.283, d = 0.35 + 0.65 * Math.sqrt(hash3(gx, gy, 220 + j));
+        list.push(stone(hash3(gx, gy, 230 + j) < 0.45 ? 1 : 2, hash3(gx, gy, 240 + j), bx + Math.cos(a) * d * HEATH.wide, by + Math.sin(a) * d * HEATH.deep));
+      }
+      list.sort((p, q) => p.y - q.y);                                   // (celui du bas passe devant)
+      for (const p of list) if (heathFree(p.x, p.y)) put('sol/caillou', p.i, p.x, p.y);
+    }
+  for (let ty = cy - 1; ty < cy + n + 1; ty++) for (let tx = cx - 1; tx < cx + n + 1; tx++) {
+    if (hash3(tx, ty, 250) >= HEATH.lone) continue;                     // un gravier tout seul
+    const x = (tx + 0.2 + 0.6 * hash3(tx, ty, 251)) * TS, y = (ty + 0.2 + 0.6 * hash3(tx, ty, 252)) * TS;
+    if (heathFree(x, y)) put('sol/caillou', P[2][0] + Math.floor(hash3(tx, ty, 253) * P[2][1]), x, y);
   }
 }
 /* Les cultures du champ, peintes une fois dans le sol : des rangs de plants (« sol/culture », deux images par
@@ -1667,6 +1765,7 @@ function cornerVal(coins, x, y) {       // un champ de coins (0 / 1 par coin de 
   return c(i, j) * (1 - u) * (1 - v) + c(i + 1, j) * u * (1 - v) + c(i, j + 1) * (1 - u) * v + c(i + 1, j + 1) * u * v;
 }
 const waterVal = (x, y) => cornerVal(MAP.water, x, y);
+const seaAt = (x, y) => MAP.sea.length > 0 && cornerVal(MAP.sea, x, y) > 0.5;       // la mer (MAP.sea : ses coins ; vide sur une carte sans mer)
 /* La falaise : sa paroi (terrain « chalk », MAP.cliff : ses coins ; vide sur une carte qui n'en a pas). On ne marche
    pas sur la roche : les pieds s'arrêtent à son bord dessiné (0,5), en haut comme en bas. */
 const cliffAt = (x, y) => MAP.cliff.length > 0 && cornerVal(MAP.cliff, x, y) > 0.5;
@@ -4564,7 +4663,7 @@ function openTitleMenu() {
   items.push({ id: 'aventure', label: txt('menu.aventure'), sub: txt('menu.aventure_note'), mode: 'aventure' });
   items.push({ id: 'balade', label: txt('menu.balade'), sub: txt('menu.balade_note'), mode: 'balade' });
   items.push({ id: 'options', label: txt('menu.options'), sub: txt('menu.options_note') });
-  items.push({ id: 'badges', label: txt('menu.badges'), sub: txt('menu.badges_note', { n: badgeCount(), total: MAP.badges.length }) });
+  items.push({ id: 'badges', label: txt('menu.badges'), sub: txt('menu.badges_note', { n: badgeCount(), total: shownBadges().length }) });
   menu = items.length > 4 ? { items, sel: 0, y0: 500, w: 760, h: 80, gap: 12 } : { items, sel: 0, y0: 506, w: 760, h: 88, gap: 14 };
 }
 function openOverMenu() {
@@ -4672,7 +4771,7 @@ function rumble(kind) {
 }
 
 /* ------------------------------------------------------------------ badges */
-/* Douze badges (MAP.badges, même ordre que hud.BADGES : image i de hud/badge, la dernière = verrouillé), gardés dans le
+/* Les badges (MAP.badges, même ordre que hud.BADGES : image i de hud/badge, la dernière = verrouillé), gardés dans le
    navigateur d'une partie à l'autre (BADGES_KEY). checkBadges() regarde la partie toutes les demi-secondes ; la
    victoire débloque aussi « aventure », « intact » (sans morsure, bitten) et « rapide ». À chaque nouveau badge, une
    annonce en haut de l'écran (toasts). Écran « Badges » depuis le menu principal ; nouveaux badges rappelés à la fin. */
@@ -4681,7 +4780,15 @@ const badgeName = id => txt('badges.' + id + '.nom'), badgeGoal = id => txt('bad
 const TOAST = { life: 3.6 };
 let badges = {}, toasts = [], newBadges = [], badgeT = 0, bitten = false;
 function loadBadges() { badges = STORE.get(BADGES_KEY) || {}; }
-const badgeCount = () => MAP.badges.filter(id => badges[id]).length;
+/* Un badge est celui d'un épisode (MAP.badgeEp ; sans cela, il est rangé avec le premier). L'écran des badges a une
+   page par épisode : seulement ceux qui sont ouverts, ou dont un badge est déjà gagné — tant que l'été n'est pas
+   ouvert, ses badges ne sont ni montrés ni comptés. */
+const badgeEp = id => MAP.badgeEp[id] || EPISODES[0].id;
+const badgeIds = ep => MAP.badges.filter(id => badgeEp(id) === ep);
+const badgePages = () => EPISODES.filter(e => badgeIds(e.id).length && (epOpen(e) || badgeIds(e.id).some(id => badges[id]))).map(e => e.id);
+const shownBadges = () => badgePages().flatMap(badgeIds);
+const badgeCount = () => shownBadges().filter(id => badges[id]).length;
+let badgePage = 0;
 function unlockBadge(id) {
   if (badges[id]) return;
   badges[id] = Date.now();
@@ -4693,9 +4800,9 @@ function checkBadges() {
   const monde = MAP.id === 'monde';     // (une carte annexe sans bêtes ni trésors les donnerait tous d'un coup)
   if (monde && balade() && dogs.length && dogs.every(d => d.friend)) unlockBadge('copains');
   if (monde && treasures >= MAP.dig.length) unlockBadge('os_dores');
-  if (farm.state === 'done' && !MAP.roles.farmer) unlockBadge('poules');     // (les poules de Gaston : pas les moutons de la côte)
+  if (farm.state === 'done') unlockBadge(MAP.roles.farmer ? 'moutons' : 'poules');     // (les poules de Gaston, ou les moutons d'Anatole)
   if (post.state === 'done') unlockBadge('facteur');
-  if (rose.state === 'done' && !MAP.roles.pompon) unlockBadge('chat');      // (Pompon : pas le caniche de la côte)
+  if (rose.state === 'done') unlockBadge(MAP.roles.pompon ? 'caniche' : 'chat');       // (Pompon, ou Praline sur la côte)
   if (fete.state === 'done') unlockBadge('ballons');
   if (jouets.state === 'done') unlockBadge('iris');
   if (train.scored) unlockBadge('train');
@@ -4744,24 +4851,48 @@ function drawToast() {                // « Nouveau badge ! » en haut de l'écr
   ctx.restore();
 }
 // écran des badges : 4 x 3 cartes ; ceux qu'il reste à gagner sont en gris, avec leur objectif
-function openBadges() { menu = null; state = 'badges'; }
+function openBadges() { menu = null; state = 'badges'; badgePage = Math.max(0, badgePages().indexOf(episode)); }
 function closeBadges() { SFX.back(); state = 'title'; openTitleMenu(); menu.sel = menu.items.findIndex(it => it.id === 'badges'); }
-function badgesInput() { if (pressed.pause || pressed.bark || pressed.ok || pressed.bite || pressed.act) closeBadges(); }
+function stepBadges(d) {                  // la page d'un autre épisode (s'il y en a plusieurs)
+  const n = badgePages().length;
+  if (n < 2) return false;
+  badgePage = (badgePage + d + n) % n; SFX.blip();
+  return true;
+}
+function badgesInput() {
+  if (pressed.left) stepBadges(-1);
+  else if (pressed.right) stepBadges(1);
+  else if (pressed.pause || pressed.bark || pressed.ok || pressed.bite || pressed.act) closeBadges();
+}
+const BADGE_PICK = { y: 162, size: 40, gap: 40, head: 13, w: 700, h: 64 };     // le choix de la page, sous le titre
+function badgesTap(gx, gy) {              // au toucher : les flèches changent de page, le reste de l'écran revient au menu
+  const B = BADGE_PICK;
+  if (badgePages().length > 1 && Math.abs(gx - GW / 2) < B.w / 2 && Math.abs(gy - (B.y - B.size * 0.34)) < B.h / 2) stepBadges(gx < GW / 2 ? -1 : 1);
+  else closeBadges();
+}
 function drawBadges() {
   guiTransform();
   veil(0.6);
-  outlined(txt('badges.titre', { n: badgeCount(), total: MAP.badges.length }), GW / 2, 118, 64, '#FFF7E6');
-  // trois rangées de quatre au plus : grandes cases ; au-delà (jusqu'à 16 badges), cases plus compactes
-  const big = MAP.badges.length <= 12, sc = big ? 1 : 0.76;
-  const cw = 420, ch = big ? 236 : 196, gx = 26, gy = big ? 22 : 14, x0 = GW / 2 - (4 * cw + 3 * gx) / 2, y0 = 168;
-  MAP.badges.forEach((id, i) => {
+  const pages = badgePages(), many = pages.length > 1, ep = pages[Math.min(badgePage, pages.length - 1)], ids = badgeIds(ep);
+  outlined(txt('badges.titre', { n: badgeCount(), total: shownBadges().length }), GW / 2, many ? 96 : 118, many ? 56 : 64, '#FFF7E6');
+  if (many) {                              // « ◀ L'été ▶ » : la page d'un épisode
+    const B = BADGE_PICK, label = txt('episodes.' + ep + '.nom');
+    outlined(label, GW / 2, B.y, B.size, '#F2C14E');
+    const w = ctx.measureText(label).width / 2 + B.gap, cy = B.y - B.size * 0.34;
+    for (const d of [-1, 1]) { arrowHead(GW / 2 + d * w, cy, d, B.head + 4, '#3A1E12'); arrowHead(GW / 2 + d * w, cy, d, B.head, '#F2C14E'); }
+  }
+  // trois rangées de quatre au plus : grandes cases ; au-delà (jusqu'à 16 badges), cases plus compactes ; une rangée
+  // qui n'est pas pleine est centrée
+  const big = ids.length <= 12, sc = big ? 1 : 0.76, cols = Math.min(4, ids.length);
+  const cw = 420, ch = big ? 236 : 196, gx = 26, gy = big ? 22 : 14, x0 = GW / 2 - (cols * cw + (cols - 1) * gx) / 2, y0 = many ? 190 : 168;
+  ids.forEach((id, i) => {
     const x = x0 + (i % 4) * (cw + gx), y = y0 + Math.floor(i / 4) * (ch + gy), got = !!badges[id];
     drawNine(got ? 'hud/panel' : 'hud/panel_dark', x, y, cw, ch, 32);
-    drawSpr('hud/badge', got ? i : MAP.badges.length, x + cw / 2 - 48 * sc, y + (big ? 14 : 8), { sc });
+    drawSpr('hud/badge', got ? MAP.badges.indexOf(id) : MAP.badges.length, x + cw / 2 - 48 * sc, y + (big ? 14 : 8), { sc });
     text(got ? badgeName(id) : '?', x + cw / 2, y + (big ? 144 : 112), 30, got ? '#3A1E12' : '#FFF7E6', 'center', 700);
     para(badgeGoal(id), x + cw / 2, y + (big ? 180 : 146), 22, got ? '#6B5A4E' : '#E9DCC8', 'center', 500, cw - 50, 28);
   });
-  text(touchMode ? txt('badges.retour.tactile') : txt('badges.retour.touches'), GW / 2, GH - 30, 26, '#E9DCC8', 'center', 500);
+  text(many ? txtDev('badges.retour_pages') : touchMode ? txt('badges.retour.tactile') : txt('badges.retour.touches'), GW / 2, GH - 30, 26, '#E9DCC8', 'center', 500);
 }
 
 /* ------------------------------------------------------------------ écran d'options */
@@ -5532,6 +5663,8 @@ function tripCoast() {
   const [r0, r1] = MAP.traffic.road, half = VEHICLE.sport.len / 2;
   Object.assign(trip.car, { name: 'sport', x: -half - 20, y: MAP.traffic.lanes[1], v: TRIP.car });
   trip.papa = null; trip.step = 'arrivee';
+  const z = zoneAt(0, trip.car.y);                         // la musique de la côte commence quand la voiture sort du tunnel
+  Music.setZone(z.music || z.id, true);
   camX = camClampX(trip.car.x - VW * 0.45); camY = camClampY((r0 + r1) / 2 - 20 - VH / 2);
 }
 // au noir : tout le monde est descendu ; Alice et Tecky sur le parking

@@ -3,8 +3,10 @@ const base = require('fs').readFileSync(__dirname + '/sim.js', 'utf8').split("se
 function main() {
   const ids = () => run('menu.items.map(i => i.id).join()');
   run('audioOn(); STORE.mem = {}; loadBadges(); toTitle();');
-  const N = run('MAP.badges.length');
-  ok(N === 16 && run('ATLAS["hud/badge"].f.length') === N + 1, N + ' badges (et l’image « verrouillé »)');
+  // (les badges de l'été ne sont ni montrés ni comptés tant que l'épisode n'est pas ouvert)
+  const N = run('shownBadges().length'), T = run('MAP.badges.length');
+  ok(N === 16 && T === 18 && run('ATLAS["hud/badge"].f.length') === T + 1 && run('badgePages().join()') === 'printemps',
+     N + ' badges montrés sur ' + T + ' (et l’image « verrouillé ») : une seule page');
   ok(run('MAP.badges.every(id => txtAt("badges." + id + ".nom") && txtAt("badges." + id + ".but"))'), 'chacun a un nom et un objectif');
   ok(ids().endsWith('options,badges') && run('menu.items[menu.items.length - 1].sub').includes('0 sur ' + N), 'menu principal : « Badges », 0 sur ' + N);
   run('menu.sel = menu.items.findIndex(i => i.id === "aventure"); pressed.ok = true'); step(1); advanceDialog();
@@ -55,7 +57,21 @@ function main() {
   ok(run('state') === 'badges', 'écran des badges');
   run('used = []; drawSpr = function (k) { used.push(k); return ds0.apply(this, arguments); }; render(); drawSpr = ds0;');
   ok(run('used.filter(k => k === "hud/badge").length') === N, 'les ' + N + ' médailles (une rangée de plus : cases compactes)');
+  run('pressed.right = true'); step(1);
+  ok(run('state') === 'badges' && run('badgePage') === 0, 'une seule page : la flèche ne fait rien');
   run('pressed.pause = true'); step(1);
   ok(run('state') === 'title' && run('menu.items[menu.sel].id') === 'badges', 'Échap : retour au menu, sur « Badges »');
+  // l'été ouvert : ses badges ont leur page
+  run('EPISODES[1].chantier = false; toTitle();');
+  ok(run('epOpen(EPISODES[1])') && run('badgePages().join()') === 'printemps,ete' && run('shownBadges().length') === T
+     && run('menu.items[menu.items.length - 1].sub').includes(' sur ' + T), 'l’été ouvert : deux pages, ' + T + ' badges comptés');
+  run('menu.sel = menu.items.length - 1; pressed.ok = true'); step(1);
+  run('pressed.right = true'); step(1);
+  run('used = []; drawSpr = function (k) { used.push(k); return ds0.apply(this, arguments); }; render(); drawSpr = ds0;');
+  ok(run('badgePage') === 1 && run('used.filter(k => k === "hud/badge").length') === 2, 'flèche droite : la page de l’été, ses deux médailles');
+  run('badgesTap(GW / 2 - 200, BADGE_PICK.y - 14)');
+  ok(run('badgePage') === 0 && run('state') === 'badges', 'au toucher, la flèche de gauche revient à la première page');
+  run('badgesTap(GW / 2, 700)');
+  ok(run('state') === 'title', 'toucher ailleurs : retour au menu');
 }
 eval(base + 'setTimeout(' + main.toString() + ', 50);');

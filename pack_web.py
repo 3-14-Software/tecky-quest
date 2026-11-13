@@ -322,6 +322,7 @@ def build_jeu():
         "wood": tiles.tile_index("forest", 15),       # le sous-bois plein (game.js : woodDetails())
         "fieldRow": tiles.tile_index("field", 0),     # la rangée des tuiles champ / herbe (fieldDetails())
         "furrows": [y * TS // tiles.T for y in tiles.SILLONS],          # les crêtes des buttes, en px dans la tuile
+        "pebbles": [list(v) for v in nature.CAILLOUX],                  # cailloux de la lande : gros, moyens, graviers
         "wild": {n: list(v) for n, v in nature.SOUS_BOIS.items()},      # détail du sous-bois -> [première image, nombre]
         "crops": len(nature.CULTURES),
         "babyFps": {a: fps for a, (_, fps, _) in herissons.ANIMS.items()},
@@ -331,7 +332,7 @@ def build_jeu():
         "teckyFps": {a: fps for a, (_, fps, _) in tecky2.ANIMS.items()},     # cadences propres à Tecky (marche en 8 images)
         "aliceFps": {a: fps for a, (_, fps) in alice2.ANIMS.items()},
         "dogFps": {a: fps for a, (_, fps, _) in chiens2.ANIMS.items()},      # celles des chiens (chiens2.py)
-        "badges": hud.BADGES,
+        "badges": hud.BADGES, "badgeEp": hud.BADGE_EP,     # (les badges d'un épisode : une page de l'écran des badges)
         "keys": hud.KEYS, "pads": [k for k, _ in hud.PAD_BUTTONS],   # noms des images de hud/key et hud/pad
         # (le papa d'Alice salue comme un villageois : game.js, newVillager(['papa', …]))
         "villagerFps": dict({k: {a: v[1] for a, v in villageois.ANIMS[k].items()} for k in villageois.KINDS},
@@ -469,7 +470,8 @@ def collect(r=1):
         out.append((f"fx/{n}", [render_svg(s, size, size, R, PAD) for s in fn()], o, True))
     for n, fn, t in (("fleur", nature.sol_fleurs, nature.SOL_T), ("brins", nature.sol_brins, nature.SOL_T),      # détails
                      ("galet", nature.sol_galets, nature.SOL_T), ("nenuphar", nature.sol_nenuphars, nature.EAU_T),    # du sol
-                     ("sousbois", nature.sol_sousbois, nature.BOIS_T), ("culture", nature.sol_cultures, nature.SOL_T)):
+                     ("sousbois", nature.sol_sousbois, nature.BOIS_T), ("culture", nature.sol_cultures, nature.SOL_T),
+                     ("caillou", nature.sol_cailloux, nature.SOL_T)):
         out.append((f"sol/{n}", [render_svg(sv, t, t, R, PAD) for sv in fn()], (t // 2 * S + M, t // 2 * S + M), True))
     for n in sorted({v for noms, _ in nature.VARIANTES.values() for v in noms}):       # la nature et les bâtiments
         _, w, h, ox, oy = nature.cadre(n)

@@ -224,6 +224,8 @@
         const r = o.rect;
         d.append(h('div', { class: 'quatre' }, ['x0', 'y0', 'x1', 'y1'].map((n, k) => champ(n, nombre(r[k], v => mod(() => { const q = r.slice(); q[k] = v; o.setRect(q); }), o.contrainte === 'xentier' && k % 2 === 0 ? 1 : 0.05)))));
       }
+    } else if (o.type === 'porche') {
+      d.append(champ('La route s’arrête en x (tuile entière)', nombre(c.traffic.fin, v => mod(() => o.set(Math.round(v) + ED.PORCHE_DX)), 1)));
     } else if (o.set) {
       d.append(h('div', { class: 'deux' }, champ('x', nombre(o.x, v => mod(() => o.set(v, o.y)))), champ('y', nombre(o.y, v => mod(() => o.set(o.x, v))))));
     }
@@ -240,6 +242,7 @@
     if (o.type === 'landmarks') d.append(champ('Étiquette', texte(c.landmarks[o.i].label, v => mod(c => { c.landmarks[o.i].label = v || 'Repère'; }))));
     if (o.zone !== undefined) inspecteurZone(d, o.zone, o);
     if (o.type === 'tunnels') d.append(h('p', { class: 'note' }, 'Un terrier relie ses deux bouts (raccourci sous un grillage) : les deux doivent être atteignables à pied.'));
+    if (o.type === 'porche') d.append(h('p', { class: 'note' }, 'La route s’arrête ici : les voitures font demi-tour sous le porche. Il ne se déplace que le long de la route ; repeindre ensuite la chaussée au pinceau jusqu’à lui.'));
     if (o.type === 'title') d.append(h('p', { class: 'note' }, 'Centre de la caméra de l’écran titre (le cadre pointillé).'));
     if (o.type === 'start') d.append(h('p', { class: 'note' }, 'Tout doit être atteignable à pied depuis ici (Vérifier). Le premier roquet doit rester assez loin.'));
     const boutons = h('div', { class: 'ligne' });

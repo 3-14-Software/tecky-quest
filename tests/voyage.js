@@ -24,6 +24,7 @@ function main() {
      'la voiture s\'en va ; au noir, l\'autre bout de la route : elle arrive devant le tunnel de l\'est');
   ok(jusqua('MAP.id === "cote"', 900) && run('state') === 'trip' && run('trip.step') === 'arrivee' && run('trip.car.x') < 0,
      'elle s\'enfonce dans le tunnel ; au noir, la côte : elle en ressort');
+  ok((run('Music.want') || run('Music.zone')) === 'cote', 'la musique de la côte commence quand la voiture sort du tunnel');
   ok(jusqua('state === "dialog"', 1500) && run('dialog.lines[0].who') === 'alice' && run('trip.car') === null
      && run('Math.abs(P.x - MAP.start[0]) < 1 && Math.abs(P.y - MAP.start[1]) < 1') && run('!alice.hidden') && run('villagers.some(v => v.kind === "papa")'),
      'elle roule jusqu\'au porche et y entre ; sur le parking, Alice : « ' + run('dialog.lines[0].text') + ' »');

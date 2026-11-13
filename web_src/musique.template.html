@@ -60,6 +60,9 @@ badge, but, menus) se jouent dans le ton du morceau en cours : lancer une zone a
   <button id="mesureb">Mesurer les bruitages</button>
 </p>
 <div id="bruits"></div>
+<h3>Les sons continus</h3>
+<p>Le fond sonore qui suit Tecky, à son volume le plus fort dans le jeu (les pieds dans l’eau, sous l’averse, contre la fontaine). Un clic pour l’entendre, un autre pour l’arrêter.</p>
+<div id="continus" class="bruits"></div>
 <pre id="niveauxb" hidden></pre>
 <script>
 /*__SONGS__*/
@@ -76,11 +79,16 @@ const NOMS = {
   foret: ['La grande forêt', 'flûte, harpe, écho'],
   parc: ['Le parc des enfants', 'valse de boîte à musique'],
   industrie: ['La zone industrielle', 'mécanique'],
+  cote: ['Été — la Côte Fleurie', 'l’air des vacances, ukulélé'],
+  port: ['Été — le port, le village de pêcheurs', 'chant de marins, en 12/8'],
+  ville: ['Été — la ville', 'valse musette'],
+  falaises: ['Été — les falaises', 'un air du large : flûte, bourdon, harpe'],
+  plage: ['Été — la plage', 'calypso'],
   berceuse: ['La scène de fin', 'berceuse : le thème, lent'],
   win: ['Victoire', 'fanfare, jouée une fois'],
   lose: ['Défaite', 'jouée une fois'],
 };
-const ZONES = ['niche', 'village', 'campagne', 'ferme', 'foret', 'parc', 'industrie'];
+const ZONES = ['niche', 'village', 'campagne', 'ferme', 'foret', 'parc', 'industrie', 'cote', 'port', 'ville', 'falaises', 'plage'];
 const $ = id => document.getElementById(id), boutons = {};
 function audio() {
   if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
@@ -251,7 +259,8 @@ const BRUITS = [
     ['cluck', 'Cot cot'], ['coo', 'Poules au loin'], ['rooster', 'Cocorico'], ['moo', 'Meuh', [['vache', 1], ['veau', 1.6]]], ['baa', 'Bêê', [['mouton', 1], ['agneau', 1.35]]],
     ['meow', 'Miaou', [['Pompon', 1], ['perdu', 0.9]]], ['hiss', 'Pfff !'], ['chitter', 'Écureuil'], ['squeak', 'Petit hérisson']]],
   ['L’ambiance', [
-    ['tweet', 'Gazouillis'], ['trill', 'Trille'], ['titu', 'Mésange'], ['cuckoo', 'Coucou'], ['owl', 'Chouette'], ['cricket', 'Grillon'], ['frog', 'Grenouille']]],
+    ['tweet', 'Gazouillis'], ['trill', 'Trille'], ['titu', 'Mésange'], ['cuckoo', 'Coucou'], ['owl', 'Chouette'], ['cricket', 'Grillon'], ['frog', 'Grenouille'],
+    ['gull', 'Mouette', [['', 1], ['aiguë', 1.2], ['grave', 0.85]]], ['rigging', 'Drisses du port'], ['gust', 'Rafale sur la falaise']]],
 ];
 const ou = () => {
   const v = document.querySelector('input[name=ou]:checked').value;
@@ -279,6 +288,25 @@ for (const [titre, liste] of BRUITS) {
     div.appendChild(sp);
   }
   $('bruits').append(h, div);
+}
+/* Les sons continus de l'ambiance (ambLoop(), AMB : la section du jeu) : chacun à son volume le plus fort ; le ressac
+   respire comme dans le jeu (surfSwell()). */
+const CONTINUS = [['water', 'Clapotis (rivière, mare)', 'water'], ['surf', 'Ressac (la mer)', 'surf'], ['rain', 'Pluie', 'rain'], ['fountain', 'Fontaine', 'fountain']];
+const continus = {};
+setInterval(() => {
+  const g = continus.surf;
+  if (g && g.on) g.node.gain.setTargetAtTime(AMB.surf * surfSwell(AC.currentTime) * opts.sfx / OPT_DEF.sfx, AC.currentTime, 0.25);
+}, 50);
+for (const [kind, label, niveau] of CONTINUS) {
+  const sp = document.createElement('span'), b = document.createElement('button');
+  b.textContent = label; b.className = 'neuf seul';
+  b.onclick = () => {
+    audio();
+    const c = continus[kind] || (continus[kind] = { node: ambLoop(kind), on: false });
+    c.on = !c.on; b.className = c.on ? 'joue' : 'neuf seul';
+    c.node.gain.setTargetAtTime(c.on ? AMB[niveau] * opts.sfx / OPT_DEF.sfx : 0, AC.currentTime, 0.2);
+  };
+  sp.appendChild(b); $('continus').appendChild(sp);
 }
 /* Niveaux des bruitages : chacun rendu hors ligne, le nouveau puis l'ancien (crête, et niveau moyen sur sa durée). */
 async function rendreBruit(jouer) {

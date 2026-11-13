@@ -576,15 +576,20 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      moutons (`reference/v2/moutons.png`). Répliques à valider (`textes/fr.json` : `anatole`, `moutons`).
    - **Ce qui reste à reprendre sur l'été** (liste tenue à jour : tout ce que j'ai signalé comme limite en
      livrant un morceau doit finir ici, ou être fait — Christophe, 13 novembre 2026 : « à chaque fois tu me
-     listes des limites : vas-tu revenir dessus ensuite ? »). *Raccourcis à corriger* : les
-     cailloux de la lande se répètent toutes les six tuiles, c'est visible autour du phare ; le porche du parking ne se déplace pas dans
-     l'éditeur (`traffic.fin` dans le fichier) ; les badges du printemps (chat, poules) ne se gagnent pas avec
-     les quêtes de la côte, qui n'ont pas les leurs ; les musiques et l'ambiance sonore de la côte sont
-     empruntées au printemps (pas de mouettes, pas de vagues). *À vérifier avec Christophe, faute de pouvoir
+     listes des limites : vas-tu revenir dessus ensuite ? »). *Raccourcis à corriger* : aucun de connu (les quatre derniers
+     sont corrigés, voir plus bas). *À vérifier avec Christophe, faute de pouvoir
      écouter ou voir* : le bêlement des moutons (`SFX.baa`), le jappement de Praline, le phare, le casino et
-     le manège allumés la nuit en dehors de la scène de fin. *Corrigés le 13 novembre 2026* : Praline a ses propres poses de caniche ; plus de tache sombre dans
+     le manège allumés la nuit en dehors de la scène de fin ; les cinq morceaux de la côte (`web/musique.html` :
+     « Été — … »), les mouettes, les drisses du port, les rafales de la falaise et le ressac (« Les sons
+     continus », en bas de la salle d'écoute). *Corrigés le 13 novembre 2026* : Praline a ses propres poses de caniche ; plus de tache sombre dans
      l'embouchure ; la voiture du départ s'enfonce dans le tunnel de l'est avant d'arriver sur la côte ; les
-     moutons ont leur bêlement. *Reports assumés* : la tenue d'été d'Alice et sa
+     moutons ont leur bêlement ; les cailloux de la lande sont semés par le jeu d'après la position (plus de
+     texture répétée toutes les six tuiles), la roche de la paroi ne se répète plus que toutes les 24 tuiles ; le
+     porche du parking se déplace à la souris dans l'éditeur (qui ne plantait plus son dessin sur une carte
+     sans écran titre) ; les quêtes de la côte ont leurs badges (« Ami des caniches », « Berger des falaises »),
+     sur la page de l'été de l'écran des badges ; la côte a ses cinq morceaux (Côte Fleurie, port, ville,
+     falaises, plage) et son ambiance (mouettes, drisses, rafales, ressac ; plus de grenouilles ni de clapotis
+     de mare au bord de la mer), et la musique de la côte commence quand la voiture sort du tunnel. *Reports assumés* : la tenue d'été d'Alice et sa
      tong perdue ; les quatre autres quêtes ; le manège qui tourne en musique ; la nage ; l'habillage du
      sable et les vagues ; les crabes ; les motos ; les voitures garées ; le bassin du village, petit et fermé ;
      le casino qui déborde de sa place ; noms des zones et répliques à valider.

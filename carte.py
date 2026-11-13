@@ -67,7 +67,8 @@ INDEXEES = ["enemies", "dig", "critters", "ducks", "letters", "hens", "balls", "
 # les indices d'Alice (CLUES dans game.js) : exactement un de chaque, parmi les objets
 INDICES = ("hairclip", "shoe", "plush")
 # morceau (music.py : MORCEAUX) et ambiance d'une zone
-MUSIQUES = ("niche", "village", "campagne", "ferme", "industrie", "foret", "parc")
+MUSIQUES = ("niche", "village", "campagne", "ferme", "industrie", "foret", "parc",
+            "cote", "port", "ville", "falaises", "plage")          # (les cinq derniers : la côte de l'été)
 # détails au sol déduits d'autres données (jamais dans « details »)
 DETAILS_DEDUITS = ("traces de pattes", "trou creusé (trésor)")
 # décors déduits d'autres données (jamais dans « decor »)

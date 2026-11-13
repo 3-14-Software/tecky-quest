@@ -436,7 +436,11 @@ def arrow_icons(scale):
 
 # ------------------------------------------------------------------ badges (succès)
 BADGES = ["aventure", "copains", "os_dores", "intact", "rapide", "poules",
-          "facteur", "chat", "betes", "canards", "explorateur", "sieste", "ballons", "iris", "train", "herissons"]
+          "facteur", "chat", "betes", "canards", "explorateur", "sieste", "ballons", "iris", "train", "herissons",
+          "caniche", "moutons"]
+# Les badges d'un épisode (les autres sont ceux du jeu, rangés avec le premier) : l'écran des badges a une page par
+# épisode ouvert (game.js : badgePages()).
+BADGE_EP = {"caniche": "ete", "moutons": "ete"}
 BADGE_C = (24, 20.5)      # centre de la médaille dans le cadre 48x48
 _HEART = ("M16,23.5 C9,18.6 7,15.2 7,12.6 C7,9.9 9.1,8 11.6,8 C13.6,8 15.1,9.2 16,10.9 "
           "C16.9,9.2 18.4,8 20.4,8 C22.9,8 25,9.9 25,12.6 C25,15.2 23,18.6 16,23.5 Z")   # même cœur que fx/heart
@@ -693,6 +697,49 @@ def _ic_train(d):
         d.add(circle(x, 28 - r, r * 0.38), "#F2C14E", sil=False, edge=True)
 
 
+def _ic_caniche(d):
+    """Tête de Praline, le caniche de Madame Hortense, de face (couleurs de critters.py) : houppette en boule à
+    nœud rose, grandes oreilles frisées qui tombent, truffe noire."""
+    fur, dark, creme, bow = "#EEC79A", "#D0A06A", "#F9E3C4", "#F2729E"
+    for s in (-1, 1):                                                   # les oreilles : des boucles qui tombent
+        for dx, dy, rx, ry in ((9.2, 14.6, 3.6, 6.2), (10.2, 20.6, 3.3, 3.1), (7.6, 21.4, 3.0, 2.8)):
+            d.add(ellipse(16 + s * dx, dy, rx, ry), dark)
+    d.add(ellipse(16, 16.4, 8.2, 7.6), fur)                             # le crâne
+    d.add(ellipse(16, 20.2, 4.9, 3.9), creme)                           # le museau
+    for dx, dy, r in ((0, -8.6, 4.6), (-4.4, -6.6, 3.3), (4.4, -6.6, 3.3)):      # la houppette
+        d.add(circle(16 + dx, 16 + dy, r), creme)
+    for s in (-1, 1):                                                   # le nœud
+        d.add(poly([(16, 5.0), (16 + s * 4.4, 2.6), (16 + s * 4.4, 7.4)]), bow)
+    d.add(circle(16, 5.0, 1.4), "#D9517F", sil=False, edge=True)
+    for x in (12.6, 19.4):
+        d.add(circle(x, 15.6, 1.5), OUTLINE, sil=False)
+        d.add(circle(x - 0.45, 15.05, 0.5), "#FFFFFF", sil=False)
+    d.add(ellipse(16, 18.6, 1.9, 1.4), OUTLINE, sil=False)
+    d.raw(line("M16,20 Q15.2,22.2 13.4,21.6 M16,20 Q16.8,22.2 18.6,21.6", OUTLINE, 0.8))
+    d.add(ellipse(16, 23.0, 1.2, 1.3), "#F28CB8", sil=False, edge=True)
+
+
+def _ic_moutons(d):
+    """Tête d'un mouton d'Anatole, de face (couleurs de moutons.py) : la laine en nuage, la face sombre, les
+    oreilles à l'horizontale."""
+    laine, ombre, tete, clair = "#FBF7EC", "#D9D1BF", "#4A3F38", "#6A5C52"
+    for cx, cy, r in ((16, 9.4, 6.4), (9.6, 12.6, 5.2), (22.4, 12.6, 5.2), (7.6, 19.2, 4.8), (24.4, 19.2, 4.8),
+                      (11.4, 24.4, 4.6), (20.6, 24.4, 4.6), (16, 17, 8)):
+        d.add(circle(cx, cy, r), laine)
+    d.raw(line("M9.4,22.6 Q11.2,24.6 13.4,23.4 M22.6,22.6 Q20.8,24.6 18.6,23.4 M6.6,15.4 Q8.2,16.8 9.8,15.6 M25.4,15.4 Q23.8,16.8 22.2,15.6",
+               ombre, 0.9))
+    for s in (-1, 1):                                                   # les oreilles
+        d.add(ellipse(16 + s * 7.6, 15.2, 3.6, 1.8, f"rotate({s * 14} {16 + s * 7.6} 15.2)"), tete)
+    d.add(ellipse(16, 18.6, 5.6, 7.2), tete)                            # la face
+    d.add(ellipse(16, 22.6, 3.4, 2.5), clair, sil=False)                # le museau
+    for cx, cy, r in ((13.2, 11.0, 2.9), (16, 9.8, 3.3), (18.8, 11.0, 2.9)):     # le toupet
+        d.add(circle(cx, cy, r), laine)
+    for x in (13.4, 18.6):
+        d.add(circle(x, 17.2, 1.5), "#FFFFFF", sil=False)
+        d.add(circle(x + 0.2, 17.4, 0.85), OUTLINE, sil=False)
+    d.raw(line("M14.8,22 L16,23.2 L17.2,22 M16,23.2 L16,24.4", OUTLINE, 0.8))
+
+
 BADGE_ICONS = {   # nom : (dessin, échelle, point de l'icône posé au centre du disque)
     "aventure": (_ic_aventure, 0.95, 16, 16), "copains": (_ic_copains, 0.92, 16, 16),
     "os_dores": (_ic_os_dores, 0.95, 16, 16), "intact": (_ic_intact, 0.92, 16, 16),
@@ -702,6 +749,7 @@ BADGE_ICONS = {   # nom : (dessin, échelle, point de l'icône posé au centre d
     "explorateur": (_ic_explorateur, 0.9, 16, 16), "sieste": (_ic_sieste, 0.86, 16.4, 15.8),
     "ballons": (_ic_ballons, 0.95, 16, 16), "iris": (_ic_iris, 0.9, 15.8, 17), "train": (_ic_train, 0.88, 16.4, 16),
     "herissons": (_ic_herissons, 1.15, 18.5, 21.5),
+    "caniche": (_ic_caniche, 0.82, 16, 14.6), "moutons": (_ic_moutons, 0.8, 16, 17),
 }
 
 

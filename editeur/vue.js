@@ -217,7 +217,7 @@
       (o.flat ? plats : debout).push(o);
     }
     if (V.visible('quetes')) for (const [n, x, y] of ED.deduits(c)) {
-      if (!dedans(x, y)) continue;
+      if (!dedans(x, y) || n === 'porche') continue;      // (le porche est un objet : il se déplace)
       const o = { spr: 'decor/' + n, x, y, frame: 0, deduit: true };
       ((ED.I.jeu && ED.I.jeu.flat || []).includes(n) ? plats : debout).push(o);
     }
@@ -254,8 +254,8 @@
       for (const t of c.tunnels) { const [a, b] = E(t[0], t[1]), [d, e] = E(t[2], t[3]); ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(d, e); ctx.stroke(); }
       ctx.setLineDash([]);
     }
-    // caméra de l'écran titre
-    if (V.visible('reperes')) {
+    // caméra de l'écran titre (une carte annexe n'en a pas)
+    if (V.visible('reperes') && c.title) {
       const vw = (ED.I.jeu ? ED.I.jeu.vue[0] : 960) / TS, vh = (ED.I.jeu ? ED.I.jeu.vue[1] : 540) / TS;
       const [a, b] = E(c.title[0] - vw / 2, c.title[1] - vh / 2), [d, e] = E(c.title[0] + vw / 2, c.title[1] + vh / 2);
       ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.setLineDash([10, 6]); ctx.lineWidth = 1.5; ctx.strokeRect(a, b, d - a, e - b); ctx.setLineDash([]);

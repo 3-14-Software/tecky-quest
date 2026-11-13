@@ -217,13 +217,18 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   hauteur dans la tuile, nulle et à plat en haut et en bas (les contours se raccordent), appliquée seulement
   près du contour et là où le bord est debout (un bord couché ondulé se dédoublait ; loin du contour, la
   distance approchée s'affolait : ombres en barbes) ; la variante se tire de la place de la tuile. Les collisions
-  ne la connaissent pas (quelques pixels). **Textures suivies** (`SUIVIES`, `PHASES`, `phase()`) : la paroi (de grandes
-  masses de roche fendues, `_dessin_roche()`, cellules de Voronoï `_cellules()`) et la lande (herbe de la
-  saison jaunie de moitié par `LANDE`, cailloux semés, `_dessin_lande()`) sont découpées dans une grande image
-  qui se répète toutes les 6 x 4 tuiles : une tuile qui en contient est toujours composée, et sa clé porte sa
+  ne la connaissent pas (quelques pixels). **Texture suivie** (`SUIVIES`, `PHASES`, `phase()`) : la paroi (de grandes
+  masses de roche fendues, `_dessin_roche()`, cellules de Voronoï `_cellules()`) est découpée dans une grande
+  image qui ne se répète que toutes les 24 x 4 tuiles (plus large qu'un écran : à 6 x 4, la répétition se
+  voyait) : une tuile qui en contient est toujours composée, et sa clé porte sa
   place — `COMPOSITES` contient des tuples de 4 coins, ou de 4 coins et de la place (px, py) ; `composite()`
   accepte les deux ; l'éditeur fait de même (`sol.js`, `/tuile?c=…,px,py`, `infos.suivies` / `phases`). Sans
-  cela, la même roche se répétait à chaque tuile.
+  cela, la même roche se répétait à chaque tuile. **La lande** (herbe de la saison jaunie de moitié par
+  `LANDE`) est une tuile unie : c'est le jeu qui y sème ses cailloux, une fois dans le sol et d'après la
+  position, comme l'habillage de l'herbe (`heathDetails()`, `HEATH`, `heathTile()` : la lande pleine, sans
+  escalier ; sprites `sol/caillou` de `nature.sol_cailloux()`, `MAP.pebbles` = `nature.CAILLOUX` : gros, moyens,
+  graviers ; par petits groupes, jamais sur le liséré du bord). Dessinés dans la texture, ils revenaient
+  toutes les six tuiles — un raccourci corrigé le 13 novembre 2026.
   **Collisions** (game.js) : `MAP.cliff` (coins de paroi) → `cliffAt()` : on ne marche pas sur la roche ;
   `MAP.plateau` (coins de lande et d'escalier) et `MAP.stairs` → `rimAt()` (`RIM`) : le bord du plateau est une
   bande infranchissable autour de la ligne où le champ passe à 0,5, ouverte là où il y a de l'escalier ;
@@ -233,7 +238,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   paroi, planches / plateau), `valider()` refuse toute tuile qui a un coin de l'un et un coin de l'autre —
   l'éditeur aussi, à l'enregistrement. La carte de la côte éprouve tout cela (`tests/cartes.js` : Tecky monte
   les deux escaliers, le bord du plateau l'arrête). Pas encore fait : l'habillage du sable par le jeu, la nage,
-  les vagues animées ; les cailloux de la lande se répètent toutes les six tuiles.
+  les vagues animées.
   **La carte de la côte** (`cartes/cote.json`, 96 x 64, carte annexe de l'été ; 13 novembre 2026), d'après le
   plan `reference/v2/ete_plan.png` (une tuile pour 20 px du plan) ; aperçu de la carte entière :
   `reference/v2/cote_carte.png`. La route sort du tunnel de l'ouest et **finit au parking** (x 24..36, y 4..13) ;
@@ -244,10 +249,21 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   nord-est la campagne normande (pommiers, vaches) ; à l'est le plateau des falaises (deux escaliers : côté
   ville en x 77..78, côté plage en x 83..84 ; le phare ira en 90,5 ; 31,5) ; en bas les planches (une bande de
   trois rangées de coins qui suit la baie, de part et d'autre de la rivière), la plage, la jetée (x 48..49) et
-  la mer. Zones : le port (`industrie`), le village de pêcheurs (`village`), la ville (musique du parc), les
-  falaises (musique de la forêt), la plage (musique de la campagne), la campagne normande (`ferme`), et « La
-  Côte Fleurie » pour le reste — les ids repris du monde donnent leur ambiance sonore (`AMB_EVENTS`) ; la plage
-  et la ville n'en ont pas encore. Elle n'a pour l'instant que des décors déjà dessinés, des objets, des os
+  la mer. Zones (chacune son id, son ambiance `AMB_EVENTS` et son morceau) : le port (`port`), le village
+  de pêcheurs (`pecheurs`, le morceau du port), la ville (`ville`), les falaises (`falaises`), la plage
+  (`plage`), la campagne normande (`bocage`, le morceau de la ferme : violon et banjo, sans ses poules ni son
+  coq) et « La Côte Fleurie » pour le reste (`cote`). **Musique et ambiance de la côte** (13 novembre 2026 ;
+  au début elle empruntait celles du printemps) : cinq morceaux dans `music.py` — `cote` (l'air des vacances,
+  si bémol, ukulélé en contretemps), `port` (chant de marins en ré mineur, 12/8, accordéon), `ville` (valse
+  musette en sol), `falaises` (un air du large en ré, lent, flûte et bourdon, de l'écho), `plage` (calypso en
+  do, tambour d'acier, claves) —, le motif de Tecky dans chacun ; bruitages `gull` (mouettes, chacune sa
+  voix), `rigging` (les drisses qui tintent au port), `gust` (rafales sur la falaise) ; le **ressac**, son
+  continu `surf` (`Ambience.salt` : la part de mer sur trois cercles autour de Tecky, `AMB.surfR` ;
+  `surfSwell()` : il enfle et retombe comme une vague). `seaAt()` : la mer ; le clapotis (`Ambience.wet`) et
+  les grenouilles ne comptent plus que l'eau douce. Les sons continus sont construits par `ambLoop()`
+  (`AMB_LOOPS`), dans la section des bruitages : la salle d'écoute les fait entendre (« Les sons continus »).
+  Pendant le voyage, la musique de la côte commence quand la voiture sort du tunnel (`tripCoast()`).
+  Test : `cote_sons.js`. Elle n'a pour l'instant que des décors déjà dessinés, des objets, des os
   dorés, sept chiens, des canards, des vaches, des petites bêtes et des papillons : **pas encore** de voitures
   garées, aucun personnage, ni indices ni Alice.
   **Route sans issue** (13 novembre 2026) : `traffic.fin` (un x entier, 30 sur la côte) dit où la route
@@ -317,7 +333,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `_poodle_walk()`, `_poodle_run()`, `_poodle_yap()` — haute sur pattes, crinière, pompons aux chevilles, à la
   hanche et au bout de la queue, houppette à nœud rose ; elle jappe quand Tecky aboie ; icône `icone/poodle`) est dans les jardins. Textes : mêmes clés sous `hortense` que sous `neighbor`
   (`nbTxt(k)`), sous `caniche` que sous `chat` (`petTxt(k)`), `tecky.praline` ; `petWho()`, `petCry()`. Le
-  badge « Ami des chats » reste celui de Pompon ; la complétion ne compte que les quêtes de la carte où l'on
+  badge « Ami des chats » reste celui de Pompon, Praline a le sien (« Ami des caniches », `caniche`) ; la complétion ne compte que les quêtes de la carte où l'on
   joue (`questsHere()`, `QUEST_GIVER`). Sauvegarde : les champs de la quête de Pompon (`rose`, `cat`). Voix :
   `tools/export_voix.js` joue les deux distributions (`DYNAMIC_SITES` = 24). Test : `hortense.js`. Pour la
   quête suivante : ajouter ses acteurs à `carte.ROLES`, leurs dessins, leurs textes sous les mêmes clés, et
@@ -331,7 +347,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   ombre) sont éparpillés sur la lande, un sixième est dans l'enclos. Textes : mêmes clés sous `anatole` que
   sous `farmer` (`fmTxt(k, params)`), sous `moutons` que sous `poules` (`flockTxt(k)`) ; `flockKey()` (le
   sprite du compteur et de la carte de la pause), `henCry()` (ils bêlent : `SFX.baa`, une voix nasillarde qui chevrote ; d'abord c'était le meuglement des vaches joué aigu, clochette comprise — un raccourci que Christophe a relevé). Le badge des
-  poules reste celui de Gaston. `MAP.farmRoadY` n'est une limite que si l'enclos est au nord de la grande
+  poules reste celui de Gaston, les moutons ont le leur (« Berger des falaises », `moutons`). `MAP.farmRoadY` n'est une limite que si l'enclos est au nord de la grande
   route (sinon 10^7 : sur la côte, les moutons ne sont pas retenus à la hauteur de la route). Voix :
   `DYNAMIC_POPS` = 9. Test : `anatole.js`. Premier jet posé par
   `v2/cote_carte.py`, **gelé depuis** : Christophe retouche la carte dans l'éditeur, c'est
@@ -582,6 +598,8 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   objets), `vue.js` (dessin), `outils.js` (souris, clavier), `panneaux.js` (interface)). Terrain au pinceau sur les
   coins, détails, décors et éléments à la souris, zones et rectangles à poignées. « Vérifier » : `pack_web.py`, puis
   `check_placement.js --json` (problèmes avec leur position, grille du parcours à pied) et `export_voix.js --check`.
+  Le porche du parking (objet `porche`, calque « route ») se déplace le long de la route : il règle
+  `traffic.fin` (`ED.PORCHE_DX` : du x où la route s'arrête au pied du porche) ; la chaussée se repeint au pinceau.
   « Essayer ici » : `web/essai.html` = le jeu précédé de `const ESSAI = [x, y, mode]` ; `startEssai()` lance la partie
   à cet endroit, sans titre, intro ni sauvegarde.
 - `pack_web.py` : atlas (frames rognées), niveau (lu dans `carte.json`, `MW=96`, `MH=64` tuiles ; variantes des tuiles
@@ -749,7 +767,13 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   doberman et la charge du chien de berger font mal sans être des morsures ; moins de 10 min). `unlockBadge()` : annonce « Nouveau badge ! »
   (`toasts`), rappel sur l'écran de victoire (`newBadges`), écran « Badges » depuis le menu principal
   (`state === 'badges'`). Un nouveau badge : l'ajouter à `hud.BADGES` (dessin), à `textes/fr.json` (`badges.<id>`) et lui donner une condition.
-  Test : `badges.js`.
+  **Badges d'un épisode** (`hud.BADGE_EP` → `MAP.badgeEp` ; sans cela, un badge est rangé avec le premier
+  épisode) : l'écran des badges a une page par épisode (`badgePages()`, `badgeIds(ep)`, `badgePage`,
+  `stepBadges()` : gauche / droite, `badgesTap()` au toucher, « ◀ L'été ▶ » sous le titre), seulement ceux qui
+  sont ouverts ou dont un badge est déjà gagné ; `shownBadges()` = ceux qu'on montre et qu'on compte (tant que
+  l'été est en chantier, le jeu publié a toujours seize badges et son écran n'a pas changé). L'été : `caniche`
+  (Praline ramenée) et `moutons` (les moutons rentrés) ; `checkBadges()` donne le badge de celui qui tient le
+  rôle (`MAP.roles`). Test : `badges.js`.
 - Météo (`weather`, `WEATHER`, option `opts.weather` : auto / soleil / pluie / neige ; `december()`) : en auto, une averse
   de temps en temps (neige en décembre). `weather.k` = force (monte et descend en `WEATHER.ramp` s). Pluie : gouttes
   (traits, `drops`), `fx/splash`, teinte gris-bleu (dans le remplissage de `drawLight()`, `weatherTint()`), flaques

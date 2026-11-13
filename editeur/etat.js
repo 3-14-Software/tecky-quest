@@ -115,7 +115,7 @@
     letters: 'Lettre du facteur', balls: 'Ballon de Léon', toys: 'Jouet d’Iris', babies: 'Petit hérisson',
     roadTunnels: 'Tunnel de la route', vehicles: 'Véhicule', crossings: 'Passage piéton', calm: 'Zone calme',
     zones: 'Zone', zoneRect: 'Rectangle de zone', landmarks: 'Étiquette de la carte', pen: 'Enclos des poules',
-    penGate: 'Barrière de l’enclos', ballBox: 'Terrain des ballons', track: 'Voie de Titine',
+    penGate: 'Barrière de l’enclos', ballBox: 'Terrain des ballons', track: 'Voie de Titine', porche: 'Porche du parking (fin de la route)',
   };
   const PERSONNAGES = ['farmer', 'postman', 'neighbor', 'leon', 'iris', 'piquette', 'papa'];
   const TOY_NAMES = ['poulet', 'anneau', 'corde'];
@@ -182,6 +182,10 @@
       set: (x, y) => { const e = ED.c.traffic.vehicles[i]; e[2] = r4(x); e[1] = Math.abs(y - lanes[0]) < Math.abs(y - lanes[1]) ? 0 : 1; } }));
     (c.traffic ? c.traffic.crossings : []).forEach((x, i) => out.push({ id: 'crossings/' + i, type: 'crossings', i, calque: 'route', forme: 'rect',
       rect: [x, road, x + 2, road + 3], fixe: 'h', set: (nx) => { ED.c.traffic.crossings[i] = Math.round(nx); } }));
+    // le porche du parking, au bout d'une route sans issue : il se déplace le long de la route (traffic.fin, un x entier)
+    if (c.traffic && c.traffic.fin !== undefined) out.push({ id: 'porche', type: 'porche', calque: 'route',
+      x: c.traffic.fin + ED.PORCHE_DX, y: road + 4, spr: 'decor/porche', frame: 0,
+      set: (x) => { ED.c.traffic.fin = Math.max(5, Math.min(ED.c.w - 7, Math.round(x - ED.PORCHE_DX))); } });
     // rectangles
     const rect = (id, type, calque, get, opts = {}) => {
       const r = get(c);
@@ -209,9 +213,10 @@
 
   /* ------------------------------------------------------------------ décors déduits (dessinés, pas modifiables) */
   // comme pack_web.derived_decor : clôtures de l'enclos, rails et heurtoirs (poteaux, terriers, filet : leurs objets)
+  ED.PORCHE_DX = 2.34375;          // du x où la route s'arrête au pied du porche (lisiere.PORCHE, pack_web.derived_decor)
   ED.deduits = c => {
     const out = [];
-    if (c.traffic && c.traffic.fin !== undefined) out.push(['porche', c.traffic.fin + 2.34375, c.traffic.y + 4]);   // (le porche du parking)
+    if (c.traffic && c.traffic.fin !== undefined) out.push(['porche', c.traffic.fin + ED.PORCHE_DX, c.traffic.y + 4]);   // (le porche du parking : son obstacle ; l'objet « porche » le dessine et le déplace)
     if (c.track) {
       const [x0, x1, y] = c.track;
       out.push(['buffer_stop', x0, y + 0.1], ['buffer_stop', x1, y + 0.1]);

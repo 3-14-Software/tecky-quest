@@ -40,8 +40,8 @@ function main() {
   run('var b0 = JSON.stringify(badges), n0 = items.length; sc0 = score; P.x = farmer.x - 60; P.y = farmer.y + 40; talkTo(farmer);');
   ok(run('dialog.lines[0].text') === run('txt("anatole.merci.0")'), 'il remercie : « ' + run('dialog.lines[0].text') + ' »');
   advanceDialog(); run('checkBadges();');
-  ok(run('farm.state') === 'done' && run('score') === run('sc0 + FARM.reward') && run('items.length') === run('n0 + 1') && run('JSON.stringify(badges)') === run('b0')
-     && run('questsHere().length') === 2, 'quête finie : des points, une saucisse ; le badge des poules reste celui de Gaston ; deux quêtes comptent sur la côte');
+  ok(run('farm.state') === 'done' && run('score') === run('sc0 + FARM.reward') && run('items.length') === run('n0 + 1') && run('!badges.poules && !!badges.moutons') && run('JSON.stringify(badges)') !== run('b0')
+     && run('questsHere().length') === 2, 'quête finie : des points, une saucisse ; le badge « Berger des falaises » (celui des poules reste à Gaston) ; deux quêtes comptent sur la côte');
   run('saveGame(); var S = loadSave();');
   ok(run('S.farm') === 'done' && run('S.hens.length') === 5 && run('S.hens.every(h => h[2] === 1)'), 'sauvegardé comme la quête des poules (farm, hens)');
   // au printemps, rien n'a changé

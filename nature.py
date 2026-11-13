@@ -23,6 +23,7 @@ silhouette et de la ligne où ils touchent le sol (bandes()).
     python3 nature.py      # reference/v2/nature_v2.png
 """
 import math
+import random
 import os
 import sys
 from collections import namedtuple
@@ -441,6 +442,42 @@ def sol_galets():
         out.append(_svg(SOL_T, f'<ellipse cx="{x + 0.5}" cy="{y + 0.9}" rx="{rx + 0.2}" ry="{ry - 0.1}" fill="#B9A46F" opacity="0.8"/>'
                                f'<ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="{teinte}" stroke="{bord}" stroke-width="0.55"/>'
                                f'<ellipse cx="{x - rx * 0.25:.2f}" cy="{y - ry * 0.3:.2f}" rx="{rx * 0.42:.2f}" ry="{ry * 0.3:.2f}" fill="#FFFFFF" opacity="0.7"/>'))
+    return out
+
+
+CAILLOUX = ((0, 2), (2, 3), (5, 3))      # gros, moyens, graviers : (première image, nombre d'images) de « sol/caillou »
+
+
+def sol_cailloux():
+    """Cailloux de craie semés sur la lande du plateau (game.js : heathDetails()), dans l'ordre de CAILLOUX : deux
+    gros, trois moyens, trois graviers. Des pierres aux pans inégaux, pas des ovales : la face d'en haut à gauche au
+    soleil, celle d'en bas à droite à l'ombre, et leur ombre couchée sur l'herbe."""
+    out = []
+    c = SOL_T / 2
+    formes = ((4.3, 2.8, "#EFE9D8", 9), (3.8, 3.0, "#E2DAC4", 8),
+              (2.9, 2.0, "#F1ECDD", 7), (2.6, 1.7, "#D6CCB2", 7), (2.3, 2.0, "#E6DFCB", 6),
+              (1.5, 1.1, "#EFE9D8", 5), (1.2, 0.9, "#D9D0B8", 5), (1.6, 0.9, "#E3DCC6", 5))
+    for i, (rx, ry, teinte, n) in enumerate(formes):
+        rnd = random.Random(40 + i)
+        pts = []
+        for j in range(n):
+            a = 2 * math.pi * (j + rnd.uniform(-0.28, 0.28)) / n
+            k = rnd.uniform(0.78, 1.0)
+            pts.append((c + rx * k * math.cos(a), c + ry * k * math.sin(a)))
+        contour = " ".join(f"{x:.2f},{y:.2f}" for x, y in pts)
+        haut = [(x, y) for x, y in pts if (x - c) / rx + (y - c) / ry < 0.15]            # les sommets tournés vers la lumière
+        s = (f'<polygon points="{" ".join(f"{x + 0.7:.2f},{y + 0.9:.2f}" for x, y in pts)}" fill="#6F7A2C" opacity="0.5" '
+             f'stroke="#6F7A2C" stroke-width="0.5" stroke-linejoin="round"/>'
+             f'<polygon points="{contour}" fill="{teinte}" stroke="#857D66" stroke-width="{0.55 if rx > 2 else 0.45}" stroke-linejoin="round"/>')
+        if rx > 2:                                                                       # le pan à l'ombre, le pan au soleil
+            bas = [(x, y) for x, y in pts if (x - c) / rx + (y - c) / ry > 0.35]
+            if len(bas) >= 2:
+                s += (f'<polygon points="{" ".join(f"{c + (x - c) * 0.86:.2f},{c + (y - c) * 0.86:.2f}" for x, y in bas)} '
+                      f'{c + rx * 0.15:.2f},{c + ry * 0.1:.2f}" fill="#B9AE92" opacity="0.75"/>')
+            if len(haut) >= 2:
+                s += (f'<polygon points="{" ".join(f"{c + (x - c) * 0.72:.2f},{c + (y - c) * 0.72:.2f}" for x, y in haut[:3])} '
+                      f'{c - rx * 0.1:.2f},{c - ry * 0.05:.2f}" fill="#FFFFFF" opacity="0.65"/>')
+        out.append(_svg(SOL_T, s))
     return out
 
 

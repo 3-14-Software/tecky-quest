@@ -79,11 +79,14 @@ _GRAINES = ["grass", "forest", "field", "dirt", "water", "sidewalk", "concrete",
 # Le bloc de la falaise : le plateau, sa paroi, son escalier. Il a les bords arrondis de tous les terrains, sans
 # froissement, et jette une ombre sur le sol d'en bas (_ombre_bloc).
 BLOC = ("chalk", "heath", "stairs")
-# Terrains dont la texture se suit d'une tuile à l'autre (de grandes masses de roche, des cailloux semés) : elle
-# est découpée dans une grande image qui se répète toutes les PHASES tuiles, d'après la place de la tuile dans la
-# carte. Une tuile qui en contient est donc toujours une tuile composée, propre à sa place (phase()).
-SUIVIES = ("chalk", "heath")
-PHASES = (6, 4)
+# Terrain dont la texture se suit d'une tuile à l'autre (les grandes masses de roche de la paroi) : elle est découpée
+# dans une grande image qui ne se répète que toutes les PHASES tuiles — plus large qu'un écran : on ne voit jamais
+# deux fois la même roche —, d'après la place de la tuile dans la carte. Une tuile qui en contient est donc
+# toujours une tuile composée, propre à sa place (phase()). La lande, elle, est unie : c'est le jeu qui y sème ses
+# cailloux, d'après la position (game.js : heathDetails()) ; dessinés dans la texture, ils revenaient toutes les
+# six tuiles, et cela se voyait autour du phare.
+SUIVIES = ("chalk",)
+PHASES = (24, 4)
 
 
 def phase(corners, tx, ty):
@@ -367,27 +370,9 @@ def _teinte_lande():
     return "#" + "".join(f"{round((a + b) / 2):02X}" for a, b in zip(g, j))
 
 
-def _dessin_lande(W, H, r):
-    """La lande du plateau : une herbe jaunie, semée de cailloux par petits groupes (ils se répètent d'un bord de
-    l'image à l'autre : un caillou à cheval sur le bord est dessiné des deux côtés)."""
-    im = Image.new("RGB", (W, H), _teinte_lande())
-    d = ImageDraw.Draw(im)
-    rnd = random.Random(5)
-    for _ in range(PHASES[0] * PHASES[1] // 2):
-        x0, y0 = rnd.uniform(0, W), rnd.uniform(0, H)
-        for _ in range(rnd.randint(1, 5)):
-            x, y = x0 + rnd.uniform(-11, 11) * r, y0 + rnd.uniform(-7, 7) * r
-            rx, ry = rnd.uniform(1.5, 4.5) * r, rnd.uniform(1.2, 3) * r
-            col = rnd.choice(("#F1ECDD", "#DDD5BF", "#CFC5AA"))
-            for ax in (-W, 0, W):
-                for ay in (-H, 0, H):
-                    d.ellipse([x + ax - rx, y + ay - ry, x + ax + rx, y + ay + ry], fill=col, outline="#857D66", width=max(1, round(0.9 * r)))
-    return im
-
-
-def tex_heath(scale, seed=0, ph=None):
-    """La lande du plateau : un morceau de la grande texture, d'après la place de la tuile."""
-    return _decoupe(_grande("lande", scale, _dessin_lande, _teinte_lande()), scale, ph)
+def tex_heath(scale, seed=0):
+    """La lande du plateau : l'herbe de la saison, jaunie, unie (le jeu y sème les cailloux : heathDetails())."""
+    return _canvas(scale, _teinte_lande())
 
 
 def tex_stairs(scale, seed=0):

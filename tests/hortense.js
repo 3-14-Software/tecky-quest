@@ -37,7 +37,7 @@ function main() {
   ok(run('state') === 'dialog' && run('dialog.lines[0].text') === run('txt("hortense.merci.0")'), 'elle remercie : « ' + run('dialog.lines[0].text') + ' »');
   advanceDialog(); run('checkBadges();');
   ok(run('rose.state') === 'done' && run('score') === run('sc0 + POST.reward') && run('items.length') === run('n0 + 1') && run('items[items.length - 1].n') === 'sausage'
-     && run('JSON.stringify(badges)') === run('b0'), 'quête finie : des points, une saucisse ; le badge « Ami des chats » reste celui de Pompon');
+     && run('!badges.chat && !!badges.caniche') && run('JSON.stringify(badges)') !== run('b0'), 'quête finie : des points, une saucisse, le badge « Ami des caniches » (« Ami des chats » reste celui de Pompon)');
   ok(run('questsHere().length') === 2 && run('questsHere().filter(q => q()).length') === 1 && run('QUESTS_DONE.length') === 6, 'pour la complétion, seules comptent les quêtes de cette carte (deux, dont celle-ci, finie)');
   run('saveGame(); var S = loadSave();');
   ok(run('S.rose') === 'done' && run('S.cat[2]') === 'home', 'sauvegardé comme la quête de Pompon (rose, cat)');

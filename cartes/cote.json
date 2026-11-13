@@ -455,13 +455,13 @@
     [78, 9.5, 90, 17.5]
   ],
   "zones": [
-    {"id": "industrie", "name": "Le port", "label": "Port", "at": [7.5, 25.2], "rects": [[0, 22.5, 14.5, 64]]},
-    {"id": "village", "name": "Le village de pêcheurs", "label": "Village de pêcheurs", "at": [27, 22.4], "rects": [[14.5, 14.5, 39, 39.5]]},
-    {"id": "ville", "music": "parc", "name": "La ville", "label": "Ville", "at": [60, 27.6], "rects": [[47.5, 13, 75.5, 42.5]]},
-    {"id": "falaises", "music": "foret", "name": "Les falaises", "label": "Falaises", "at": [87, 15], "rects": [[75.5, 8.5, 96, 41.5]]},
-    {"id": "plage", "music": "campagne", "name": "La plage", "label": "Plage", "at": [30, 48.6], "rects": [[0, 38.5, 96, 64]]},
-    {"id": "ferme", "name": "La campagne normande", "label": "Campagne normande", "at": [60, 1.4], "rects": [[44.5, 0, 96, 13]]},
-    {"id": "campagne", "name": "La Côte Fleurie", "label": "Côte Fleurie", "at": [14, 1.4], "rects": [[0, 0, 96, 64]]}
+    {"id": "port", "name": "Le port", "label": "Port", "at": [7.5, 25.2], "rects": [[0, 22.5, 14.5, 64]]},
+    {"id": "pecheurs", "music": "port", "name": "Le village de pêcheurs", "label": "Village de pêcheurs", "at": [27, 22.4], "rects": [[14.5, 14.5, 39, 39.5]]},
+    {"id": "ville", "name": "La ville", "label": "Ville", "at": [60, 27.6], "rects": [[47.5, 13, 75.5, 42.5]]},
+    {"id": "falaises", "name": "Les falaises", "label": "Falaises", "at": [87, 15], "rects": [[75.5, 8.5, 96, 41.5]]},
+    {"id": "plage", "name": "La plage", "label": "Plage", "at": [30, 48.6], "rects": [[0, 38.5, 96, 64]]},
+    {"id": "bocage", "music": "ferme", "name": "La campagne normande", "label": "Campagne normande", "at": [60, 1.4], "rects": [[44.5, 0, 96, 13]]},
+    {"id": "cote", "name": "La Côte Fleurie", "label": "Côte Fleurie", "at": [14, 1.4], "rects": [[0, 0, 96, 64]]}
   ],
   "landmarks": [
     {"label": "Rivière", "at": [42, 20]},

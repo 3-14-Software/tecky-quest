@@ -16,6 +16,11 @@ jeu ; son premier motif (mi sol do sol mi – ré mi) revient dans les autres mo
   foret      la mineur, 96       flûte et harpe, avec de l'écho
   parc       ré majeur, 3/4      valse de boîte à musique, sans batterie
   industrie  mi mineur, 138      mécanique : basse martelée, engrenages, coups de métal
+  cote       si bémol majeur, 126   la côte de l'été : l'air des vacances, ukulélé en contretemps
+  port       ré mineur, 12/8     chant de marins : accordéon, pas lourds (le port, le village de pêcheurs)
+  ville      sol majeur, 3/4     valse musette : l'accordéon du bal
+  falaises   ré majeur, 12/8     un air du large : flûte dans le vent, bourdon, harpe
+  plage      do majeur, 116      calypso : tambour d'acier, claves, shaker
   berceuse   do majeur, 84       le thème, lent et à l'octave : la nuit à la niche (scène de fin)
   win, lose  fanfare de victoire et musique de défaite (3 mesures, jouées une fois)
 
@@ -505,6 +510,167 @@ def industrie():
     return m
 
 
+# ================================================================== la côte (l'été)
+# Cinq morceaux pour la carte de la côte : au début, ses zones empruntaient ceux du printemps (la valse du parc en
+# ville, la forêt sur les falaises…), ce qui ne disait rien de la mer. Le motif de Tecky revient dans chacun.
+
+# ------------------------------------------------------------------ la Côte Fleurie : l'air des vacances
+# Si bémol majeur, guilleret : ukulélé en contretemps, basse qui sautille. Le motif de Tecky ouvre l'air.
+COTE_A = """
+D5 F5 Bb5 F5 D5 -  C5 D5 | Bb4 -  G4 Bb4 D5 -  Bb4 G4 | G4 Bb4 Eb5 G5 Bb5 G5 Eb5 G5 | A5 -  F5 A5 C6 -  .  .
+D5 F5 Bb5 F5 D6 -  Bb5 F5 | G5 -  Bb5 G5 D5 -  G5 Bb5 | Eb5 G5 Bb5 G5 A5 F5 C6 A5 | Bb5 -  -  -  .  .  F5 -
+"""
+COTE_B = """
+G5 -  G5 F5 Eb5 -  G5 -  | F5 -  F5 Eb5 D5 -  F5 -  | Eb5 G5 Bb5 -  G5 -  Eb5 -  | F5 -  A5 -  C6 -  A5 -
+Bb5 -  Bb5 A5 G5 -  D5 -  | G5 -  G5 F5 Eb5 -  Bb4 -  | C5 Eb5 G5 Eb5 C5 Eb5 G5 C6 | A5 -  C6 -  F5 -  .  .
+"""
+
+
+def cote():
+    m = Morceau("cote", 126, "Bb", inst=dict(lead=dict(vib=8), arp=dict(w="triangle", v=0.075, pl=0.11),
+                                             harm=dict(v=0.06)))
+    acc = "Bb Gm Eb F Bb Gm Eb,F Bb"
+    bond = lambda *iv: [(k * 2, x, 1.6, 1.0) for k, x in enumerate(iv)]
+    ukulele = [(k, (1, 2, 3), 0.9, 1.0 if k % 8 == 2 else 0.8) for k in (2, 6, 10, 14)] + [(k, (1, 2, 3), 0.5, 0.5) for k in (7, 15)]
+    secoue = [(k, 0.45 if k % 4 == 2 else 0.22) for k in range(16)]                # un shaker, accent sur le contretemps
+    plage = bat(kick=[0, 8], rim=[(4, 0.8), (12, 0.8)], hat=secoue)
+    fete = bat(kick=[0, 8, 10], rim=[(4, 0.8), (12, 0.8)], hat=secoue, woodH=[(6, 0.6), (14, 0.6)])
+    m.partie(acc, lead=COTE_A, bass=bond(0, 12, 0, 12, 0, 12, 7, 12), arp=ukulele, drums=plage, fin=TOMS)
+    m.partie("Eb Bb Eb F Gm Eb Cm F", lead=COTE_B, pad=0.9, arp=ukulele, drums=plage, fin=ROULE,
+             bass=[(0, 0, 3.6, 1.0), (6, 0, 1.6, 0.8), (8, "q", 3.6, 0.9), (14, "a", 1.6, 0.9)])
+    m.partie(acc, lead=COTE_A, harm="tierces", bass=bond(0, 12, 7, 12, 0, 12, 7, 12), arp=ukulele, drums=fete, fin=TOMS, crash=True)
+    return m
+
+
+# ------------------------------------------------------------------ le port et le village de pêcheurs : chant de marins
+# Ré mineur, à 12/8 : on tire sur le cordage (« oh hisse ! ») ; accordéon, pas lourds sur les temps.
+PORT_A = """
+A4 - D5  D5 - E5  F5 - E5  D5 - A4  | D5 - F5  A5 - G5  F5 - E5  D5 - -   | C5 - E5  G5 - E5  C5 - E5  G5 - -  | A5 - G5  F5 - E5  D5 - -  . . .
+A4 - D5  D5 - E5  F5 - G5  A5 - -   | C6 - A5  F5 - A5  C6 - A5  F5 - -   | G5 - E5  C5 - E5  E5 - C#5  A4 - - | D5 - -  - - -  . . .  . . .
+"""
+PORT_B = """
+F5 - -  A5 - -  C6 - A5  F5 - -     | E5 - -  G5 - -  C6 - G5  E5 - -     | D5 - F5  A5 - F5  D5 - F5  A5 - -  | A5 - -  F5 - -  D5 - -  . . .
+D5 - F5  Bb5 - F5  D5 - F5  Bb5 - - | A5 - C6  A5 - F5  A5 - -  C6 - -    | G5 - E5  C5 - E5  A5 - E5  C#5 - E5 | D5 - -  - - -  D5 - -  . . .
+"""
+
+
+def port():
+    m = Morceau("port", 108, "Dm", bar=12, beat=3,
+                inst=dict(lead=dict(w="sawtooth", lp=2300, v=0.15, s=0.75, vib=9, a=0.02),
+                          harm=dict(w="sawtooth", lp=1800, v=0.065, s=0.75), arp=dict(w=0.5, v=0.04, s=0.55),
+                          bass=dict(v=0.22)))
+    pas = [(0, 0, 4.5, 1.0), (6, "q", 4.5, 0.9)]                                 # un pas lourd par temps fort
+    monte = [(0, 0, 4.5, 1.0), (6, "q", 2.5, 0.9), (9, "3", 1.5, 0.8), (11, "a", 0.8, 0.9)]
+    soufflet = [(3, (0, 1, 2), 1.6, 0.9), (9, (0, 1, 2), 1.6, 0.9)]              # l'accordéon répond sur les temps faibles
+    hisse = bat(kick=[0, (6, 0.9)], tomL=[(3, 0.6), (9, 0.6)], hat=[(k, 0.3) for k in (2, 5, 8, 11)])
+    pont = bat(kick=[0, (6, 0.9)], tomL=[(3, 0.6), (9, 0.6)], rim=[(5, 0.5), (11, 0.6)], hat=[(k, 0.3) for k in (2, 5, 8, 11)])
+    toms = [(6, "tomH", 0.7), (8, "tomM", 0.8), (9, "tomM", 0.8), (11, "tomL", 0.9)]
+    m.partie("Dm Dm C Dm Dm F C,A Dm", lead=PORT_A, bass=[pas, pas, pas, monte], arp=soufflet, drums=hisse, fin=toms)
+    # le refrain : tout l'équipage (la deuxième voix), le motif de Tecky au milieu (ré fa la fa ré)
+    m.partie("F C Dm Dm Bb F C,A Dm", lead=PORT_B, harm="tierces", hv=1.2, bass=[pas, pas, pas, monte], arp=soufflet,
+             drums=pont, fin=toms, crash=True)
+    m.partie("Dm Dm C Dm Dm F C,A Dm", lead=PORT_A, harm="tierces", bass=[pas, pas, pas, monte], arp=soufflet, drums=pont, fin=toms)
+    return m
+
+
+# ------------------------------------------------------------------ la ville : valse musette
+# Sol majeur, à trois temps, vive : l'accordéon du bal, des notes d'agrément ; un temps de basse, deux d'accords.
+VILLE_A = """
+B5 - D6 - B5 G5   | E5 - G5 - B5 -    | C6 B5 A5 - E5 -   | F#5 - A5 - D6 -
+B5 D6 G6 D6 B5 -  | A5 B5 G5 - D5 -   | C6 - A5 F#5 A5 C6 | B5 - G5 - . .
+"""
+VILLE_C = """
+E6 - C6 - G5 -    | D6 - B5 - G5 -    | C6 - A5 - F#5 -   | G5 B5 D6 - B5 -
+E6 D6 C6 - G5 -   | D6 C6 B5 - G5 -   | A5 - C6 A5 F#5 A5 | G5 - - - . .
+"""
+VILLE_B = """
+E5 G5 B5 - G5 -   | A5 - C6 - A5 -    | F#5 A5 C6 - A5 -  | B5 - - - D5 -
+E5 G5 C6 - G5 -   | E5 A5 C6 - E6 -   | D6 - C6 - A5 F#5  | G5 - - - . .
+"""
+
+
+def ville():
+    m = Morceau("ville", 160, "G", bar=12,
+                inst=dict(lead=dict(w="sawtooth", lp=2600, v=0.18, s=0.8, vib=13, a=0.015),
+                          harm=dict(w="sawtooth", lp=2000, v=0.07, s=0.8), arp=dict(w=0.5, v=0.055, s=0.45),
+                          bass=dict(v=0.2)))
+    a = "G Em Am D7 G G Am,D7 G"
+    valse = [(0, 0, 3.6, 1.0)]
+    accords = [(4, (1, 2, 3), 1.6, 0.9), (8, (1, 2, 3), 1.6, 0.8)]
+    balais = bat(kick=[(0, 0.6)], rim=[(4, 0.45), (8, 0.45)])
+    leve = [(8, "snare", 0.5), (10, "snare", 0.65)]
+    m.partie(a, lead=VILLE_A, bass=valse, arp=accords, drums=balais, fin=leve)             # mesure 5 : le motif de Tecky
+    m.partie("Em Am D7 G C Am D7 G", lead=VILLE_B, bass=valse + [(8, "q", 3.0, 0.6)], arp=accords, drums=balais, fin=leve)
+    plein = bat(kick=[(0, 0.7)], rim=[(4, 0.5), (8, 0.5)], hat=[(k, 0.3) for k in (2, 6, 10)])
+    m.partie(a, lead=VILLE_A, harm="tierces", bass=valse + [(8, "q", 3.0, 0.6)], arp=accords, drums=plein, fin=leve)
+    # le trio : la mélodie redescend de haut, les accords égrenés
+    m.partie("C G D7 G C G Am,D7 G", lead=VILLE_C, bass=valse, drums=balais, fin=leve,
+             arp=[(k * 2, r, 1.6, 0.8, 12) for k, r in enumerate([0, 1, 2, 3, 2, 1])])
+    m.partie(a, lead=VILLE_A, harm="tierces", hv=1.2, bass=valse + [(8, "q", 3.0, 0.6)], arp=accords, drums=plein, fin=leve)
+    return m
+
+
+# ------------------------------------------------------------------ les falaises : un air du large
+# Ré majeur, lent, à 12/8 : une flûte dans le vent (de l'écho), une note tenue dessous comme un bourdon, la harpe.
+FALAISES_A = """
+D5 - -  F#5 - A5  D6 - -  A5 - -    | F#5 - E5  D5 - -  A4 - -  D5 - -    | G5 - -  B5 - D6  B5 - -  G5 - -   | A5 - F#5  D5 - -  - - -  . . .
+B4 - -  D5 - F#5  B5 - -  F#5 - -   | G5 - B5  D6 - B5  G5 - -  D5 - -    | E5 - -  A5 - C#6  E6 - C#6  A5 - - | E5 - -  - - -  C#5 - -  . . .
+"""
+FALAISES_B = """
+B5 - -  - - D6  B5 - -  G5 - -      | A5 - -  - - F#5  D5 - -  F#5 - -    | G5 - B5  D6 - -  G6 - -  D6 - -   | E6 - -  C#6 - -  A5 - -  . . .
+F#5 - A5  D6 - A5  F#5 - -  E5 - F#5 | D5 - -  G5 - B5  D6 - -  B5 - -    | C#6 - -  A5 - -  E5 - A5  C#6 - - | D6 - -  - - -  . . .  . . .
+"""
+
+
+def falaises():
+    m = Morceau("falaises", 76, "D", bar=12, beat=3, echo=(4, 0.38, 0.3),
+                inst=dict(lead=dict(w="triangle", v=0.27, s=0.8, vib=15, a=0.03, echo=1),
+                          arp=dict(w="triangle", v=0.07, pl=0.3, echo=1), harm=dict(w="sine", v=0.09, s=0.85, a=0.04),
+                          pad=dict(v=0.04), bass=dict(v=0.15)))
+    bourdon = [(0, 0, 11.4, 0.9), (6, "q", 5.4, 0.6)]
+    harpe = [(k, r, 2.6, 1.0) for k, r in zip((0, 2, 3, 5, 6, 8, 9, 11), (0, 2, 1, 3, 2, 1, 3, 2))]
+    peau = bat(kick=[(0, 0.4)], tomL=[(6, 0.3), (9, 0.22)])                       # un tambour de peau, très doux
+    liee = dict(coupe=(0.1, 0.1))
+    m.partie("D D", arp=harpe, bass=bourdon, intro=True)                         # la harpe et le bourdon, une fois
+    m.partie("D D G D Bm G A A", lead=FALAISES_A, bass=bourdon, arp=harpe, pad=0.8, drums=peau, **liee)
+    m.partie("G D G A Bm G A D", lead=FALAISES_B, bass=bourdon, pad=1.0, drums=peau, **liee,       # mesure 5 : le motif de Tecky
+             arp=[(k, r, 2.6, 0.9) for k, r in zip((0, 3, 6, 9), (0, 1, 2, 3))])
+    m.partie("D D G D Bm G A A", lead=FALAISES_A, harm="tierces", bass=bourdon, arp=harpe, pad=0.8, **liee,
+             drums=peau + [(3, "rim", 0.25), (11, "rim", 0.2)])
+    return m
+
+
+# ------------------------------------------------------------------ la plage : calypso
+# Do majeur : des lames de tambour d'acier (notes pincées, à deux voix), basse en trois-trois-deux, claves, shaker.
+# Elle s'ouvre sur le motif de Tecky, tel quel.
+PLAGE_A = """
+E5 G5 C6 G5 E5 -  D5 E5 | F5 -  A5 F5 C6 -  A5 -  | G5 -  B5 G5 D6 -  B5 G5 | E6 -  C6 -  G5 -  .  .
+E5 G5 C6 G5 E6 -  C6 G5 | A5 -  C6 A5 F5 -  A5 -  | B5 D6 G5 B5 D5 -  G5 B5 | C6 -  -  -  .  .  G5 -
+"""
+PLAGE_B = """
+A5 -  -  C6 A5 -  E5 -  | A5 -  -  C6 A5 -  F5 -  | G5 -  -  C6 G5 -  E5 -  | G5 -  B5 -  D6 -  .  .
+C6 -  -  A5 E5 -  A5 -  | C6 -  -  A5 F5 -  A5 -  | D6 -  B5 -  G5 -  B5 -  | D6 -  -  -  .  .  G5 -
+"""
+
+
+def plage():
+    m = Morceau("plage", 116, "C", echo=(3, 0.25, 0.2),
+                inst=dict(lead=dict(w="sine", v=0.27, pl=0.26, echo=1), harm=dict(w="sine", v=0.085, pl=0.24),
+                          arp=dict(w="triangle", v=0.075, pl=0.1), bass=dict(v=0.2)))
+    acc = "C F G C C F G C"
+    trois = [(0, 0, 4.6, 1.0), (6, "q", 4.6, 0.9), (12, 12, 2.6, 0.9)]             # trois, trois, deux
+    trois_a = trois[:2] + [(12, 12, 1.6, 0.9), (14, "a", 1.6, 0.9)]
+    marimba = [(k, (1, 2), 0.9, 0.9) for k in (3, 6, 10, 14)]
+    secoue = [(k, 0.4 if k % 4 == 0 else 0.2) for k in range(16)]
+    claves = bat(kick=[0, (8, 0.8)], woodH=[(0, 0.7), (6, 0.7), (12, 0.7)], woodL=[(4, 0.5), (10, 0.6)], hat=secoue)
+    doux = bat(kick=[(0, 0.8)], woodL=[(6, 0.5), (12, 0.5)], hat=secoue)
+    m.partie(acc, lead=PLAGE_A, harm="tierces", bass=[trois, trois, trois, trois_a], arp=marimba, drums=claves, fin=TOMS)
+    m.partie("Am F C G Am F G G", lead=PLAGE_B, pad=0.9, bass=[trois, trois, trois, trois_a], arp=marimba, drums=doux, fin=ROULE)
+    m.partie(acc, lead=PLAGE_A, harm="tierces", hv=1.2, bass=[trois, trois, trois, trois_a], arp=marimba, fin=TOMS, crash=True,
+             drums=claves + [(14, "ohat", 0.5)])
+    return m
+
+
 # ------------------------------------------------------------------ fanfare de victoire, musique de défaite
 # Trois mesures à 140, jouées une fois. La défaite est en la mineur : la mélodie descend doucement, passe par la
 # tension de mi majeur (sol dièse) et se pose sur un la grave tenu. Triste mais tendre, pas moqueuse.
@@ -534,7 +700,8 @@ def defaite():
 
 
 MORCEAUX = dict(niche=niche, village=village, campagne=campagne, ferme=ferme, foret=foret, parc=parc,
-                industrie=industrie, berceuse=berceuse, win=fanfare, lose=defaite)
+                industrie=industrie, cote=cote, port=port, ville=ville, falaises=falaises, plage=plage,
+                berceuse=berceuse, win=fanfare, lose=defaite)
 
 
 def songs():

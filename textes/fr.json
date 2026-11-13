@@ -377,6 +377,18 @@
       "nom": "Nounou des hérissons",
       "but": "Ramener ses trois petits à Maman Piquette."
     },
+    "caniche": {
+      "nom": "Ami des caniches",
+      "but": "Ramener Praline à Madame Hortense."
+    },
+    "moutons": {
+      "nom": "Berger des falaises",
+      "but": "Rentrer tous les moutons d’Anatole."
+    },
+    "retour_pages": {
+      "tactile": "Touche les flèches pour changer d’épisode, ailleurs pour revenir",
+      "touches": "[leftright] pour changer d’épisode · [back] pour revenir"
+    },
     "titre": "Badges : {n} / {total}"
   },
   "options": {

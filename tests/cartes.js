@@ -100,7 +100,7 @@ function main() {
   run('var x0 = P.x, y0 = P.y;');
   step(90, 'held.right = true;'); run('held.right = false;');
   step(60, 'held.down = true;'); run('held.down = false;');
-  ok(run('P.x - x0') > 150 && run('P.y - y0') > 60 && run('ground.size') >= 1 && run('zone && zone.id') === 'campagne', 'il y marche (' + Math.round(run('P.x - x0')) + ' px vers l\'est, puis vers le sud)');
+  ok(run('P.x - x0') > 150 && run('P.y - y0') > 60 && run('ground.size') >= 1 && run('zone && zone.id') === 'cote', 'il y marche (' + Math.round(run('P.x - x0')) + ' px vers l\'est, puis vers le sud)');
   run('state = "pause"; openPauseMenu(); render(); state = "play"; menu = null;');
   ok(run('mapImg !== null') && run('seenCells.length') === run('cellsW() * cellsH()') && run('seenCells.some(v => v)'), 'la carte de la pause est celle de cette carte');
   run('var b0 = JSON.stringify(badges); seenCells.fill(1); checkBadges();');
