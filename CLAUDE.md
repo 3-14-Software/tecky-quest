@@ -349,7 +349,23 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   sprite du compteur et de la carte de la pause), `henCry()` (ils bêlent : `SFX.baa`, une voix nasillarde qui chevrote ; d'abord c'était le meuglement des vaches joué aigu, clochette comprise — un raccourci que Christophe a relevé). Le badge des
   poules reste celui de Gaston, les moutons ont le leur (« Berger des falaises », `moutons`). `MAP.farmRoadY` n'est une limite que si l'enclos est au nord de la grande
   route (sinon 10^7 : sur la côte, les moutons ne sont pas retenus à la hauteur de la route). Voix :
-  `DYNAMIC_POPS` = 9. Test : `anatole.js`. Premier jet posé par
+  Test : `anatole.js`.
+  Troisième quête : **les coquillages de Zoé** = la quête des lettres (`post`, `letters`, `talkPostman()`…
+  inchangés) avec `"postman": "zoe"`. Zoé (`npcs._zoe()` : une enfant, réduite par `npcs.SCALE`, maillot corail
+  à pois, couettes blondes, sa pelle à la main ; palette `sans_manche` : bras nus dans `npcs._arm()`) bâtit son
+  château de sable sur la plage de l'ouest (décor `sandcastle`, `mobilier.chateau_de_sable()`), en zone calme.
+  Ses cinq coquillages (`plage.py` : Saint-Jacques, bulot, coque, moule, bigorneau, sprite `item/shell`, une
+  image chacun ; `MAP.shellBase`) sont **enfouis** : la liste `letters` de la carte donne leurs places, et
+  `shells()` (= la carte a ce rôle) en fait des coquillages (`l.shell`, `l.dug`). Une butte de sable d'où
+  dépasse un bout de coquille (`sable/butte`, image 0 ; image 1 : le creux qui reste) signale chacun ; un
+  coquillage enfoui ne se ramasse pas en passant : `nearDig()` le rend comme un trésor, Tecky gratte (gerbe de
+  sable `fx/sand` — aussi pour un os doré enterré dans le sable, `sandAt()`, `MAP.sand`), il saute du sable
+  (`uncoverShell()`, `POST.wait` / `jump`) puis se ramasse (`SFX.shell`). La quête finie, le château prend son
+  second dessin, paré des coquillages (`dressCastle()` : `chateau_de_sable_fini`, même silhouette ; jamais
+  tiré de la position). Textes : mêmes clés sous `zoe` que sous `postman` (`pmTxt()`), sous `coquillages` que
+  sous `lettres` (`lostTxt()`). Badge « Chercheur de coquillages » (`coquillages`). Sauvegarde : la chaîne
+  `letters` (0 enfoui, 2 sorti du sable, 1 ramassé). `check_placement.js` : un coquillage enfoui a la portée
+  d'un grattage. Voix : `DYNAMIC_SITES` = 23, `DYNAMIC_POPS` = 7. Test : `zoe.js`. Premier jet posé par
   `v2/cote_carte.py`, **gelé depuis** : Christophe retouche la carte dans l'éditeur, c'est
   `cartes/cote.json` qui fait foi (le script refuse d'écraser une carte qui existe ; ses listes ne sont plus
   à jour ; `python3 v2/cote_carte.py --apercu` redessine l'aperçu à partir du fichier). Rien ne dépend de

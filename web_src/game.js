@@ -534,6 +534,10 @@ const SOUNDS = {
     tone([150, 80], 0.1, 'sine', 0.12); noise(0.3, 0.05, [4200, 1500], { a: 0.02, q: 0.8 });
     [523, 659, 784, 1047].forEach((f, i) => chime(f, i === 3 ? 0.3 : 0.1, 0.05, 0.1 + i * 0.07));
   },
+  shell(k) {                           // un coquillage : deux petits chocs de coquille, puis une note claire qui tinte
+    for (const at of [0, 0.07]) { noise(0.03, 0.045, 4200, { at, q: 3 }); tone([1500 * k, 1150 * k], 0.045, 'triangle', 0.035, { at, a: 0.002 }); }
+    chime(1320 * k, 0.32, 0.03, 0.14);
+  },
   paper() { for (let i = 0; i < 3; i++) noise(0.04 + Math.random() * 0.03, 0.03, 3000 + Math.random() * 2500, { at: i * 0.05, type: 'highpass', q: 0.7 }); },
   pouic(k) {                           // jouet en caoutchouc : « pouic-pouic »
     tone([760 * k, 1500 * k], 0.09, 'triangle', 0.07, { a: 0.01 }); noise(0.08, 0.02, 3000, { q: 2 });
@@ -1719,7 +1723,7 @@ const FOOT = {
   // la côte : poissonnerie, marchand de glaces, maisons et cabanes de pêcheurs
   stall_fish: [-52, -24, 52, 0], stall_ice: [-52, -24, 52, 0], house_fisher: [-72, -72, 72, -2], hut_fisher: [-50, -50, 54, -2],
   // le phare, le casino, le manège, les cabines de plage (le cargo et les bateaux de pêche sont sur l'eau : pas de collision)
-  lighthouse: [-46, -30, 46, -2], casino: [-148, -92, 144, -2], carousel: [-86, -30, 86, -2], beach_hut: [-28, -28, 34, -2],
+  lighthouse: [-46, -30, 46, -2], casino: [-148, -92, 144, -2], carousel: [-86, -30, 86, -2], beach_hut: [-28, -28, 34, -2], sandcastle: [-48, -24, 60, -2],
   // le porche du parking, au bout de la route de la côte (lisiere.porche) : tout le bâtiment, bouche comprise
   porche: [-142, -372, 152, 8],
   bench: [-40, -20, 40, 0], mailbox: [-7, -6, 7, 0], hedge: [0, -36, 64, 0], flower_pot: [-14, -18, 14, 0],
@@ -1765,6 +1769,7 @@ function cornerVal(coins, x, y) {       // un champ de coins (0 / 1 par coin de 
   return c(i, j) * (1 - u) * (1 - v) + c(i + 1, j) * u * (1 - v) + c(i, j + 1) * (1 - u) * v + c(i + 1, j + 1) * u * v;
 }
 const waterVal = (x, y) => cornerVal(MAP.water, x, y);
+const sandAt = (x, y) => MAP.sand.length > 0 && cornerVal(MAP.sand, x, y) > 0.5;     // le sable (MAP.sand : ses coins)
 const seaAt = (x, y) => MAP.sea.length > 0 && cornerVal(MAP.sea, x, y) > 0.5;       // la mer (MAP.sea : ses coins ; vide sur une carte sans mer)
 /* La falaise : sa paroi (terrain « chalk », MAP.cliff : ses coins ; vide sur une carte qui n'en a pas). On ne marche
    pas sur la roche : les pieds s'arrêtent à son bord dessiné (0,5), en haut comme en bas. */
@@ -2093,8 +2098,10 @@ function resetWorld() {
   hens = MAP.hens.map(newHen);
   cows = MAP.cows.map(newCow);
   farmer = newFarmer();
-  postman = newNpc('postman', MAP.postman, 1.05);
-  letters = MAP.letters.map(([x, y]) => ({ x, y, t: Math.random() * 2, got: false }));
+  postman = Object.assign(newNpc('postman', MAP.postman, MAP.roles.postman ? 1.6 : 1.05, MAP.roles.postman), MAP.roles.postman ? { markY: POST.kidMarkY } : {});
+  // (des coquillages enfouis, sur la côte : dug = sorti du sable ; une lettre n'est jamais enfouie)
+  letters = MAP.letters.map(([x, y], i) => ({ x, y, i, t: Math.random() * 2, got: false, dug: !shells(), shell: shells(), wait: 0, up: 0 }));
+  dressCastle();
   neighbor = newNpc('neighbor', MAP.neighbor, MAP.roles.neighbor ? 1.2 : 1.35, MAP.roles.neighbor); pompon = newPompon();
   leon = newNpc('leon', MAP.leon, 0.95); balls = MAP.balls.map(newBall);
   iris = Object.assign(newNpc('iris', MAP.iris, 0.8), { markY: IRIS.markY, woof: true, tip: iris ? iris.tip : 0 });
@@ -2168,6 +2175,7 @@ const WHO = {
   papa: { get name() { return txt('noms.papa'); }, portrait: 'hud/portrait_papa' },       // le papa d'Alice (l'été)
   hortense: { get name() { return txt('noms.hortense'); }, portrait: 'hud/portrait_hortense' },   // la dame au caniche (l'été)
   anatole: { get name() { return txt('noms.anatole'); }, portrait: 'hud/portrait_anatole' },      // le gardien du phare (l'été)
+  zoe: { get name() { return txt('noms.zoe'); }, portrait: 'hud/portrait_zoe' },                  // la petite fille au château de sable (l'été)
   info:  { name: '', portrait: null },
 };
 // une réplique demandée pendant un dialogue passe à la suite (ex. : le fermier parle, et Tecky ramasse la barrette)
@@ -2179,7 +2187,7 @@ function say(lines, onEnd) {
 }
 /* Le babil d'une réplique : chaque personnage a sa voix (hauteur) ; Tecky et Iris, des chiens, font de petits
    « wouf » ; un texte d'information fait « tic ». Rien sur un espace ni un signe de ponctuation. */
-const VOICE = { tecky: 1.15, alice: 1.7, farmer: 0.8, postman: 1.05, neighbor: 1.35, leon: 0.95, iris: 0.8, piquette: 1.5, papa: 0.9, hortense: 1.25, anatole: 0.75 };
+const VOICE = { tecky: 1.15, alice: 1.7, farmer: 0.8, postman: 1.05, neighbor: 1.35, leon: 0.95, iris: 0.8, piquette: 1.5, papa: 0.9, hortense: 1.25, anatole: 0.75, zoe: 1.75 };
 function talkSound(L, i) {
   const k = VOICE[L.who];
   if (!k) SFX.blip();
@@ -3118,58 +3126,85 @@ function updateNpcs() {
 /* ------------------------------------------------------------------ le facteur */
 /* Marcel, le facteur du village, a perdu ses lettres dans un coup de vent (MAP.letters : cinq lettres autour du
    village). Tecky les ramasse en passant dessus, même avant d'avoir parlé à Marcel ; quand il les a toutes, Marcel
-   l'appelle et, quand Tecky vient lui parler, le remercie (un os et des points). Sauvegardé (post, letters). */
-const POST = { reward: 150, pick: 54 };
+   l'appelle et, quand Tecky vient lui parler, le remercie (un os et des points). Sauvegardé (post, letters).
+   La même quête se rejoue sur la côte de l'été avec d'autres acteurs (MAP.roles.postman) : Zoé, une petite fille
+   (look « zoe »), bâtit un château de sable et a perdu ses cinq coquillages, enfouis dans la plage. Une butte de
+   sable d'où dépasse un bout de coquille signale chacun : Tecky gratte (nearDig() les rend comme les trésors), le
+   coquillage saute du sable (uncoverShell()), puis il le ramasse en passant dessus. La quête finie, le château est
+   paré des coquillages (dressCastle()). pmTxt() et lostTxt() donnent les textes de la distribution (mêmes clés
+   sous « postman » / « zoe », « lettres » / « coquillages »). */
+const POST = { reward: 150, pick: 54, kidMarkY: 118, wait: 0.55, jump: 46 };
 let post = { state: 'new' }, postman = null, letters = [];
+const shells = () => !!MAP.roles.postman;
+const pmTxt = (k, p) => postman.look === 'zoe' ? txt('zoe.' + k, p) : txt('postman.' + k, p);
+const lostTxt = (k, p) => shells() ? txt('coquillages.' + k, p) : txt('lettres.' + k, p);
 const lettersLeft = () => letters.filter(l => !l.got).length;
 function updateLetters(dt) {
   for (const l of letters) {
     l.t += dt;
-    if (l.got || dist(P.x, P.y, l.x, l.y + 20) > POST.pick || P.mode === 'ko') continue;
+    if (l.wait > 0) { l.wait -= dt; l.up = Math.max(0, Math.sin(Math.PI * l.wait / POST.wait)) * POST.jump; continue; }   // il retombe sur le sable
+    if (l.got || !l.dug || dist(P.x, P.y, l.x, l.y + 20) > POST.pick || P.mode === 'ko') continue;
     l.got = true;
     const n = letters.length - lettersLeft();
-    addWordPop(post.state === 'new' ? txt('lettres.premiere') : txt('lettres.trouvee', { n, total: letters.length }), l.x, l.y - 70, 'tecky');
-    SFX.paper(); SFX.pick();
-    if (!lettersLeft()) { postman.waveT = 2.5; if (post.state === 'asked') npcShout(postman, txt('postman.vite')); }
+    addWordPop(post.state === 'new' ? lostTxt('premiere') : lostTxt('trouvee', { n, total: letters.length }), l.x, l.y - 70, 'tecky');
+    if (l.shell) SFX.shell(1, l); else SFX.paper();
+    SFX.pick();
+    if (!lettersLeft()) { postman.waveT = 2.5; if (post.state === 'asked') npcShout(postman, pmTxt('vite')); }
+  }
+}
+// un coquillage enfoui sort du sable : il saute, retombe à côté de son trou, et attend que Tecky le ramasse
+function uncoverShell(l) {
+  l.dug = true; l.wait = POST.wait; l.t = 0;
+  addFx('fx/pickup', l.x, l.y - 20, { fps: 12 });
+  SFX.shell(1, l);
+  rumble('treasure');
+}
+// le château de sable de Zoé : paré de coquillages une fois la quête finie (son second dessin, même silhouette)
+function dressCastle() {
+  if (!decor) return;
+  for (const d of decor) if (d.n === 'sandcastle') {
+    d.look = shells() && post.state === 'done' ? 'chateau_de_sable_fini' : 'chateau_de_sable';
+    d.key = 'decor/' + d.look;
   }
 }
 function postmanMark() { return post.state === 'done' ? -1 : post.state === 'asked' && lettersLeft() ? 1 : 0; }
 function postmanGreet() {
-  if (post.state === 'new') npcShout(postman, txt('postman.oh'));
+  if (post.state === 'new') npcShout(postman, pmTxt('oh'));
   else if (post.state === 'asked') {
     const n = lettersLeft();
-    npcShout(postman, !n ? txt('postman.merci_bulle') : txt('postman.encore', { n }));
-  } else { npcShout(postman, txt('postman.bonjour')); postman.waveT = 1.5; }
+    npcShout(postman, !n ? pmTxt('merci_bulle') : pmTxt('encore', { n }));
+  } else { npcShout(postman, pmTxt('bonjour')); postman.waveT = 1.5; }
 }
 const postThanks = () => [
-  { who: 'postman', face: 2, text: txt('postman.merci.0') },
-  { who: 'postman', face: 0, text: txt('postman.merci.1') },
+  { who: postman.look, face: 2, text: pmTxt('merci.0') },
+  { who: postman.look, face: 0, text: pmTxt('merci.1') },
 ];
 function finishPost() {
   post.state = 'done'; score += POST.reward;
   addPop('+' + POST.reward, P.x - 30, P.y - 140);
   items.push({ n: 'bone', x: P.x + 40, y: P.y - 30, t: 0, pop: 0.001 });
   postman.cheerT = 3;
+  dressCastle();
   saveGame();
 }
 function talkPostman() {
   if (post.state === 'done') {
     postman.waveT = 2;
-    say([{ who: 'postman', face: 2, text: txt('postman.apres') }]);
+    say([{ who: postman.look, face: 2, text: pmTxt('apres') }]);
     return;
   }
   if (!lettersLeft()) { post.state = 'asked'; say(postThanks(), finishPost); return; }
   if (post.state === 'asked') {
     const n = lettersLeft();
-    say([{ who: 'postman', face: 0, text: txt('postman.rappel', { n }) }]);
+    say([{ who: postman.look, face: 0, text: pmTxt('rappel', { n }) }]);
     return;
   }
   post.state = 'asked';
   const got = letters.length - lettersLeft();
   say([
-    { who: 'postman', face: 3, text: txt('postman.demande.0') },
-    { who: 'postman', face: 0, text: got ? txt('postman.deja', { n: got }) : txt('postman.demande.1') },
-    { who: 'tecky', face: 2, text: txt('postman.demande.2') },
+    { who: postman.look, face: 3, text: pmTxt('demande.0') },
+    { who: postman.look, face: 0, text: got ? pmTxt('deja', { n: got }) : pmTxt('demande.1') },
+    { who: 'tecky', face: 2, text: pmTxt('demande.2') },
   ], saveGame);
 }
 
@@ -3875,7 +3910,7 @@ function layTrail() {
       acc += seg - u;
     }
   } else addWordPop(txt('tecky.hmm'), P.x, P.y - 160, 'tecky');
-  for (const g of digs) if (!g.dug && dist(P.x, P.y, g.x, g.y) < SNIFF.treasure) addFx('fx/pickup', g.x, g.y - 24, { fps: 9 });
+  for (const g of digs.concat(letters)) if (!g.dug && dist(P.x, P.y, g.x, g.y) < SNIFF.treasure) addFx('fx/pickup', g.x, g.y - 24, { fps: 9 });
 }
 function updateTrail(dt) {
   for (let i = trail.length - 1; i >= 0; i--) if ((trail[i].t += dt) > SNIFF.life + SNIFF.fade) trail.splice(i, 1);
@@ -3907,6 +3942,7 @@ function threatened() {
 const REACH = { sign: 95, dig: 86, item: 52 };
 function nearDig() {
   for (const g of digs) if (!g.dug && dist(P.x, P.y, g.x, g.y + 6) < REACH.dig) return g;
+  for (const l of letters) if (!l.dug && dist(P.x, P.y, l.x, l.y + 6) < REACH.dig) return l;      // un coquillage enfoui (la côte)
   return null;
 }
 // panneau à portée : [x, y, texte]
@@ -3993,11 +4029,11 @@ function updateDig(dt) {
     P.digTick = 0.16;
     const [vx, vy] = DIRV[P.dir];
     // la terre part derrière Tecky
-    addFx('fx/dirt', g.x - vx * 10 + (Math.random() - 0.5) * 16, g.y + 4 - vy * 6, { fps: 16 });
+    addFx(g.shell || sandAt(g.x, g.y) ? 'fx/sand' : 'fx/dirt', g.x - vx * 10 + (Math.random() - 0.5) * 16, g.y + 4 - vy * 6, { fps: 16 });
     SFX.scratch();
   }
   P.timer -= dt;
-  if (P.timer <= 0) { P.mode = 'free'; uncover(g); }
+  if (P.timer <= 0) { P.mode = 'free'; if (g.shell) uncoverShell(g); else uncover(g); }
 }
 // trésor : un os doré jaillit du trou (treasures = nombre d'os dorés trouvés)
 function uncover(g) {
@@ -4528,7 +4564,7 @@ function mapState() {
     seen: Array.from(seenCells).join(''),
     critters: critters.map(c => c.scored ? 1 : 0).join(''),
     ducks: ducks.map(d => d.scored ? 1 : 0).join(''),
-    letters: letters.map(l => l.got ? 1 : 0).join(''),
+    letters: letters.map(l => l.got ? 1 : l.shell && l.dug ? 2 : 0).join(''),      // (2 : un coquillage sorti du sable, pas encore ramassé)
     cat: [r1(pompon.x), r1(pompon.y), pompon.mode],
     balls: balls.map(b => [r1(b.x), r1(b.y), b.inNet ? 1 : 0]),
     toys: toys.map(t => t.carried ? [r1(P.x), r1(P.y), 0] : [r1(t.x), r1(t.y), t.home ? 1 : 0]),
@@ -4544,7 +4580,7 @@ function applyMapState(s) {
   if (s.seen) for (let i = 0; i < seenCells.length; i++) seenCells[i] = s.seen[i] === '1' ? 1 : 0;
   critters.forEach((c, i) => { c.scored = (s.critters || '')[i] === '1'; });
   ducks.forEach((d, i) => { d.scored = (s.ducks || '')[i] === '1'; });
-  letters.forEach((l, i) => { l.got = (s.letters || '')[i] === '1'; });
+  letters.forEach((l, i) => { const v = (s.letters || '')[i]; l.got = v === '1'; l.dug = !l.shell || v === '1' || v === '2'; });
   (s.balls || []).forEach((q, i) => { const b = balls[i]; if (b && q) { b.x = q[0]; b.y = q[1]; b.inNet = !!q[2]; } });
   train.scored = !!s.train;
   (s.babies || []).forEach((q, i) => { const b = babies[i]; if (b && q) { b.x = q[0]; b.y = q[1]; b.mode = q[2]; b.slot = q[3] || 0; } });
@@ -4591,6 +4627,7 @@ function loadGame(s, rested) {
   score = s.score; timePlayed = s.time; fled = s.fled; treasures = s.treasures;
   clues = [0, 1, 2].map(i => !!s.clues[i]); aliceSniffed = !!s.sniffed; barkImmuneSeen = !!s.immune;
   farm.state = s.farm || 'new'; post.state = s.post || 'new'; rose.state = s.rose || 'new';
+  dressCastle();
   fete.state = s.fete || 'new'; jouets.state = s.jouets || 'new'; piq.state = s.piq || 'new';
   bitten = !!s.bitten || rested;
   applyMapState(s);
@@ -4801,7 +4838,7 @@ function checkBadges() {
   if (monde && balade() && dogs.length && dogs.every(d => d.friend)) unlockBadge('copains');
   if (monde && treasures >= MAP.dig.length) unlockBadge('os_dores');
   if (farm.state === 'done') unlockBadge(MAP.roles.farmer ? 'moutons' : 'poules');     // (les poules de Gaston, ou les moutons d'Anatole)
-  if (post.state === 'done') unlockBadge('facteur');
+  if (post.state === 'done') unlockBadge(MAP.roles.postman ? 'coquillages' : 'facteur');    // (les lettres de Marcel, ou les coquillages de Zoé)
   if (rose.state === 'done') unlockBadge(MAP.roles.pompon ? 'caniche' : 'chat');       // (Pompon, ou Praline sur la côte)
   if (fete.state === 'done') unlockBadge('ballons');
   if (jouets.state === 'done') unlockBadge('iris');
@@ -5914,6 +5951,10 @@ function drawWorld() {
     if (g.dug) drawHole(g.x, g.y);
     else if (g.t % 2.4 < 0.7) drawSpr('fx/pickup', Math.floor((g.t % 2.4) * 7), g.x, g.y - 24, { sc: 0.55, alpha: 0.9 });
   }
+  for (const l of letters) if (l.shell && vis(l.x, l.y, 60)) {         // coquillages enfouis : la butte de sable, puis son creux
+    drawSpr('sable/butte', l.dug ? 1 : 0, l.x, l.y + 6);
+    if (!l.dug && l.t % 3.1 < 0.6) drawSpr('fx/glint', Math.floor((l.t % 3.1) / 0.6 * ATLAS['fx/glint'].f.length), l.x + 6, l.y - 14);
+  }
   for (const d of decor) if (FLAT.has(d.n) && vis(d.x, d.y, 400)) drawSpr(d.key, 0, d.x, d.y);   // pont, bac à sable
   drawLeavesOnGround();
   drawTrail();
@@ -5943,7 +5984,9 @@ function drawWorld() {
     drawSpr('vehicle/' + v.name, Math.floor(v.t * 4), v.x, v.y, { flip: v.dir < 0 }) });
   if (!alice.hidden && vis(alice.x, alice.y, 120)) list.push({ y: alice.y, draw: () => alice.draw() });
   for (const n of npcList()) if (vis(n.x, n.y, 140)) list.push({ y: n.y, draw: () => drawNpc(n) });
-  for (const l of letters) if (!l.got && vis(l.x, l.y, 60)) list.push({ y: l.y + POSED.ground, draw: () => drawPosed('item/letter', Math.floor(l.t * 6), l.x, l.y + POSED.ground, MAP.itemBase.letter, l.t + l.x * 0.013) });
+  for (const l of letters) if (!l.got && l.dug && vis(l.x, l.y, 60)) list.push(l.shell
+    ? { y: l.y + POSED.ground, draw: () => drawPosed('item/shell', l.i, l.x, l.y + POSED.ground, MAP.shellBase[l.i], l.wait > 0 ? -1 : l.t, l.up) }
+    : { y: l.y + POSED.ground, draw: () => drawPosed('item/letter', Math.floor(l.t * 6), l.x, l.y + POSED.ground, MAP.itemBase.letter, l.t + l.x * 0.013) });
   if (vis(pompon.x, pompon.y, 60)) list.push({ y: pompon.y, draw: drawPompon });
   for (const b of babies) if (vis(b.x, b.y, 60)) list.push({ y: b.y, draw: () => drawBaby(b) });
   for (const b of balls) if (vis(b.x, b.y, 80)) list.push({ y: b.y, draw: () => drawBall(b) });
@@ -6006,7 +6049,8 @@ function drawWorld() {
   if (digHint && state === 'play' && P.mode !== 'dig') {
     // juste au-dessus des traces de pattes, dessinées sur la tuile du sol qui contient le trésor
     const mx = Math.floor(digHint.x / TS) * TS + TS / 2, my = Math.floor(digHint.y / TS) * TS;
-    actionBubble(txt('actions.gratter'), mx, my - 36 + bob);
+    if (digHint.shell) actionBubble(txt('actions.gratter'), digHint.x, digHint.y - 64 + bob);      // (au-dessus de la butte de sable)
+    else actionBubble(txt('actions.gratter'), mx, my - 36 + bob);
   }
   if (hintText && state === 'play') actionBubble(txt('actions.lire'), hintText.x, hintText.y + bob);
   if (playHint && state === 'play' && P.mode !== 'play') actionBubble(txt('actions.jouer'), playHint.x, playHint.y - 125 + bob);
@@ -6172,7 +6216,7 @@ function hudCounters() {
   if (treasures > 0) c.push(['item/goldbone', 42, 28, 0.8, treasures, MAP.dig.length]);
   if (farm.state === 'asked') c.push(flockKey() === 'sheep' ? ['sheep/idle/right', 46, 58, 0.5, questHens().length - hensLeft(), questHens().length]
     : ['icone/hen', 46, 58, 1, questHens().length - hensLeft(), questHens().length]);
-  if (post.state === 'asked') c.push(['item/letter', 50, 36, 0.8, letters.length - lettersLeft(), letters.length]);
+  if (post.state === 'asked') c.push([shells() ? 'item/shell' : 'item/letter', 50, 36, 0.8, letters.length - lettersLeft(), letters.length]);
   if (rose.state === 'asked') c.push(['icone/' + pompon.kind, 46, 58, 1, pompon.mode === 'lost' ? 0 : 1, 1]);
   if (fete.state === 'asked') c.push(['port/balloon', 42, 35, 0.8, balls.length - ballsLeft(), balls.length]);
   if (jouets.state === 'asked') c.push(['port/toy', 42, 35, 0.8, toys.length - toysLeft(), toys.length]);

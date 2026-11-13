@@ -1768,6 +1768,7 @@ DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x)
     "barge": (barge, (176, 48), (88, 42)),
     "goal_net": (goal_net, (96, 64), (48, 60)),
     "leaf_nest": (leaf_nest, (48, 32), (24, 28)),
+    "sandcastle": (leaf_nest, (64, 52), (30, 45)),          # le château de sable de Zoé (dessin : mobilier.chateau_de_sable)
     "dog_bed": (dog_bed, (48, 32), (24, 22)),
     "rail": (rail, (32, 32), (0, 16)),
     "buffer_stop": (buffer_stop, (32, 40), (16, 36)),

@@ -34,6 +34,7 @@ tecky-4b38b1aa;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 11 s
 tecky-d21bf16d;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 12 sur 12;Os doré déterré
 tecky-0dd8f6c5;Tecky;dialogue;;fier;Ouaf ! Je m'en occupe !;"Gaston : demande ; Anatole : demande"
 tecky-4a58d3aa;Tecky;dialogue;;joyeux;Ouaf ! Je vais les chercher !;Marcel : demande
+tecky-cdd20514;Tecky;dialogue;;joyeux;Ouaf ! Je gratte et je reviens !;Zoé : demande
 tecky-5ce738ae;Tecky;dialogue;;fier;Ouaf ! Je te le ramène !;Mamie Rose : demande
 tecky-01da17b2;Tecky;dialogue;;fier;Ouaf ! Je vous la ramène !;Madame Hortense : demande
 tecky-80f8a095;Tecky;dialogue;;joyeux;Te voilà, Praline ! Viens, on retourne voir ta maîtresse.;Tecky retrouve Praline
@@ -47,6 +48,12 @@ tecky-9232cc10;Tecky;dialogue;;joyeux;Ouaf ! Ouaf ouaf !;"Retrouvailles avec Ali
 tecky-e08772a9;Tecky;dialogue;;inquiet;Grr… Ce doberman n'a pas peur de mes aboiements. Il va falloir le mordre !;Premier aboiement sur le doberman
 tecky-72e5a7c8;Tecky;dialogue;;fier;Un teckel, ça creuse des terriers : hop, sous le grillage ! Les autres chiens, eux, doivent faire le tour.;Premier terrier
 tecky-5dfd1ea4;Tecky;dialogue;;inquiet;Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !;Devant la cachette d’Alice, avant les trois indices
+tecky-83fbe1c5;Tecky;bulle;;;Un coquillage ?;Tecky ramasse un coquillage
+tecky-eb9338a9;Tecky;bulle;;;Un coquillage ! 1 sur 5;Tecky ramasse un coquillage
+tecky-22dd2eb8;Tecky;bulle;;;Un coquillage ! 2 sur 5;Tecky ramasse un coquillage
+tecky-fd4b031f;Tecky;bulle;;;Un coquillage ! 3 sur 5;Tecky ramasse un coquillage
+tecky-0680bf46;Tecky;bulle;;;Un coquillage ! 4 sur 5;Tecky ramasse un coquillage
+tecky-d65433c5;Tecky;bulle;;;Un coquillage ! 5 sur 5;Tecky ramasse un coquillage
 tecky-779c33b0;Tecky;bulle;;;Une lettre ?;Tecky ramasse une lettre
 tecky-122c4680;Tecky;bulle;;;Un jouet ?;Tecky prend un jouet d’Iris
 tecky-552e60bc;Tecky;bulle;;;Une lettre ! 1 sur 5;Tecky ramasse une lettre
@@ -61,6 +68,8 @@ tecky-cefff293;Tecky;bulle;;;Oups !;Tecky aboie avec un jouet dans la gueule
 tecky-8ef8d480;Tecky;bulle;;;Le tunnel, c’est pour les voitures !;Tecky pousse contre le bord de la carte
 tecky-439ced13;Tecky;bulle;;;Alice n’a pas pu aller si loin !;Tecky pousse contre le bord de la carte
 tecky-8afd030a;Tecky;bulle;;;Ouf !;Une voiture bouscule Tecky
+tecky-34375e0e;Tecky;bulle;;;premiere;dans updateLetters()
+tecky-d9fbbbe1;Tecky;bulle;;;trouvee;dans updateLetters()
 tecky-ea351913;Tecky;bulle;;;Snif snif…;Tecky flaire la piste
 tecky-eb42144d;Tecky;bulle;;;Hmm…;Tecky flaire (pas de piste par ici)
 tecky-e1959b96;Tecky;bulle;;;Un os de plus !;Tecky ramasse un objet
@@ -153,6 +162,11 @@ postman-9216a347;Marcel;bulle;;;Encore 1 lettre !;Marcel : Tecky arrive
 postman-31074e9b;Marcel;bulle;;;Mes lettres ! Merci !;Marcel : Tecky arrive
 postman-74aca4e8;Marcel;bulle;;;Bonne journée, Tecky !;Marcel : Tecky arrive
 postman-21fe700c;Marcel;bulle;;;Mes lettres ! Viens vite !;Tecky ramasse une lettre
+postman-e9c9dbdb;Marcel;bulle;;;vite;dans updateLetters()
+postman-67343942;Marcel;bulle;;;oh;dans postmanGreet()
+postman-e837b32c;Marcel;bulle;;;merci_bulle;dans postmanGreet()
+postman-a237244d;Marcel;bulle;;;encore;dans postmanGreet()
+postman-53142120;Marcel;bulle;;;bonjour;dans postmanGreet()
 neighbor-e42f5daf;Mamie Rose;dialogue;;inquiet;Bonjour, mon petit. Tu n'aurais pas vu mon chat, Pompon ? Il est tout blanc, avec un collier rose et un grelot.;Mamie Rose : demande
 neighbor-29f9c75a;Mamie Rose;dialogue;;;Il s'est sauvé ce matin… Il adore se cacher près des entrepôts, de l'autre côté de la grande route.;Mamie Rose : demande
 neighbor-45353be6;Mamie Rose;dialogue;;inquiet;Pompon adore se cacher près des entrepôts, de l'autre côté de la grande route. Attention aux voitures !;Mamie Rose : rappel
@@ -298,3 +312,26 @@ anatole-b1ba4df9;Anatole;bulle;;;Encore 1 mouton !;Anatole : Tecky arrive
 anatole-742270de;Anatole;bulle;;;Bravo ! Viens me voir !;Anatole : Tecky arrive
 anatole-2cdd7c97;Anatole;bulle;;;Bonjour, Tecky !;Anatole : Tecky arrive
 anatole-fdb2e190;Anatole;bulle;;;Oh ! Mes moutons !;Anatole : ses moutons rentrent sans lui
+zoe-f8b68628;Zoé;dialogue;;inquiet;Bonjour, petit chien ! Je fais un château de sable. Mais une grosse vague a emporté tous mes coquillages…;Zoé : demande
+zoe-28f065f1;Zoé;dialogue;;;J'en avais cinq. Ils sont cachés sous le sable, sur la plage. Toi, tu sais gratter : tu me les rapportes ?;Zoé : demande
+zoe-b6e93493;Zoé;dialogue;;;Tu en as déjà trouvé 1 ? Trop fort ! J'en avais cinq, cachés sous le sable de la plage. Tu me les rapportes ?;Zoé : demande
+zoe-82aef184;Zoé;dialogue;;;Tu en as déjà trouvé 2 ? Trop fort ! J'en avais cinq, cachés sous le sable de la plage. Tu me les rapportes ?;Zoé : demande
+zoe-8b1cc731;Zoé;dialogue;;;Tu en as déjà trouvé 3 ? Trop fort ! J'en avais cinq, cachés sous le sable de la plage. Tu me les rapportes ?;Zoé : demande
+zoe-e79853d2;Zoé;dialogue;;;Tu en as déjà trouvé 4 ? Trop fort ! J'en avais cinq, cachés sous le sable de la plage. Tu me les rapportes ?;Zoé : demande
+zoe-e1ce647b;Zoé;dialogue;;;Il m'en manque encore 5. Cherche les petites bosses dans le sable : il y a un bout de coquillage qui dépasse.;Zoé : rappel
+zoe-c53e01b0;Zoé;dialogue;;;Il m'en manque encore 4. Cherche les petites bosses dans le sable : il y a un bout de coquillage qui dépasse.;Zoé : rappel
+zoe-36839901;Zoé;dialogue;;;Il m'en manque encore 3. Cherche les petites bosses dans le sable : il y a un bout de coquillage qui dépasse.;Zoé : rappel
+zoe-d36d972e;Zoé;dialogue;;;Il m'en manque encore 2. Cherche les petites bosses dans le sable : il y a un bout de coquillage qui dépasse.;Zoé : rappel
+zoe-8495ca80;Zoé;dialogue;;;Plus qu'un ! Cherche les petites bosses dans le sable : il y a un bout de coquillage qui dépasse.;Zoé : rappel
+zoe-8d4860f4;Zoé;dialogue;;joyeux;Tous mes coquillages ! Merci, Tecky ! Regarde : je les pose sur mon château. C'est le plus beau de la plage !;Zoé : merci
+zoe-d8eac244;Zoé;dialogue;;;Tiens, Papi avait gardé un os pour un gentil chien. C'est toi, le gentil chien !;Zoé : merci
+zoe-2e475e51;Zoé;dialogue;;joyeux;Tu as vu mon château ? Il a des coquillages partout ! Viens te cacher dedans si tu veux.;Zoé : après la quête
+zoe-98b24b5f;Zoé;bulle;;;Oh non, mes coquillages…;Zoé : Tecky arrive
+zoe-4d481592;Zoé;bulle;;;Encore 5 coquillages !;Zoé : Tecky arrive
+zoe-b466a311;Zoé;bulle;;;Encore 4 coquillages !;Zoé : Tecky arrive
+zoe-9d99a728;Zoé;bulle;;;Encore 3 coquillages !;Zoé : Tecky arrive
+zoe-fc621fff;Zoé;bulle;;;Encore 2 coquillages !;Zoé : Tecky arrive
+zoe-c0e787c3;Zoé;bulle;;;Encore 1 coquillage !;Zoé : Tecky arrive
+zoe-08c13167;Zoé;bulle;;;Mes coquillages ! Merci !;Zoé : Tecky arrive
+zoe-5709388a;Zoé;bulle;;;Coucou, Tecky !;Zoé : Tecky arrive
+zoe-2b2af890;Zoé;bulle;;;Mes coquillages ! Viens vite !;Tecky ramasse un coquillage

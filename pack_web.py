@@ -45,6 +45,7 @@ import moutons
 import tecky2
 import vehicles
 import music
+import plage
 import nature
 import tiles
 import villageois
@@ -245,6 +246,7 @@ def build_map():
     water = [1 if g[y][x] in tiles.EAUX else 0 for y in range(MH + 1) for x in range(MW + 1)]      # (eau douce et mer)
     # la mer (rien si la carte n'en a pas) : le jeu n'y pose pas les fonds sombres de l'eau douce, ni à ses abords
     sea = [1 if g[y][x] == "sea" else 0 for y in range(MH + 1) for x in range(MW + 1)]
+    sand = [1 if g[y][x] == "sand" else 0 for y in range(MH + 1) for x in range(MW + 1)]      # (le sable : on y gratte du sable, pas de la terre)
     # la falaise : les coins de craie, où l'on ne marche pas (game.js : cliffAt()) ; rien si la carte n'en a pas
     cliff = [1 if g[y][x] == "chalk" else 0 for y in range(MH + 1) for x in range(MW + 1)]
     # le plateau (la lande et l'escalier qui y monte) : on ne franchit son bord que par l'escalier (rimAt())
@@ -253,7 +255,7 @@ def build_map():
     px = lambda v: round(v * TS, 1)
     hors = px(carte.HORS)
     m = {
-        "w": MW, "h": MH, "ground": ground, "over": over, "water": water, "sea": sea if any(sea) else [], "cliff": cliff if any(cliff) else [],
+        "w": MW, "h": MH, "ground": ground, "over": over, "water": water, "sea": sea if any(sea) else [], "sand": sand if any(sand) else [], "cliff": cliff if any(cliff) else [],
         "plateau": plateau if any(plateau) else [], "stairs": stairs if any(stairs) else [],
         "decor": [[n, px(x), px(y)] for n, x, y in DECOR],
         # lisière (lisiere.py) : sol de la marge autour de la carte (tx, ty, tuile) et ses décors (nom, x, y, miroir)
@@ -346,7 +348,7 @@ def build_jeu():
         "variants": {n: [noms, tirage] for n, (noms, tirage) in nature.VARIANTES.items()},
         # ombres portées : le décalage d'un point par unité de hauteur, et la ligne de contact de chaque sprite
         "shadow": list(nature.OMBRE), "sols": sols(),
-        "itemBase": bases()[0], "toyBase": bases()[1],   # objets posés au sol : le bas de leur dessin
+        "itemBase": bases()[0], "toyBase": bases()[1], "shellBase": shell_bases(),   # objets posés au sol : le bas de leur dessin
         "cast": portees(),                            # familles de sprites à ombre portée (personnages, bêtes, véhicules)
         "perches": {**batiments.perchoirs(S), **mobilier.perchoirs(S)},   # où un chat se réfugie : toits, conteneurs
         # décors agrandis (bâtiments, camion, tracteur, chariot) : leur obstacle (FOOT) grandit d'autant
@@ -386,6 +388,13 @@ def bases():
     out = {n: bas(items.item_frames(n)[0], 32 + m) for n in items.ITEMS}
     out["letter"] = bas(npcs.letter_frames()[0], 32 + m)
     return out, [bas(sv, 16 * S + m) for sv in port.toy_frames()]
+
+
+def shell_bases():
+    """Les coquillages de Zoé (plage.py), posés au sol comme les objets : le bas de chaque dessin (voir bases())."""
+    import numpy as np
+    m = PAD * S
+    return [nature.assise(np.asarray(render_svg(sv, 32, 32, S, PAD).getchannel("A")) > 128) - (32 + m) for sv in plage.shell_frames()]
 
 
 def collect(r=1):
@@ -431,6 +440,10 @@ def collect(r=1):
         for a in villageois.ANIMS[kind]:
             out.append((f"{kind}/{a}", [render_svg(sans_ovale(sv), npcs.W, npcs.H, R, PAD) for sv in villageois.frames(kind, a)], (24 * S + M, 60 * S + M), True))
     out.append(("item/letter", [render_svg(sv, 32, 32, R, PAD) for sv in npcs.letter_frames()], (32 + M, 32 + M), True))
+    # la plage de l'été : les coquillages de Zoé (posés au sol comme la lettre), la butte de sable, la gerbe de sable
+    out.append(("item/shell", [render_svg(sv, 32, 32, R, PAD) for sv in plage.shell_frames()], (32 + M, 32 + M), True))
+    out.append(("sable/butte", [render_svg(sv, 32, 32, R, PAD) for sv in plage.mound_frames()], (32 + M, 32 + M), True))
+    out.append(("fx/sand", [render_svg(sv, 32, 32, R, PAD) for sv in plage.fx_sand()], (32 + M, 32 + M), True))
     out.append(("port/balloon", [render_svg(sv, 32, 32, R, PAD) for sv in port.balloon_frames()], (16 * S + M, 16 * S + M), True))
     out.append(("port/toy", [render_svg(sv, 32, 32, R, PAD) for sv in port.toy_frames()], (16 * S + M, 16 * S + M), True))
     out.append(("ballon/relief", [render_svg(sv, 32, 32, R, PAD) for sv in port.balloon_relief()], (16 * S + M, 16 * S + M), True))

@@ -888,6 +888,67 @@ def panier():
     return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), None)
 
 
+# ====================================================================== LA PLAGE
+SABLE_CH = ("#EDD08A", "#D2AE62", "#F9E7B2")       # le sable mouillé du château : au soleil, à l'ombre, ses arêtes claires
+TRAIT_SABLE = "#8A6634"
+
+
+def _tour_sable(d, cle, x, yb, larg, haut, crans=3):
+    """Une tour de sable démoulée d'un seau : un tronc de cône, ses créneaux, la moitié droite à l'ombre."""
+    x0, x1, e = x - larg / 2, x + larg / 2, larg * 0.12
+    corps = _pts([(x0 - e, yb), (x0, yb - haut), (x1, yb - haut), (x1 + e, yb)])
+    d.clip(cle, [corps])
+    d.add(corps, SABLE_CH[0])
+    d.add(rect(x + larg * 0.12, yb - haut - 1, larg, haut + 2), SABLE_CH[1], sil=False, clip=cle)
+    d.add(rect(x0 - e, yb - haut, 1.6, haut), SABLE_CH[2], sil=False, clip=cle, opacity=0.8)
+    pas = larg / (2 * crans - 1)
+    for k in range(crans):                                                                 # les créneaux
+        cx = x0 + pas * (2 * k)
+        d.add(rect(cx, yb - haut - 2.6, pas, 3.2, 0.5), SABLE_CH[1] if cx + pas / 2 > x + larg * 0.12 else SABLE_CH[0])
+    d.raw(line(f"M{x0 - e * 0.6:.2f},{yb - haut * 0.45:.2f} L{x1 + e * 0.6:.2f},{yb - haut * 0.45:.2f}", SABLE_CH[1], 0.7))
+
+
+def chateau_de_sable(fini=False):
+    """Le château de sable de Zoé : un donjon et deux tours démoulés au seau, un mur à porte ronde, un fanion ; à
+    côté, son seau jaune. fini : paré des cinq coquillages que Tecky a rapportés, un chemin de ronde de petits
+    cailloux — la même silhouette (son ombre au sol ne change pas)."""
+    w, h, px, py = 64, 52, 30, 45
+    d = Drawing(w, h)
+    d.add(ellipse(30, 44.4, 25, 5.4), SABLE_CH[0])                                         # le tas de sable
+    d.add(ellipse(33, 45.4, 21, 3.6), SABLE_CH[1], sil=False, opacity=0.7)
+    mur = rect(13, 31.5, 34, 12, 1)
+    d.clip("mur", [mur])
+    d.add(mur, SABLE_CH[0])
+    d.add(rect(32, 30, 20, 16), SABLE_CH[1], sil=False, clip="mur")
+    for k in range(6):                                                                     # créneaux du mur
+        d.add(rect(14.2 + k * 5.6, 29.2, 3.2, 3.0, 0.5), SABLE_CH[1] if k > 2 else SABLE_CH[0])
+    d.add(path("M26.2,43.5 L26.2,38.6 Q30,33.6 33.8,38.6 L33.8,43.5 Z"), "#9C7A46", sil=False, edge=True)      # la porte
+    _tour_sable(d, "tg", 13, 44, 10, 17)
+    _tour_sable(d, "td", 47, 44, 10, 17)
+    _tour_sable(d, "donjon", 30, 32.5, 13, 16, 4)
+    d.raw(line("M30,14 L30,4.6", "#8A5A2E", 1.0))                                          # le fanion
+    d.add(_pts([(30.4, 4.6), (37.6, 6.8), (30.4, 9.2)]), "#E2483C")
+    # le seau, posé devant à droite
+    seau = _pts([(51.6, 36.4), (60.4, 36.4), (59.2, 45.6), (52.8, 45.6)])
+    d.clip("seau", [seau])
+    d.add(seau, "#F2C230")
+    d.add(rect(56.6, 35, 6, 12), "#C9981C", sil=False, clip="seau")
+    d.add(ellipse(56, 36.4, 4.6, 1.5), "#B98A1C", sil=False, edge=True)
+    d.raw(f'<path d="M51.6,36.2 Q56,29.6 60.4,36.2" fill="none" stroke="{OUTLINE}" stroke-width="1.5"/>'
+          '<path d="M51.6,36.2 Q56,29.6 60.4,36.2" fill="none" stroke="#3FB7C4" stroke-width="0.8"/>')
+    if fini:                                                                               # la parure de coquillages
+        for x, y, r, fond, bord in ((30, 23.6, 2.3, "#F7A98C", "#C9705A"), (13, 34.6, 2.0, "#FBF5E4", "#C9A24E"),
+                                    (47, 34.6, 2.0, "#46598A", "#2A3558"), (20.6, 38.4, 1.8, "#E9D3A8", "#A87A4A"),
+                                    (39.4, 38.4, 1.8, "#A3B39A", "#56664F")):
+            d.raw(f'<path d="M{x},{y + r} L{x - r},{y - r * 0.2} Q{x},{y - r * 1.5} {x + r},{y - r * 0.2} Z" fill="{fond}" '
+                  f'stroke="{bord}" stroke-width="0.6" stroke-linejoin="round"/>'
+                  f'<path d="M{x},{y + r * 0.8} L{x},{y - r * 0.8}" stroke="{bord}" stroke-width="0.4"/>')
+        for k in range(9):                                                                 # petits cailloux au pied
+            x = 9 + k * 5.2
+            d.raw(f'<circle cx="{x:.1f}" cy="{47.2 + (k % 2) * 0.8:.1f}" r="0.9" fill="#F4EFE1" stroke="#9A8E72" stroke-width="0.4"/>')
+    return Sprite([(d, TRAIT_SABLE, nature.TRAIT)], w, h, (px, py), "contour")
+
+
 # ====================================================================== LA RUE
 def lampadaire():
     """Lampadaire de fonte verte : socle, fût éclairé à gauche, lanterne à quatre vitres sous son chapeau."""
@@ -982,6 +1043,7 @@ CATALOGUE = {
     # la côte de l'été
     "cargo": cargo, "bateau_de_peche": bateau_de_peche, "bateau_de_peche_rouge": lambda: bateau_de_peche("rouge"),
     "bateau_de_peche_vert": lambda: bateau_de_peche("vert"),
+    "chateau_de_sable": chateau_de_sable, "chateau_de_sable_fini": lambda: chateau_de_sable(True),
 }
 # Décor de carte.json -> ses dessins (un par position, comme la nature) ; `n` reste le nom du décor et son obstacle.
 VARIANTES = {
@@ -1000,6 +1062,8 @@ VARIANTES = {
     "road_sign": (["panneau_routier"], [0]),
     "cargo": (["cargo"], [0]),
     "fishing_boat": (["bateau_de_peche", "bateau_de_peche_rouge", "bateau_de_peche_vert"], [0, 1, 2]),
+    # (le second dessin n'est jamais tiré de la position : le jeu le pose quand la quête de Zoé est finie)
+    "sandcastle": (["chateau_de_sable", "chateau_de_sable_fini"], [0]),
 }
 # Où un chat se réfugie sur un conteneur : points du cadre (game.js : REFUGES, MAP.perches)
 PERCHOIRS = {

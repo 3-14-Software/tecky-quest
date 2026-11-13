@@ -574,6 +574,12 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      en haut du plateau ; cinq moutons sont éparpillés sur la lande, Tecky les ramène en aboyant derrière eux
      (la quête des poules, avec d'autres acteurs). Dessins : Anatole (ciré jaune, casquette de marin), les
      moutons (`reference/v2/moutons.png`). Répliques à valider (`textes/fr.json` : `anatole`, `moutons`).
+   - *Troisième quête, faite le 13 novembre 2026* : le château de sable de Zoé. Sur la plage de l'ouest, une
+     petite fille bâtit son château ; une vague a emporté ses cinq coquillages, enfouis dans le sable. Tecky
+     gratte les petites buttes d'où dépasse un bout de coquille, ramasse les coquillages et les lui rapporte :
+     le château en est paré (la quête des lettres, avec d'autres acteurs et le grattage en plus). Dessins : Zoé,
+     les cinq coquillages, la butte et son creux, la gerbe de sable, le château avant et après
+     (`reference/v2/lot6_zoe_jeu.png`). Répliques à valider.
    - **Ce qui reste à reprendre sur l'été** (liste tenue à jour : tout ce que j'ai signalé comme limite en
      livrant un morceau doit finir ici, ou être fait — Christophe, 13 novembre 2026 : « à chaque fois tu me
      listes des limites : vas-tu revenir dessus ensuite ? »). *Raccourcis à corriger* : aucun de connu (les quatre derniers
@@ -590,7 +596,8 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      sur la page de l'été de l'écran des badges ; la côte a ses cinq morceaux (Côte Fleurie, port, ville,
      falaises, plage) et son ambiance (mouettes, drisses, rafales, ressac ; plus de grenouilles ni de clapotis
      de mare au bord de la mer), et la musique de la côte commence quand la voiture sort du tunnel. *Reports assumés* : la tenue d'été d'Alice et sa
-     tong perdue ; les quatre autres quêtes ; le manège qui tourne en musique ; la nage ; l'habillage du
+     tong perdue ; les trois autres quêtes (le maître-nageur et les bouées
+     du pêcheur attendent la nage ; les mouettes voleuses) ; le manège qui tourne en musique ; la nage ; l'habillage du
      sable et les vagues ; les crabes ; les motos ; les voitures garées ; le bassin du village, petit et fermé ;
      le casino qui déborde de sa place ; noms des zones et répliques à valider.
    - *À dessiner* : les motos, Tecky qui nage, les quatre autres personnages

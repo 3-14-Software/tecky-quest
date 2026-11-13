@@ -55,7 +55,7 @@ ORDRE = ["format", "annexe", "w", "h", "legende", "terrain", "details", "decor",
 # Les rôles qu'une carte distribue autrement (game.js : MAP.roles) : une quête du printemps rejouée avec d'autres
 # acteurs. Sur la côte, le rôle de Mamie Rose (neighbor) est tenu par Madame Hortense, celui de Pompon par Praline,
 # son caniche. { rôle : les acteurs permis }
-ROLES = {"neighbor": ("hortense",), "pompon": ("poodle",), "farmer": ("anatole",)}
+ROLES = {"neighbor": ("hortense",), "pompon": ("poodle",), "farmer": ("anatole",), "postman": ("zoe",)}
 
 # listes de taille fixe : « cinq lettres » et « cinq ballons » dans les dialogues (une couleur par ballon,
 # port.BALL_COLORS), les jouets d'Iris (port.TOYS : poulet, anneau, corde, dans cet ordre), les places des petits

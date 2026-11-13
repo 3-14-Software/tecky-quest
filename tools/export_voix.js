@@ -41,11 +41,12 @@ const VOICES = {
   hortense: ['Madame Hortense', 'la dame au caniche, devant le casino : élégante, voix chantante, un peu précieuse'],
   poodle: ['Praline', 'le caniche de Madame Hortense : petits jappements aigus'],
   anatole: ['Anatole', 'le gardien du phare, vieux marin : voix grave et rocailleuse, bonhomme'],
+  zoe: ['Zoé', 'la petite fille au château de sable, six ans : voix d’enfant, vive et rieuse'],
 };
 // répliques dont le texte est calculé (pas une chaîne écrite en dur) : chacune doit être produite ci-dessous ; si ce
 // nombre change, une réplique calculée a été ajoutée ou retirée dans game.js : adapter ce fichier
-const DYNAMIC_SITES = 24;
-const DYNAMIC_POPS = 9;          // de même pour les bulles (texte calculé : comptes, noms des jouets, mot passé à dropToy)
+const DYNAMIC_SITES = 23;
+const DYNAMIC_POPS = 7;          // de même pour les bulles (texte calculé : comptes, noms des jouets, mot passé à dropToy)
 const NPC_VARS = { farmer: 'farmer', postman: 'postman', neighbor: 'neighbor', leon: 'leon', iris: 'iris', piquette: 'piquette' };
 // répliques relevées dans le code (écrites en dur, dites en cours de route) : contexte selon la fonction qui les dit
 const WHERE = { doBark: 'Premier aboiement sur le doberman', updatePompon: 'Tecky retrouve Pompon',
@@ -109,6 +110,21 @@ function main() {
     ask('Marcel : rappel', `post.state = "asked"; letters.forEach((l, i) => l.got = i >= ${n}); talkPostman();`);
   ask('Marcel : merci', 'letters.forEach(l => l.got = true); talkPostman();');
   ask('Marcel : après la quête', 'post.state = "done"; talkPostman();');
+  // (la même quête sur la côte de l'été : Zoé et ses coquillages enfouis dans le sable)
+  run('postman.look = "zoe"; MAP.roles = { postman: "zoe" };');
+  for (let got = 0; got <= 4; got++)
+    ask('Zoé : demande', `post.state = "new"; letters.forEach((l, i) => l.got = i < ${got}); talkPostman();`);
+  for (let n = 5; n >= 1; n--)
+    ask('Zoé : rappel', `post.state = "asked"; letters.forEach((l, i) => l.got = i >= ${n}); talkPostman();`);
+  ask('Zoé : merci', 'letters.forEach(l => l.got = true); talkPostman();');
+  ask('Zoé : après la quête', 'post.state = "done"; talkPostman();');
+  ask('Zoé : Tecky arrive', 'post.state = "new"; postmanGreet();');
+  for (let n = 5; n >= 0; n--) ask('Zoé : Tecky arrive', `post.state = "asked"; letters.forEach((l, i) => l.got = i >= ${n}); postmanGreet();`);
+  ask('Zoé : Tecky arrive', 'post.state = "done"; postmanGreet();');
+  for (const st of ['new', 'asked'])
+    ask('Tecky ramasse un coquillage', `post.state = "${st}"; letters.forEach(l => { l.got = false; l.dug = true; l.wait = 0; }); P.mode = "free";` +
+        ' letters.forEach(l => { P.x = l.x; P.y = l.y + 20; updateLetters(0); });');
+  run('postman.look = "postman"; MAP.roles = {}; post.state = "new"; letters.forEach(l => l.got = false);');
   ask('Mamie Rose : demande', 'rose.state = "new"; pompon.mode = "lost"; talkNeighbor();');
   ask('Mamie Rose : rappel', 'rose.state = "asked"; pompon.mode = "lost"; talkNeighbor();');
   ask('Mamie Rose : rappel (Pompon suit Tecky)', 'pompon.mode = "follow"; talkNeighbor();');

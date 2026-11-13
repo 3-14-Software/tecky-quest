@@ -42,7 +42,7 @@ from spritelib import Drawing, circle, ellipse, rect, path, poly, leg, line, OUT
 W, H = 48, 64
 G = 60.0                      # ligne des pieds
 HK = 1.08                     # agrandissement de la tête (style chibi), autour du menton — comme Gaston
-KINDS = ("postman", "neighbor", "leon", "iris", "piquette", "papa", "hortense", "anatole")
+KINDS = ("postman", "neighbor", "leon", "iris", "piquette", "papa", "hortense", "anatole", "zoe")
 FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-côté conseillé
     "postman": (24, 18.5, 15.5),      # casquette, visage, moustache et menton (comme Gaston)
     "neighbor": (24, 21.5, 15.5),     # chignon, lunettes, menton (elle est plus petite : tout est 3 unités plus bas)
@@ -52,9 +52,10 @@ FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-
     "papa": (24, 19.6, 15.0),         # le papa d'Alice : cheveux ras, visage, bouc
     "hortense": (24, 20.4, 15.8),     # Madame Hortense : capeline, visage, collier
     "anatole": (24, 18.5, 15.5),      # Anatole, le gardien du phare : casquette de marin, moustache blanche
+    "zoe": (24, 26.6, 15.2),          # Zoé, la petite fille au château de sable : couettes, frange, sourire
 }
 PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6", "leon": "#FDE3C2", "iris": "#DDE9F6", "piquette": "#F6E3EC",
-               "papa": "#F7E6C8", "hortense": "#D9F0F2", "anatole": "#FBEFC4"}   # fond du médaillon (Gaston : "#CFE8B0")
+               "papa": "#F7E6C8", "hortense": "#D9F0F2", "anatole": "#FBEFC4", "zoe": "#FCE6B8"}   # fond du médaillon (Gaston : "#CFE8B0")
 
 PAL = {
     "postman": dict(skin="#F5C8A6", skin_dk="#E2A986", nose="#EA9C82", blush="#F28A8A",
@@ -97,6 +98,13 @@ PAL = {
                      slipper="#D7332B", slipper_dk="#A82520", pompom="#D7332B",
                      pearl="#FFFDF8", lens="#E3F4FB", hat="#FBF3DC", hat_dk="#D9C9A0", ribbon="#D7332B",
                      eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#9ED8F5"),
+    # Zoé, la petite fille qui bâtit un château de sable sur la plage (la côte de l'été) : maillot corail à pois,
+    # couettes blondes à nœuds turquoise, pieds nus, une petite pelle à la main
+    "zoe": dict(skin="#F6CDAE", skin_dk="#E2AA88", nose="#EC9F86", blush="#F28A8A",
+                hair="#F2CE6B", hair_dk="#C99A3A", hair_lt="#FBE7A6", bow="#3FB7C4", bow_dk="#2A8E9A",
+                suit="#F26D5B", suit_dk="#CF4E3E", suit_lt="#FF9A86", dot="#FFFFFF",
+                spade="#D7332B", spade_dk="#A82520", handle="#F2C14E",
+                eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#9ED8F5", sans_manche=True),
     "leon": dict(skin="#E9B892", skin_dk="#D39A72", nose="#DD8F74", blush="#F08A7E",
                  hair="#5A3A22", hair_dk="#3E2615",
                  helmet="#F6C83E", helmet_dk="#D9A520", helmet_lt="#FFE07A",
@@ -219,7 +227,11 @@ def _arm(d, c, s, sx, sy, ex, ey, hx, hy, hand="fist", front=False, band=None):
     wx, wy = hx - ux * 1.9, hy - uy * 1.9                     # poignet
     rot = math.degrees(math.atan2(uy, ux)) - 90
     nu = c.get("bras")              # manches courtes : la couleur du bras nu, sous une manche qui s'arrête avant le coude
-    if nu:
+    sans = c.get("sans_manche")     # maillot de bain : tout le bras est nu, pas d'ourlet
+    if sans:
+        upper = [(_seg(sx, sy + EP, ex, ey, 3.6), c["skin"]), (circle(sx, sy + EP, 2.0), c["skin"])]
+        fore = [(circle(ex, ey, 1.8), c["skin"]), (_seg(ex, ey, hx, hy, 3.4), c["skin"])]
+    elif nu:
         mx, my = sx + (ex - sx) * 0.62, sy + EP + (ey - sy - EP) * 0.62               # l'ourlet de la manche
         upper = [(_seg(sx, sy + EP, ex, ey, 4.0), nu), (_seg(sx, sy + EP, mx, my, 5.0), c["sleeve"]),
                  (circle(sx, sy + EP, 2.5), c["sleeve"]), (_epaule(sx, sy, s), c["sleeve"])]
@@ -239,8 +251,8 @@ def _arm(d, c, s, sx, sy, ex, ey, hx, hy, hand="fist", front=False, band=None):
             st.append((circle(hx, hy, 2.15), c["skin"]))
         # le contour du bras ne commence qu'un peu sous l'épaule, où il se fond : pas de trait en travers
         k = lambda t: (sx + (ex - sx) * t, sy + EP + (ey - sy - EP) * t)
-        _sticker(d, st + [(_seg(*k(0.3), ex, ey, 4.6), c["sleeve"])] + fore)
-        d.add(_seg(sx, sy + EP, *k(0.5), 4.4), c["sleeve"], sil=False)
+        _sticker(d, st + [(_seg(*k(0.3), ex, ey, 3.6 if sans else 4.6), c["skin"] if sans else c["sleeve"])] + fore)
+        d.add(_seg(sx, sy + EP, *k(0.5), 3.4 if sans else 4.4), c["skin"] if sans else c["sleeve"], sil=False)
     else:
         if hand == "palm":
             details.append(_palm(d, c, hx, hy, ux, uy, s))
@@ -251,7 +263,9 @@ def _arm(d, c, s, sx, sy, ex, ey, hx, hy, hand="fist", front=False, band=None):
     if band:   # bande jaune autour de l'avant-bras
         mx, my = (ex + wx) / 2, (ey + wy) / 2
         d.add(rect(mx - 2.0, my - 0.6, 4.0, 1.2, 0, f"rotate({rot:.1f} {mx:.2f} {my:.2f})"), band, sil=False)
-    if nu:                                                     # l'ourlet de la manche courte
+    if sans:
+        pass
+    elif nu:                                                   # l'ourlet de la manche courte
         r2 = math.degrees(math.atan2(ey - sy - EP, ex - sx)) - 90
         d.add(rect(mx - 2.7, my - 0.7, 5.4, 1.4, 0.7, f"rotate({r2:.1f} {mx:.2f} {my:.2f})"), c["cuff"], sil=False, edge=True)
     else:
@@ -960,9 +974,100 @@ def _neighbor(p, qui="neighbor"):
     return d
 
 
+# ================================================================== ZOÉ
+ZDY = 5.4     # une enfant : le haut du corps est plus bas, les jambes plus courtes ; elle est ensuite réduite (SCALE)
+
+
+def _zoe(p):
+    """Zoé, la petite fille au château de sable : maillot de bain corail à pois blancs et petit volant, couettes
+    blondes nouées de turquoise, frange, pieds nus ; au repos, elle tient sa pelle rouge."""
+    c = dict(PAL["zoe"])
+    d = Drawing(W, H)
+    L = p["lift"]
+    Y = lambda v: v + ZDY + p["bob"] - L
+    T = lambda v: v - L
+    _shadow(d, L, 9.0)
+
+    for x, s in ((21.2, -1), (26.8, 1)):                                                      # jambes et pieds nus
+        d.add(leg(x, T(51.0), x, T(G - 2.0), 3.0), c["skin"])
+        d.add(ellipse(x + s * 0.7, T(G - 1.3), 3.0, 1.6), c["skin"])
+        d.raw(line(f"M{x + s * 2.0:.2f},{T(G - 1.9):.2f} L{x + s * 2.0:.2f},{T(G - 1.0):.2f}", c["skin_dk"], 0.5))
+
+    # le maillot : buste, ventre rond d'enfant, petit volant en bas ; épaules nues, deux bretelles
+    buste = rect(17.2, Y(29.4), 13.6, 9.0, 4.2)
+    ventre = ellipse(24, Y(38.2), 7.6 + p["breath"], 6.2)
+    d.add(buste, c["skin"])
+    d.add(ventre, c["suit"])
+    volant = path(f"M16.4,{Y(41.6):.2f} Q24,{Y(40.2):.2f} 31.6,{Y(41.6):.2f} L33.0,{Y(46.2):.2f} "
+                  f"Q30.6,{Y(47.6):.2f} 28.4,{Y(46.4):.2f} Q26.2,{Y(47.8):.2f} 24,{Y(46.6):.2f} "
+                  f"Q21.8,{Y(47.8):.2f} 19.6,{Y(46.4):.2f} Q17.4,{Y(47.6):.2f} 15.0,{Y(46.2):.2f} Z")
+    d.add(volant, c["suit"])
+    d.clip("zoe_maillot", [buste, ventre])
+    haut = path(f"M16,{Y(33.4):.2f} Q24,{Y(31.6):.2f} 32,{Y(33.4):.2f} L32,{Y(46):.2f} L16,{Y(46):.2f} Z")
+    d.raw('<g clip-path="url(#zoe_maillot)">' + haut.replace('fill="%F%"', f'fill="{c["suit"]}"')
+          + line(f"M16,{Y(33.4):.2f} Q24,{Y(31.6):.2f} 32,{Y(33.4):.2f}", OUTLINE, 0.8) + "</g>")
+    for s in (-1, 1):                                                                         # les bretelles
+        d.add(rect(24 + s * 4.6 - 0.9, Y(29.0), 1.8, 4.2, 0.6), c["suit"], sil=False, edge=True)
+    for x, y in ((20.4, 36.0), (27.2, 35.4), (23.8, 38.8), (19.6, 40.4), (28.4, 40.0), (24.4, 43.6), (18.2, 44.4), (30.0, 44.2)):
+        d.add(circle(x, Y(y), 0.75), c["dot"], sil=False)
+    d.raw(line(f"M16.4,{Y(41.8):.2f} Q24,{Y(40.4):.2f} 31.6,{Y(41.8):.2f}", c["suit_dk"], 0.8))
+
+    hy, X, V = _head_frame(Y, p)
+    libre = not (p["gesture"] > 0 or p["cheer"] > 0 or p["cheeks"])                          # la main qui tient la pelle
+
+    def rest(s, sx):
+        return (sx + s * 1.6, Y(36.6)), (sx + s * 3.0, Y(41.4)), False
+
+    _arms(d, c, p, 17.0, 31.0, Y(31.0), rest, head=(X, V))
+    if libre:                                                                                 # la pelle, tenue par le manche
+        hx, hy2 = 31.0 + 3.0, Y(41.4)
+        tr = f"rotate(-16 {hx:.2f} {hy2:.2f})"
+        d.add(rect(hx - 0.75, hy2 - 2.6, 1.5, 8.0, 0.6, tr), c["handle"])
+        d.add(rect(hx - 2.0, hy2 - 3.6, 4.0, 1.5, 0.7, tr), c["handle"])
+        d.add(path(f"M{hx - 2.9:.2f},{hy2 + 4.8:.2f} L{hx + 2.9:.2f},{hy2 + 4.8:.2f} L{hx + 2.5:.2f},{hy2 + 9.6:.2f} "
+                   f"Q{hx:.2f},{hy2 + 11.8:.2f} {hx - 2.5:.2f},{hy2 + 9.6:.2f} Z", tr), c["spade"])
+        d.raw(f'<g transform="{tr}">' + line(f"M{hx - 1.4:.2f},{hy2 + 5.8:.2f} L{hx - 1.4:.2f},{hy2 + 9.0:.2f}", "#FF8C7E", 0.8) + "</g>")
+        _sticker(d, [(circle(hx, hy2, 2.15), c["skin"])], 1.0)                                # la main, par-dessus le manche
+
+    # la tête : couettes, oreilles, visage, frange
+    k = HK
+    for s in (-1, 1):
+        x = 24 + s * 12.4
+        d.add(ellipse(X(x + s * 1.4), V(4.4), 3.0 * k, 4.6 * k, f"rotate({-s * 24} {X(x):.2f} {V(1.0):.2f})"), c["hair"])
+        d.raw(line(f"M{X(x + s * 1.2):.2f},{V(2.6):.2f} Q{X(x + s * 2.6):.2f},{V(5.2):.2f} {X(x + s * 2.4):.2f},{V(7.6):.2f}", c["hair_dk"], 0.6))
+    for x in (14.6, 33.4):
+        d.add(circle(X(x), V(1.8), 1.9 * k), c["skin"])
+        d.add(circle(X(x), V(1.8), 0.85 * k), c["skin_dk"], sil=False)
+    d.add(ellipse(24, hy, 9.6 * k, 9.0 * k), c["skin"])
+    cheveux = path(f"M{X(14.4):.2f},{V(1.6):.2f} Q{X(12.8):.2f},{V(-9.8):.2f} 24,{V(-10.4):.2f} "
+                   f"Q{X(35.2):.2f},{V(-9.8):.2f} {X(33.6):.2f},{V(1.6):.2f} Q{X(32.8):.2f},{V(-1.6):.2f} {X(31.4):.2f},{V(-3.6):.2f} "
+                   f"Q{X(29.6):.2f},{V(-2.6):.2f} {X(27.8):.2f},{V(-3.8):.2f} Q{X(25.8):.2f},{V(-2.8):.2f} 24,{V(-4.0):.2f} "
+                   f"Q{X(22.2):.2f},{V(-2.8):.2f} {X(20.2):.2f},{V(-3.8):.2f} Q{X(18.4):.2f},{V(-2.6):.2f} {X(16.6):.2f},{V(-3.6):.2f} "
+                   f"Q{X(15.2):.2f},{V(-1.6):.2f} {X(14.4):.2f},{V(1.6):.2f} Z")
+    d.add(cheveux, c["hair"])
+    d.raw(line(f"M24,{V(-10.2):.2f} Q{X(23.2):.2f},{V(-7.4):.2f} 24,{V(-4.6):.2f} "
+               f"M{X(19.6):.2f},{V(-8.6):.2f} Q{X(18.6):.2f},{V(-6.4):.2f} {X(19.4):.2f},{V(-4.6):.2f} "
+               f"M{X(28.4):.2f},{V(-8.6):.2f} Q{X(29.4):.2f},{V(-6.4):.2f} {X(28.6):.2f},{V(-4.6):.2f}", c["hair_dk"], 0.6))
+    d.add(ellipse(X(19.0), V(-7.8), 2.6 * k, 1.0 * k, f"rotate(-24 {X(19.0):.2f} {V(-7.8):.2f})"), c["hair_lt"], sil=False, opacity=0.85)
+    for s in (-1, 1):                                                                         # les nœuds des couettes
+        bx, by = X(24 + s * 11.6), V(-0.6)
+        for t in (-1, 1):
+            d.add(poly([(bx, by), (bx + s * 0.4 + t * 2.6, by - 2.2), (bx + s * 0.4 + t * 2.6, by + 2.0)]), c["bow"])
+        d.add(circle(bx, by, 1.0), c["bow_dk"], sil=False, edge=True)
+
+    _eyes(d, c, p, X, V, 1.2, 1.5)
+    _blush(d, c, X, V, 3.4)
+    _mouth(d, c, p, X, V, 5.4, 0.9)
+    _nez(d, c, X, V, 2.9, 1.0, 0.85, 0)
+    _brows(d, p, X, V, c["hair_dk"], 1.0)
+    if p["sweat"]:
+        _sweat(d, c, X, V)
+    return d
+
+
 # ================================================================== animations
 _DRAW = {"postman": _postman, "neighbor": _neighbor, "leon": _leon, "iris": _iris, "piquette": _piquette, "papa": _papa,
-         "hortense": lambda p: _neighbor(p, "hortense"), "anatole": lambda p: _postman(p, "anatole")}
+         "hortense": lambda p: _neighbor(p, "hortense"), "anatole": lambda p: _postman(p, "anatole"), "zoe": _zoe}
 
 _WAVE = [P(wave=1, wave_a=-28, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2),
          P(wave=1, wave_a=4, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2)]
@@ -1027,6 +1132,11 @@ ANIMS = {   # PNJ : {nom : (poses, fps, boucle)}
 
 ANIMS["anatole"] = ANIMS["postman"]          # (mêmes gestes que Marcel)
 ANIMS["hortense"] = ANIMS["neighbor"]        # (mêmes gestes que Mamie Rose : elle s'inquiète, les mains aux joues)
+ANIMS["zoe"] = {                             # Zoé : une enfant, elle sautille plus haut quand elle est contente
+    "idle": (_IDLE, 5, True), "talk": (_TALK, 8, True), "wave": (_WAVE, 8, True),
+    "cheer": ([P(cheer=0.6, happy=True, bob=0.4), P(cheer=1, happy=True, lift=2.6),
+               P(cheer=1, happy=True, lift=4.0), P(cheer=0.85, happy=True, lift=1.6)], 9, True),
+}
 
 
 def front(kind, p):
@@ -1041,8 +1151,8 @@ def portrait_states(kind):
 
 # Iris, un petit chien, et Maman Piquette, un hérisson (un peu plus haute que Tecky, bien plus petite qu'Alice : à la
 # taille des gens, elle faisait celle d'Alice) : réduits autour de leurs pieds, pas dans leur portrait.
-SCALE = {"iris": 0.84, "piquette": 0.62}
-CONTOUR = {"piquette", "iris"}     # leur contour est épaissi d'autant, pour garder celui des autres sprites
+SCALE = {"iris": 0.84, "piquette": 0.62, "zoe": 0.8}          # (Zoé : une enfant, à peine plus grande qu'Alice)
+CONTOUR = {"piquette", "iris", "zoe"}     # leur contour est épaissi d'autant, pour garder celui des autres sprites
 
 
 def frames(kind, anim):

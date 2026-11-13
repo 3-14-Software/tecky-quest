@@ -437,10 +437,10 @@ def arrow_icons(scale):
 # ------------------------------------------------------------------ badges (succès)
 BADGES = ["aventure", "copains", "os_dores", "intact", "rapide", "poules",
           "facteur", "chat", "betes", "canards", "explorateur", "sieste", "ballons", "iris", "train", "herissons",
-          "caniche", "moutons"]
+          "caniche", "moutons", "coquillages"]
 # Les badges d'un épisode (les autres sont ceux du jeu, rangés avec le premier) : l'écran des badges a une page par
 # épisode ouvert (game.js : badgePages()).
-BADGE_EP = {"caniche": "ete", "moutons": "ete"}
+BADGE_EP = {"caniche": "ete", "moutons": "ete", "coquillages": "ete"}
 BADGE_C = (24, 20.5)      # centre de la médaille dans le cadre 48x48
 _HEART = ("M16,23.5 C9,18.6 7,15.2 7,12.6 C7,9.9 9.1,8 11.6,8 C13.6,8 15.1,9.2 16,10.9 "
           "C16.9,9.2 18.4,8 20.4,8 C22.9,8 25,9.9 25,12.6 C25,15.2 23,18.6 16,23.5 Z")   # même cœur que fx/heart
@@ -740,6 +740,12 @@ def _ic_moutons(d):
     d.raw(line("M14.8,22 L16,23.2 L17.2,22 M16,23.2 L16,24.4", OUTLINE, 0.8))
 
 
+def _ic_coquillages(d):
+    """La coquille Saint-Jacques des coquillages de Zoé (plage.py)."""
+    import plage
+    plage.saint_jacques(d)
+
+
 BADGE_ICONS = {   # nom : (dessin, échelle, point de l'icône posé au centre du disque)
     "aventure": (_ic_aventure, 0.95, 16, 16), "copains": (_ic_copains, 0.92, 16, 16),
     "os_dores": (_ic_os_dores, 0.95, 16, 16), "intact": (_ic_intact, 0.92, 16, 16),
@@ -750,6 +756,7 @@ BADGE_ICONS = {   # nom : (dessin, échelle, point de l'icône posé au centre d
     "ballons": (_ic_ballons, 0.95, 16, 16), "iris": (_ic_iris, 0.9, 15.8, 17), "train": (_ic_train, 0.88, 16.4, 16),
     "herissons": (_ic_herissons, 1.15, 18.5, 21.5),
     "caniche": (_ic_caniche, 0.82, 16, 14.6), "moutons": (_ic_moutons, 0.8, 16, 17),
+    "coquillages": (_ic_coquillages, 0.92, 16, 16),
 }
 
 
@@ -820,6 +827,7 @@ def all_sprites(scale):
         "spr_hud_portrait_papa": npc_portrait("papa", scale),
         "spr_hud_portrait_hortense": npc_portrait("hortense", scale),
         "spr_hud_portrait_anatole": npc_portrait("anatole", scale),
+        "spr_hud_portrait_zoe": npc_portrait("zoe", scale),
         "spr_hud_digits": digit_frames(scale),
         "spr_hud_key": key_frames(scale),
         "spr_hud_pad": pad_frames(scale),

@@ -104,7 +104,7 @@ setTimeout(() => {
     for (const g of digs) A.push(['os doré', 'trésor', g.x, g.y + 6, REACH.dig]);
     MAP.tunnels.forEach(([ax, ay, bx, by]) => { A.push(['terrier', 'terrier', ax, ay, TUNNEL.reach]); A.push(['terrier', 'terrier', bx, by, TUNNEL.reach]); });
     for (const it of items) if (ITEM[it.n] && ITEM[it.n].clue !== undefined) A.push(['indice', it.n, it.x, it.y + 32, REACH.item]);
-    for (const l of letters) A.push(['lettre', 'lettre', l.x, l.y + 20, POST.pick]);
+    for (const l of letters) A.push(l.shell ? ['coquillage', 'coquillage', l.x, l.y + 6, REACH.dig] : ['lettre', 'lettre', l.x, l.y + 20, POST.pick]);     // (un coquillage enfoui se gratte)
     if (ici('pompon')) A.push(['chat', 'Pompon', pompon.x, pompon.y, CAT.find]);
     for (const t of toys) A.push(['jouet', 'jouet', t.x, t.y, IRIS.pick]);
     for (const b of babies) A.push(['hérisson', 'hérisson', b.x, b.y, BABY.find]);
