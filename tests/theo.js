@@ -6,7 +6,7 @@ function main() {
   run('EPISODES[1].chantier = false; audioOn(); STORE.mem = {}; loadBadges(); episode = "ete"; newGame("balade", true);'); advanceDialog();
   run('cars = []; dogs = []; P.inv = 99; var T = MAP.ts; function va(x, y) { P.x = x; P.y = y; P.mode = "free"; syncSwim(true); }');
   ok(run('MAP.roles.iris') === 'theo' && run('iris.kind') === 'iris' && run('iris.look') === 'theo' && run('!iris.woof') && run('seaToys()')
-     && run('toys.length') === 3 && run('toys.every(t => swimAt(t.x, t.y) && !deepAt(t.x, t.y))') && run('npcList().length') === 5,
+     && run('toys.length') === 3 && run('toys.every(t => swimAt(t.x, t.y) && !deepAt(t.x, t.y))') && run('npcList().length') === 6,
      'sur la côte, le rôle d\'Iris est tenu par Théo ; ses trois jouets flottent dans la zone de baignade');
   ok(['theo/idle', 'theo/talk', 'theo/wave', 'theo/cheer', 'theo/worry', 'hud/portrait_theo', 'plage/jouet', 'mer/jouet'].every(k => run(`!!ATLAS[${JSON.stringify(k)}]`))
      && run('ATLAS["plage/jouet"].f.length') === 3 && run('ATLAS["mer/jouet"].f.length') === 3 && run('MAP.beachToyBase.length') === 3

@@ -437,10 +437,10 @@ def arrow_icons(scale):
 # ------------------------------------------------------------------ badges (succès)
 BADGES = ["aventure", "copains", "os_dores", "intact", "rapide", "poules",
           "facteur", "chat", "betes", "canards", "explorateur", "sieste", "ballons", "iris", "train", "herissons",
-          "caniche", "moutons", "coquillages", "nageur", "bouees"]
+          "caniche", "moutons", "coquillages", "nageur", "bouees", "mouettes"]
 # Les badges d'un épisode (les autres sont ceux du jeu, rangés avec le premier) : l'écran des badges a une page par
 # épisode ouvert (game.js : badgePages()).
-BADGE_EP = {"caniche": "ete", "moutons": "ete", "coquillages": "ete", "nageur": "ete", "bouees": "ete"}
+BADGE_EP = {"caniche": "ete", "moutons": "ete", "coquillages": "ete", "nageur": "ete", "bouees": "ete", "mouettes": "ete"}
 BADGE_C = (24, 20.5)      # centre de la médaille dans le cadre 48x48
 _HEART = ("M16,23.5 C9,18.6 7,15.2 7,12.6 C7,9.9 9.1,8 11.6,8 C13.6,8 15.1,9.2 16,10.9 "
           "C16.9,9.2 18.4,8 20.4,8 C22.9,8 25,9.9 25,12.6 C25,15.2 23,18.6 16,23.5 Z")   # même cœur que fx/heart
@@ -762,6 +762,12 @@ def _ic_bouees(d):
     d.raw(line("M10.8,15.8 Q11.2,13.6 13.6,13.0", "#FFFFFF", 1.0))
 
 
+def _ic_mouettes(d):
+    """Le rouget de Suzanne, repris aux mouettes (mouettes.py)."""
+    import mouettes
+    mouettes._poisson(d, "rouget")
+
+
 BADGE_ICONS = {   # nom : (dessin, échelle, point de l'icône posé au centre du disque)
     "aventure": (_ic_aventure, 0.95, 16, 16), "copains": (_ic_copains, 0.92, 16, 16),
     "os_dores": (_ic_os_dores, 0.95, 16, 16), "intact": (_ic_intact, 0.92, 16, 16),
@@ -774,6 +780,7 @@ BADGE_ICONS = {   # nom : (dessin, échelle, point de l'icône posé au centre d
     "caniche": (_ic_caniche, 0.82, 16, 14.6), "moutons": (_ic_moutons, 0.8, 16, 17),
     "coquillages": (_ic_coquillages, 0.92, 16, 16),
     "nageur": (_ic_nageur, 0.95, 16, 16.4), "bouees": (_ic_bouees, 0.9, 16, 15.4),
+    "mouettes": (_ic_mouettes, 1.0, 16, 16),
 }
 
 
@@ -847,6 +854,7 @@ def all_sprites(scale):
         "spr_hud_portrait_zoe": npc_portrait("zoe", scale),
         "spr_hud_portrait_theo": npc_portrait("theo", scale),
         "spr_hud_portrait_yvon": npc_portrait("yvon", scale),
+        "spr_hud_portrait_suzanne": npc_portrait("suzanne", scale),
         "spr_hud_digits": digit_frames(scale),
         "spr_hud_key": key_frames(scale),
         "spr_hud_pad": pad_frames(scale),

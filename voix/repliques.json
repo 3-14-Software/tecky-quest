@@ -111,6 +111,14 @@
     "yvon": {
       "nom": "Yvon",
       "voix": "le pêcheur : vieux loup de mer, voix grave et bourrue, bon cœur"
+    },
+    "suzanne": {
+      "nom": "Suzanne",
+      "voix": "la poissonnière du village de pêcheurs : voix forte et gaie, gouailleuse, le cœur sur la main"
+    },
+    "gull": {
+      "nom": "Les mouettes",
+      "voix": "mouettes rieuses : cris moqueurs (« Kia-ha-ha ! »), cri d’effroi (« Kiaaa ! »)"
     }
   },
   "repliques": [
@@ -622,6 +630,17 @@
     },
     {
       "voix": "tecky",
+      "fichier": "tecky-abea3508",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Ouaf ! Des voleuses ? Attendez un peu, mes cocottes !",
+      "affiche": "Ouaf ! Des voleuses ? Attendez un peu, mes cocottes !",
+      "contexte": "Suzanne : demande"
+    },
+    {
+      "voix": "tecky",
       "fichier": "tecky-75b457ab",
       "personnage": "Tecky",
       "type": "dialogue",
@@ -908,6 +927,50 @@
     },
     {
       "voix": "tecky",
+      "fichier": "tecky-e7794f3c",
+      "personnage": "Tecky",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Un poisson ?",
+      "affiche": "Un poisson ?",
+      "contexte": "Tecky prend un poisson"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-59dc766d",
+      "personnage": "Tecky",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Le maquereau !",
+      "affiche": "Le maquereau !",
+      "contexte": "Tecky prend un poisson"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-700fb3ab",
+      "personnage": "Tecky",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Le rouget !",
+      "affiche": "Le rouget !",
+      "contexte": "Tecky prend un poisson"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-9fa2959a",
+      "personnage": "Tecky",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "La dorade !",
+      "affiche": "La dorade !",
+      "contexte": "Tecky prend un poisson"
+    },
+    {
+      "voix": "tecky",
       "fichier": "tecky-35f2c78d",
       "personnage": "Tecky",
       "type": "bulle",
@@ -949,28 +1012,6 @@
       "texte": "Ouf !",
       "affiche": "Ouf !",
       "contexte": "Une voiture bouscule Tecky"
-    },
-    {
-      "voix": "tecky",
-      "fichier": "tecky-34375e0e",
-      "personnage": "Tecky",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "premiere",
-      "affiche": "premiere",
-      "contexte": "dans updateLetters()"
-    },
-    {
-      "voix": "tecky",
-      "fichier": "tecky-d9fbbbe1",
-      "personnage": "Tecky",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "trouvee",
-      "affiche": "trouvee",
-      "contexte": "dans updateLetters()"
     },
     {
       "voix": "tecky",
@@ -1425,6 +1466,17 @@
     },
     {
       "voix": "info",
+      "fichier": "info-5d8e77c2",
+      "personnage": "Narrateur",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Au parc !",
+      "affiche": "Au parc !",
+      "contexte": "Une bouée entre dans le parc"
+    },
+    {
+      "voix": "info",
       "fichier": "info-ec71aefc",
       "personnage": "Narrateur",
       "type": "bulle",
@@ -1458,6 +1510,17 @@
     },
     {
       "voix": "info",
+      "fichier": "info-c9157c1f",
+      "personnage": "Narrateur",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "But !",
+      "affiche": "But !",
+      "contexte": "Un ballon entre dans le filet"
+    },
+    {
+      "voix": "info",
       "fichier": "info-1128d67e",
       "personnage": "Narrateur",
       "type": "bulle",
@@ -1465,50 +1528,6 @@
       "ton": "",
       "texte": "Tous dans le filet !",
       "affiche": "Tous dans le filet !",
-      "contexte": "Un ballon entre dans le filet"
-    },
-    {
-      "voix": "info",
-      "fichier": "info-1a3f43f6",
-      "personnage": "Narrateur",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "rentree",
-      "affiche": "rentree",
-      "contexte": "dans keepHen()"
-    },
-    {
-      "voix": "info",
-      "fichier": "info-867fcbd9",
-      "personnage": "Narrateur",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "toutes",
-      "affiche": "toutes",
-      "contexte": "dans keepHen()"
-    },
-    {
-      "voix": "info",
-      "fichier": "info-60d56f8c",
-      "personnage": "Narrateur",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "but",
-      "affiche": "but",
-      "contexte": "Un ballon entre dans le filet"
-    },
-    {
-      "voix": "info",
-      "fichier": "info-3683eed0",
-      "personnage": "Narrateur",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "tous",
-      "affiche": "tous",
       "contexte": "Un ballon entre dans le filet"
     },
     {
@@ -1719,61 +1738,6 @@
       "texte": "Oh ! Mes poules !",
       "affiche": "Oh ! Mes poules !",
       "contexte": "Une poule rentre dans l’enclos"
-    },
-    {
-      "voix": "farmer",
-      "fichier": "farmer-a20cec43",
-      "personnage": "Gaston",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "bravo",
-      "affiche": "bravo",
-      "contexte": "dans keepHen()"
-    },
-    {
-      "voix": "farmer",
-      "fichier": "farmer-67343942",
-      "personnage": "Gaston",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "oh",
-      "affiche": "oh",
-      "contexte": "dans keepHen()"
-    },
-    {
-      "voix": "farmer",
-      "fichier": "farmer-1dd20585",
-      "personnage": "Gaston",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "appel",
-      "affiche": "appel",
-      "contexte": "dans farmerGreet()"
-    },
-    {
-      "voix": "farmer",
-      "fichier": "farmer-a237244d",
-      "personnage": "Gaston",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "encore",
-      "affiche": "encore",
-      "contexte": "dans farmerGreet()"
-    },
-    {
-      "voix": "farmer",
-      "fichier": "farmer-53142120",
-      "personnage": "Gaston",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "bonjour",
-      "affiche": "bonjour",
-      "contexte": "dans farmerGreet()"
     },
     {
       "voix": "postman",
@@ -2029,61 +1993,6 @@
       "contexte": "Tecky ramasse une lettre"
     },
     {
-      "voix": "postman",
-      "fichier": "postman-e9c9dbdb",
-      "personnage": "Marcel",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "vite",
-      "affiche": "vite",
-      "contexte": "dans updateLetters()"
-    },
-    {
-      "voix": "postman",
-      "fichier": "postman-67343942",
-      "personnage": "Marcel",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "oh",
-      "affiche": "oh",
-      "contexte": "dans postmanGreet()"
-    },
-    {
-      "voix": "postman",
-      "fichier": "postman-e837b32c",
-      "personnage": "Marcel",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "merci_bulle",
-      "affiche": "merci_bulle",
-      "contexte": "dans postmanGreet()"
-    },
-    {
-      "voix": "postman",
-      "fichier": "postman-a237244d",
-      "personnage": "Marcel",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "encore",
-      "affiche": "encore",
-      "contexte": "dans postmanGreet()"
-    },
-    {
-      "voix": "postman",
-      "fichier": "postman-53142120",
-      "personnage": "Marcel",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "bonjour",
-      "affiche": "bonjour",
-      "contexte": "dans postmanGreet()"
-    },
-    {
       "voix": "neighbor",
       "fichier": "neighbor-e42f5daf",
       "personnage": "Mamie Rose",
@@ -2214,61 +2123,6 @@
       "texte": "Bonjour, Tecky !",
       "affiche": "Bonjour, Tecky !",
       "contexte": "Mamie Rose : Tecky arrive"
-    },
-    {
-      "voix": "neighbor",
-      "fichier": "neighbor-3fc436f0",
-      "personnage": "Mamie Rose",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "viens",
-      "affiche": "viens",
-      "contexte": "Pompon"
-    },
-    {
-      "voix": "neighbor",
-      "fichier": "neighbor-1e63c735",
-      "personnage": "Mamie Rose",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "cherche",
-      "affiche": "cherche",
-      "contexte": "dans neighborGreet()"
-    },
-    {
-      "voix": "neighbor",
-      "fichier": "neighbor-4831c9de",
-      "personnage": "Mamie Rose",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "la",
-      "affiche": "la",
-      "contexte": "dans neighborGreet()"
-    },
-    {
-      "voix": "neighbor",
-      "fichier": "neighbor-5849e7f4",
-      "personnage": "Mamie Rose",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "vu",
-      "affiche": "vu",
-      "contexte": "dans neighborGreet()"
-    },
-    {
-      "voix": "neighbor",
-      "fichier": "neighbor-53142120",
-      "personnage": "Mamie Rose",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "bonjour",
-      "affiche": "bonjour",
-      "contexte": "dans neighborGreet()"
     },
     {
       "voix": "leon",
@@ -2478,61 +2332,6 @@
       "texte": "Mes ballons !",
       "affiche": "Mes ballons !",
       "contexte": "Un ballon entre dans le filet"
-    },
-    {
-      "voix": "leon",
-      "fichier": "leon-a20cec43",
-      "personnage": "Léon",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "bravo",
-      "affiche": "bravo",
-      "contexte": "Un ballon entre dans le filet"
-    },
-    {
-      "voix": "leon",
-      "fichier": "leon-baf0f6fa",
-      "personnage": "Léon",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "ballons",
-      "affiche": "ballons",
-      "contexte": "Un ballon entre dans le filet"
-    },
-    {
-      "voix": "leon",
-      "fichier": "leon-67343942",
-      "personnage": "Léon",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "oh",
-      "affiche": "oh",
-      "contexte": "dans leonGreet()"
-    },
-    {
-      "voix": "leon",
-      "fichier": "leon-a237244d",
-      "personnage": "Léon",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "encore",
-      "affiche": "encore",
-      "contexte": "dans leonGreet()"
-    },
-    {
-      "voix": "leon",
-      "fichier": "leon-83c3216e",
-      "personnage": "Léon",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "salut",
-      "affiche": "salut",
-      "contexte": "dans leonGreet()"
     },
     {
       "voix": "iris",
@@ -2852,83 +2651,6 @@
       "texte": "Bravo ! Encore 1 !",
       "affiche": "Bravo ! Encore 1 !",
       "contexte": "Tecky rapporte un jouet à Iris"
-    },
-    {
-      "voix": "iris",
-      "fichier": "iris-8c5debec",
-      "personnage": "Iris",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "bravo_encore",
-      "affiche": "bravo_encore",
-      "contexte": "dans giveToy()"
-    },
-    {
-      "voix": "iris",
-      "fichier": "iris-d6962e4a",
-      "personnage": "Iris",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "tiens",
-      "affiche": "tiens",
-      "contexte": "dans giveToy()"
-    },
-    {
-      "voix": "iris",
-      "fichier": "iris-3683eed0",
-      "personnage": "Iris",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "tous",
-      "affiche": "tous",
-      "contexte": "dans giveToy()"
-    },
-    {
-      "voix": "iris",
-      "fichier": "iris-a20cec43",
-      "personnage": "Iris",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "bravo",
-      "affiche": "bravo",
-      "contexte": "dans giveToy()"
-    },
-    {
-      "voix": "iris",
-      "fichier": "iris-83c3216e",
-      "personnage": "Iris",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "salut",
-      "affiche": "salut",
-      "contexte": "dans irisGreet()"
-    },
-    {
-      "voix": "iris",
-      "fichier": "iris-a237244d",
-      "personnage": "Iris",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "encore",
-      "affiche": "encore",
-      "contexte": "dans irisGreet()"
-    },
-    {
-      "voix": "iris",
-      "fichier": "iris-740ee6ba",
-      "personnage": "Iris",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "chasse",
-      "affiche": "chasse",
-      "contexte": "dans irisGreet()"
     },
     {
       "voix": "piquette",
@@ -4502,6 +4224,226 @@
       "texte": "Mes bouées !",
       "affiche": "Mes bouées !",
       "contexte": "Une bouée entre dans le parc"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-e414f235",
+      "personnage": "Suzanne",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Bonjour, petit chien ! Je suis Suzanne, la poissonnière. Ces chipies de mouettes m'ont volé trois beaux poissons sur l'étal !",
+      "affiche": "Bonjour, petit chien ! Je suis Suzanne, la poissonnière. Ces chipies de mouettes m'ont volé trois beaux poissons sur l'étal !",
+      "contexte": "Suzanne : demande"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-512736be",
+      "personnage": "Suzanne",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Elles se sont posées dans le village et sur le port, le poisson au bec. Et elles s'envolent dès qu'on approche, en se moquant de moi !",
+      "affiche": "Elles se sont posées dans le village et sur le port, le poisson au bec. Et elles s'envolent dès qu'on approche, en se moquant de moi !",
+      "contexte": "Suzanne : demande"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-5df93f51",
+      "personnage": "Suzanne",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Aboie-leur dessus, de loin : elles lâcheront prise. Puis rapporte-moi mes poissons un par un, dans ta gueule.",
+      "affiche": "Aboie-leur dessus, de loin : elles lâcheront prise. Puis rapporte-moi mes poissons un par un, dans ta gueule.",
+      "contexte": "Suzanne : demande"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-2854a136",
+      "personnage": "Suzanne",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Il m'en manque encore 3. Les mouettes ne sont pas loin. N'approche pas trop, elles s'envoleraient : aboie de loin, elles lâcheront prise !",
+      "affiche": "Il m'en manque encore 3. Les mouettes ne sont pas loin. N'approche pas trop, elles s'envoleraient : aboie de loin, elles lâcheront prise !",
+      "contexte": "Suzanne : rappel"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-81bfc4bb",
+      "personnage": "Suzanne",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Il m'en manque encore 2. Les mouettes ne sont pas loin. N'approche pas trop, elles s'envoleraient : aboie de loin, elles lâcheront prise !",
+      "affiche": "Il m'en manque encore 2. Les mouettes ne sont pas loin. N'approche pas trop, elles s'envoleraient : aboie de loin, elles lâcheront prise !",
+      "contexte": "Suzanne : rappel"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-89d52555",
+      "personnage": "Suzanne",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Plus qu'un ! Sa mouette n'est pas loin. N'approche pas trop, elle s'envolerait : aboie de loin, elle lâchera prise !",
+      "affiche": "Plus qu'un ! Sa mouette n'est pas loin. N'approche pas trop, elle s'envolerait : aboie de loin, elle lâchera prise !",
+      "contexte": "Suzanne : rappel"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-515fa78b",
+      "personnage": "Suzanne",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Le maquereau, le rouget et la dorade ! Tu es le meilleur chasse-mouettes de toute la côte, Tecky.",
+      "affiche": "Le maquereau, le rouget et la dorade ! Tu es le meilleur chasse-mouettes de toute la côte, Tecky.",
+      "contexte": "Suzanne : merci"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-53be65eb",
+      "personnage": "Suzanne",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tiens, un bel os pour toi. Et si tu vois encore ces chipies tourner autour de mon étal, aboie un bon coup !",
+      "affiche": "Tiens, un bel os pour toi. Et si tu vois encore ces chipies tourner autour de mon étal, aboie un bon coup !",
+      "contexte": "Suzanne : merci"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-86eb1cfd",
+      "personnage": "Suzanne",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Depuis que tu es passé, les mouettes n'osent plus approcher de mon étal. Merci encore, Tecky !",
+      "affiche": "Depuis que tu es passé, les mouettes n'osent plus approcher de mon étal. Merci encore, Tecky !",
+      "contexte": "Suzanne : après la quête"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-3e6deba1",
+      "personnage": "Suzanne",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Ah, ces mouettes ! Voleuses !",
+      "affiche": "Ah, ces mouettes ! Voleuses !",
+      "contexte": "Suzanne : Tecky arrive"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-f50615cf",
+      "personnage": "Suzanne",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 3 poissons !",
+      "affiche": "Encore 3 poissons !",
+      "contexte": "Suzanne : Tecky arrive"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-31ab6c6a",
+      "personnage": "Suzanne",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 2 poissons !",
+      "affiche": "Encore 2 poissons !",
+      "contexte": "Suzanne : Tecky arrive"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-0ad56956",
+      "personnage": "Suzanne",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 1 poisson !",
+      "affiche": "Encore 1 poisson !",
+      "contexte": "Suzanne : Tecky arrive"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-ea76c9c8",
+      "personnage": "Suzanne",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Mes trois poissons ! Viens me voir !",
+      "affiche": "Mes trois poissons ! Viens me voir !",
+      "contexte": "Suzanne : Tecky arrive ; Tecky rapporte un poisson à Suzanne"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-2cdd7c97",
+      "personnage": "Suzanne",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Bonjour, Tecky !",
+      "affiche": "Bonjour, Tecky !",
+      "contexte": "Suzanne : Tecky arrive"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-ccd9916a",
+      "personnage": "Suzanne",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Mon poisson ! Encore 2 !",
+      "affiche": "Mon poisson ! Encore 2 !",
+      "contexte": "Tecky rapporte un poisson à Suzanne"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-12257aaf",
+      "personnage": "Suzanne",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Mon poisson ! Encore 1 !",
+      "affiche": "Mon poisson ! Encore 1 !",
+      "contexte": "Tecky rapporte un poisson à Suzanne"
+    },
+    {
+      "voix": "suzanne",
+      "fichier": "suzanne-a01d1b3f",
+      "personnage": "Suzanne",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Mes poissons !",
+      "affiche": "Mes poissons !",
+      "contexte": "Tecky rapporte un poisson à Suzanne"
+    },
+    {
+      "voix": "gull",
+      "fichier": "gull-ceaf8e63",
+      "personnage": "Les mouettes",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Kia-ha-ha !",
+      "affiche": "Kia-ha-ha !",
+      "contexte": "Une mouette nargue Tecky"
+    },
+    {
+      "voix": "gull",
+      "fichier": "gull-47212b81",
+      "personnage": "Les mouettes",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Kiaaa !",
+      "affiche": "Kiaaa !",
+      "contexte": "Une mouette lâche son poisson"
     }
   ]
 }

@@ -320,7 +320,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   plateau (depuis la cachette) au pied du phare, la nuit tombe et la lanterne s'allume avec les fenêtres. Voix : les cas de l'été
   sont produits par `tools/export_voix.js` (`DYNAMIC_SITES` = 23). Tests : `voyage.js` joue l'été du départ à
   la victoire. Pas encore fait : la tenue d'été d'Alice (elle garde ses chaussures rouges), une tong à un
-  pied, cinq des six quêtes.
+  pied.
   **Quêtes rejouées avec d'autres acteurs : les rôles** (13 novembre 2026). Chaque quête de la côte reprend une
   mécanique du printemps ; plutôt que de la recopier, la carte **distribue le rôle** à d'autres acteurs :
   `"roles": { rôle: acteur }` dans la carte (`carte.ROLES` : les acteurs permis ; `MAP.roles`, vide ailleurs).
@@ -385,9 +385,39 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   pas, glisse moins loin (`FLOAT`), penche quand elle file et ne quitte jamais la zone de baignade
   (`ballBlocked()` : `swimAt()`). Textes : mêmes clés sous `yvon` que sous `leon` (`lnTxt()`), sous `bouees` que
   sous `ballons` (`ballTxt()`). Badge « Mousse » (`bouees`). `check_placement.js` : jouets, bouées et parc
-  dans la zone de baignade. Test : `yvon.js`. Voix : `DYNAMIC_SITES` = 23, `DYNAMIC_POPS` = 4 (les bulles d'un
-  rôle sont jouées dans leurs deux distributions par `tools/export_voix.js`). Captures :
-  `reference/v2/lot6_quete_theo.png`, `lot6_quete_yvon.png` ; planche : `cote_theo_yvon.png`. Premier jet posé par
+  dans la zone de baignade. Test : `yvon.js`. Captures :
+  `reference/v2/lot6_quete_theo.png`, `lot6_quete_yvon.png` ; planche : `cote_theo_yvon.png`.
+  Sixième quête : **les mouettes voleuses de Suzanne** = la quête de Maman Piquette (`piq`, `babies`,
+  `talkPiquette()`… ; état et sauvegarde inchangés, mécanique nouvelle) avec `"piquette": "suzanne"`. Suzanne, la
+  poissonnière (`npcs._suzanne()` : chignon roux, fichu rouge à pois, anneaux d'or, marinière aux manches
+  retroussées, tablier ciré vert, bottes jaunes ; les poings sur les hanches), est à côté de son étal
+  (`stall_fish`), au village de pêcheurs, en zone calme. Trois mouettes rieuses (`mouettes.py` : cadre 32 x 32,
+  pattes en (16, 28), réduites de `SCALE` ; animations idle, walk, taunt, cry, fly ; sprites `gull/<anim>`,
+  famille à ombre ; `bec(anim)` → `MAP.gullBeak` : le bout du bec à chaque image) lui ont chipé trois poissons
+  (`mouettes.poisson_frames()` : maquereau, rouget, dorade ; sprite `plage/poisson`, `MAP.fishBase`). Sur une
+  carte qui a ce rôle (`gulls()`), chaque entrée de `babies` est **un poisson** (`b.mode` : `held` au bec,
+  `fall`, `ground`, `carried` dans la gueule de Tecky, `home` rendu — `babiesLeft()` marche donc tel quel) **et
+  sa mouette** (`b.g`, mode `perch`, `hop`, `away`, `gone`) : `newGull()`, `updateGull()`, `gullList()` (ce
+  qu'elle ajoute à la liste triée de `drawWorld()` ; une mouette en vol passe par-dessus tout). La mouette fait
+  quelques pas quand Tecky est loin, le nargue quand il est dans les parages (`gullLaugh()`, « Kia-ha-ha ! »,
+  `SFX.laugh`) et s'envole plus loin dès qu'il approche (`GULL.shy` ; `gullSpot()` : un sol libre où Tecky peut
+  aller à pied — `gullOpen()`, d'après `fieldTo()` depuis sa place —, loin de lui, à moins de `GULL.roam` de sa
+  place) ; **un aboiement dans le cône lui fait lâcher son poisson** (`scareGull()`, « Kiaaa ! », `SFX.squawk` ;
+  en vol au-dessus d'un toit ou de l'eau, il tombe là où elle allait se poser ; `SFX.flop`), elle file et
+  disparaît. Tecky prend le poisson en passant dessus (un seul objet dans la gueule : `fishCarried()`, ni deux
+  poissons ni un poisson et un jouet de Théo), le lâche s'il aboie, mord ou est KO (`dropToy()` appelle
+  `dropFish()`), le rend près de Suzanne (`fishHome()`). Tout marche avant de lui avoir parlé. Textes : mêmes
+  clés sous `suzanne` que sous `piquette` (`pqTxt()` ; une réplique de plus, `demande.3`), `mouette.rire` /
+  `.cri`, `suzanne.poisson.<i>`, `tecky.poisson`. Badge « Chasse-mouettes » (`mouettes`). Sauvegarde : la liste
+  `babies` (`gullState()` : un poisson au bec est à la place de sa mouette, un poisson porté est par terre aux
+  pieds de Tecky ; `gullRestore()`). `check_placement.js` : la place de chaque mouette est libre et atteignable.
+  Test : `suzanne.js`. Planche : `reference/v2/mouettes.png` ; dans le jeu : `reference/v2/lot6_quete_suzanne.png`.
+  **Voix** : `DYNAMIC_SITES` = 23, `DYNAMIC_POPS` = 31 — toute bulle dont le texte passe par un `xxTxt()` de
+  rôle compte comme calculée et doit être jouée par `tools/export_voix.js` dans ses deux distributions (avant,
+  elles laissaient dans la liste des lignes parasites : « tous », « salut »… et « But ! » n'y était pas).
+  **Éditeur de carte** : `carte.ACTEURS` (acteur → image et nom de ce qu'il tient ; `infos.acteurs`,
+  `ED.acteur()`, `ED.nom()`) : sur la côte, l'éditeur montre Anatole, Zoé, les coquillages, les mouettes… et
+  plus Gaston, Marcel, les lettres, les hérissons. Un nouvel acteur : l'y ajouter. Premier jet posé par
   `v2/cote_carte.py`, **gelé depuis** : Christophe retouche la carte dans l'éditeur, c'est
   `cartes/cote.json` qui fait foi (le script refuse d'écraser une carte qui existe ; ses listes ne sont plus
   à jour ; `python3 v2/cote_carte.py --apercu` redessine l'aperçu à partir du fichier). Rien ne dépend de

@@ -154,7 +154,7 @@
     } else if (out === 'poser') {
       p.append(h('h3', {}, 'Poser'));
       const sel = h('select', { on: { change: e => { O.poser.type = e.target.value; O.poser.genre = genres(O.poser.type)[0] || null; construirePalette(); } } },
-        POSABLES.map(t => h('option', { value: t, selected: O.poser.type === t }, ED.NOMS[t])));
+        POSABLES.map(t => h('option', { value: t, selected: O.poser.type === t }, ED.nom(t))));
       p.append(sel);
       const gs = genres(O.poser.type);
       if (gs.length) {
@@ -197,13 +197,13 @@
     }
     if (objs.length > 1) {
       const par = {};
-      for (const o of objs) par[ED.NOMS[o.type] || o.type] = (par[ED.NOMS[o.type] || o.type] || 0) + 1;
+      for (const o of objs) par[ED.nom(o.type) || o.type] = (par[ED.nom(o.type) || o.type] || 0) + 1;
       d.append(h('h2', {}, objs.length + ' éléments'), h('ul', { class: 'compte' }, Object.entries(par).map(([k, n]) => h('li', {}, n + ' × ' + k))),
         h('div', { class: 'ligne' }, h('button', { on: { click: O.dupliquer } }, 'Dupliquer'), h('button', { class: 'danger', on: { click: O.supprimer } }, 'Supprimer')));
       return;
     }
     const o = objs[0], c = ED.c, I = ED.I;
-    const titre = (ED.NOMS[o.type] || o.type) + (o.i !== undefined && O.LISTES[o.type] ? ' #' + o.i : '') + (o.type === 'tunnels' ? (o.bout ? ' (bout B)' : ' (bout A)') : '');
+    const titre = (ED.nom(o.type) || o.type) + (o.i !== undefined && O.LISTES[o.type] ? ' #' + o.i : '') + (o.type === 'tunnels' ? (o.bout ? ' (bout B)' : ' (bout A)') : '');
     d.append(h('h2', {}, titre));
     if (o.spr && ED.meta[ED.cle(o.spr, o.x, o.y)]) d.append(vignette(ED.cle(o.spr, o.x, o.y), o.frame, 64));
     if (I.indexees.includes(o.type)) d.append(h('p', { class: 'note' }, 'La sauvegarde retient cet élément par son numéro : en ajouter à la fin, ne pas en retirer au milieu.'));

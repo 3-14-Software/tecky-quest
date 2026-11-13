@@ -642,6 +642,18 @@ const SOUNDS = {
     }
   },
   squeak(k) { tone([1900 * k, 2700 * k, 2200 * k], 0.09, 'sine', 0.05, { a: 0.008 }); tone([3800 * k, 5200 * k], 0.06, 'sine', 0.01); },   // hérisson : « couic »
+  laugh(k) {                           // la mouette rieuse nargue Tecky : « kia-ha-ha-ha », des éclats brefs qui descendent
+    for (let i = 0; i < 5; i++)
+      cry([1250 * k, 1500 * k, (1150 - i * 45) * k], 0.1, 0.03 * (1 - i * 0.1), [[2100, 4, 1], [3400, 5, 0.5]], { at: i * 0.13, a: 0.012, h: 0.35 });
+  },
+  squawk(k) {                          // la mouette effrayée lâche son poisson : un cri rauque, d'un trait
+    cry([1500 * k, 1900 * k, 1100 * k], 0.34, 0.04, [[[1900, 2500, 1700], 3, 1], [3600, 5, 0.6]], { a: 0.01, h: 0.4, vib: [22, 60] });
+    noise(0.2, 0.012, [3000, 1800], { a: 0.01, q: 1.2 });
+  },
+  flop() {                             // un poisson qui tombe par terre : un « flop » mouillé
+    tone([190, 90], 0.11, 'sine', 0.09, { a: 0.004 }); noise(0.09, 0.05, [1400, 500], { a: 0.004, q: 0.9 });
+    noise(0.05, 0.02, 2600, { at: 0.07, a: 0.004, q: 1.5 });
+  },
   /* ---- l'ambiance (jouée par ambSound) */
   gull(k) {                            // une mouette : un long cri qui retombe, puis des « kia-kia-kia » de plus en plus bas
     const n = 2 + Math.floor(Math.random() * 3);
@@ -2200,8 +2212,8 @@ function resetWorld() {
   villagers = MAP.villagers.map(newVillager);
   if (ici('papa')) villagers.push(newVillager(['papa', MAP.papa[0], MAP.papa[1]]));     // (le papa d'Alice, au parking de la côte)
   train = newTrain();
-  piquette = Object.assign(newNpc('piquette', MAP.piquette, 1.3), { markY: BABY.markY });
-  babies = MAP.babies.map(newBaby); babySeq = 0;
+  piquette = Object.assign(newNpc('piquette', MAP.piquette, MAP.roles.piquette ? 1.25 : 1.3, MAP.roles.piquette), MAP.roles.piquette ? {} : { markY: BABY.markY });
+  babies = MAP.babies.map(gulls() ? newGull : newBaby); babySeq = 0;
   critters = MAP.critters.map(newCritter);
   ducks = MAP.ducks.map(newDuck); linkDucks();
   puddles = null; walkGrid = null; distField = null; trail = []; crumbs = []; followN = 0;
@@ -2263,6 +2275,7 @@ const WHO = {
   leon: { get name() { return txt('noms.leon'); }, portrait: 'hud/portrait_leon' },
   iris: { get name() { return txt('noms.iris'); }, portrait: 'hud/portrait_iris' },
   piquette: { get name() { return txt('noms.piquette'); }, portrait: 'hud/portrait_piquette' },
+  suzanne: { get name() { return txt('noms.suzanne'); }, portrait: 'hud/portrait_suzanne' },
   papa: { get name() { return txt('noms.papa'); }, portrait: 'hud/portrait_papa' },       // le papa d'Alice (l'été)
   hortense: { get name() { return txt('noms.hortense'); }, portrait: 'hud/portrait_hortense' },   // la dame au caniche (l'été)
   anatole: { get name() { return txt('noms.anatole'); }, portrait: 'hud/portrait_anatole' },      // le gardien du phare (l'été)
@@ -2281,7 +2294,7 @@ function say(lines, onEnd) {
 }
 /* Le babil d'une réplique : chaque personnage a sa voix (hauteur) ; Tecky et Iris, des chiens, font de petits
    « wouf » ; un texte d'information fait « tic ». Rien sur un espace ni un signe de ponctuation. */
-const VOICE = { tecky: 1.15, alice: 1.7, farmer: 0.8, postman: 1.05, neighbor: 1.35, leon: 0.95, iris: 0.8, piquette: 1.5, papa: 0.9, hortense: 1.25, anatole: 0.75, zoe: 1.75, theo: 1.0, yvon: 0.8 };
+const VOICE = { tecky: 1.15, alice: 1.7, farmer: 0.8, postman: 1.05, neighbor: 1.35, leon: 0.95, iris: 0.8, piquette: 1.5, papa: 0.9, hortense: 1.25, anatole: 0.75, zoe: 1.75, theo: 1.0, yvon: 0.8, suzanne: 1.25 };
 function talkSound(L, i) {
   const k = VOICE[L.who];
   if (!k) SFX.blip();
@@ -2425,8 +2438,9 @@ function doBark() {
     const dx = c.x - P.x, dy = c.y - P.y, l = Math.hypot(dx, dy);
     if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) scareCritter(c);
   }
-  for (const b of babies) {            // les bébés hérissons se roulent en boule
-    const dx = b.x - P.x, dy = b.y - P.y, l = Math.hypot(dx, dy);
+  for (const b of babies) {            // les bébés hérissons se roulent en boule ; une mouette lâche son poisson
+    const q = gulls() ? b.g : b, dx = q.x - P.x, dy = q.y - P.y, l = Math.hypot(dx, dy);
+    if (gulls()) { if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) scareGull(b); continue; }
     if (b.mode !== 'home' && l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) b.ballT = BABY.ball;
   }
   for (const b of balls) {             // les ballons de Léon roulent, plus fort de près
@@ -3573,6 +3587,7 @@ const toysLeft = () => toys.filter(t => !t.home).length;
 const carried = () => toys.find(t => t.carried);
 function newToy([x, y], i) { return { i, x, y, home: false, carried: false, t: Math.random() * 2, cd: 0 }; }
 function dropToy(word) {
+  if (dropFish(word)) return;            // (sur la côte, c'est peut-être un poisson de Suzanne qu'il tient)
   const t = carried();
   if (!t) return;
   t.carried = false; t.cd = IRIS.regrab;
@@ -3598,7 +3613,7 @@ function updateToys(dt) {
     else if (dist(P.x, P.y, iris.x, iris.y) < IRIS.give) giveToy(c);
     return;
   }
-  if (P.mode === 'ko' || P.alpha === 0) return;
+  if (P.mode === 'ko' || P.alpha === 0 || fishCarried()) return;     // (un seul objet dans la gueule)
   for (const t of toys) {
     if (t.home || t.cd > 0 || dist(P.x, P.y, t.x, t.y) > IRIS.pick) continue;
     t.carried = true;
@@ -3737,8 +3752,8 @@ function babyHome(b) {
 function piquetteCall() {
   const left = babiesLeft(), k = piquette.got;
   piquette.got = 0; piquette.callT = 0;
-  npcShout(piquette, left ? txt('piquette.arrive', { n: k, reste: left })
-    : piq.state === 'asked' ? txt('piquette.tous') : txt('piquette.petits'));
+  npcShout(piquette, left ? pqTxt('arrive', { n: k, reste: left })
+    : piq.state === 'asked' ? pqTxt('tous') : pqTxt('petits'));
 }
 function updateBaby(b, dt) {
   const dP = dist(b.x, b.y, P.x, P.y);
@@ -3776,16 +3791,16 @@ function drawBaby(b) {
 }
 function piquetteMark() { return piq.state === 'done' ? -1 : piq.state === 'asked' && babiesLeft() ? 1 : 0; }
 function piquetteGreet() {
-  if (babies.some(b => b.mode === 'follow')) return;      // ses petits arrivent : piquetteCall() parle
-  if (piq.state === 'new') npcShout(piquette, txt('piquette.cherche'));
+  if (babies.some(b => b.mode === 'follow' || b.mode === 'carried')) return;      // ses petits arrivent (ou un poisson) : piquetteCall() parle
+  if (piq.state === 'new') npcShout(piquette, pqTxt('cherche'));
   else if (piq.state === 'asked') {
     const n = babiesLeft();
-    npcShout(piquette, !n ? txt('piquette.tous') : txt('piquette.encore', { n }));
-  } else { npcShout(piquette, txt('piquette.bonjour')); piquette.waveT = 1.5; }
+    npcShout(piquette, !n ? pqTxt('tous') : pqTxt('encore', { n }));
+  } else { npcShout(piquette, pqTxt('bonjour')); piquette.waveT = 1.5; }
 }
 const piquetteThanks = () => [
-  { who: 'piquette', face: 2, text: txt('piquette.merci.0') },
-  { who: 'piquette', face: 0, text: txt('piquette.merci.1') },
+  { who: piquette.look, face: 2, text: pqTxt('merci.0') },
+  { who: piquette.look, face: 0, text: pqTxt('merci.1') },
 ];
 function finishPiquette() {
   piq.state = 'done'; score += 150;
@@ -3797,21 +3812,203 @@ function finishPiquette() {
 function talkPiquette() {
   if (piq.state === 'done') {
     piquette.waveT = 2;
-    say([{ who: 'piquette', face: 2, text: txt('piquette.apres') }]);
+    say([{ who: piquette.look, face: 2, text: pqTxt('apres') }]);
     return;
   }
   if (!babiesLeft()) { piq.state = 'asked'; say(piquetteThanks(), finishPiquette); return; }
   if (piq.state === 'asked') {
     const n = babiesLeft();
-    say([{ who: 'piquette', face: 3, text: txt('piquette.rappel', { n }) }]);
+    say([{ who: piquette.look, face: 3, text: pqTxt('rappel', { n }) }]);
     return;
   }
   piq.state = 'asked';
   say([
-    { who: 'piquette', face: 3, text: txt('piquette.demande.0') },
-    { who: 'piquette', face: 0, text: txt('piquette.demande.1') },
-    { who: 'tecky', face: 2, text: txt('piquette.demande.2') },
-  ], saveGame);
+    { who: piquette.look, face: 3, text: pqTxt('demande.0') },
+    { who: piquette.look, face: 0, text: pqTxt('demande.1') },
+    { who: 'tecky', face: 2, text: pqTxt('demande.2') },
+  ].concat(gulls() ? [{ who: piquette.look, face: 0, text: pqTxt('demande.3') }] : []), saveGame);
+}
+
+/* ------------------------------------------------------------------ les mouettes voleuses de Suzanne */
+/* La même quête se rejoue sur la côte de l'été avec d'autres acteurs (MAP.roles.piquette) : Suzanne, la poissonnière
+   du village de pêcheurs (look « suzanne »), s'est fait chiper trois poissons par des mouettes rieuses (mouettes.py ;
+   MAP.babies : où chacune se tient). Chaque entrée de babies est alors un poisson (b.mode : held dans le bec de sa
+   mouette, fall il tombe, ground par terre, carried dans la gueule de Tecky, home rendu) et sa mouette (b.g : perch
+   posée — elle fait quelques pas de temps en temps —, hop elle change de place, away elle file sans son poisson, gone partie). Une mouette nargue Tecky
+   (« Kia-ha-ha ! ») et s'envole un peu plus loin dès qu'il approche (GULL.shy ; gullSpot : un endroit où Tecky peut
+   aller à pied, jamais trop loin de sa place) ; un aboiement dans le cône lui fait lâcher son poisson, qui tombe
+   par terre (en vol au-dessus d'un toit ou de l'eau : là où elle allait se poser). Tecky le prend dans sa gueule en
+   passant dessus (un seul objet à la fois : ni deux poissons, ni un poisson et un jouet de Théo), le lâche s'il
+   aboie, mord ou est KO, et le rend en arrivant près de Suzanne. Tout marche aussi avant de lui avoir parlé.
+   Textes : mêmes clés sous « suzanne » que sous « piquette » (pqTxt). Sauvegardé (piq, babies). */
+const GULL = { shy: 150, safe: 240, hop: [230, 340], roam: 430, spd: 330, alt: 64, hear: 380, taunt: [3.5, 7], laugh: 1.1,
+  stroll: [2.5, 6], step: 70, walk: 46, flee: 300, climb: 150, start: 0.3, beak: 30, grav: 900, pick: 54, give: 120, perFish: 20, regrab: 1.2, fishSc: 0.5,
+  slots: [[-58, 16], [58, 18], [-34, 32]] };
+const gulls = () => !!MAP.roles.piquette;
+const pqTxt = (k, p) => piquette.look === 'suzanne' ? txt('suzanne.' + k, p) : txt('piquette.' + k, p);
+const fishCarried = () => gulls() ? babies.find(b => b.mode === 'carried') : undefined;
+const fishName = i => txt('suzanne.poisson.' + i);
+function newGull([x, y], i) {
+  return { i, x, y, hx: x, hy: y, mode: 'held', t: Math.random() * 2, cd: 0, up: 0, up0: 1, vy: 0, sx: x, sy: y, slot: 0,
+    g: { x, y, h: 0, mode: 'perch', anim: 'idle', t: Math.random() * 2, dir: i % 2 ? 'left' : 'right', tauntT: rnd(GULL.taunt),
+      laughT: 0, fx: x, fy: y, tx: x, ty: y, k: 0, len: 1, vx: 0, vy: 0, startT: 0, strollT: rnd(GULL.stroll), wx: null, wy: 0 } };
+}
+function gullAnim(g, a) { if (g.anim !== a) { g.anim = a; g.t = 0; } }
+function gullLaugh(g) {
+  g.laughT = GULL.laugh; g.tauntT = rnd(GULL.taunt);
+  addWordPop(txt('mouette.rire'), g.x, g.y - g.h - 56, 'gull'); SFX.laugh(0.9 + Math.random() * 0.25, g);
+}
+// un sol libre où Tecky peut aller à pied (depuis la place de la mouette, que check_placement.js sait atteignable)
+function gullOpen(b, x, y) {
+  const d = fieldTo(b.hx, b.hy), { W, H } = walkGrid, i = Math.floor(x / GRID), j = Math.floor(y / GRID);
+  return i >= 1 && j >= 1 && i < W - 1 && j < H - 1 && d[j * W + i] >= 0 && !blockedFeet(x, y, 14);
+}
+// où se poser : un endroit où Tecky peut aller à pied, loin de lui, pas trop loin de la place de la mouette
+function gullSpot(b) {
+  const g = b.g, ok = [], away = [];
+  for (let k = 0; k < 48; k++) {
+    const a = Math.random() * Math.PI * 2, r = rnd(GULL.hop), x = g.x + Math.cos(a) * r, y = g.y + Math.sin(a) * r * 0.8;
+    if (!gullOpen(b, x, y)) continue;
+    if (dist(x, y, b.hx, b.hy) > GULL.roam || dist(x, y, P.x, P.y) < GULL.safe) continue;
+    ok.push([x, y]);
+    if ((x - g.x) * (g.x - P.x) + (y - g.y) * (g.y - P.y) > 0) away.push([x, y]);
+  }
+  const c = away.length ? away : ok;
+  return c.length ? c[Math.floor(Math.random() * c.length)] : null;
+}
+function gullHop(g, x, y) {
+  Object.assign(g, { mode: 'hop', fx: g.x, fy: g.y, tx: x, ty: y, k: 0, len: Math.max(1, dist(g.x, g.y, x, y)), laughT: 0 });
+  g.dir = x < g.x ? 'left' : 'right';
+  SFX.flap(1.3, g);
+}
+// un aboiement : elle lâche son poisson et file
+function scareGull(b) {
+  const g = b.g;
+  if (b.mode !== 'held' || g.mode === 'gone') return;
+  const [x, y] = g.mode === 'hop' && !gullOpen(b, g.x, g.y) ? [g.tx, g.ty] : [g.x, g.y];     // (au-dessus d'un toit ou de l'eau : là où elle allait)
+  Object.assign(b, { mode: 'fall', sx: g.x, sy: g.y, x, y, up: g.h + GULL.beak, up0: g.h + GULL.beak, vy: 0 });
+  const l = Math.max(1, dist(g.x, g.y, P.x, P.y)), ux = (g.x - P.x) / l, uy = (g.y - P.y) / l;
+  Object.assign(g, { mode: 'away', vx: ux * GULL.flee, vy: (uy * 0.6 - 0.5) * GULL.flee, startT: g.h > 0 ? 0 : GULL.start, laughT: 0 });
+  g.dir = ux < 0 ? 'left' : 'right';
+  pops = pops.filter(o => !(o.word && o.who === 'gull' && dist(o.x, o.y, g.x, g.y - g.h - 56) < 30));
+  addWordPop(txt('mouette.cri'), g.x, g.y - g.h - 56, 'gull'); SFX.squawk(0.9 + Math.random() * 0.2, g);
+}
+function dropFish(word) {
+  const b = fishCarried();
+  if (!b) return false;
+  b.mode = 'ground'; b.cd = GULL.regrab;
+  b.x = P.x + MOUTH[P.dir][0] * 0.8; b.y = P.y + (P.dir === 'up' ? -28 : P.dir === 'down' ? 26 : 6);
+  if (blockedFeet(b.x, b.y, 8)) { b.x = P.x; b.y = P.y; }
+  if (word) addWordPop(word, P.x, P.y - 120, 'tecky');
+  return true;
+}
+function fishHome(b) {
+  const [sx, sy] = GULL.slots[babies.filter(o => o.mode === 'home').length];
+  b.mode = 'home'; b.x = piquette.x + sx; b.y = piquette.y + sy;
+  score += GULL.perFish;
+  addPop('+' + GULL.perFish, piquette.x - 20, piquette.y - 120);
+  piquette.cheerT = 2.5; piquette.got = (piquette.got || 0) + 1; piquette.callT = 0.01;
+  saveGame();
+}
+function updateGull(b, dt) {
+  const g = b.g, dP = dist(g.x, g.y, P.x, P.y), there = P.mode !== 'ko' && P.alpha !== 0;
+  b.t += dt; g.t += dt; b.cd = Math.max(0, b.cd - dt);
+  switch (g.mode) {                       // la mouette
+    case 'perch':
+      if (dP < GULL.hear + 60 && g.laughT <= 0) g.dir = P.x < g.x ? 'left' : 'right';
+      g.laughT = Math.max(0, g.laughT - dt);
+      if (g.laughT > 0 || (there && dP < GULL.hear)) g.wx = null;       // (Tecky est là : elle ne le quitte plus des yeux)
+      else if (g.wx !== null) {                                         // elle fait quelques pas
+        const l = dist(g.x, g.y, g.wx, g.wy), st = GULL.walk * dt;
+        if (l <= st) { g.x = g.wx; g.y = g.wy; g.wx = null; g.strollT = rnd(GULL.stroll); }
+        else { g.x += (g.wx - g.x) / l * st; g.y += (g.wy - g.y) / l * st; g.dir = g.wx < g.x ? 'left' : 'right'; }
+      } else if ((g.strollT -= dt) <= 0) {
+        const a = Math.random() * Math.PI * 2, x = g.x + Math.cos(a) * GULL.step, y = g.y + Math.sin(a) * GULL.step * 0.6;
+        if (gullOpen(b, x, y) && gullOpen(b, (g.x + x) / 2, (g.y + y) / 2) && dist(x, y, b.hx, b.hy) < GULL.roam * 0.5) { g.wx = x; g.wy = y; }
+        else g.strollT = 0.5;
+      }
+      gullAnim(g, g.laughT > 0 ? 'taunt' : g.wx !== null ? 'walk' : 'idle');
+      if (there && dP < GULL.shy) {
+        const s = gullSpot(b);
+        if (s) gullHop(g, s[0], s[1]); else if (g.laughT <= 0) gullLaugh(g);
+      } else if (there && dP < GULL.hear && (g.tauntT -= dt) <= 0) gullLaugh(g);
+      break;
+    case 'hop': {                         // elle change de place, son poisson au bec
+      g.k = Math.min(1, g.k + dt * GULL.spd / g.len);
+      const e = g.k * g.k * (3 - 2 * g.k);
+      g.x = g.fx + (g.tx - g.fx) * e; g.y = g.fy + (g.ty - g.fy) * e; g.h = Math.sin(g.k * Math.PI) * GULL.alt;
+      gullAnim(g, 'fly');
+      if (g.k >= 1) { g.mode = 'perch'; g.h = 0; g.dir = P.x < g.x ? 'left' : 'right'; gullLaugh(g); }
+      break;
+    }
+    case 'away':                          // elle file, le bec vide
+      if (g.startT > 0) { g.startT -= dt; gullAnim(g, 'cry'); break; }
+      gullAnim(g, 'fly');
+      g.x += g.vx * dt; g.y += g.vy * dt; g.h += GULL.climb * dt;
+      if (g.h > 520 || dP > 1100) g.mode = 'gone';
+      break;
+  }
+  switch (b.mode) {                       // le poisson
+    case 'held': b.x = g.x; b.y = g.y; break;
+    case 'fall':
+      b.vy += GULL.grav * dt; b.up -= b.vy * dt;
+      if (b.up <= 0) { b.up = 0; b.mode = 'ground'; b.cd = 0.25; b.t = 0; SFX.flop(1, b); for (let k = 0; k < 3; k++) addDust(b.x + (Math.random() - 0.5) * 20, b.y - 2, (Math.random() - 0.5) * 70, -10 - Math.random() * 16, 5 + Math.random() * 3); }
+      break;
+    case 'carried':
+      if (P.mode === 'ko') dropFish();
+      else if (dist(P.x, P.y, piquette.x, piquette.y) < GULL.give) fishHome(b);
+      break;
+    case 'ground':
+      if (there && !P.swim && b.cd <= 0 && !carried() && !fishCarried() && dist(P.x, P.y, b.x, b.y) < GULL.pick) {
+        b.mode = 'carried';
+        addWordPop(piq.state === 'new' ? txt('tecky.poisson') : fishName(b.i), P.x, P.y - 120, 'tecky');
+        SFX.pick();
+      }
+      break;
+  }
+}
+// ce qui se sauvegarde d'un poisson : [x, y, mode, rang chez Suzanne] (dans le bec : la place de sa mouette)
+function gullState(b) {
+  const g = b.g;
+  if (b.mode === 'held') return [r1(g.mode === 'hop' ? g.tx : g.x), r1(g.mode === 'hop' ? g.ty : g.y), 'held', 0];
+  if (b.mode === 'carried') return [r1(P.x), r1(P.y), 'ground', 0];
+  return [r1(b.x), r1(b.y), b.mode === 'fall' ? 'ground' : b.mode, 0];
+}
+function gullRestore(b) {
+  b.up = 0; b.cd = 0;
+  if (b.mode === 'held') Object.assign(b.g, { x: b.x, y: b.y, h: 0, mode: 'perch', laughT: 0 });
+  else b.g.mode = 'gone';
+}
+function drawGullBird(b) {
+  const g = b.g, f = Math.floor(g.t * MAP.gullFps[g.anim]) % MAP.gullBeak[g.anim].length, s = g.dir === 'left' ? -1 : 1;
+  if (b.mode === 'held') {                // le poisson, en travers du bec (dessiné avant elle : le bec passe par-dessus)
+    const [bx, by] = MAP.gullBeak[g.anim][f];
+    drawSpr('plage/poisson', b.i, g.x + s * (bx + 3), g.y - g.h + by + 3, { sc: GULL.fishSc, flip: s < 0, angle: s * 0.5, lift: g.h - by });
+  }
+  drawSpr('gull/' + g.anim, f, g.x, g.y - g.h, { flip: s < 0, lift: g.h });
+}
+function drawFish(b) {
+  if (b.mode === 'carried') {
+    if (P.alpha === 0) return;
+    const [mx, my] = MOUTH[P.dir];
+    drawSpr('plage/poisson', b.i, P.x + mx, P.y + my, { sc: POSED.sc, flip: P.dir === 'left', lift: -my });
+    return;
+  }
+  if (b.mode === 'fall') {
+    const k = 1 - b.up / b.up0;
+    drawPosed('plage/poisson', b.i, b.sx + (b.x - b.sx) * k, b.sy + (b.y - b.sy) * k, MAP.fishBase[b.i], -1, b.up);
+    return;
+  }
+  drawPosed('plage/poisson', b.i, b.x, b.y, MAP.fishBase[b.i], b.mode === 'home' ? -1 : b.t);
+}
+function gullList(list, vis) {
+  for (const b of babies) {
+    const g = b.g;
+    if (g.mode !== 'gone' && vis(g.x, g.y - g.h, 90)) list.push({ y: g.h > 0 ? g.y + 400 : g.y, draw: () => drawGullBird(b) });   // (en vol : par-dessus tout)
+    if (b.mode === 'held') continue;
+    const y = b.mode === 'carried' ? P.y + (P.dir === 'up' ? -0.5 : 0.5) : b.y;
+    if (vis(b.mode === 'carried' ? P.x : b.x, y, 80)) list.push({ y, draw: () => drawFish(b) });
+  }
 }
 
 /* ------------------------------------------------------------------ Titine, le petit train du port */
@@ -4698,7 +4895,7 @@ function mapState() {
     balls: balls.map(b => [r1(b.x), r1(b.y), b.inNet ? 1 : 0]),
     toys: toys.map(t => t.carried ? [r1(P.x), r1(P.y), 0] : [r1(t.x), r1(t.y), t.home ? 1 : 0]),
     train: train.scored ? 1 : 0,
-    babies: babies.map(b => [r1(b.x), r1(b.y), b.mode === 'follow' ? 'wait' : b.mode, b.slot]),
+    babies: gulls() ? babies.map(gullState) : babies.map(b => [r1(b.x), r1(b.y), b.mode === 'follow' ? 'wait' : b.mode, b.slot]),
   };
 }
 function applyMapState(s) {
@@ -4713,6 +4910,7 @@ function applyMapState(s) {
   (s.balls || []).forEach((q, i) => { const b = balls[i]; if (b && q) { b.x = q[0]; b.y = q[1]; b.inNet = !!q[2]; } });
   train.scored = !!s.train;
   (s.babies || []).forEach((q, i) => { const b = babies[i]; if (b && q) { b.x = q[0]; b.y = q[1]; b.mode = q[2]; b.slot = q[3] || 0; } });
+  if (gulls()) babies.forEach(gullRestore);
   (s.toys || []).forEach((q, i) => { const t = toys[i]; if (t && q) { t.x = q[0]; t.y = q[1]; t.home = !!q[2]; } });
   if (s.cat) { pompon.x = s.cat[0]; pompon.y = s.cat[1]; pompon.mode = s.cat[2] === 'follow' ? 'wait' : s.cat[2]; }
   questHens().forEach((h, i) => { const q = (s.hens || [])[i]; if (q) { h.x = h.hx = q[0]; h.y = h.hy = q[1]; h.penned = !!q[2]; } });
@@ -4975,7 +5173,7 @@ function checkBadges() {
   if (fete.state === 'done') unlockBadge(MAP.roles.leon ? 'bouees' : 'ballons');         // (les ballons de Léon, ou les bouées d'Yvon)
   if (jouets.state === 'done') unlockBadge(MAP.roles.iris ? 'nageur' : 'iris');          // (les jouets d'Iris, ou ceux de Théo)
   if (train.scored) unlockBadge('train');
-  if (piq.state === 'done') unlockBadge('herissons');
+  if (piq.state === 'done') unlockBadge(MAP.roles.piquette ? 'mouettes' : 'herissons');     // (les petits de Maman Piquette, ou les poissons de Suzanne)
   if (monde && critters.every(c => c.scored)) unlockBadge('betes');
   if (monde && ducks.filter(d => !d.lead).every(d => d.scored)) unlockBadge('canards');
   if (monde && seenCells.reduce((a, v) => a + v, 0) >= seenCells.length * 0.95) unlockBadge('explorateur');
@@ -6050,7 +6248,7 @@ function update(dt) {
       for (const b of balls) updateBall(b, dt);
       updateToys(dt);
       updateTrain(dt);
-      for (const b of babies) updateBaby(b, dt);
+      for (const b of babies) if (gulls()) updateGull(b, dt); else updateBaby(b, dt);
       if (piquette.callT > 0 && (piquette.callT -= dt) <= 0) piquetteCall();
       for (const c of critters) updateCritter(c, dt);
       for (const d of ducks) updateDuck(d, dt);
@@ -6133,7 +6331,8 @@ function drawWorld() {
     ? { y: l.y + POSED.ground, draw: () => drawPosed('item/shell', l.i, l.x, l.y + POSED.ground, MAP.shellBase[l.i], l.wait > 0 ? -1 : l.t, l.up) }
     : { y: l.y + POSED.ground, draw: () => drawPosed('item/letter', Math.floor(l.t * 6), l.x, l.y + POSED.ground, MAP.itemBase.letter, l.t + l.x * 0.013) });
   if (vis(pompon.x, pompon.y, 60)) list.push({ y: pompon.y, draw: drawPompon });
-  for (const b of babies) if (vis(b.x, b.y, 60)) list.push({ y: b.y, draw: () => drawBaby(b) });
+  if (gulls()) gullList(list, vis);
+  else for (const b of babies) if (vis(b.x, b.y, 60)) list.push({ y: b.y, draw: () => drawBaby(b) });
   for (const b of balls) if (vis(b.x, b.y, 80)) list.push({ y: b.y, draw: () => drawBall(b) });
   if (trainEast() > cx - 100 && trainWest() < cx + VW + 100 && vis(train.x, trainY(), 200))
     list.push({ y: trainY() + TRAIN.ground, draw: drawTrain });
@@ -6364,7 +6563,8 @@ function hudCounters() {
   if (rose.state === 'asked') c.push(['icone/' + pompon.kind, 46, 58, 1, pompon.mode === 'lost' ? 0 : 1, 1]);
   if (fete.state === 'asked') c.push([floats() ? 'mer/casier' : 'port/balloon', 42, 35, 0.8, balls.length - ballsLeft(), balls.length]);
   if (jouets.state === 'asked') c.push([toyKey(), 42, 35, 0.8, toys.length - toysLeft(), toys.length]);
-  if (piq.state === 'asked') c.push(['icone/hedgehog', 44, 58, 1, babies.length - babiesLeft(), babies.length]);
+  if (piq.state === 'asked') c.push(gulls() ? ['plage/poisson', 46, 35, 0.8, babies.length - babiesLeft(), babies.length]
+    : ['icone/hedgehog', 44, 58, 1, babies.length - babiesLeft(), babies.length]);
   return c;
 }
 function drawHUD() {

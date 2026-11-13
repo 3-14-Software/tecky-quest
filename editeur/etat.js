@@ -121,8 +121,14 @@
   const TOY_NAMES = ['poulet', 'anneau', 'corde'];
 
   // clé d'atlas d'un élément (carte.SPRITES)
+  // un rôle que la carte distribue autrement (carte.ROLES, carte.ACTEURS) : [image, nom] de ce que tient l'acteur
+  ED.acteur = type => {
+    for (const a of Object.values((ED.c && ED.c.roles) || {})) { const v = ((ED.I.acteurs || {})[a] || {})[type]; if (v) return v; }
+    return null;
+  };
+  ED.nom = type => (ED.acteur(type) || [])[1] || ED.NOMS[type];
   ED.sprite = (type, genre, i) => {
-    const s = ED.I.sprites[type];
+    const s = (ED.acteur(type) || [])[0] || ED.I.sprites[type];
     if (Array.isArray(s)) return [s[0], i || 0];
     return [s.replace('{}', genre), 0];
   };

@@ -42,7 +42,7 @@ from spritelib import Drawing, circle, ellipse, rect, path, poly, leg, line, OUT
 W, H = 48, 64
 G = 60.0                      # ligne des pieds
 HK = 1.08                     # agrandissement de la tête (style chibi), autour du menton — comme Gaston
-KINDS = ("postman", "neighbor", "leon", "iris", "piquette", "papa", "hortense", "anatole", "zoe", "theo", "yvon")
+KINDS = ("postman", "neighbor", "leon", "iris", "piquette", "papa", "hortense", "anatole", "zoe", "theo", "yvon", "suzanne")
 FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-côté conseillé
     "postman": (24, 18.5, 15.5),      # casquette, visage, moustache et menton (comme Gaston)
     "neighbor": (24, 21.5, 15.5),     # chignon, lunettes, menton (elle est plus petite : tout est 3 unités plus bas)
@@ -55,10 +55,11 @@ FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-
     "zoe": (24, 26.6, 15.2),          # Zoé, la petite fille au château de sable : couettes, frange, sourire
     "theo": (24, 18.8, 15.2),         # Théo, le maître-nageur : mèches blondes, lunettes de soleil relevées, sifflet
     "yvon": (24, 18.2, 15.6),         # Yvon, le pêcheur : bonnet rouge, barbe grise
+    "suzanne": (24, 18.0, 15.8),      # Suzanne, la poissonnière : chignon roux, fichu rouge à pois, anneaux d'or
 }
 PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6", "leon": "#FDE3C2", "iris": "#DDE9F6", "piquette": "#F6E3EC",
                "papa": "#F7E6C8", "hortense": "#D9F0F2", "anatole": "#FBEFC4", "zoe": "#FCE6B8",
-               "theo": "#CFEFF2", "yvon": "#DCE6F2"}   # fond du médaillon (Gaston : "#CFE8B0")
+               "theo": "#CFEFF2", "yvon": "#DCE6F2", "suzanne": "#DDF0E4"}   # fond du médaillon (Gaston : "#CFE8B0")
 
 PAL = {
     "postman": dict(skin="#F5C8A6", skin_dk="#E2A986", nose="#EA9C82", blush="#F28A8A",
@@ -125,6 +126,15 @@ PAL = {
                  bib="#F2C230", bib_dk="#C9981C", bib_lt="#FBE07A", buckle="#E6EBF0",
                  boot="#3F4A3A", boot_lt="#6A785F",
                  eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#9ED8F5"),
+    # Suzanne, la poissonnière du village de pêcheurs (la côte de l'été) : chignon roux sous un fichu rouge à pois,
+    # anneaux d'or, marinière aux manches retroussées, grand tablier ciré vert, bottes jaunes
+    "suzanne": dict(skin="#F6CFB2", skin_dk="#E2AC8C", nose="#EC9F86", blush="#F28A8A", bras="#F6CFB2",
+                    hair="#C8642C", hair_dk="#9A4619", hair_lt="#E8915A",
+                    scarf="#D7392F", scarf_dk="#A82820", dot="#FFFFFF", gold="#F2C14E",
+                    top="#FFFDF6", top_dk="#D9D3C4", stripe="#2E4470",
+                    apron="#3E9A72", apron_dk="#2C7656", apron_lt="#7CCBA4", strap="#2C7656",
+                    pants="#2E4470", boot="#F2C230", boot_dk="#C9981C", boot_lt="#FBE48A",
+                    eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#9ED8F5"),
     "leon": dict(skin="#E9B892", skin_dk="#D39A72", nose="#DD8F74", blush="#F08A7E",
                  hair="#5A3A22", hair_dk="#3E2615",
                  helmet="#F6C83E", helmet_dk="#D9A520", helmet_lt="#FFE07A",
@@ -607,6 +617,94 @@ def _yvon(p):
     _nez(d, c, X, V, 2.7, 1.8, 1.4)
     if p["sweat"]:
         _sweat(d, c, X, V)
+    return d
+
+
+def _suzanne(p):
+    """Suzanne, la poissonnière : ronde et souriante, chignon roux sous un fichu rouge à pois noué sur la tête, anneaux
+    d'or, marinière aux manches retroussées, grand tablier ciré vert à bavette, bottes jaunes."""
+    c = dict(PAL["suzanne"], sleeve=PAL["suzanne"]["top"], cuff=PAL["suzanne"]["top_dk"])
+    d = Drawing(W, H)
+    L = p["lift"]
+    Y = lambda v: v + p["bob"] - L
+    T = lambda v: v - L
+    _shadow(d, L, 11.0)
+    # bottes jaunes : le pied, la tige, un reflet
+    for x, s in ((20.4, -1), (27.6, 1)):
+        d.add(ellipse(x + s * 0.7, T(G - 1.8), 3.8, 2.1), c["boot"])
+        d.add(ellipse(x + s * 0.7 - 1.2, T(G - 2.7), 1.2, 0.55), c["boot_lt"], sil=False, opacity=0.9)
+    for x in (20.4, 27.6):
+        d.add(leg(x, Y(50), x, T(57.0), 5.4), c["boot"])
+        d.raw(line(f"M{x - 2.5:.2f},{T(53.4):.2f} L{x + 2.5:.2f},{T(53.4):.2f}", c["boot_dk"], 0.7))
+    # marinière : épaules et ventre ronds, rayures bleu marine
+    torso = rect(14.2, Y(28.6), 19.6, 16.4, 4.8)
+    belly = ellipse(24, Y(39.4), 10.2 + p["breath"], 6.8)
+    d.add(torso, c["top"])
+    d.add(belly, c["top"])
+    d.clip("suzanne", [torso, belly])
+    d.raw('<g clip-path="url(#suzanne)">' + line(" ".join(f"M8,{Y(y):.2f} L40,{Y(y):.2f}" for y in (31.4, 33.8, 36.2, 38.6, 41.0, 43.4)),
+                                                 c["stripe"], 0.9) + "</g>")
+    d.add(ellipse(24, Y(28.8), 4.6, 2.0), c["skin"], sil=False, clip="suzanne")               # l'encolure bateau
+    d.raw('<g clip-path="url(#suzanne)">' + line(f"M19.4,{Y(29.4):.2f} Q24,{Y(31.6):.2f} 28.6,{Y(29.4):.2f}", c["stripe"], 0.7) + "</g>")
+    # le tablier ciré : une jupe évasée jusqu'aux bottes, une bavette, deux bretelles, une grande poche
+    skirt = path(f"M14.6,{Y(40.6):.2f} L33.4,{Y(40.6):.2f} L35.2,{T(53.8):.2f} Q24,{T(55.8):.2f} 12.8,{T(53.8):.2f} Z")
+    d.add(skirt, c["apron"])
+    d.clip("tablier", [skirt])
+    d.raw('<g clip-path="url(#tablier)">' + line(f"M11,{T(52.6):.2f} Q24,{T(54.6):.2f} 37,{T(52.6):.2f}", c["apron_dk"], 1.1) + "</g>")
+    d.add(ellipse(18.2, Y(46.4), 1.5, 4.2, f"rotate(8 18.2 {Y(46.4):.2f})"), c["apron_lt"], sil=False, opacity=0.55)
+    d.add(rect(17.6, Y(32.6), 12.8, 9.2, 1.4), c["apron"], sil=False, edge=True)             # la bavette
+    for x in (18.6, 29.4):
+        d.add(rect(x - 1.1, Y(28.4), 2.2, 5.0, 0.5), c["strap"], sil=False, clip="suzanne")
+    d.raw(line(f"M13.6,{Y(41.0):.2f} L34.4,{Y(41.0):.2f}", c["apron_dk"], 1.2))               # le lien de la taille
+    d.add(rect(20.2, Y(44.2), 7.6, 4.8, 1.0), c["apron_lt"], sil=False, edge=True)           # la poche
+    d.add(ellipse(19.6, Y(34.4), 1.0, 0.5), c["apron_lt"], sil=False, opacity=0.8)
+
+    def rest(s, sx):                              # les poings sur les hanches
+        (ex, ey), tgt = _ik(sx, Y(31.2), 24 + s * 9.6, Y(41.4), 6.2, 6.0, s, -0.9)
+        return (ex, ey), tgt, False
+    hy, X, V = _head_frame(Y, p)
+    _arms(d, c, p, 14.8, 33.2, Y(31.2), rest, head=(X, V))
+    k = HK
+    # chignon roux, noué haut, derrière le fichu
+    d.add(circle(24, V(-12.2), 3.6 * k), c["hair"])
+    d.raw(line(f"M{X(21.8):.2f},{V(-13.4):.2f} Q24,{V(-15.0):.2f} {X(26.4):.2f},{V(-13.2):.2f}", c["hair_dk"], 0.6))
+    for x in (14.5, 33.5):
+        d.add(circle(X(x), V(1.5), 2.0 * k), c["skin"])
+        d.add(circle(X(x), V(1.5), 0.9 * k), c["skin_dk"], sil=False)
+    d.add(ellipse(24, hy, 9.7 * k, 9.1 * k), c["skin"])
+    for x in (14.2, 33.8):                                                                    # anneaux d'or
+        d.raw(f'<circle cx="{X(x):.2f}" cy="{V(4.6):.2f}" r="1.05" fill="none" stroke="{OUTLINE}" stroke-width="1.4"/>'
+              f'<circle cx="{X(x):.2f}" cy="{V(4.6):.2f}" r="1.05" fill="none" stroke="{c["gold"]}" stroke-width="0.8"/>')
+    # cheveux : une raie sur le côté, deux mèches qui encadrent le front
+    hair = path(f"M{X(14.6):.2f},{V(1.0):.2f} Q{X(13.2):.2f},{V(-9.4):.2f} 24,{V(-10.0):.2f} "
+                f"Q{X(34.8):.2f},{V(-9.4):.2f} {X(33.4):.2f},{V(1.0):.2f} "
+                f"Q{X(32.8):.2f},{V(-3.0):.2f} {X(30.2):.2f},{V(-4.4):.2f} Q{X(26.0):.2f},{V(-4.6):.2f} {X(21.4):.2f},{V(-7.0):.2f} "
+                f"Q{X(20.0):.2f},{V(-4.2):.2f} {X(16.8):.2f},{V(-3.4):.2f} Q{X(15.2):.2f},{V(-2.4):.2f} {X(14.6):.2f},{V(1.0):.2f} Z")
+    d.add(hair, c["hair"])
+    d.raw(line(f"M{X(21.4):.2f},{V(-7.0):.2f} Q{X(26.6):.2f},{V(-7.4):.2f} {X(31.8):.2f},{V(-4.6):.2f}", c["hair_dk"], 0.6))
+    # le fichu : un bandeau rouge à pois, noué au-dessus du front (deux pointes)
+    band = path(f"M{X(14.0):.2f},{V(-5.2):.2f} Q24,{V(-10.4):.2f} {X(34.0):.2f},{V(-5.2):.2f} L{X(33.6):.2f},{V(-8.6):.2f} "
+                f"Q24,{V(-13.6):.2f} {X(14.4):.2f},{V(-8.6):.2f} Z")
+    d.add(band, c["scarf"])
+    d.clip("fichu", [band])
+    for x, y in ((17.0, -8.0), (20.6, -9.6), (27.6, -9.6), (31.0, -8.0)):
+        d.add(circle(X(x), V(y), 0.75), c["dot"], sil=False, clip="fichu")
+    for s in (-1, 1):
+        d.add(ellipse(X(24 + s * 2.3), V(-12.0), 2.3 * k, 1.25 * k, f"rotate({s * -32} {X(24 + s * 2.3):.2f} {V(-12.0):.2f})"), c["scarf"])
+    d.add(circle(24, V(-10.6), 1.35 * k), c["scarf_dk"], sil=False, edge=True)
+    _eyes(d, c, p, X, V, 1.2, 1.5)
+    _brows(d, p, X, V, c["hair_dk"], 1.2)
+    _blush(d, c, X, V, 3.4)
+    _mouth(d, c, p, X, V, 5.6, 1.0)
+    _nez(d, c, X, V, 2.7, 1.3, 1.05, 0)
+    if p["sweat"]:
+        _sweat(d, c, X, V)
+    if p["cheeks"]:   # les mains, posées sur les joues, passent devant le visage
+        for s in (-1, 1):
+            hx, hy_ = X(24 + s * 8.0), V(4.0)
+            _sticker(d, [(ellipse(hx, hy_, 2.2, 2.6, f"rotate({-s * 12} {hx:.2f} {hy_:.2f})"), c["skin"])], 1.0)
+            d.raw(line(f"M{hx - s * 0.9:.2f},{hy_ - 1.8:.2f} L{hx - s * 0.9:.2f},{hy_ - 0.6:.2f} "
+                       f"M{hx + s * 0.5:.2f},{hy_ - 2.0:.2f} L{hx + s * 0.5:.2f},{hy_ - 0.8:.2f}", c["skin_dk"], 0.55))
     return d
 
 
@@ -1222,7 +1320,7 @@ def _zoe(p):
 # ================================================================== animations
 _DRAW = {"postman": _postman, "neighbor": _neighbor, "leon": _leon, "iris": _iris, "piquette": _piquette, "papa": _papa,
          "hortense": lambda p: _neighbor(p, "hortense"), "anatole": lambda p: _postman(p, "anatole"), "zoe": _zoe,
-         "theo": _theo, "yvon": _yvon}
+         "theo": _theo, "yvon": _yvon, "suzanne": _suzanne}
 
 _WAVE = [P(wave=1, wave_a=-28, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2),
          P(wave=1, wave_a=4, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2)]
@@ -1289,6 +1387,7 @@ ANIMS["anatole"] = ANIMS["postman"]          # (mêmes gestes que Marcel)
 ANIMS["hortense"] = ANIMS["neighbor"]        # (mêmes gestes que Mamie Rose : elle s'inquiète, les mains aux joues)
 ANIMS["theo"] = ANIMS["leon"]                # (Théo s'inquiète pour ses jouets partis au large, Yvon pour ses bouées)
 ANIMS["yvon"] = ANIMS["leon"]
+ANIMS["suzanne"] = ANIMS["neighbor"]         # (Suzanne s'inquiète pour ses poissons, les mains aux joues)
 ANIMS["zoe"] = {                             # Zoé : une enfant, elle sautille plus haut quand elle est contente
     "idle": (_IDLE, 5, True), "talk": (_TALK, 8, True), "wave": (_WAVE, 8, True),
     "cheer": ([P(cheer=0.6, happy=True, bob=0.4), P(cheer=1, happy=True, lift=2.6),

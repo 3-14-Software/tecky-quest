@@ -27,7 +27,8 @@
     "anatole": "Anatole",
     "zoe": "Zoé",
     "theo": "Théo",
-    "yvon": "Yvon"
+    "yvon": "Yvon",
+    "suzanne": "Suzanne"
   },
   "intro": {
     "partie": "Ouaf ! Alice est partie jouer… et elle n'est pas rentrée !",
@@ -74,7 +75,8 @@
     "large": "Pas plus loin que les bouées : c'est trop profond !",
     "os_dore_bulle": "Os doré !",
     "os_dore": "Wouf ! Un os doré était enterré ! ({n} / {total})",
-    "praline": "Te voilà, Praline ! Viens, on retourne voir ta maîtresse."
+    "praline": "Te voilà, Praline ! Viens, on retourne voir ta maîtresse.",
+    "poisson": "Un poisson ?"
   },
   "doberman": {
     "peur": "Même pas peur !"
@@ -500,7 +502,11 @@
       "tactile": "Touche les flèches pour changer d’épisode, ailleurs pour revenir",
       "touches": "[leftright] pour changer d’épisode · [back] pour revenir"
     },
-    "titre": "Badges : {n} / {total}"
+    "titre": "Badges : {n} / {total}",
+    "mouettes": {
+      "nom": "Chasse-mouettes",
+      "but": "Reprendre aux mouettes les trois poissons de Suzanne."
+    }
   },
   "options": {
     "music": {
@@ -821,5 +827,43 @@
       "one": "Plus qu'un ! Aboie derrière lui pour le pousser vers la barrière ouverte, au sud de l'enclos.",
       "other": "Il en reste {n} dehors ! Aboie derrière eux pour les pousser vers la barrière ouverte, au sud de l'enclos."
     }
+  },
+  "suzanne": {
+    "tous": "Mes trois poissons ! Viens me voir !",
+    "petits": "Mes poissons !",
+    "cherche": "Ah, ces mouettes ! Voleuses !",
+    "bonjour": "Bonjour, Tecky !",
+    "merci": [
+      "Le maquereau, le rouget et la dorade ! Tu es le meilleur chasse-mouettes de toute la côte, Tecky.",
+      "Tiens, un bel os pour toi. Et si tu vois encore ces chipies tourner autour de mon étal, aboie un bon coup !"
+    ],
+    "apres": "Depuis que tu es passé, les mouettes n'osent plus approcher de mon étal. Merci encore, Tecky !",
+    "demande": [
+      "Bonjour, petit chien ! Je suis Suzanne, la poissonnière. Ces chipies de mouettes m'ont volé trois beaux poissons sur l'étal !",
+      "Elles se sont posées dans le village et sur le port, le poisson au bec. Et elles s'envolent dès qu'on approche, en se moquant de moi !",
+      "Ouaf ! Des voleuses ? Attendez un peu, mes cocottes !",
+      "Aboie-leur dessus, de loin : elles lâcheront prise. Puis rapporte-moi mes poissons un par un, dans ta gueule."
+    ],
+    "poisson": [
+      "Le maquereau !",
+      "Le rouget !",
+      "La dorade !"
+    ],
+    "encore": {
+      "one": "Encore {n} poisson !",
+      "other": "Encore {n} poissons !"
+    },
+    "arrive": {
+      "one": "Mon poisson ! Encore {reste} !",
+      "other": "Mes poissons ! Encore {reste} !"
+    },
+    "rappel": {
+      "one": "Plus qu'un ! Sa mouette n'est pas loin. N'approche pas trop, elle s'envolerait : aboie de loin, elle lâchera prise !",
+      "other": "Il m'en manque encore {n}. Les mouettes ne sont pas loin. N'approche pas trop, elles s'envoleraient : aboie de loin, elles lâcheront prise !"
+    }
+  },
+  "mouette": {
+    "rire": "Kia-ha-ha !",
+    "cri": "Kiaaa !"
   }
 }

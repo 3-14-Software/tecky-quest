@@ -94,7 +94,8 @@ setTimeout(() => {
     if (seaToys()) { for (const t of toys) if (!swimAt(t.x, t.y) || deepAt(t.x, t.y)) out.push('jouet hors de la zone de baignade ' + tile(t.x, t.y)); }
     else for (const t of toys) if (waterAt(t.x, t.y) || !reachable(t.x, t.y, IRIS.pick)) out.push('jouet ' + tile(t.x, t.y));
     if (ici('piquette') && !reachable(piquette.x, piquette.y, 150)) out.push('Maman Piquette ' + tile(piquette.x, piquette.y));
-    for (const b of babies) if (!standable(b.x, b.y) || !reachable(b.x, b.y, BABY.find)) out.push('bébé hérisson ' + tile(b.x, b.y));
+    // (sur la côte : les mouettes de Suzanne — leur poisson tombe là où elles se tiennent)
+    for (const b of babies) if (!standable(b.x, b.y) || !reachable(b.x, b.y, gulls() ? GULL.pick : BABY.find)) out.push((gulls() ? 'mouette ' : 'bébé hérisson ') + tile(b.x, b.y));
     for (const l of letters) if (waterAt(l.x, l.y + 20) || !reachable(l.x, l.y + 20, 52)) out.push('lettre ' + tile(l.x, l.y));
     if (ici('pompon') && (!standable(pompon.x, pompon.y) || !reachable(pompon.x, pompon.y, 120))) out.push('Pompon ' + tile(pompon.x, pompon.y));
     // terriers : les deux bouts praticables et atteignables à pied (le terrier est un raccourci, pas un passage obligé)
@@ -114,7 +115,7 @@ setTimeout(() => {
     for (const l of letters) A.push(l.shell ? ['coquillage', 'coquillage', l.x, l.y + 6, REACH.dig] : ['lettre', 'lettre', l.x, l.y + 20, POST.pick]);     // (un coquillage enfoui se gratte)
     if (ici('pompon')) A.push(['chat', 'Pompon', pompon.x, pompon.y, CAT.find]);
     for (const t of toys) A.push(['jouet', 'jouet', t.x, t.y, IRIS.pick]);
-    for (const b of babies) A.push(['hérisson', 'hérisson', b.x, b.y, BABY.find]);
+    if (!gulls()) for (const b of babies) A.push(['hérisson', 'hérisson', b.x, b.y, BABY.find]);     // (une mouette ne se touche pas : on lui aboie dessus)
     for (let i = 0; i < A.length; i++) for (let j = i + 1; j < A.length; j++) {
       const a = A[i], b = A[j];
       if (a[0] === b[0] && a[0] !== 'personnage') continue;

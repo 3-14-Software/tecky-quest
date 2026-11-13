@@ -6,7 +6,7 @@ function main() {
   run('EPISODES[1].chantier = false; audioOn(); STORE.mem = {}; loadBadges(); episode = "ete"; newGame("balade", true);'); advanceDialog();
   run('cars = []; dogs = []; P.inv = 99; var T = MAP.ts; function va(x, y) { P.x = x; P.y = y; P.mode = "free"; for (const k in held) held[k] = false; syncSwim(true); }');
   ok(run('MAP.roles.leon') === 'yvon' && run('leon.kind') === 'leon' && run('leon.look') === 'yvon' && run('floats()') && run('balls.length') === 5
-     && run('balls.every(b => swimAt(b.x, b.y) && !ballBlocked(b, b.x, b.y) && !b.inNet)') && run('npcList().length') === 5,
+     && run('balls.every(b => swimAt(b.x, b.y) && !ballBlocked(b, b.x, b.y) && !b.inNet)') && run('npcList().length') === 6,
      'sur la côte, le rôle de Léon est tenu par Yvon ; ses cinq bouées flottent dans la zone de baignade');
   ok(['yvon/idle', 'yvon/talk', 'yvon/wave', 'yvon/cheer', 'yvon/worry', 'hud/portrait_yvon', 'mer/casier', 'decor/buoy_pen'].every(k => run(`!!ATLAS[${JSON.stringify(k)}]`))
      && run('ATLAS["mer/casier"].f.length') === 5 && run('WHO.yvon.name') === 'Yvon' && run('calmAt(leon.x, leon.y)') && run('sandAt(leon.x, leon.y)')
@@ -42,8 +42,8 @@ function main() {
   ok(run('dialog.lines[0].text') === run('txt("yvon.merci.0")'), 'il remercie : « ' + run('dialog.lines[0].text') + ' »');
   advanceDialog(); run('checkBadges();');
   ok(run('fete.state') === 'done' && run('score') === run('sc0 + LEON.reward') && run('items.length') === run('n0 + 1') && run('!!badges.bouees && !badges.ballons')
-     && run('questsHere().length') === 5,
-     'quête finie : des points, un os, le badge « ' + run('badgeName("bouees")') + ' » ; la côte a cinq quêtes');
+     && run('questsHere().length') === 6,
+     'quête finie : des points, un os, le badge « ' + run('badgeName("bouees")') + ' » ; la côte a six quêtes');
   // au printemps, rien ne change
   run('episode = "printemps"; newGame("balade", true);'); advanceDialog();
   ok(run('!floats()') && run('leon.look') === 'leon' && run('decor.some(d => d.n === "goal_net")') && run('balls.every(b => !waterAt(b.x, b.y))'), 'dans le monde : Léon, ses ballons et son filet, comme avant');

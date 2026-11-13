@@ -106,7 +106,7 @@ def infos():
         "overlays": [n for n, _ in tiles.OVERLAYS], "overlayRow": tiles.OVERLAY_ROW,
         "compositeBase": tiles.COMPOSITE_BASE, "fullVariants": pack_web.FULL_VARIANTS,
         "grassVariants": pack_web.GRASS_VARIANTS, "ts": pack_web.TS, "lisiere": pack_web.lisiere.RING,
-        "genres": carte.genres(), "sprites": carte.SPRITES, "tailles": carte.TAILLES, "indexees": carte.INDEXEES,
+        "genres": carte.genres(), "sprites": carte.SPRITES, "acteurs": carte.ACTEURS, "tailles": carte.TAILLES, "indexees": carte.INDEXEES,
         "indices": carte.INDICES, "musiques": carte.MUSIQUES, "decorsDeduits": carte.DECORS_DEDUITS,
         # décors redessinés (nature, bâtiments, mobilier) : nom du décor -> ses modèles et leur tirage (MAP.variants)
         "variants": {n: [noms, tirage] for n, (noms, tirage) in pack_web.nature.VARIANTES.items()},

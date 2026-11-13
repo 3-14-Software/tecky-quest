@@ -44,11 +44,13 @@ const VOICES = {
   zoe: ['Zoé', 'la petite fille au château de sable, six ans : voix d’enfant, vive et rieuse'],
   theo: ['Théo', 'le maître-nageur de la plage : jeune, sportif, voix claire et enjouée'],
   yvon: ['Yvon', 'le pêcheur : vieux loup de mer, voix grave et bourrue, bon cœur'],
+  suzanne: ['Suzanne', 'la poissonnière du village de pêcheurs : voix forte et gaie, gouailleuse, le cœur sur la main'],
+  gull: ['Les mouettes', 'mouettes rieuses : cris moqueurs (« Kia-ha-ha ! »), cri d’effroi (« Kiaaa ! »)'],
 };
 // répliques dont le texte est calculé (pas une chaîne écrite en dur) : chacune doit être produite ci-dessous ; si ce
 // nombre change, une réplique calculée a été ajoutée ou retirée dans game.js : adapter ce fichier
 const DYNAMIC_SITES = 23;
-const DYNAMIC_POPS = 4;          // de même pour les bulles (texte calculé : comptes, noms des jouets, mot passé à dropToy ; celles d'un rôle, irTxt(), lnTxt()…, sont jouées plus bas dans leurs deux distributions)
+const DYNAMIC_POPS = 31;         // de même pour les bulles (texte calculé : comptes, noms des jouets, mot passé à dropToy, et toutes celles d'un rôle — nbTxt(), irTxt(), pqTxt()… —, jouées plus bas dans leurs deux distributions)
 const NPC_VARS = { farmer: 'farmer', postman: 'postman', neighbor: 'neighbor', leon: 'leon', iris: 'iris', piquette: 'piquette' };
 // répliques relevées dans le code (écrites en dur, dites en cours de route) : contexte selon la fonction qui les dit
 const WHERE = { doBark: 'Premier aboiement sur le doberman', updatePompon: 'Tecky retrouve Pompon',
@@ -57,7 +59,7 @@ const WHERE = { doBark: 'Premier aboiement sur le doberman', updatePompon: 'Teck
 const WHERE_POP = { doBark: 'Tecky aboie', updatePompon: 'Pompon', updateDog: 'Les chiens du coin',
   updateCritter: 'Écureuils et chats', scareDuck: 'Les canards s’envolent', updateTrain: 'Titine s’arrête devant Tecky',
   barkAtTrain: 'Tecky aboie vers Titine', updateVehicle: 'Une voiture bouscule Tecky', startSniff: 'Tecky flaire la piste',
-  layTrail: 'Tecky flaire (pas de piste par ici)', updateItems: 'Tecky ramasse un objet', checkGoal: 'Un ballon entre dans le filet',
+  layTrail: 'Tecky flaire (pas de piste par ici)', gullLaugh: 'Une mouette nargue Tecky', scareGull: 'Une mouette lâche son poisson', updateItems: 'Tecky ramasse un objet', checkGoal: 'Un ballon entre dans le filet',
   cowMoo: 'Une vache meugle (Tecky est dans le pré)', scareCow: 'Tecky aboie vers une vache',
   edgeBump: 'Tecky pousse contre le bord de la carte' };
 // expression du portrait (face) : le ton à donner. 4 à 6 : les visages de Tecky (FACE dans game.js)
@@ -171,7 +173,7 @@ function main() {
   for (let n = 5; n >= 0; n--) ask('Yvon : Tecky arrive', `fete.state = "asked"; balls.forEach((b, i) => b.inNet = i >= ${n}); leonGreet();`);
   ask('Yvon : Tecky arrive', 'fete.state = "done"; leonGreet();');
   for (const st of ['new', 'asked'])
-    ask('Une bouée entre dans le parc', `fete.state = "${st}"; balls.forEach(b => { b.inNet = false; b.x = MAP.goal[0]; b.y = MAP.goal[1] - 20; checkGoal(b); });`);
+    ask('Une bouée entre dans le parc', `fete.state = "${st}"; balls.forEach(b => b.inNet = false); balls.forEach(b => { b.x = MAP.goal[0]; b.y = MAP.goal[1] - 20; checkGoal(b); });`);
   ask('Théo : demande', 'jouets.state = "new"; toys.forEach(t => t.home = false); talkIris();');
   for (let n = 3; n >= 1; n--)
     ask('Théo : rappel', `jouets.state = "asked"; toys.forEach((t, i) => t.home = i >= ${n}); talkIris();`);
@@ -213,7 +215,7 @@ function main() {
         ' questHens().forEach(h => { h.x = (R[0] + R[2]) / 2; h.y = (R[1] + R[3]) / 2; keepHen(h); });');
     ask('Tecky ramasse une lettre', `post.state = "${st}"; letters.forEach(l => l.got = false); P.mode = "free";` +
         ' letters.forEach(l => { P.x = l.x; P.y = l.y + 20; updateLetters(0); });');
-    ask('Un ballon entre dans le filet', `fete.state = "${st}"; balls.forEach(b => { b.inNet = false; b.x = MAP.goal[0]; b.y = MAP.goal[1] - 20; checkGoal(b); });`);
+    ask('Un ballon entre dans le filet', `fete.state = "${st}"; balls.forEach(b => b.inNet = false); balls.forEach(b => { b.x = MAP.goal[0]; b.y = MAP.goal[1] - 20; checkGoal(b); });`);
     ask('Tecky prend un jouet d’Iris', `jouets.state = "${st}"; toys.forEach(t => { t.home = t.carried = false; t.cd = 0; });` +
         ' toys.forEach(t => { P.x = t.x; P.y = t.y; updateToys(0); const c = carried(); if (c) c.carried = false; t.cd = 9; });');
     ask('Un petit hérisson rejoint sa maman', `piq.state = "${st}"; babies.forEach(b => b.mode = "hidden"); babies.forEach(b => { babyHome(b); piquetteCall(); });`);
@@ -226,6 +228,21 @@ function main() {
     ask('Maman Piquette : rappel', `piq.state = "asked"; babies.forEach((b, i) => b.mode = i >= ${n} ? "home" : "hidden"); talkPiquette();`);
   ask('Maman Piquette : merci', 'babies.forEach(b => b.mode = "home"); talkPiquette();');
   ask('Maman Piquette : après la quête', 'piq.state = "done"; talkPiquette();');
+  // (la même quête sur la côte de l'été : Suzanne, la poissonnière, et les mouettes qui lui ont chipé trois poissons)
+  run('piquette.look = "suzanne"; MAP.roles = { piquette: "suzanne" }; babies = MAP.babies.map(newGull); piq.state = "new";');
+  const fish = n => `babies.forEach((b, i) => { b.mode = i >= ${n} ? "home" : "held"; });`;
+  ask('Suzanne : demande', 'piq.state = "new"; talkPiquette();');
+  for (let n = 3; n >= 1; n--) ask('Suzanne : rappel', `piq.state = "asked"; ${fish(n)} talkPiquette();`);
+  ask('Suzanne : merci', `${fish(0)} talkPiquette();`);
+  ask('Suzanne : après la quête', 'piq.state = "done"; talkPiquette();');
+  ask('Suzanne : Tecky arrive', `piq.state = "new"; ${fish(3)} piquetteGreet();`);
+  for (let n = 3; n >= 0; n--) ask('Suzanne : Tecky arrive', `piq.state = "asked"; ${fish(n)} piquetteGreet();`);
+  ask('Suzanne : Tecky arrive', 'piq.state = "done"; piquetteGreet();');
+  for (const st of ['new', 'asked']) {
+    ask('Tecky rapporte un poisson à Suzanne', `piq.state = "${st}"; ${fish(3)} babies.forEach(b => { fishHome(b); piquetteCall(); });`);
+    ask('Tecky prend un poisson', `piq.state = "${st}"; babies.forEach(b => addWordPop(piq.state === "new" ? txt("tecky.poisson") : fishName(b.i), 0, 0, "tecky"));`);
+  }
+  run('piquette.look = "piquette"; MAP.roles = {}; babies = MAP.babies.map(newBaby); piq.state = "new"; piquette.got = 0; piquette.callT = 0;');
   for (const k of ['baker', 'vendor', 'florist', 'kid'])
     for (let i = 0; i < 2; i++)
       ask(`${VOICES[k][0]} salue Tecky qui passe`, `var V = villagers.find(v => v.kind === "${k}"); V.near = false; V.cd = 0; V.i = ${i};` +
@@ -281,7 +298,7 @@ function main() {
     const a = args(src.slice(mm.index + mm[0].length, mm.index + 400));
     const [textArg, whoList] = mm[1] === 'npcShout' ? [a[1], [NPC_VARS[a[0]]]] : [a[0], a[3] ? lits(a[3]).length ? lits(a[3]) : [] : []];
     if (!whoList.length || !whoList[0]) continue;                      // personne ne le dit (« ! » du chien de berger)
-    if (/[+`]|^\w+$|\[|\b(txt\w*|toyName)\(/.test(textArg.replace(/'(?:[^'\\]|\\.)*'/g, "''"))) {          // calculé
+    if (/[+`]|^\w+$|\[|\b(txt\w*|\w+Txt|toyName|fishName)\(/.test(textArg.replace(/'(?:[^'\\]|\\.)*'/g, "''"))) {          // calculé
       pops++;
       if (process.argv.includes('--sites')) console.log('bulle calculée, ligne', src.slice(0, mm.index).split('\n').length);
       continue;

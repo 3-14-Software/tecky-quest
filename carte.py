@@ -56,7 +56,18 @@ ORDRE = ["format", "annexe", "w", "h", "legende", "terrain", "details", "decor",
 # acteurs. Sur la côte, le rôle de Mamie Rose (neighbor) est tenu par Madame Hortense, celui de Pompon par Praline,
 # son caniche. { rôle : les acteurs permis }
 ROLES = {"neighbor": ("hortense",), "pompon": ("poodle",), "farmer": ("anatole",), "postman": ("zoe",),
-         "iris": ("theo",), "leon": ("yvon",)}
+         "iris": ("theo",), "leon": ("yvon",), "piquette": ("suzanne",)}
+# Ce que l'éditeur de carte montre pour un acteur : { acteur : { élément de la carte : (image de l'atlas, nom) } }
+# (comme SPRITES ; sans cela, il montrerait Gaston à la place d'Anatole, des hérissons à la place des mouettes)
+ACTEURS = {
+    "hortense": {"neighbor": ("hortense/idle", "Madame Hortense")},
+    "poodle": {"pompon": ("poodle/idle", "Praline, son caniche")},
+    "anatole": {"farmer": ("anatole/idle", "Anatole, le gardien du phare")},
+    "zoe": {"postman": ("zoe/idle", "Zoé et son château de sable"), "letters": (["item/shell"], "Coquillage de Zoé")},
+    "theo": {"iris": ("theo/idle", "Théo, le maître-nageur"), "toys": (["plage/jouet"], "Jouet de plage de Théo")},
+    "yvon": {"leon": ("yvon/idle", "Yvon, le pêcheur"), "balls": (["mer/casier"], "Bouée d’Yvon"), "goal": ("decor/buoy_pen", "Parc à bouées")},
+    "suzanne": {"piquette": ("suzanne/idle", "Suzanne, la poissonnière"), "babies": ("gull/idle", "Mouette voleuse")},
+}
 
 # listes de taille fixe : « cinq lettres » et « cinq ballons » dans les dialogues (une couleur par ballon,
 # port.BALL_COLORS), les jouets d'Iris (port.TOYS : poulet, anneau, corde, dans cet ordre), les places des petits

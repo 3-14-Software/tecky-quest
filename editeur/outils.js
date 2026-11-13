@@ -282,13 +282,13 @@
     if (!objs.length) return;
     const refus = objs.find(o => !(LISTES[o.type] || o.type === 'zoneRect') || (o.type === 'items' && ED.I.indices.includes(o.genre)));
     if (refus) {
-      msg(FIXES.includes(refus.type) ? `${ED.NOMS[refus.type]} : il en faut exactement ${ED.I.tailles[refus.type]}, on peut seulement les déplacer.`
-        : refus.indice ? 'Un indice d’Alice ne se supprime pas : déplace-le.' : `« ${ED.NOMS[refus.type] || refus.type} » ne se supprime pas : déplace-le.`);
+      msg(FIXES.includes(refus.type) ? `${ED.nom(refus.type)} : il en faut exactement ${ED.I.tailles[refus.type]}, on peut seulement les déplacer.`
+        : refus.indice ? 'Un indice d’Alice ne se supprime pas : déplace-le.' : `« ${ED.nom(refus.type) || refus.type} » ne se supprime pas : déplace-le.`);
       return;
     }
     // listes indexées par la sauvegarde : retirer au milieu décale les numéros des suivants
     const milieu = objs.filter(o => ED.I.indexees.includes(o.type) && o.i < LISTES[o.type](ED.c).length - objs.filter(p => p.type === o.type).length);
-    if (milieu.length && !confirm('Supprimer au milieu de la liste « ' + ED.NOMS[milieu[0].type] + ' » décale les numéros des suivants : '
+    if (milieu.length && !confirm('Supprimer au milieu de la liste « ' + ED.nom(milieu[0].type) + ' » décale les numéros des suivants : '
       + 'une partie sauvegardée en cours les retrouverait mélangés (sinon, augmenter SAVE_V dans game.js). Supprimer quand même ?')) return;
     for (const o of objs.filter(o => o.type === 'zoneRect')) {
       if (ED.c.zones[o.i].rects.length - objs.filter(p => p.type === 'zoneRect' && p.i === o.i).length < 1) { msg('Une zone garde au moins un rectangle.'); return; }

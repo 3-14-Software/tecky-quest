@@ -42,6 +42,7 @@ import hud
 import items
 import lisiere
 import moutons
+import mouettes
 import tecky2
 import vehicles
 import music
@@ -327,6 +328,9 @@ def build_jeu():
         "wild": {n: list(v) for n, v in nature.SOUS_BOIS.items()},      # détail du sous-bois -> [première image, nombre]
         "crops": len(nature.CULTURES),
         "babyFps": {a: fps for a, (_, fps, _) in herissons.ANIMS.items()},
+        # les mouettes voleuses (mouettes.py) : cadences, et le bout du bec à chaque image, en px à partir des pattes
+        "gullFps": {a: fps for a, (_, fps, _) in mouettes.ANIMS.items()},
+        "gullBeak": {a: [[round(x * S, 1), round(y * S, 1)] for x, y in mouettes.bec(a)] for a in mouettes.ANIMS},
         "npcFps": dict({"farmer": {a: v[1] for a, v in farmer.ANIMS.items()}},
                        **{k: {a: v[1] for a, v in npcs.ANIMS[k].items()} for k in npcs.KINDS}),
         "rest": {a: [fps, loop] for a, (_, fps, _, loop) in tecky2.REST_ANIMS.items()},
@@ -347,7 +351,7 @@ def build_jeu():
         "variants": {n: [noms, tirage] for n, (noms, tirage) in nature.VARIANTES.items()},
         # ombres portées : le décalage d'un point par unité de hauteur, et la ligne de contact de chaque sprite
         "shadow": list(nature.OMBRE), "sols": sols(),
-        "itemBase": bases()[0], "toyBase": bases()[1], "shellBase": shell_bases(), "beachToyBase": beach_toy_bases(),   # objets posés au sol : le bas de leur dessin
+        "itemBase": bases()[0], "toyBase": bases()[1], "shellBase": shell_bases(), "beachToyBase": beach_toy_bases(), "fishBase": fish_bases(),   # objets posés au sol : le bas de leur dessin
         "cast": portees(),                            # familles de sprites à ombre portée (personnages, bêtes, véhicules)
         "perches": {**batiments.perchoirs(S), **mobilier.perchoirs(S)},   # où un chat se réfugie : toits, conteneurs
         # décors agrandis (bâtiments, camion, tracteur, chariot) : leur obstacle (FOOT) grandit d'autant
@@ -366,7 +370,7 @@ def sans_ovale(svg):
 def portees():
     """Familles de sprites qui ont une ombre portée dans le jeu (le début de leur clé dans l'atlas)."""
     return (["tecky", "alice", "alice1", "farmer", "hedgehog", "vehicle", "item", "port", "plage"] + list(chiens2.CHIENS) + list(npcs.KINDS)
-            + list(villageois.KINDS) + list(critters.KINDS) + list(cows.KINDS) + list(hens.COLORS) + ["sheep"])
+            + list(villageois.KINDS) + list(critters.KINDS) + list(cows.KINDS) + list(hens.COLORS) + ["sheep", "gull"])
 
 
 def beach_toy_bases():
@@ -374,6 +378,13 @@ def beach_toy_bases():
     import numpy as np
     m = PAD * S
     return [nature.assise(np.asarray(render_svg(sv, 32, 32, S, PAD).getchannel("A")) > 128) - (16 * S + m) for sv in plage.beach_toy_frames()]
+
+
+def fish_bases():
+    """Les poissons de Suzanne (mouettes.py), posés au sol comme les objets : le bas de chaque dessin (voir bases())."""
+    import numpy as np
+    m = PAD * S
+    return [nature.assise(np.asarray(render_svg(sv, 32, 32, S, PAD).getchannel("A")) > 128) - (16 * S + m) for sv in mouettes.poisson_frames()]
 
 
 def icone(svg, ancien, nouveau):
@@ -494,6 +505,9 @@ def collect(r=1):
         for anim in hens.ANIMS:
             out.append((f"{kind}/{anim}/right", [render_svg(sans_ovale(s), 32, 32, R, PAD) for s in hens.frames(kind, anim)],
                         (16 * S + M, 28 * S + M), True))
+    for anim in mouettes.ANIMS:                         # les mouettes voleuses : de profil vers la droite, pattes en (16, 28)
+        out.append((f"gull/{anim}", [render_svg(sans_ovale(sv), 32, 32, R, PAD) for sv in mouettes.frames(anim)], (16 * S + M, mouettes.G * S + M), True))
+    out.append(("plage/poisson", [render_svg(sv, 32, 32, R, PAD) for sv in mouettes.poisson_frames()], (16 * S + M, 16 * S + M), True))
     for anim in moutons.ANIMS:                          # les moutons d'Anatole : des poules en plus gros (cadre 48 x 40)
         out.append((f"sheep/{anim}/right", [render_svg(sans_ovale(s), moutons.W, moutons.H, R, PAD) for s in moutons.frames(anim)],
                     (24 * S + M, moutons.G * S + M), True))

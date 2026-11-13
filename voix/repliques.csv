@@ -45,6 +45,7 @@ tecky-9d3a7c0c;Tecky;dialogue;;joyeux;Ouaf ! À l'abordage !;Yvon : demande
 tecky-e90979af;Tecky;dialogue;;inquiet;Ouaf ! Comme un poisson ! Enfin… comme un teckel.;Théo : demande
 tecky-8f6d9274;Tecky;dialogue;;joyeux;Ouaf ! Tecky, chien sauveteur, à la rescousse !;Théo : demande
 tecky-348e99e9;Tecky;dialogue;;joyeux;Ouaf ! Moi aussi, je cherche quelqu'un qui joue à cache-cache !;Maman Piquette : demande
+tecky-abea3508;Tecky;dialogue;;joyeux;Ouaf ! Des voleuses ? Attendez un peu, mes cocottes !;Suzanne : demande
 tecky-75b457ab;Tecky;dialogue;;;(La mer ? Je ne l'ai jamais vue… Wouf ! J'arrive !);Le départ en voiture (été)
 tecky-3e444da6;Tecky;dialogue;;;(Un, deux, trois… dix ! Prête ou pas, me voilà !);L’arrivée au parking (été)
 tecky-9232cc10;Tecky;dialogue;;joyeux;Ouaf ! Ouaf ouaf !;"Retrouvailles avec Alice ; Retrouvailles avec Alice (été)"
@@ -71,12 +72,14 @@ tecky-29ee3f0a;Tecky;bulle;;;Le poulet d’Iris !;Tecky prend un jouet d’Iris
 tecky-616f5b09;Tecky;bulle;;;L’anneau d’Iris !;Tecky prend un jouet d’Iris
 tecky-c2ae0d44;Tecky;bulle;;;La corde d’Iris !;Tecky prend un jouet d’Iris
 tecky-cefff293;Tecky;bulle;;;Oups !;Tecky aboie avec un jouet dans la gueule
+tecky-e7794f3c;Tecky;bulle;;;Un poisson ?;Tecky prend un poisson
+tecky-59dc766d;Tecky;bulle;;;Le maquereau !;Tecky prend un poisson
+tecky-700fb3ab;Tecky;bulle;;;Le rouget !;Tecky prend un poisson
+tecky-9fa2959a;Tecky;bulle;;;La dorade !;Tecky prend un poisson
 tecky-35f2c78d;Tecky;bulle;;;Plouf ! Elle est bonne !;dans syncSwim()
 tecky-8ef8d480;Tecky;bulle;;;Le tunnel, c’est pour les voitures !;Tecky pousse contre le bord de la carte
 tecky-439ced13;Tecky;bulle;;;Alice n’a pas pu aller si loin !;Tecky pousse contre le bord de la carte
 tecky-8afd030a;Tecky;bulle;;;Ouf !;Une voiture bouscule Tecky
-tecky-34375e0e;Tecky;bulle;;;premiere;dans updateLetters()
-tecky-d9fbbbe1;Tecky;bulle;;;trouvee;dans updateLetters()
 tecky-ea351913;Tecky;bulle;;;Snif snif…;Tecky flaire la piste
 tecky-eb42144d;Tecky;bulle;;;Hmm…;Tecky flaire (pas de piste par ici)
 tecky-8ebed277;Tecky;bulle;;;Pas plus loin que les bouées : c'est trop profond !;dans swimStroke()
@@ -118,14 +121,12 @@ info-84a34e45;Narrateur;dialogue;;;Les Planches : la promenade du bord de mer. L
 info-b9d1bdb6;Narrateur;dialogue;;;Baignade surveillée. Les chiens bons nageurs sont les bienvenus : ne dépassez pas les bouées !;Panneau
 info-f84c40f8;Narrateur;bulle;;;Rentré !;Un mouton rentre dans l’enclos
 info-db496eac;Narrateur;bulle;;;Tous rentrés !;Un mouton rentre dans l’enclos
+info-5d8e77c2;Narrateur;bulle;;;Au parc !;Une bouée entre dans le parc
 info-ec71aefc;Narrateur;bulle;;;Toutes au parc !;Une bouée entre dans le parc
 info-22143be5;Narrateur;bulle;;;Rentrée !;Une poule rentre dans l’enclos
 info-4ea3be7e;Narrateur;bulle;;;Toutes rentrées !;Une poule rentre dans l’enclos
+info-c9157c1f;Narrateur;bulle;;;But !;Un ballon entre dans le filet
 info-1128d67e;Narrateur;bulle;;;Tous dans le filet !;Un ballon entre dans le filet
-info-1a3f43f6;Narrateur;bulle;;;rentree;dans keepHen()
-info-867fcbd9;Narrateur;bulle;;;toutes;dans keepHen()
-info-60d56f8c;Narrateur;bulle;;;but;Un ballon entre dans le filet
-info-3683eed0;Narrateur;bulle;;;tous;Un ballon entre dans le filet
 farmer-45e0e1b7;Gaston;dialogue;;;Bonjour, petit teckel ! Une petite fille est passée par ici tout à l'heure… Mais pardon, mes poules se sont sauvées !;Gaston : demande
 farmer-5b8f35be;Gaston;dialogue;;;Tu voudrais bien les ramener dans l'enclos ? Aboie derrière elles pour les pousser vers la barrière ouverte, au sud.;Gaston : demande
 farmer-4c12fde2;Gaston;dialogue;;;Il en reste 5 dehors ! Aboie derrière elles pour les pousser vers la barrière ouverte, au sud de l'enclos.;Gaston : rappel
@@ -145,11 +146,6 @@ farmer-f38e2826;Gaston;bulle;;;Encore 1 poule !;Gaston : Tecky arrive
 farmer-742270de;Gaston;bulle;;;Bravo ! Viens me voir !;"Gaston : Tecky arrive ; Une poule rentre dans l’enclos"
 farmer-2cdd7c97;Gaston;bulle;;;Bonjour, Tecky !;Gaston : Tecky arrive
 farmer-81eae6bd;Gaston;bulle;;;Oh ! Mes poules !;Une poule rentre dans l’enclos
-farmer-a20cec43;Gaston;bulle;;;bravo;dans keepHen()
-farmer-67343942;Gaston;bulle;;;oh;dans keepHen()
-farmer-1dd20585;Gaston;bulle;;;appel;dans farmerGreet()
-farmer-a237244d;Gaston;bulle;;;encore;dans farmerGreet()
-farmer-53142120;Gaston;bulle;;;bonjour;dans farmerGreet()
 postman-7c73240a;Marcel;dialogue;;inquiet;Bonjour, petit chien ! Un coup de vent a fait s'envoler mes lettres, juste au début de ma tournée…;Marcel : demande
 postman-c5986551;Marcel;dialogue;;;Il y en a cinq, dans le village et autour. Si tu les trouves, rapporte-les-moi, s'il te plaît !;Marcel : demande
 postman-c1caf73f;Marcel;dialogue;;;Tu en as déjà trouvé 1 ? Bravo ! Il y en a cinq en tout, autour du village. Rapporte-les-moi, s'il te plaît !;Marcel : demande
@@ -173,11 +169,6 @@ postman-9216a347;Marcel;bulle;;;Encore 1 lettre !;Marcel : Tecky arrive
 postman-31074e9b;Marcel;bulle;;;Mes lettres ! Merci !;Marcel : Tecky arrive
 postman-74aca4e8;Marcel;bulle;;;Bonne journée, Tecky !;Marcel : Tecky arrive
 postman-21fe700c;Marcel;bulle;;;Mes lettres ! Viens vite !;Tecky ramasse une lettre
-postman-e9c9dbdb;Marcel;bulle;;;vite;dans updateLetters()
-postman-67343942;Marcel;bulle;;;oh;dans postmanGreet()
-postman-e837b32c;Marcel;bulle;;;merci_bulle;dans postmanGreet()
-postman-a237244d;Marcel;bulle;;;encore;dans postmanGreet()
-postman-53142120;Marcel;bulle;;;bonjour;dans postmanGreet()
 neighbor-e42f5daf;Mamie Rose;dialogue;;inquiet;Bonjour, mon petit. Tu n'aurais pas vu mon chat, Pompon ? Il est tout blanc, avec un collier rose et un grelot.;Mamie Rose : demande
 neighbor-29f9c75a;Mamie Rose;dialogue;;;Il s'est sauvé ce matin… Il adore se cacher près des entrepôts, de l'autre côté de la grande route.;Mamie Rose : demande
 neighbor-45353be6;Mamie Rose;dialogue;;inquiet;Pompon adore se cacher près des entrepôts, de l'autre côté de la grande route. Attention aux voitures !;Mamie Rose : rappel
@@ -190,11 +181,6 @@ neighbor-45aecd27;Mamie Rose;bulle;;;Pompon ? Pompon, où es-tu ?;Mamie Rose : T
 neighbor-b6f75375;Mamie Rose;bulle;;;Tu as vu Pompon ?;Mamie Rose : Tecky arrive
 neighbor-94123d59;Mamie Rose;bulle;;;Mon Pompon est là !;Mamie Rose : Tecky arrive
 neighbor-2cdd7c97;Mamie Rose;bulle;;;Bonjour, Tecky !;Mamie Rose : Tecky arrive
-neighbor-3fc436f0;Mamie Rose;bulle;;;viens;Pompon
-neighbor-1e63c735;Mamie Rose;bulle;;;cherche;dans neighborGreet()
-neighbor-4831c9de;Mamie Rose;bulle;;;la;dans neighborGreet()
-neighbor-5849e7f4;Mamie Rose;bulle;;;vu;dans neighborGreet()
-neighbor-53142120;Mamie Rose;bulle;;;bonjour;dans neighborGreet()
 leon-6a2c6609;Léon;dialogue;;inquiet;Salut, petit chien ! Je devais livrer ces gros ballons pour la fête du parc… mais le carton s'est ouvert, et ils ont roulé partout !;Léon : demande
 leon-ca296332;Léon;dialogue;;;Tu veux bien les pousser dans le grand filet, à côté de moi ? Fonce dedans, ou aboie derrière eux : comme au foot !;Léon : demande
 leon-03cee306;Léon;dialogue;;;Il en reste 5 ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.;Léon : rappel
@@ -214,11 +200,6 @@ leon-1bb964a5;Léon;bulle;;;Encore 1 ballon !;Léon : Tecky arrive
 leon-cd78e5a9;Léon;bulle;;;Bravo, champion ! Viens me voir !;"Léon : Tecky arrive ; Un ballon entre dans le filet"
 leon-80ab8ef2;Léon;bulle;;;Salut, champion !;Léon : Tecky arrive
 leon-760a9aca;Léon;bulle;;;Mes ballons !;Un ballon entre dans le filet
-leon-a20cec43;Léon;bulle;;;bravo;Un ballon entre dans le filet
-leon-baf0f6fa;Léon;bulle;;;ballons;Un ballon entre dans le filet
-leon-67343942;Léon;bulle;;;oh;dans leonGreet()
-leon-a237244d;Léon;bulle;;;encore;dans leonGreet()
-leon-83c3216e;Léon;bulle;;;salut;dans leonGreet()
 iris-3c9a6f0f;Iris;dialogue;;joyeux;Tiens, mon petit Tecky ! Ça me fait plaisir de te voir. Alors, tu cherches ta petite Alice ?;Iris : demande
 iris-f1b51627;Iris;dialogue;;;Un bon chien ne perd jamais une piste. Pour t'entraîner, j'ai caché mes trois jouets dans les prés de la ferme : mon poulet, mon anneau et ma corde.;Iris : demande
 iris-bcc4cc11;Iris;dialogue;;;Rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches !;Iris : demande
@@ -248,13 +229,6 @@ iris-012f6c74;Iris;bulle;;;Tiens, mon jouet !;Tecky rapporte un jouet à Iris
 iris-29227698;Iris;bulle;;;Mes jouets ! Bravo !;Tecky rapporte un jouet à Iris
 iris-a68dff79;Iris;bulle;;;Bravo ! Encore 2 !;Tecky rapporte un jouet à Iris
 iris-65a74908;Iris;bulle;;;Bravo ! Encore 1 !;Tecky rapporte un jouet à Iris
-iris-8c5debec;Iris;bulle;;;bravo_encore;dans giveToy()
-iris-d6962e4a;Iris;bulle;;;tiens;dans giveToy()
-iris-3683eed0;Iris;bulle;;;tous;dans giveToy()
-iris-a20cec43;Iris;bulle;;;bravo;dans giveToy()
-iris-83c3216e;Iris;bulle;;;salut;dans irisGreet()
-iris-a237244d;Iris;bulle;;;encore;dans irisGreet()
-iris-740ee6ba;Iris;bulle;;;chasse;dans irisGreet()
 piquette-5bc4cae4;Maman Piquette;dialogue;;inquiet;Oh, bonjour, petit chien ! Je suis Maman Piquette. Mes trois petits jouaient à cache-cache dans la forêt…;Maman Piquette : demande
 piquette-3fdedeb7;Maman Piquette;dialogue;;;Ils se sont cachés sous les fougères, et ils n'osent plus sortir. Tu veux bien me les ramener ? Ils te suivront !;Maman Piquette : demande
 piquette-99f48922;Maman Piquette;dialogue;;inquiet;Il m'en manque encore 3. Ils se cachent sous les fougères : approche-toi doucement, ils te suivront. Mais n'aboie pas, ça leur fait peur !;Maman Piquette : rappel
@@ -398,3 +372,23 @@ yvon-ad580da9;Yvon;bulle;;;Encore 1 bouée !;Yvon : Tecky arrive
 yvon-65770384;Yvon;bulle;;;Bravo, matelot ! Viens me voir !;"Yvon : Tecky arrive ; Une bouée entre dans le parc"
 yvon-02a52325;Yvon;bulle;;;Salut, matelot !;Yvon : Tecky arrive
 yvon-fd347b56;Yvon;bulle;;;Mes bouées !;Une bouée entre dans le parc
+suzanne-e414f235;Suzanne;dialogue;;inquiet;Bonjour, petit chien ! Je suis Suzanne, la poissonnière. Ces chipies de mouettes m'ont volé trois beaux poissons sur l'étal !;Suzanne : demande
+suzanne-512736be;Suzanne;dialogue;;;Elles se sont posées dans le village et sur le port, le poisson au bec. Et elles s'envolent dès qu'on approche, en se moquant de moi !;Suzanne : demande
+suzanne-5df93f51;Suzanne;dialogue;;;Aboie-leur dessus, de loin : elles lâcheront prise. Puis rapporte-moi mes poissons un par un, dans ta gueule.;Suzanne : demande
+suzanne-2854a136;Suzanne;dialogue;;inquiet;Il m'en manque encore 3. Les mouettes ne sont pas loin. N'approche pas trop, elles s'envoleraient : aboie de loin, elles lâcheront prise !;Suzanne : rappel
+suzanne-81bfc4bb;Suzanne;dialogue;;inquiet;Il m'en manque encore 2. Les mouettes ne sont pas loin. N'approche pas trop, elles s'envoleraient : aboie de loin, elles lâcheront prise !;Suzanne : rappel
+suzanne-89d52555;Suzanne;dialogue;;inquiet;Plus qu'un ! Sa mouette n'est pas loin. N'approche pas trop, elle s'envolerait : aboie de loin, elle lâchera prise !;Suzanne : rappel
+suzanne-515fa78b;Suzanne;dialogue;;joyeux;Le maquereau, le rouget et la dorade ! Tu es le meilleur chasse-mouettes de toute la côte, Tecky.;Suzanne : merci
+suzanne-53be65eb;Suzanne;dialogue;;;Tiens, un bel os pour toi. Et si tu vois encore ces chipies tourner autour de mon étal, aboie un bon coup !;Suzanne : merci
+suzanne-86eb1cfd;Suzanne;dialogue;;joyeux;Depuis que tu es passé, les mouettes n'osent plus approcher de mon étal. Merci encore, Tecky !;Suzanne : après la quête
+suzanne-3e6deba1;Suzanne;bulle;;;Ah, ces mouettes ! Voleuses !;Suzanne : Tecky arrive
+suzanne-f50615cf;Suzanne;bulle;;;Encore 3 poissons !;Suzanne : Tecky arrive
+suzanne-31ab6c6a;Suzanne;bulle;;;Encore 2 poissons !;Suzanne : Tecky arrive
+suzanne-0ad56956;Suzanne;bulle;;;Encore 1 poisson !;Suzanne : Tecky arrive
+suzanne-ea76c9c8;Suzanne;bulle;;;Mes trois poissons ! Viens me voir !;"Suzanne : Tecky arrive ; Tecky rapporte un poisson à Suzanne"
+suzanne-2cdd7c97;Suzanne;bulle;;;Bonjour, Tecky !;Suzanne : Tecky arrive
+suzanne-ccd9916a;Suzanne;bulle;;;Mon poisson ! Encore 2 !;Tecky rapporte un poisson à Suzanne
+suzanne-12257aaf;Suzanne;bulle;;;Mon poisson ! Encore 1 !;Tecky rapporte un poisson à Suzanne
+suzanne-a01d1b3f;Suzanne;bulle;;;Mes poissons !;Tecky rapporte un poisson à Suzanne
+gull-ceaf8e63;Les mouettes;bulle;;;Kia-ha-ha !;Une mouette nargue Tecky
+gull-47212b81;Les mouettes;bulle;;;Kiaaa !;Une mouette lâche son poisson

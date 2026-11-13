@@ -6,7 +6,7 @@ function main() {
   run('EPISODES[1].chantier = false; audioOn(); episode = "ete"; newGame("balade", true);'); advanceDialog();
   run('cars = []; dogs = []; P.inv = 99;');
   ok(run('MAP.roles.farmer') === 'anatole' && run('farmer.kind') === 'farmer' && run('farmer.look') === 'anatole' && run('hens.length') === 6
-     && run('hens.every(h => h.kind === "sheep")') && run('questHens().length') === 5 && run('ici("pen")') && run('npcList().length') === 5,
+     && run('hens.every(h => h.kind === "sheep")') && run('questHens().length') === 5 && run('ici("pen")') && run('npcList().length') === 6,
      'sur la côte, le rôle de Gaston est tenu par Anatole, celui des poules par ses moutons : cinq à ramener, un dans l\'enclos');
   ok(['anatole/idle', 'anatole/talk', 'anatole/wave', 'hud/portrait_anatole', 'sheep/idle/right', 'sheep/peck/right', 'sheep/walk/right', 'sheep/flap/right']
        .every(k => run(`!!ATLAS[${JSON.stringify(k)}]`)) && run('WHO.anatole.name') === 'Anatole' && run('calmAt(farmer.x, farmer.y)')
@@ -41,7 +41,7 @@ function main() {
   ok(run('dialog.lines[0].text') === run('txt("anatole.merci.0")'), 'il remercie : « ' + run('dialog.lines[0].text') + ' »');
   advanceDialog(); run('checkBadges();');
   ok(run('farm.state') === 'done' && run('score') === run('sc0 + FARM.reward') && run('items.length') === run('n0 + 1') && run('!badges.poules && !!badges.moutons') && run('JSON.stringify(badges)') !== run('b0')
-     && run('questsHere().length') === 5, 'quête finie : des points, une saucisse ; le badge « Berger des falaises » (celui des poules reste à Gaston) ; cinq quêtes comptent sur la côte');
+     && run('questsHere().length') === 6, 'quête finie : des points, une saucisse ; le badge « Berger des falaises » (celui des poules reste à Gaston) ; six quêtes comptent sur la côte');
   run('saveGame(); var S = loadSave();');
   ok(run('S.farm') === 'done' && run('S.hens.length') === 5 && run('S.hens.every(h => h[2] === 1)'), 'sauvegardé comme la quête des poules (farm, hens)');
   // au printemps, rien n'a changé
