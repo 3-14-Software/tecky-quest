@@ -12,6 +12,7 @@ l'atlas ; la profondeur fuit vers la droite et vers le haut : un point à la pro
 
     python3 batiments.py      # reference/v2/batiments_v2.png
 """
+import math
 import os
 
 from PIL import Image
@@ -555,8 +556,309 @@ def cabane():
     return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), sol)
 
 
+# ====================================================================== LE VILLAGE DE PÊCHEURS (la côte de l'été)
+CHAUX = ("#FBF7EC", "#D3CCBA")                    # murs blanchis à la chaux : au soleil, à l'ombre
+GOUDRON = ("#4E535D", "#373B43", "#747A86")       # toit de carton goudronné
+
+
+def _bouee(d, cx, cy, r=4.8):
+    """Une bouée de sauvetage accrochée au mur : anneau blanc à quartiers rouges."""
+    d.add(circle(cx, cy, r), "#FFFFFF", sil=False, edge=True)
+    for a in (45, 135, 225, 315):                          # quartiers rouges
+        a0, a1 = math.radians(a - 20), math.radians(a + 20)
+        d.add(_pts([(cx + r * 0.52 * math.cos(a0), cy + r * 0.52 * math.sin(a0)), (cx + r * math.cos(a0), cy + r * math.sin(a0)),
+                    (cx + r * math.cos(a1), cy + r * math.sin(a1)), (cx + r * 0.52 * math.cos(a1), cy + r * 0.52 * math.sin(a1))]),
+              "#D7332B", sil=False)
+    d.add(circle(cx, cy, r * 0.5), "#000000", sil=False, opacity=0.16)
+    d.raw(circle(cx, cy, r * 0.5).replace('fill="%F%"', 'fill="none"').replace("/>", f' stroke="{OUTLINE}" stroke-width="0.6"/>'))
+
+
+def maison_pecheur(volets="#3F7FB5"):
+    """Maison de pêcheur, la façade longue devant : basse, blanchie à la chaux, toit d'ardoises, volets et porte
+    peints du bleu des bateaux, une bouée accrochée près de la porte."""
+    w, h, px, py = 92, 86, 44, 78
+    x0, larg, haut, prof, comble = 8, 56, 30, 28, 21
+    x1, yb, yt = x0 + larg, py, py - haut
+    d = _dessin(w, h)
+    sol = _murs_facade(d, x0, x1, yb, yt, prof, CHAUX, _p(x1, yt - comble, prof / 2))
+    _fenetre_cote(d, x1, yt + 10, prof * 0.3, prof * 0.4, 10)
+    d.add(rect(x0, yt, larg, 4.5), "#000000", sil=False, clip="face", opacity=0.16)
+    _fenetre(d, x0 + 8, yt + 9, 12, 12, volets)
+    _porte(d, x0 + 28, yb - 24, 13, 23.4, volets)
+    _bouee(d, x1 - 8, yt + 15.5)
+    _toit_long(d, x0, x1, yt, prof, comble, ARDOISE, couverture="ardoises", avant=lambda y: _cheminee(d, x0 + larg * 0.2, y - 8, 14))
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), sol)
+
+
+def cabane_pecheur(couleur):
+    """Cabane de pêcheur en planches peintes, pignon devant : bardage debout, planches de rive et d'angle blanches,
+    porte de remise à deux battants, petite fenêtre au grenier, toit goudronné, une bouée."""
+    w, h, px, py = 78, 78, 35, 70
+    x0, larg, haut, prof, comble = 10, 38, 27, 26, 17
+    x1, yb, yt, xm = x0 + larg, py, py - haut, x0 + larg / 2
+    ombre, trait, blanc = _fonce(couleur, 0.76), _fonce(couleur, 0.84), "#FBF7EC"
+    d = _dessin(w, h)
+    cote = [_p(x1, yb), _p(x1, yb, prof), _p(x1, yt, prof), _p(x1, yt)]
+    d.clip("cote", [_pts(cote)])
+    d.add(_pts(cote), ombre)
+    for k in range(1, 6):                                                       # les planches du mur qui fuit
+        a, b = _p(x1, yb, prof * k / 6), _p(x1, yt, prof * k / 6)
+        d.raw('<g clip-path="url(#cote)">' + line(f"M{a[0]:.2f},{a[1]:.2f} L{b[0]:.2f},{b[1]:.2f}", _fonce(couleur, 0.62), 0.7) + "</g>")
+    profil = [(x0, yt), (xm, yt - comble), (x1, yt)]
+    pignon = [(x0, yb)] + profil + [(x1, yb)]
+    d.clip("pignon", [_pts(pignon)])
+    d.add(_pts(pignon), couleur)
+    x = x0 + 4.75
+    while x < x1 - 1:                                                           # le bardage debout
+        d.raw('<g clip-path="url(#pignon)">' + line(f"M{x:.2f},{yt - comble} L{x:.2f},{yb}", trait, 0.8) + "</g>")
+        x += 4.75
+    for x in (x0, x1 - 2.4):                                                    # planches d'angle
+        d.add(rect(x, yt - 1, 2.4, haut + 1), blanc, sil=False, clip="pignon")
+    _ombre_pignon(d, profil, "pignon")
+    _fenetre(d, xm - 4, yt - 9.5, 8, 7.5, None, jardiniere=False)
+    # porte de remise : deux battants, leur écharpe en Z, l'encadrement blanc
+    pw, ph, px0 = 17, 19.5, x0 + 5.5
+    d.add(rect(px0 - 1.4, yb - ph - 1.4, pw + 2.8, ph + 1.4, 0.8), blanc, sil=False, edge=True)
+    d.add(rect(px0, yb - ph, pw, ph, 0.4), _fonce(couleur, 0.9), sil=False, edge=True)
+    d.raw(line(f"M{px0 + pw / 2},{yb - ph} L{px0 + pw / 2},{yb}", OUTLINE, 0.7))
+    for a, b in ((px0 + 1, px0 + pw / 2 - 1), (px0 + pw - 1, px0 + pw / 2 + 1)):   # (l'écharpe de droite en miroir : pas « ZZ »)
+        d.raw(line(f"M{a},{yb - ph + 2} L{b},{yb - ph + 2} L{a},{yb - 2.2} L{b},{yb - 2.2}", blanc, 1.1))
+    d.add(circle(px0 + pw / 2 - 1.5, yb - ph * 0.45, 0.8), "#2B2B33", sil=False)
+    d.add(circle(px0 + pw / 2 + 1.5, yb - ph * 0.45, 0.8), "#2B2B33", sil=False)
+    _bouee(d, x1 - 8.2, yt + 11.5, 4.4)
+    _toit_pignon(d, profil, prof, GOUDRON, lignes=2, debord=4)
+    for (ax, ay), (bx, by) in zip(profil, profil[1:]):                          # planches de rive, blanches, sous le toit
+        d.raw(line(f"M{ax:.2f},{ay + 1.6:.2f} L{bx:.2f},{by + 1.6:.2f}", blanc, 1.5))
+    sol = [(x0, yb - CONTACT), (x1, yb - CONTACT), _p(x1, yb - CONTACT, prof)]
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), sol)
+
+
+# ====================================================================== LE BORD DE MER (la côte de l'été)
+ROUGE_PHARE = ("#D7372E", "#A82822", "#EE7068")
+
+
+def phare():
+    """Le phare des falaises : une tour blanche qui s'affine, trois bandes rouges, une porte, deux petites
+    fenêtres, la galerie, la lanterne vitrée (elle s'allume le soir : lumieres()) sous un dôme rouge."""
+    w, h, px, py = 84, 142, 42, 134
+    xm, yb, yg = px, py, 30                                 # l'axe, le sol, la galerie
+    r0, r1 = 19, 12.5                                       # demi-largeur de la tour, au sol et sous la galerie
+    d = _dessin(w, h)
+    larg = lambda y: r1 + (r0 - r1) * (y - yg) / (yb - yg)  # demi-largeur à la hauteur y
+    d.add(path(f"M{xm - r0 - 4},{yb} L{xm - r0 - 4},{yb - 5} L{xm + r0 + 4},{yb - 5} L{xm + r0 + 4},{yb} Z"), PIERRE[0])   # le socle
+    d.add(rect(xm + r0 - 2, yb - 5, 6, 5), PIERRE[1], sil=False)
+    tour = f"M{xm - r0},{yb - 5} L{xm - r1},{yg} L{xm + r1},{yg} L{xm + r0},{yb - 5} Z"
+    d.clip("tour", [path(tour)])
+    d.add(path(tour), "#FBF7EC")
+    for i, y in enumerate((yb - 30, yb - 62, yb - 94)):     # les bandes rouges, bombées comme la tour
+        d.add(path(f"M{xm - 30},{y} Q{xm},{y + 5} {xm + 30},{y} L{xm + 30},{y + 15} Q{xm},{y + 20} {xm - 30},{y + 15} Z"),
+              ROUGE_PHARE[0], sil=False, clip="tour")
+    d.add(path(f"M{xm + 4},{yg} L{xm + r1},{yg} L{xm + r0},{yb - 5} L{xm + 9},{yb - 5} Z"), "#000000", sil=False, clip="tour", opacity=0.14)
+    d.add(path(f"M{xm - r1 + 1.5},{yg} L{xm - r1 + 4.5},{yg} L{xm - r0 + 5.5},{yb - 5} L{xm - r0 + 1.5},{yb - 5} Z"), "#FFFFFF", sil=False,
+          clip="tour", opacity=0.45)
+    _porte(d, xm - 6.5, yb - 26, 13, 21, ROUGE_PHARE[1], ronde=True)
+    for y in (yb - 50, yb - 82):                            # petites fenêtres
+        d.vitres.append((rect(xm - 3, y, 6, 8, 2.6), ""))
+        d.add(rect(xm - 4.2, y - 1.2, 8.4, 10.4, 3.4), "#E9DFC9", sil=False, edge=True)
+        d.add(rect(xm - 3, y, 6, 8, 2.6), VITRE, sil=False, edge=True)
+    # la galerie : sa dalle, son garde-corps
+    d.add(path(f"M{xm - r1 - 6},{yg} L{xm - r1 - 6},{yg - 4} L{xm + r1 + 6},{yg - 4} L{xm + r1 + 6},{yg} Q{xm},{yg + 4} {xm - r1 - 6},{yg} Z"), "#4A4F5A")
+    # la lanterne : le vitrage, ses montants, le feu au milieu
+    lx, ly, lh = 9.5, yg - 4, 16
+    vitre = rect(xm - lx, ly - lh, lx * 2, lh, 1)
+    d.vitres.append((vitre, f"M{xm - lx / 3},{ly - lh} L{xm - lx / 3},{ly} M{xm + lx / 3},{ly - lh} L{xm + lx / 3},{ly}"))
+    d.add(vitre, VITRE, edge=True)
+    d.add(circle(xm, ly - lh / 2, 4.2), "#FFE9A6", sil=False)
+    d.add(circle(xm, ly - lh / 2, 2.2), "#FFFBEA", sil=False)
+    d.raw(line(d.vitres[-1][1], "#FFFFFF", 1.1))
+    for x in (xm - r1 - 5, xm - 6, xm + 6, xm + r1 + 5):   # garde-corps de la galerie, devant le vitrage
+        d.raw(line(f"M{x},{yg - 4} L{x},{yg - 10}", "#2F333B", 1.2))
+    d.raw(line(f"M{xm - r1 - 5.5},{yg - 10} L{xm + r1 + 5.5},{yg - 10}", "#2F333B", 1.4))
+    # le dôme, sa boule
+    d.add(path(f"M{xm - lx - 2.5},{ly - lh} Q{xm - lx},{ly - lh - 12} {xm},{ly - lh - 13} Q{xm + lx},{ly - lh - 12} {xm + lx + 2.5},{ly - lh} Z"), ROUGE_PHARE[0])
+    d.add(path(f"M{xm + 2},{ly - lh - 12.6} Q{xm + lx},{ly - lh - 12} {xm + lx + 2.5},{ly - lh} L{xm + 5},{ly - lh} Z"), ROUGE_PHARE[1], sil=False)
+    d.add(circle(xm, ly - lh - 14.5, 2.2), "#F2C14E")
+    sol = [(xm - r0 - 4, yb - CONTACT), (xm + r0 + 4, yb - CONTACT)]
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), sol)
+
+
+def _coeur(d, x, y, r, couleur):
+    d.add(path(f"M{x},{y + r} C{x - r * 1.5},{y - r * 0.1} {x - r * 0.9},{y - r * 1.1} {x},{y - r * 0.35} "
+               f"C{x + r * 0.9},{y - r * 1.1} {x + r * 1.5},{y - r * 0.1} {x},{y + r} Z"), couleur, sil=False)
+
+
+def casino():
+    """Le casino de la ville : une longue façade crème à hautes fenêtres cintrées, un avant-corps à fronton au
+    milieu, sa grande porte sous une marquise rouge à ampoules, un toit d'ardoises et ses deux drapeaux."""
+    w, h, px, py = 176, 132, 82, 124
+    x0, larg, haut, prof, comble = 8, 130, 46, 34, 20
+    x1, yb, yt, xm = x0 + larg, py, py - haut, x0 + larg / 2
+    mur, or_ = ("#F6ECD2", "#CDBE98"), "#F2C14E"
+    d = _dessin(w, h)
+    sol = _murs_facade(d, x0, x1, yb, yt, prof, mur, _p(x1, yt - comble, prof / 2))
+    _fenetre_cote(d, x1, yt + 12, prof * 0.2, prof * 0.22, 20)
+    _fenetre_cote(d, x1, yt + 12, prof * 0.58, prof * 0.22, 20)
+    d.add(rect(x0, yt, larg, 5), "#000000", sil=False, clip="face", opacity=0.16)
+    d.add(rect(x0, yt + 5, larg, 3), "#E2D3AC", sil=False, clip="face")                       # corniche
+    for k in range(13):                                                                       # ses ampoules
+        d.add(circle(x0 + 5 + k * 10, yt + 6.5, 1.1), or_, sil=False)
+
+    def cintre(x, y, lw, lh):                                                                 # haute fenêtre cintrée
+        f = path(f"M{x},{y + lh} L{x},{y + lw / 2} A{lw / 2},{lw / 2} 0 0 1 {x + lw},{y + lw / 2} L{x + lw},{y + lh} Z")
+        d.vitres.append((f, f"M{x + lw / 2},{y + 1} L{x + lw / 2},{y + lh} M{x},{y + lh * 0.52} L{x + lw},{y + lh * 0.52}"))
+        d.add(path(f"M{x - 1.6},{y + lh + 1.6} L{x - 1.6},{y + lw / 2} A{lw / 2 + 1.6},{lw / 2 + 1.6} 0 0 1 {x + lw + 1.6},{y + lw / 2} "
+                   f"L{x + lw + 1.6},{y + lh + 1.6} Z"), "#FFFFFF", sil=False, edge=True)
+        d.add(f, VITRE, sil=False, edge=True)
+        d.raw(line(d.vitres[-1][1], "#FFFFFF", 1.1))
+    for x in (x0 + 7, x0 + 24, x1 - 35, x1 - 18):
+        cintre(x, yt + 13, 11, 25)
+    biais, e0, fy = _toit_long(d, x0, x1, yt, prof, comble, ARDOISE, rangs=3, couverture="ardoises")
+    for x, c in ((x0 + 20, "#D7332B"), (x1 - 20, "#2F7FC2")):                                 # deux drapeaux au faîtage
+        fx = x + biais * (yt + 2.5 - fy)
+        d.add(rect(fx, fy - 15, 1.6, 15, 0.6), "#6A6F7A")
+        d.add(path(f"M{fx + 1.6},{fy - 14.4} L{fx + 11},{fy - 11.8} L{fx + 1.6},{fy - 8.6} Z"), c)
+    # l'avant-corps, devant le toit : il avance un peu, monte plus haut que la corniche, porte un fronton
+    a0, a1, ah = xm - 21, xm + 21, yt - 13
+    d.add(_pts([(a1, yb), _p(a1, yb, 5), _p(a1, ah, 5), (a1, ah)]), mur[1], edge=True)
+    d.add(rect(a0, ah, a1 - a0, yb - ah), "#FBF3DC", edge=True)
+    d.add(rect(a0, yb - 3.5, a1 - a0, 3.5), PIERRE[0], sil=False)
+    for x in (a0 + 1.5, a1 - 5):                                                              # deux pilastres
+        d.add(rect(x, ah + 2, 3.5, yb - ah - 5.5), "#FFFFFF", sil=False, edge=True)
+    d.add(_pts([(a0 - 3, ah + 3), (a0 - 3, ah), (xm, ah - 15), (a1 + 3, ah), (a1 + 3, ah + 3)]), ARDOISE[1], edge=True)   # le fronton, coiffé d'ardoise
+    d.add(_pts([(a0 + 1.5, ah + 0.6), (xm, ah - 11), (a1 - 1.5, ah + 0.6)]), "#FBF3DC", sil=False, edge=True)
+    _coeur(d, xm, ah - 4.6, 3, "#D7332B")
+    for k in range(5):                                                                        # un rang d'ampoules sous le fronton
+        d.add(circle(a0 + 6 + k * 7.5, ah + 6.5, 1.2), or_, sil=False, edge=True)
+    cintre(xm - 6.5, yb - 30, 13, 29.4)                                                       # la grande porte vitrée
+    d.add(rect(xm - 9.5, yb - 0.8, 19, 3, 1), "#C4BEB2", sil=False, edge=True)
+    # la marquise rouge au-dessus de la porte, sa retombée, ses ampoules
+    m0, m1, my = xm - 13, xm + 13, yb - 34
+    d.add(_pts([(m0 + 3, my - 6), (m1 - 3, my - 6), (m1 + 1.5, my), (m0 - 1.5, my)]), "#D7332B", edge=True)
+    d.add(rect(m0 - 1.5, my, m1 - m0 + 3, 3.2, 0.6), "#A82520", edge=True)
+    for k in range(6):
+        d.add(circle(m0 + 0.5 + k * 5, my + 4.4, 1.2), or_, sil=False, edge=True)
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), sol)
+
+
+CABINES = {"bleue": "#3F8FCB", "rouge": "#D9483E", "jaune": "#F0BE3C", "verte": "#57B8A2"}
+
+
+def cabine_plage(couleur):
+    """Une cabine de plage, pignon devant : planches à rayures blanches et de couleur, toit de la couleur, porte
+    à losange, sur quatre plots."""
+    w, h, px, py = 48, 68, 20, 60
+    x0, larg, haut, prof, comble = 7, 22, 27, 16, 10
+    x1, yb, yt, xm = x0 + larg, py - 2, py - 2 - haut, x0 + larg / 2
+    blanc, ombre = "#FBF7EC", "#CFC8B6"
+    d = _dessin(w, h)
+    for x, p in ((x0 + 1.5, prof - 2), (x1 - 1.5, prof - 2), (x0 + 1.5, 0), (x1 - 1.5, 0)):    # les plots
+        a = _p(x, yb, p)
+        d.add(rect(a[0] - 1.6, a[1] - 0.5, 3.2, 3), PIERRE[1] if p else PIERRE[0])
+    cote = [_p(x1, yb), _p(x1, yb, prof), _p(x1, yt, prof), _p(x1, yt)]
+    d.clip("cote", [_pts(cote)])
+    d.add(_pts(cote), ombre)
+    for k in range(4):                                                                       # rayures du mur qui fuit
+        if k % 2 == 0:
+            p0, p1 = prof * k / 4, prof * (k + 1) / 4
+            d.add(_pts([_p(x1, yb, p0), _p(x1, yb, p1), _p(x1, yt, p1), _p(x1, yt, p0)]), _fonce(couleur, 0.76), sil=False, clip="cote")
+    profil = [(x0, yt), (xm, yt - comble), (x1, yt)]
+    pignon = [(x0, yb)] + profil + [(x1, yb)]
+    d.clip("pignon", [_pts(pignon)])
+    d.add(_pts(pignon), blanc)
+    pas = larg / 6
+    for k in range(0, 6, 2):                                                                 # rayures du pignon
+        d.add(rect(x0 + k * pas, yt - comble, pas, haut + comble), couleur, sil=False, clip="pignon")
+    _ombre_pignon(d, profil, "pignon")
+    pw, ph = 10, 19
+    d.add(rect(xm - pw / 2 - 1, yb - ph - 1, pw + 2, ph + 1, 0.8), blanc, sil=False, edge=True)
+    d.add(rect(xm - pw / 2, yb - ph, pw, ph, 0.4), _fonce(couleur, 0.9), sil=False, edge=True)
+    d.add(_pts([(xm, yb - ph + 3), (xm + 2.2, yb - ph + 6), (xm, yb - ph + 9), (xm - 2.2, yb - ph + 6)]), "#3A2418", sil=False)
+    d.add(circle(xm + pw / 2 - 1.6, yb - ph * 0.45, 0.8), "#F2C14E", sil=False)
+    _toit_pignon(d, profil, prof, (couleur, _fonce(couleur, 0.72), _fonce(couleur, 1.0)), lignes=1, debord=3)
+    d.add(circle(xm, yt - comble - 3.2, 1.6), blanc)
+    sol = [(x0, yb + 2 - CONTACT), (x1, yb + 2 - CONTACT), _p(x1, yb + 2 - CONTACT, prof)]
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), sol)
+
+
+def manege():
+    """Le manège des jardins : un plateau rond, un mât, quatre chevaux de bois sur leurs barres, un chapiteau à
+    quartiers rouges et crème frangé de festons et d'ampoules, un fanion."""
+    w, h, px, py = 104, 104, 52, 94
+    xm, yb = px, py
+    rouge, creme, or_ = "#D7332B", "#FFF3D2", "#F2C14E"
+    d = _dessin(w, h)
+    d.add(ellipse(xm, yb - 5, 44, 9.5), "#8FA5C8")                                            # le plateau : son chant, son dessus
+    d.add(ellipse(xm, yb - 8.5, 44, 9.5), "#DCE6F4")
+    d.add(ellipse(xm, yb - 8.5, 36, 7), "#C3D2EA", sil=False)
+    yh = 40                                                                                  # le bas du chapiteau
+    for x, p in ((xm - 22, 5), (xm + 22, 5)):                                                # les chevaux du fond
+        _cheval(d, x, yb - 13 - p, yh, ("#F6C1D6", "#B9E3D2")[x > xm], petit=True)
+    d.add(rect(xm - 5, yh - 2, 10, yb - yh - 7, 1.5), "#F7E7B8")                             # le mât, ses miroirs
+    for y in (yh + 6, yh + 18, yh + 30):
+        d.add(_pts([(xm, y), (xm + 3, y + 4), (xm, y + 8), (xm - 3, y + 4)]), "#A9D8F2", sil=False, edge=True)
+    for x, c in ((xm - 30, "#FFFFFF"), (xm + 30, "#F7D58A"), (xm - 1, None)):                # les chevaux de devant
+        if c:
+            _cheval(d, x, yb - 9, yh, c)
+    # le chapiteau : un cône à quartiers, puis sa retombée festonnée
+    apex, r = (xm, 9), 48
+    n = 8
+    for k in range(n):
+        a, b = xm - r + 2 * r * k / n, xm - r + 2 * r * (k + 1) / n
+        d.add(_pts([apex, (a, yh), (b, yh)]), (rouge, creme)[k % 2], sil=(k == 0))
+    d.add(_pts([apex, (xm - r, yh), (xm + r, yh)]), "#000000", sil=True, opacity=0)           # (la silhouette du cône entier)
+    d.add(_pts([apex, (xm + r * 0.35, yh), (xm + r, yh)]), "#000000", sil=False, opacity=0.13)
+    pas = 2 * r / n
+    for k in range(n):
+        x = xm - r + k * pas
+        d.add(rect(x, yh, pas, 5.5, 0), (creme, rouge)[k % 2], sil=False)
+        d.add(circle(x + pas / 2, yh + 5.5, pas / 2), (creme, rouge)[k % 2], sil=False)
+    d.raw(line(f"M{xm - r},{yh} L{xm + r},{yh} M{xm - r},{yh} L{xm - r},{yh + 5.5} M{xm + r},{yh} L{xm + r},{yh + 5.5} "
+               f"M{xm},{apex[1]} L{xm - r},{yh} M{xm},{apex[1]} L{xm + r},{yh}", OUTLINE, 0.9))
+    d.raw(path(f"M{xm - r},{yh + 5.5} " + " ".join(f"A{pas / 2:.2f},{pas / 2:.2f} 0 0 0 {xm - r + (k + 1) * pas:.2f},{yh + 5.5}" for k in range(n)))
+          .replace('fill="%F%"', 'fill="none"').replace("/>", f' stroke="{OUTLINE}" stroke-width="0.9"/>'))
+    for k in range(n + 1):                                                                   # les ampoules (elles s'allument le soir)
+        c = circle(xm - r + k * pas, yh + 1, 1.5)
+        d.vitres.append((c, ""))
+        d.add(c, or_, sil=False, edge=True)
+    d.add(rect(xm - 0.8, apex[1] - 9, 1.6, 10, 0.6), "#6A6F7A")                              # le fanion
+    d.add(path(f"M{xm + 0.8},{apex[1] - 8.6} L{xm + 9},{apex[1] - 6.2} L{xm + 0.8},{apex[1] - 3.6} Z"), or_)
+    sol = [(xm - 44, yb - 5), (xm + 44, yb - 5)]
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), sol)
+
+
+def _cheval(d, x, y, haut, robe, petit=False):
+    """Un cheval de bois du manège, de profil, tourné vers la gauche, les sabots en (x, y), sur sa barre dorée qui
+    monte jusqu'au chapiteau."""
+    k = 0.8 if petit else 1.0
+    d.add(rect(x - 0.9 * k, haut, 1.8 * k, y - haut - 6 * k, 0.6), "#F2C14E", sil=not petit)   # la barre
+    for dx in (-6, -3.4, 3.4, 6):                                                            # les pattes
+        d.raw(line(f"M{x + dx * k},{y - 6.5 * k} L{x + (dx - 1.2) * k},{y}", "#3A1E12", 1.9 * k))
+        d.raw(line(f"M{x + dx * k},{y - 6.5 * k} L{x + (dx - 1.2) * k},{y - 0.6 * k}", robe, 1.0 * k))
+    d.add(ellipse(x, y - 9 * k, 8 * k, 4.4 * k), robe, sil=not petit, edge=True)             # le corps
+    d.add(path(f"M{x - 5 * k},{y - 10.5 * k} L{x - 9.5 * k},{y - 18 * k} L{x - 14 * k},{y - 15 * k} L{x - 13 * k},{y - 12.6 * k} "
+               f"L{x - 9.6 * k},{y - 13.6 * k} L{x - 7 * k},{y - 7.6 * k} Z"), robe, sil=not petit, edge=True)   # l'encolure, la tête
+    d.raw(line(f"M{x - 5.4 * k},{y - 11.5 * k} L{x - 8.8 * k},{y - 17.6 * k}", "#D7332B", 1.5 * k))                # la crinière
+    d.raw(line(f"M{x + 7.6 * k},{y - 10 * k} q{3.4 * k},{1 * k} {3 * k},{5 * k}", "#D7332B", 1.5 * k))            # la queue
+    d.add(rect(x - 3 * k, y - 13 * k, 6 * k, 3.6 * k, 1), "#2F7FC2", sil=False, edge=True)   # la selle
+    d.add(circle(x - 11.6 * k, y - 15.6 * k, 0.6 * k), "#22262E", sil=False)
+
+
 # ====================================================================== MARCHÉ, BASSE-COUR
-STORES = {"fruits": ("#D7332B", "#FFFFFF"), "legumes": ("#3F9A4A", "#FFFFFF"), "fleurs": ("#E06BA8", "#FFFFFF")}
+STORES = {"fruits": ("#D7332B", "#FFFFFF"), "legumes": ("#3F9A4A", "#FFFFFF"), "fleurs": ("#E06BA8", "#FFFFFF"),
+          # la côte (demande de Christophe, 13 novembre 2026 : « de nouvelles variantes, poissonnerie, glaces »)
+          "poissons": ("#2F7FC2", "#FFFFFF"), "glaces": ("#5CC4B0", "#FFF3D2")}
+# Étals qui ne sont pas de bois brut : comptoir peint (face, flanc, dessus, chant, joints) et bacs (face, flanc) —
+# la poissonnerie, blanche et bleue, ses bacs de glace pilée ; le marchand de glaces, crème, ses bacs d'inox.
+PEINTS = {"poissons": (("#EAF2F7", "#B7C8D6", "#F9FCFE", "#2F7FC2", "#C3D3DF"), ("#F4F8FB", "#C6D4DE")),
+          "glaces": (("#FFF1D6", "#D9C39A", "#FFFAEC", "#F29AB8", "#EBD7AC"), ("#DCE4EA", "#AAB8C4"))}
+
+
+def _poisson(d, x, y, L, dos, ventre):
+    """Un poisson couché, la tête à gauche en (x, y), long de L : le corps, le ventre plus clair, la queue, l'œil."""
+    d.add(_pts([(x + L * 0.74, y), (x + L, y - L * 0.2), (x + L * 0.93, y), (x + L, y + L * 0.2)]), dos, sil=False, edge=True)
+    d.add(ellipse(x + L * 0.4, y, L * 0.4, L * 0.19), dos, sil=False, edge=True)
+    d.add(ellipse(x + L * 0.42, y + L * 0.07, L * 0.3, L * 0.09), ventre, sil=False)
+    d.add(circle(x + L * 0.15, y - L * 0.04, max(0.45, L * 0.045)), "#22262E", sil=False)
 
 
 def _marchandises(d, genre, i, x, y):
@@ -575,6 +877,26 @@ def _marchandises(d, genre, i, x, y):
         for dx in (4, 11):
             d.add(circle(x + dx, y - 2.5, 4.2), "#7CC45A", sil=False, edge=True)
             d.add(circle(x + dx, y - 2.5, 2), "#A8DC7E", sil=False)
+    elif genre == "poissons":                                                   # sur un lit de glace pilée
+        for dx in (2.2, 5.4, 8.6, 11.8):
+            d.add(circle(x + dx, y + 0.2, 2.3), "#FFFFFF", sil=False)
+        if i == 0:                                                              # deux poissons argentés
+            _poisson(d, x + 1.2, y - 4.4, 11.5, "#8FA6BD", "#E3ECF3")
+            _poisson(d, x + 2.4, y - 1.4, 11.5, "#7F98B2", "#DCE7F0")
+        elif i == 1:                                                            # des rougets
+            _poisson(d, x + 2.2, y - 4.4, 10.5, "#EE7F64", "#FBC6B4")
+            _poisson(d, x + 1.2, y - 1.4, 10.5, "#E66F58", "#F9BBA8")
+        else:                                                                   # des moules, un citron
+            for dx, dy in ((2.6, -1.2), (6, -1.8), (4.2, -4), (8, -4.2)):
+                d.add(ellipse(x + dx, y + dy, 2.3, 1.5), "#39445F", sil=False, edge=True)
+                d.raw(line(f"M{x + dx - 1.4},{y + dy - 0.2} L{x + dx + 1.2},{y + dy - 0.5}", "#6C7A9C", 0.5))
+            d.add(circle(x + 11.6, y - 2.2, 2.3), "#F7D154", sil=False, edge=True)
+            d.add(circle(x + 11.6, y - 2.2, 1.1), "#FFF3A8", sil=False)
+    elif genre == "glaces":                                                     # des boules, un parfum par bac
+        col, clair = (("#F29AB8", "#FBCADB"), ("#8A5A3A", "#B07E5A"), ("#FBE49A", "#FFF5CF"))[i]
+        for dx, dy in ((3.4, -0.8), (11.4, -0.8), (7.4, -2.6)):
+            d.add(circle(x + dx, y + dy, 3.1), col, sil=False, edge=True)
+            d.add(circle(x + dx - 0.9, y + dy - 1, 1.1), clair, sil=False)
     else:                                                                       # bouquets
         col = ("#F28CB8", "#F7D154", "#B48ED8")[i]
         for dx in (3.5, 7.5, 11.5):
@@ -590,7 +912,10 @@ def etal(genre):
     w, h, px, py = 76, 80, 33, 71
     x0, x1, yb, prof = 8, 58, py, 16
     haut, toit = yb - 23, 12                               # dessus du comptoir, bord avant du store
-    bois, bois_o, bois_c = "#B98556", "#8F6238", "#DDA566"
+    bois, bois_o, bois_c, chant, joint = "#B98556", "#8F6238", "#DDA566", "#C98A4B", "#9A6B43"
+    bac, bac_o = bois_c, "#B07A45"
+    if genre in PEINTS:
+        (bois, bois_o, bois_c, chant, joint), (bac, bac_o) = PEINTS[genre]
     d = _dessin(w, h)
     for x in (x0 + 1.2, x1 - 3.8):                         # poteaux du fond
         a = _p(x, yb, prof)
@@ -598,15 +923,24 @@ def etal(genre):
     d.add(_pts([_p(x1, yb), _p(x1, yb, prof), _p(x1, haut, prof), _p(x1, haut)]), bois_o)      # flanc du comptoir
     d.add(rect(x0, haut, x1 - x0, yb - haut), bois)                                         # sa face
     for y in (haut + 9, haut + 16):
-        d.raw(line(f"M{x0 + 0.8},{y} L{x1 - 0.8},{y}", "#9A6B43", 0.9))
+        d.raw(line(f"M{x0 + 0.8},{y} L{x1 - 0.8},{y}", joint, 0.9))
+    xc = (x0 + x1) / 2
+    if genre == "poissons":                                # l'enseigne, sur la face du comptoir : un poisson
+        d.add(ellipse(xc, haut + 13, 12.5, 6.2), "#FFFFFF", sil=False, edge=True)
+        _poisson(d, xc - 8.5, haut + 13, 17, "#2F7FC2", "#8CC0E8")
+    elif genre == "glaces":                                # un cornet
+        d.add(ellipse(xc, haut + 13, 9, 8.2), "#FFFFFF", sil=False, edge=True)
+        d.add(_pts([(xc - 3.3, haut + 12.4), (xc + 3.3, haut + 12.4), (xc, haut + 20)]), "#E3A85C", sil=False, edge=True)
+        d.add(circle(xc, haut + 10.6, 3.7), "#F29AB8", sil=False, edge=True)
+        d.add(circle(xc - 1.1, haut + 9.5, 1.2), "#FBCADB", sil=False)
     plateau = [(x0 - 1.5, haut), (x1 + 1.5, haut), _p(x1 + 1.5, haut, prof), _p(x0 - 1.5, haut, prof)]
     d.add(_pts(plateau), bois_c)                                                             # son dessus
-    d.add(rect(x0 - 1.5, haut, x1 - x0 + 3, 3.4, 1), "#C98A4B")                             # et son chant
+    d.add(rect(x0 - 1.5, haut, x1 - x0 + 3, 3.4, 1), chant)                                 # et son chant
     for i, x in enumerate((x0 + 5.5, x0 + 21, x0 + 36.5)):                                  # cagettes, posées sur le dessus
         cy = haut - 4
-        d.add(_pts([(x + 15, cy), (x + 18, cy - 2.2), (x + 18, cy - 9.2), (x + 15, cy - 7)]), "#B07A45", edge=True)
-        d.add(rect(x, cy - 7, 15, 7, 0.6), bois_c, edge=True)
-        d.raw(line(f"M{x + 0.6},{cy - 3.5} L{x + 14.4},{cy - 3.5}", "#B07A45", 0.7))
+        d.add(_pts([(x + 15, cy), (x + 18, cy - 2.2), (x + 18, cy - 9.2), (x + 15, cy - 7)]), bac_o, edge=True)
+        d.add(rect(x, cy - 7, 15, 7, 0.6), bac, edge=True)
+        d.raw(line(f"M{x + 0.6},{cy - 3.5} L{x + 14.4},{cy - 3.5}", bac_o, 0.7))
         _marchandises(d, genre, i, x, cy - 7)
     for x in (x0 + 0.4, x1 - 3):                           # poteaux de devant, plantés aux coins du comptoir
         d.add(rect(x, toit, 2.6, haut - toit + 1, 1), "#8A5A3A")
@@ -698,6 +1032,16 @@ CATALOGUE = {
     "cabane": cabane,
     "etal_fruits": lambda: etal("fruits"), "etal_legumes": lambda: etal("legumes"), "etal_fleurs": lambda: etal("fleurs"),
     "poulailler": poulailler,
+    # la côte de l'été
+    "etal_poissons": lambda: etal("poissons"), "etal_glaces": lambda: etal("glaces"),
+    "maison_pecheur": maison_pecheur,
+    "maison_pecheur_verte": lambda: maison_pecheur("#3F8F6A"),
+    "maison_pecheur_pignon": lambda: maison_pignon(ARDOISE, CHAUX, "#B5443A", "#B5443A"),
+    "cabane_pecheur_rouge": lambda: cabane_pecheur("#C2463B"), "cabane_pecheur_bleue": lambda: cabane_pecheur("#3F7FB5"),
+    "cabane_pecheur_jaune": lambda: cabane_pecheur("#E6B43C"), "cabane_pecheur_verte": lambda: cabane_pecheur("#57AE9A"),
+    "phare": phare, "casino": casino, "manege": manege,
+    "cabine_bleue": lambda: cabine_plage(CABINES["bleue"]), "cabine_rouge": lambda: cabine_plage(CABINES["rouge"]),
+    "cabine_jaune": lambda: cabine_plage(CABINES["jaune"]), "cabine_verte": lambda: cabine_plage(CABINES["verte"]),
 }
 # Décor de carte.json -> ses dessins (un par position, comme la nature) ; `n` reste le nom du décor : l'obstacle
 # (FOOT dans game.js) ne change pas, chaque bâtiment tient dans l'emprise de celui qu'il remplace.
@@ -713,6 +1057,11 @@ VARIANTES = {
     "playhouse": (["cabane"], [0]),
     "stall_fruit": (["etal_fruits"], [0]), "stall_veg": (["etal_legumes"], [0]), "stall_flower": (["etal_fleurs"], [0]),
     "chicken_coop": (["poulailler"], [0]),
+    "stall_fish": (["etal_poissons"], [0]), "stall_ice": (["etal_glaces"], [0]),
+    "house_fisher": (["maison_pecheur", "maison_pecheur_pignon", "maison_pecheur_verte"], [0, 1, 2]),
+    "hut_fisher": (["cabane_pecheur_rouge", "cabane_pecheur_bleue", "cabane_pecheur_jaune", "cabane_pecheur_verte"], [0, 1, 2, 3]),
+    "lighthouse": (["phare"], [0]), "casino": (["casino"], [0]), "carousel": (["manege"], [0]),
+    "beach_hut": (["cabine_bleue", "cabine_rouge", "cabine_jaune", "cabine_verte"], [0, 1, 2, 3]),
 }
 # Où un chat se réfugie sur chaque toit : points du cadre (game.js : REFUGES, MAP.perches)
 PERCHOIRS = {
@@ -722,6 +1071,10 @@ PERCHOIRS = {
     "maison_colombages": [(46, 24.5), (73, 42)],
     "maison_haute": [(26, 44), (56, 38)],
     "boulangerie": [(26, 42), (66, 38)],
+    "maison_pecheur": [(22, 38), (50, 35)],
+    "maison_pecheur_verte": [(22, 38), (50, 35)],
+    "maison_pecheur_pignon": [(46, 25.5), (74, 41)],
+    "casino": [(40, 62), (120, 58)],
 }
 
 
@@ -738,7 +1091,10 @@ def perchoirs(echelle=2):
 # 12 novembre 2026). L'obstacle du décor grandit d'autant : MAP.grow, appliqué à FOOT par game.js.
 ECH = {"maison_rouge": 1.3, "maison_rouge_pignon": 1.3, "maison_bleue": 1.3, "maison_colombages": 1.3, "maison_haute": 1.3,
        "boulangerie": 1.3, "grange": 1.25, "entrepot": 1.2, "guerite": 1.25, "cabane": 1.2,
-       "etal_fruits": 1.25, "etal_legumes": 1.25, "etal_fleurs": 1.25, "poulailler": 1.25}
+       "etal_fruits": 1.25, "etal_legumes": 1.25, "etal_fleurs": 1.25, "poulailler": 1.25,
+       "etal_poissons": 1.25, "etal_glaces": 1.25, "maison_pecheur": 1.3, "maison_pecheur_pignon": 1.3, "maison_pecheur_verte": 1.3,
+       "cabane_pecheur_rouge": 1.25, "cabane_pecheur_bleue": 1.25, "cabane_pecheur_jaune": 1.25, "cabane_pecheur_verte": 1.25,
+       "phare": 1.4, "casino": 1.35, "manege": 1.35, "cabine_bleue": 1.25, "cabine_rouge": 1.25, "cabine_jaune": 1.25, "cabine_verte": 1.25}
 
 
 def agrandis():

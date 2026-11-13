@@ -40,7 +40,7 @@ def terrain(x, y):
         return "grass"
     if y < yb + 1.9:
         return "planks" if x <= 16 else "grass"              # (les planches s'arrêtent avant la falaise : jamais de jonction)
-    return "sand" if y < ys else "water"
+    return "sand" if y < ys else "sea"
 
 
 def scene(titre):

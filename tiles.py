@@ -39,6 +39,10 @@ TERRAINS = {
     # bords naturels (sable / herbe, eau / sable, falaise) ont leur rangée dans le tileset : PAIRS.
     "sand":     dict(fill="#F2DFA8", edge="#E3CB8C", out="#B79A5C", edge_w=1.6, out_w=0.8),   # le sable de la plage
     "planks":   dict(fill="#B98A5C", edge="#9C7046", out="#5E4630", edge_w=1.4, out_w=0.9),   # les planches, la jetée
+    # La mer : un terrain à part de l'eau douce (Christophe, 13 novembre 2026 : la rivière « doit avoir une couleur
+    # moins prononcée que la mer »). La mer garde le turquoise choisi sur cote_terrains_options.png, la rivière et
+    # les mares le bleu doux de « water ». Pour les collisions, les deux sont de l'eau (pack_web : MAP.water).
+    "sea":      dict(fill="#2F9CCB", out="#1C6A96", out_w=0.85, shore=True, mer=True),
     # La falaise, façon RPG Maker XP (demande de Christophe, d'après une carte de RPG Maker, validée sur
     # reference/v2/falaise_rpg.png) : le plateau est un bloc surélevé aux bords arrondis. « heath », la lande du
     # plateau (herbe jaunie, caillouteuse), cernée d'un liséré de pierres ; « chalk », la paroi de roche peinte sous
@@ -56,7 +60,7 @@ PAIRS = [("dirt", "grass"), ("road", "grass"), ("paving", "grass"), ("concrete",
          ("forest", "grass"), ("dirt", "forest"),
          # la côte : ses bords naturels ont une rangée (et donc leurs variantes froissées, ALTERNEES) ; les planches,
          # la falaise et les autres mélanges restent des tuiles composées
-         ("sand", "grass"), ("water", "sand")]
+         ("sand", "grass"), ("sea", "sand")]
 
 # Retouches de style pour certaines paires (sinon : style du terrain du dessus)
 PAIR_STYLE = {
@@ -66,12 +70,12 @@ PAIR_STYLE = {
 
 # Priorité d'empilement (utile pour la génération automatique) : l'eau recouvre le sable, la falaise a le pied dans
 # l'eau ou sur le sable, les planches (la jetée) passent sur l'eau
-PRIORITY = ["grass", "forest", "field", "dirt", "sand", "water", "chalk", "heath", "stairs", "sidewalk", "concrete",
-            "paving", "planks", "road"]
+PRIORITY = ["grass", "forest", "field", "dirt", "sand", "water", "sea", "chalk", "heath", "stairs", "sidewalk",
+            "concrete", "paving", "planks", "road"]
 # (l'ordre d'avant la côte, les nouveaux terrains à la suite : la graine des tuiles composées, qui ne doit pas
 # changer pour celles qui existaient — composite_seed())
 _GRAINES = ["grass", "forest", "field", "dirt", "water", "sidewalk", "concrete", "paving", "road", "sand", "chalk", "planks",
-            "heath", "stairs"]
+            "heath", "stairs", "sea"]
 # Le bloc de la falaise : le plateau, sa paroi, son escalier. Il a les bords arrondis de tous les terrains, sans
 # froissement, et jette une ombre sur le sol d'en bas (_ombre_bloc).
 BLOC = ("chalk", "heath", "stairs")
@@ -208,6 +212,11 @@ def tex_sidewalk(scale, seed=0):
 def tex_water(scale, seed=0):
     """Eau unie : le jeu anime ses vaguelettes à part (fx_ripple)."""
     return _canvas(scale, TERRAINS["water"]["fill"])
+
+
+def tex_sea(scale, seed=0):
+    """La mer, unie elle aussi."""
+    return _canvas(scale, TERRAINS["sea"]["fill"])
 
 
 SILLONS = (8, 24)            # crêtes des buttes du champ, en px 1x dans la tuile : le jeu y plante ses rangs
@@ -415,7 +424,7 @@ def tex_lower_grass(scale, seed=0):
 TEX = {"dirt": tex_dirt, "road": tex_road, "paving": tex_paving, "concrete": tex_concrete,
        "sidewalk": tex_sidewalk, "water": tex_water, "grass": tex_lower_grass, "field": tex_field,
        "forest": tex_forest, "sand": tex_sand, "planks": tex_planks, "chalk": tex_chalk, "heath": tex_heath,
-       "stairs": tex_stairs}
+       "stairs": tex_stairs, "sea": tex_sea}
 
 
 def _tex(terrain, scale, seed=0, marking=None, ph=None):
@@ -458,7 +467,8 @@ def _ease(t):
 
 
 TREMBLE = 0.06               # bords naturels : de combien le champ est froissé (0 : des bords tirés à la règle)
-NATURELS = ("dirt", "water", "forest", "field", "sand")   # chemins de terre, rives, sous-bois, champ, plage ; pas la voirie ni la falaise
+NATURELS = ("dirt", "water", "sea", "forest", "field", "sand")   # chemins de terre, rives, sous-bois, champ, plage ; pas la voirie ni la falaise
+EAUX = ("water", "sea")      # l'eau douce et la mer
 RIVES = BANKS + ("sand",)    # là où le bord de l'eau est froissé (pas le long d'un quai)
 
 
@@ -525,8 +535,9 @@ def _blend(out, color, alpha):
     out[..., :3] = out[..., :3] * (1 - a) + np.array(hexrgb(color)) * a
 
 
-def _shore(out, bits, below, scale, tremble=0.0, variante=0):
-    """Rive et hauts-fonds de l'eau (SHORE) autour des coins `bits`, par-dessus `out` où l'eau est déjà posée."""
+def _shore(out, bits, below, scale, tremble=0.0, variante=0, mer=False):
+    """Rive et hauts-fonds de l'eau (SHORE) autour des coins `bits`, par-dessus `out` où l'eau est déjà posée.
+    mer : la mer (ses hauts-fonds sont ceux de PLAGE ; sur le sable, le bord de mer)."""
     n, k = T * scale * SS, scale * SS
     dist, lum, v = _field(bits, n, light=True, tremble=tremble, variante=variante)
     d = dist / k                                      # en px 1x
@@ -535,7 +546,7 @@ def _shore(out, bits, below, scale, tremble=0.0, variante=0):
     U, V = np.meshgrid(u, u)
     motif = (np.sin(2 * np.pi * (3 * U + V)) + 0.7 * np.sin(2 * np.pi * (2 * V - 5 * U) + 1.0)
              + 0.5 * np.sin(2 * np.pi * (7 * U + 4 * V) + 2.0))
-    if below == "sand":                               # le bord de mer (PLAGE)
+    if below == "sand" and mer:                       # le bord de mer (PLAGE)
         for key in ("wet", "wet2"):
             col, a = PLAGE[key]
             out[band(a, 0)] = hexrgb(col) + (255,)
@@ -552,10 +563,15 @@ def _shore(out, bits, below, scale, tremble=0.0, variante=0):
         for key in ("sand", "wet"):
             col, a = SHORE[key]
             out[band(a, 0)] = hexrgb(col) + (255,)
-    v1, v2 = (float(_ease(0.5 + SHORE[key] / T)) for key in ("mid_at", "deep"))    # niveaux du champ, en ligne droite
+    elif below == "sand":                             # la rivière qui traverse la plage : du sable mouillé
+        for key in ("wet", "wet2"):
+            col, a = PLAGE[key]
+            out[band(a * 0.6, 0)] = hexrgb(col) + (255,)
+    fonds = PLAGE if mer else SHORE                   # (les hauts-fonds de la mer, le long d'un quai ou de l'herbe aussi)
+    v1, v2 = (float(_ease(0.5 + fonds[key] / T)) for key in ("mid_at", "deep"))    # niveaux du champ, en ligne droite
     shallow = (v >= 0.5) & (v < v1)
-    out[shallow] = hexrgb(SHORE["shallow"]) + (255,)
-    out[(v >= v1) & (v < v2)] = hexrgb(SHORE["mid"]) + (255,)
+    out[shallow] = hexrgb(fonds["shallow"]) + (255,)
+    out[(v >= v1) & (v < v2)] = hexrgb(fonds["mid"]) + (255,)
     col, a = SHORE["shade"]
     _blend(out, col, shallow * (d >= a) * (lum * 6 - 0.6))
     # écume : des tirets inégaux, tirés d'un motif qui se répète d'une tuile à l'autre (ils se raccordent)
@@ -583,8 +599,12 @@ def _layer(out, terrain, bits, below, scale, seed=0, marking=None, variante=0, p
     spec = dict(TERRAINS[terrain])
     spec.update(PAIR_STYLE.get((terrain, below), {}))
     ter = np.array(_tex(terrain, scale, seed, marking, ph))
-    tremble = TREMBLE if terrain in NATURELS and (terrain != "water" or below in RIVES) else 0     # (pas le long d'un quai)
+    tremble = TREMBLE if terrain in NATURELS and (terrain not in EAUX or below in RIVES) else 0     # (pas le long d'un quai)
     onde = terrain in ONDULES
+    if terrain == "sea" and below == "water":         # l'embouchure : l'eau douce se fond dans la mer, sans rive
+        _, _, v = _field(bits, n, light=True)
+        _blend(out, spec["fill"], _ease(np.clip((v - 0.2) / 0.6, 0, 1)))
+        return
     dist = _field(bits, n, tremble=tremble, variante=variante, ondule=onde)
     if bloc is not None:
         _ombre_bloc(out, bloc, scale, variante)
@@ -607,7 +627,7 @@ def _layer(out, terrain, bits, below, scale, seed=0, marking=None, variante=0, p
         out[(d >= 0) & (d < spec["out_w"])] = hexrgb(spec["out"]) + (255,)
         return
     elif spec.get("shore"):
-        _shore(out, bits, below, scale, tremble, variante)
+        _shore(out, bits, below, scale, tremble, variante, mer=bool(spec.get("mer")))
     else:
         edge = (dist >= spec["out_w"] * k) & (dist < (spec["out_w"] + spec["edge_w"]) * k)
         out[edge] = hexrgb(spec["edge"]) + (255,)
@@ -819,7 +839,7 @@ ROW0 = ["(vide)", "herbe", "herbe + brins", "herbe + fleurs", "herbe + cailloux"
 OVERLAY_ROW = 1 + len(PAIRS)
 # Variantes des transitions à bord naturel (un autre froissement, mêmes coins) : FROISSES - 1 rangées par paire,
 # après la ligne des détails. La carte ne les connaît pas : le jeu les choisit en peignant le sol (MAP.tileAlt).
-ALTERNEES = [p for p in PAIRS if p[0] in NATURELS and (p[0] != "water" or p[1] in RIVES)]
+ALTERNEES = [p for p in PAIRS if p[0] in NATURELS and (p[0] not in EAUX or p[1] in RIVES)]
 ALT_ROW = OVERLAY_ROW + 1
 COMPOSITE_BASE = (ALT_ROW + len(ALTERNEES) * (FROISSES - 1)) * COLS      # tuiles composées, après les variantes
 

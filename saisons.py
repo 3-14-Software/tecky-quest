@@ -29,8 +29,8 @@ SAISONS = {
                     "bouleau": ("#6AA63A", "#8FC348", "#BEDD68", "#3A6428"), "jeune": ("#2A8554", "#41A069", "#79C68D", "#1B503B"),
                     "buisson": ("#358A3C", "#55AB43", "#8CCF55", "#205327"), "cerisier": ("#2F8A46", "#4FAE56", "#8FD46A", "#1F5A2E")},
         herbe=dict(fill="#A5CB62", blade="#86AE4A"), terrains={"field": dict(fill="#DDB851", edge="#C59E3E", out="#8E6E26"),
-                                                                 # (l'eau de l'été est la mer turquoise de la côte, choisie par Christophe sur reference/v2/cote_terrains_options.png)
-                                                                 "water": dict(fill="#2F9CCB", out="#1C6A96"), "forest": dict(fill="#5F9B48", edge="#538C40", out="#427534")}),
+                                                                 # (l'eau douce garde son bleu en été : la mer turquoise de la côte est un terrain à part, tiles « sea »)
+                                                                 "forest": dict(fill="#5F9B48", edge="#538C40", out="#427534")}),
     "automne": dict(
         feuillages={"chene": ("#C2611F", "#E48A2A", "#F6BD4C", "#6E3612"), "sombre": ("#96381F", "#BE5128", "#DF7E3A", "#571F10"),
                     "bouleau": ("#D29E1C", "#EEC636", "#FAE584", "#775612"), "jeune": ("#B8502A", "#DA7434", "#F0A458", "#6A2A14"),

@@ -758,6 +758,80 @@ def peniche():
     return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), None)
 
 
+def cargo():
+    """Un petit cargo de mer à quai (sur l'eau : pas d'ombre portée), pour le port de la côte — la péniche du
+    printemps « n'a rien à faire dans la mer » (Christophe) : coque bleu nuit à carène rouge, gaillard d'avant
+    relevé, trois conteneurs en pontée, le château à l'arrière avec sa passerelle vitrée et sa cheminée."""
+    w, h, px, py = 204, 84, 102, 76
+    nuit, nuit_o, carene = "#2B3F63", "#1D2C47", "#B5443A"
+    d = Drawing(w, h)
+    d.raw('<ellipse cx="100" cy="75.6" rx="96" ry="4.6" fill="#155A7E" opacity="0.32"/>')
+    d.raw(line("M1,77 q4,-2 8,0 M44,80 q5,-2 10,0 M122,80.4 q5,-2 10,0 M188,77 q4,-1.8 8,0", "#CFF1F6", 1.0))
+    d.add(_pts([(186, 41), (194, 35.6), (190, 66), (184, 72)]), nuit_o)                    # le tableau arrière
+    coque = "M4,40 L30,41 L36,48 L160,48 L160,41 L186,41 L184,72 Q100,77 22,72 Q10,62 4,40 Z"
+    d.clip("coque", [path(coque)])
+    d.add(path(coque), nuit)
+    d.add(rect(0, 64, 200, 16), carene, sil=False, clip="coque")
+    d.raw('<g clip-path="url(#coque)">' + line("M0,63.4 L200,63.4", "#FFFFFF", 1.2) + "</g>")
+    d.add(rect(0, 70, 200, 10), "#000000", sil=False, clip="coque", opacity=0.16)
+    d.add(path("M4,40 L30,41 L36,35.4 L12,35 Q6,36 4,40 Z"), "#C9CED6")                    # le gaillard d'avant
+    d.add(path("M36,48 L160,48 L166,43.4 L42,43.4 Z"), "#AEB5BF")                          # le pont
+    d.add(path("M160,41 L186,41 L194,35.6 L166,35.6 Z"), "#C9CED6")                        # la dunette
+    d.add(circle(13, 47, 2.6), "#C9CED6", sil=False, edge=True)                           # l'écubier, l'ancre
+    d.raw(line("M13,47 L13,53 M10.6,51.6 Q13,55 15.4,51.6", "#C9CED6", 1.1))
+    d.add(rect(18, 13, 1.8, 23, 0.6), "#C9CED6")                                          # le mât de proue, son feu
+    d.add(circle(18.9, 12, 1.6), "#F7D154")
+    for i, (x, col) in enumerate(((46, "orange"), (83, "bleu"), (120, "vert"))):          # la pontée
+        face, cote, dessus = CONTENEURS[col][0], CONTENEURS[col][1], CONTENEURS[col][2]
+        _boite_p(d, f"p{i}", x, x + 34, 47.6, 13, 2, 8, face, cote, dessus)
+        for k in range(1, 6):
+            _dans(d, f"fp{i}", line(f"M{x + 1 + k * 5.6 + 1},{47.6 - 13 - 0.72} L{x + 1 + k * 5.6 + 1},{47.6 - 0.72}", cote, 0.7))
+    _boite_p(d, "h1", 164, 188, 41, 14, 2, 9, "#F6F0E4", "#CFC6B4", "#FFFFFF")            # le château, la passerelle
+    _boite_p(d, "h2", 162, 190, 27, 9.5, 2, 10, "#F6F0E4", "#CFC6B4", "#FFFFFF")
+    for x in (165.5, 173, 180.5):
+        d.add(rect(x, 19, 6, 5.4, 0.8), "#A9D8F2", sil=False, edge=True)
+    for x in (168, 178):
+        d.add(circle(x + 0.6, 33.6, 1.7), "#A9D8F2", sil=False, edge=True)                # hublots
+    d.add(rect(174, 3, 8, 13.6, 1), nuit)                                                 # la cheminée
+    d.add(rect(174, 6, 8, 3.4, 0), carene, sil=False)
+    for x in (58, 100, 142):                                                              # pneus de défense
+        d.add(circle(x, 58, 2.9), "#2B2B33", sil=False)
+        d.add(circle(x, 58, 1.1), nuit, sil=False)
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), None)
+
+
+BATEAUX = {"bleu": ("#2F6FB5", "#1F4F86"), "rouge": ("#C2463B", "#8E2F28"), "vert": ("#3F8F6A", "#2A664A")}
+
+
+def bateau_de_peche(couleur="bleu"):
+    """Un petit bateau de pêche au mouillage dans le bassin (sur l'eau : pas d'ombre portée) : coque de couleur à
+    liston blanc, l'étrave relevée à droite, une cabine blanche, un mât et sa corne, des bouées orange."""
+    w, h, px, py = 100, 66, 50, 56
+    c, c_o = BATEAUX[couleur]
+    d = Drawing(w, h)
+    d.raw('<ellipse cx="50" cy="55.6" rx="45" ry="3.6" fill="#155A7E" opacity="0.32"/>')
+    d.raw(line("M2,57 q4,-2 8,0 M40,59.6 q5,-2 10,0 M86,57 q4,-1.8 8,0", "#CFF1F6", 1.0))
+    coque = "M6,38 L74,39 L94,33 Q92,46 82,53 Q48,56.6 16,53 Q8,48 6,38 Z"
+    d.clip("coque", [path(coque)])
+    d.add(path(coque), c)
+    d.add(rect(0, 48.6, 100, 10), c_o, sil=False, clip="coque")
+    d.raw('<g clip-path="url(#coque)">' + line("M5,41.6 L74,42.6 L95,36.4", "#FFFFFF", 1.6) + "</g>")
+    d.add(path("M6,38 L74,39 L94,33 L88,31 L70,35.4 L10,34.6 Z"), "#E9DFC9")               # le pont
+    _boite_p(d, "k", 18, 40, 38.4, 13, 2, 7, "#F6F0E4", "#CFC6B4", "#FFFFFF")              # la cabine
+    d.add(rect(21, 27.6, 7, 5.6, 0.8), "#A9D8F2", sil=False, edge=True)
+    d.add(rect(30.6, 27.6, 7, 5.6, 0.8), "#A9D8F2", sil=False, edge=True)
+    _boite_p(d, "r", 16.6, 41.4, 24.6, 2.2, 1.4, 8.6, c, c_o, _fonce(c, 1.0))              # son toit
+    d.add(rect(52, 6, 1.9, 31, 0.6), "#8A5A3A")                                           # le mât, sa corne, le gréement
+    d.raw(line("M53,10 L82,24", "#8A5A3A", 1.6))
+    d.raw(line("M53,7 L90,33 M53,7 L12,35 M82,24 L84,34", "#5E574C", 0.6))
+    d.add(path("M53.9,6.6 L61,8.8 L53.9,11 Z"), "#D7332B")
+    for x in (60, 65.4, 70.8):                                                            # bouées orange, sur le pont
+        d.add(circle(x, 35.6, 2.4), "#F28C28", sil=False, edge=True)
+    for x in (30, 62):                                                                    # pneus de défense
+        d.add(circle(x, 46.4, 2.3), "#2B2B33", sil=False)
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), None)
+
+
 # ====================================================================== CLAIRIÈRE, VERGER
 FEUILLES_MORTES = ("#E59A3C", "#F2C24E", "#C9642E", "#B8763A", "#D9803A")
 
@@ -905,6 +979,9 @@ CATALOGUE = {
     "toboggan": toboggan, "balancoire": balancoire, "nid_de_feuilles": nid_de_feuilles, "panier": panier,
     "lampadaire": lampadaire, "cone_de_chantier": cone_de_chantier, "panneau_indicateur": panneau_indicateur,
     "panneau_routier": panneau_routier,
+    # la côte de l'été
+    "cargo": cargo, "bateau_de_peche": bateau_de_peche, "bateau_de_peche_rouge": lambda: bateau_de_peche("rouge"),
+    "bateau_de_peche_vert": lambda: bateau_de_peche("vert"),
 }
 # Décor de carte.json -> ses dessins (un par position, comme la nature) ; `n` reste le nom du décor et son obstacle.
 VARIANTES = {
@@ -921,6 +998,8 @@ VARIANTES = {
     "slide": (["toboggan"], [0]), "swing": (["balancoire"], [0]), "leaf_nest": (["nid_de_feuilles"], [0]), "dog_bed": (["panier"], [0]),
     "lamppost": (["lampadaire"], [0]), "cone": (["cone_de_chantier"], [0]), "signpost": (["panneau_indicateur"], [0]),
     "road_sign": (["panneau_routier"], [0]),
+    "cargo": (["cargo"], [0]),
+    "fishing_boat": (["bateau_de_peche", "bateau_de_peche_rouge", "bateau_de_peche_vert"], [0, 1, 2]),
 }
 # Où un chat se réfugie sur un conteneur : points du cadre (game.js : REFUGES, MAP.perches)
 PERCHOIRS = {
@@ -934,7 +1013,8 @@ PERCHOIRS = {
 ECH = {"conteneur": 1.5, "conteneur_bleu": 1.5, "conteneur_vert": 1.5, "conteneurs_empiles": 1.5,
        "table_de_terrasse": 1.35, "banc": 1.2,            # (un parasol plus haut qu'un villageois, un banc où s'asseoir)
        "foin": 1.3, "foin_rond": 1.3, "tonneau_bleu": 1.35, "tonneau_rouge": 1.35, "portique": 1.5, "peniche": 1.4,
-       "lampadaire": 1.3, "toboggan": 1.3, "balancoire": 1.3}
+       "lampadaire": 1.3, "toboggan": 1.3, "balancoire": 1.3,
+       "cargo": 1.3, "bateau_de_peche": 1.3, "bateau_de_peche_rouge": 1.3, "bateau_de_peche_vert": 1.3}
 
 
 def agrandis():

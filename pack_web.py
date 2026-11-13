@@ -158,6 +158,8 @@ def charger_carte(nom=carte.MONDE, episode=None):
     DECOR = _T("decor") + derived_decor()
     # pont : coins (x0, y0, x1, y1) qui ne sont plus de l'eau, sous le tablier de chaque décor « bridge » (5 tuiles de haut)
     BRIDGES = [(round(x) - 1, round(y) - 5, round(x) + 1, round(y)) for n, x, y in DECOR if n == "bridge"]
+    # (le pont en travers, « bridge_h », posé sur un milieu de tuile : sept coins de large, trois de haut)
+    BRIDGES += [(math.floor(x) - 3, math.floor(y) - 2, math.floor(x) + 4, math.floor(y)) for n, x, y in DECOR if n == "bridge_h"]
     EDGE = edge_decor(corner_grid(), edge_keep())
 
 
@@ -203,18 +205,20 @@ def build_map():
     for ty in range(MH):
         for tx in range(MW):
             ground.append(pick([g[ty][tx], g[ty][tx + 1], g[ty + 1][tx], g[ty + 1][tx + 1]], tx, ty))
-    # marquages de la route (sur sa deuxième rangée)
-    for tx in range(MW if ROAD is not None else 0):
-        ground[(ROAD + 1) * MW + tx] = 5 if tx % 2 == 0 else tiles.tile_index("road", 15)
+    # marquages de la route (sur sa deuxième rangée), tant qu'elle dure : sur la côte, elle s'arrête au parking
+    at = lambda x, y: g[min(max(y, 0), MH)][min(max(x, 0), MW)]
+    chaussee = lambda tx: ROAD is not None and all(at(tx + i, ROAD + 1 + j) == "road" for i in (0, 1) for j in (0, 1))
+    for tx in range(MW):
+        if chaussee(tx):
+            ground[(ROAD + 1) * MW + tx] = 5 if tx % 2 == 0 else tiles.tile_index("road", 15)
     # sol de la lisière : lisiere.RING tuiles autour de la carte, qui prolongent celles du bord (coins ramenés sur le
     # bord : la route, ses marquages, la rivière et le ruisseau continuent tout droit)
     R, ring = lisiere.RING, []
-    at = lambda x, y: g[min(max(y, 0), MH)][min(max(x, 0), MW)]
     for ty in range(-R, MH + R):
         for tx in range(-R, MW + R):
             if not (0 <= tx < MW and 0 <= ty < MH):
                 idx = pick([at(tx, ty), at(tx + 1, ty), at(tx, ty + 1), at(tx + 1, ty + 1)], tx, ty)
-                ring.append([tx, ty, (5 if tx % 2 == 0 else tiles.tile_index("road", 15)) if ROAD is not None and ty == ROAD + 1 else idx])
+                ring.append([tx, ty, (5 if tx % 2 == 0 else tiles.tile_index("road", 15)) if ty == (ROAD or 0) + 1 and chaussee(tx) else idx])
     for tx in CROSSINGS:                              # passages piétons (dont chemin de la ferme et du pont)
         for ty in (ROAD, ROAD + 1, ROAD + 2):
             ground[ty * MW + tx] = ground[ty * MW + tx + 1] = 7
@@ -233,7 +237,7 @@ def build_map():
         for y in range(y0, y1 + 1):
             for x in range(x0, x1 + 1):
                 g[y][x] = "bridge"           # n'est plus de l'eau pour les collisions (le sol a déjà été choisi)
-    water = [1 if g[y][x] == "water" else 0 for y in range(MH + 1) for x in range(MW + 1)]
+    water = [1 if g[y][x] in tiles.EAUX else 0 for y in range(MH + 1) for x in range(MW + 1)]      # (eau douce et mer)
     # la falaise : les coins de craie, où l'on ne marche pas (game.js : cliffAt()) ; rien si la carte n'en a pas
     cliff = [1 if g[y][x] == "chalk" else 0 for y in range(MH + 1) for x in range(MW + 1)]
     # le plateau (la lande et l'escalier qui y monte) : on ne franchit son bord que par l'escalier (rimAt())

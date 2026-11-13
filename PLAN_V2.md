@@ -414,7 +414,8 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
    **Atteint le 12 novembre 2026** : `cartes/pre.json` (40 x 24), reliée au tunnel de l'est du monde ;
    `tests/cartes.js` fait l'aller-retour, vérifie que chaque carte garde son état, qu'une partie enregistrée
    là-bas reprend là-bas et qu'une sauvegarde v2 se reprend dans le monde ; batterie complète verte ; vu dans le
-   jeu (`reference/v2/lot6_deux_cartes.png`) et dans l'éditeur (`?carte=pre`). Restent pour plus tard : des
+   jeu (`reference/v2/lot6_deux_cartes.png`) et dans l'éditeur (`?carte=pre`). (Cette carte d'essai a été
+   remplacée par la côte le 13 novembre 2026.) Restent pour plus tard : des
    portes (intérieurs), les passages modifiables dans l'éditeur, et faire suivre Pompon ou un copain d'une carte
    à l'autre. Retouches du même jour, à la demande de Christophe : Tecky ressort sur la route, devant le tunnel,
    à la hauteur où il est entré (il ressortait dans l'herbe) ; le tunnel est redessiné (`tunnel_options.png`,
@@ -524,11 +525,33 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      un plateau de lande jaunie et caillouteuse cerné d'un liséré de pierres, une paroi de roche sous ses bords
      du bas, un escalier pour monter, l'ombre du bloc sur le sol d'en bas ; on ne franchit le bord du plateau que
      par l'escalier ; les planches ne touchent jamais la falaise. Tout est dans le moteur de tuiles et dans
-     l'éditeur, essayé sur la carte d'essai (`reference/v2/lot6_plage_jeu.png`). Restent : la carte de la côte
-     elle-même, l'habillage du sable (coquillages, traces), la nage, les vagues.
+     l'éditeur, essayé sur la carte d'essai (`reference/v2/lot6_plage_jeu.png`). Restent : l'habillage du sable
+     (coquillages, traces), la nage, les vagues.
+   - *La carte de la côte, premier jet du 13 novembre 2026* : `cartes/cote.json`, 96 x 64, tracée d'après le
+     plan (`reference/v2/cote_carte.png` : la carte entière ; `reference/v2/lot6_cote_jeu.png` : dans le jeu,
+     aux couleurs de l'été). Le terrain est complet : la route qui finit au parking, la rivière et son pont de
+     planches, le port, le village de pêcheurs et son bassin, la ville (place du casino, jardins, front de
+     mer), la campagne normande, le plateau des falaises et ses deux escaliers, les planches, la plage, la
+     jetée, la mer. Elle est habillée avec les décors qui existent (maisons, étals, conteneurs, portique,
+     péniche, pommiers, bancs, lampadaires…), des objets, six os dorés, sept chiens, des canards, des vaches,
+     des petites bêtes, des papillons, cinq panneaux, sept zones. Elle remplace la carte d'essai dans l'été :
+     on y arrive encore à pied par le tunnel, en attendant la cinématique. Restent vides, faute de dessins :
+     la place du casino, le bout de la falaise (le phare), le milieu des jardins (le manège), le parking (le
+     porche, les voitures garées) ; rien ne roule encore sur la route ; ni personnages, ni indices, ni Alice.
+     **Avis de Christophe (13 novembre 2026) : « le tracé général est excellent ».** Les décors repris du
+     printemps ne sont que des bouche-trous. Ses demandes, faites le jour même : un vrai pont dans l'autre sens
+     (`bridge_h`), une rivière moins prononcée que la mer (la mer devient un terrain à part, `sea`), deux
+     étals neufs (poissonnerie, glaces), des maisons de pêcheurs et des cabanes pour le village
+     (`reference/v2/cote_pecheurs.png`) — « c'est parfait ». Puis, le même jour : un cargo à la place de la
+     péniche (« qui n'a rien à faire dans la mer »), des bateaux de pêche dans le bassin, le phare au bout
+     de la falaise, le casino sur sa place, le manège dans les jardins (il ne tourne pas encore), des cabines
+     de plage au pied des planches (`reference/v2/cote_bord_de_mer.png` ; dans le jeu :
+     `reference/v2/lot6_cote_bord_de_mer_jeu.png`). Restent à valider : ces derniers
+     dessins, les noms des zones, leurs musiques d'emprunt.
    - *À dessiner* : les motos, Tecky qui nage, les six personnages
-     des quêtes, le caniche, les moutons, les mouettes, les crabes ; le phare, le casino, les cabines de plage,
-     le manège, les bateaux de pêche, l'étal de poissons, le porche du parking ; les vagues de la mer ; les objets (chapeau, pelle, tong, coquillages, bouées, jouets de plage).
+     des quêtes, le caniche, les moutons, les mouettes, les crabes ; le porche du parking ; les vagues de la
+     mer ; les objets (chapeau, pelle, tong, coquillages, bouées, jouets de plage). (Faits le 13 novembre
+     2026 : le phare, le casino, les cabines de plage, le manège, les bateaux de pêche, la poissonnerie.)
 5. Les autres saisons (automne, hiver), puis les intérieurs.
 6. Rejouer : cachettes tirées au sort, album d'autocollants.
 

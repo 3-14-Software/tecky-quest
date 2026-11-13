@@ -13,15 +13,15 @@ ok(diff(s.ground, MAP.ground) === 0, 'sol : les ' + MAP.ground.length + ' tuiles
 ok(diff(s.over, MAP.over) === 0, 'détails au sol et traces de pattes (' + diff(s.over, MAP.over) + ' différences)');
 ok(JSON.stringify(s.ring) === JSON.stringify(MAP.edge.ring), 'sol de la lisière (' + s.ring.length + ' tuiles)');
 ok(s.composites.length > 0 && s.ground.some(i => i >= I.compositeBase), s.composites.length + ' tuiles composées, mêmes index');
-// une carte annexe (cartes/pre.json) : même sol que le jeu, elle aussi, avec sa route et sa lisière
+// une carte annexe (cartes/cote.json) : même sol que le jeu, elle aussi, avec sa route et sa lisière
 {
-  const pre = JSON.parse(fs.readFileSync(root + '/cartes/pre.json', 'utf8')), jeu = JSON.parse(html.match(/const CARTES = (.*);\n/)[1]).pre;
-  const sp = ED.calculerSol(pre, I);
+  const cote = JSON.parse(fs.readFileSync(root + '/cartes/cote.json', 'utf8')), jeu = JSON.parse(html.match(/const CARTES = (.*);\n/)[1]).cote;
+  const sp = ED.calculerSol(cote, I);
   // (les tuiles composées sont numérotées à la suite pour toutes les cartes du jeu : on compare leurs places, pas leur numéro)
   const sansNumero = a => a.map(v => v >= I.compositeBase ? -1 : v);
   ok(diff(sansNumero(sp.ground), sansNumero(jeu.ground)) === 0 && diff(sp.over, jeu.over) === 0
      && JSON.stringify(sp.ring.map(([x, y, v]) => [x, y, v >= I.compositeBase ? -1 : v])) === JSON.stringify(jeu.edge.ring.map(([x, y, v]) => [x, y, v >= I.compositeBase ? -1 : v])),
-     'carte annexe « pre » : sol, détails et lisière comme dans le jeu (' + jeu.ground.length + ' tuiles)');
+     'carte annexe « cote » : sol, détails et lisière comme dans le jeu (' + jeu.ground.length + ' tuiles)');
 }
 // décors redessinés : l'éditeur montre, pour chaque décor de la carte, le modèle que le jeu tire de sa position
 const jeu = (n, x, y) => { const v = MAP.variants[n]; return 'decor/' + (v ? v[0][v[1][Math.floor(ED.hash3(Math.round(x), Math.round(y), 7) * v[1].length)]] : n); };

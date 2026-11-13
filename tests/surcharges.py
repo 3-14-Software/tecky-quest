@@ -71,18 +71,18 @@ try:
     shutil.copy(carte.FICHIER, tmp)
     vrai = (carte.DOSSIER, carte.FICHIER)
     carte.DOSSIER, carte.FICHIER = os.path.join(tmp, "cartes"), os.path.join(tmp, "carte.json")
-    f = carte.surcharge("pre", "ete")
-    pre = carte.charger(carte.chemin("pre"))
-    c = copy.deepcopy(pre)
+    f = carte.surcharge("cote", "ete")
+    cote = carte.charger(carte.chemin("cote"))
+    c = copy.deepcopy(cote)
     c["signs"][0][2] += " !"
-    ok(editeur.enregistrer_surcharge(c, "pre", "ete") == [] and json.load(open(f, encoding="utf-8")) == {"signs": c["signs"]},
+    ok(editeur.enregistrer_surcharge(c, "cote", "ete") == [] and json.load(open(f, encoding="utf-8")) == {"signs": c["signs"]},
        "éditeur : enregistrer la carte d'un épisode n'écrit que ce qu'elle change")
-    ok(open(carte.chemin("pre"), encoding="utf-8").read() == open(os.path.join(vrai[0], "pre.json"), encoding="utf-8").read(),
+    ok(open(carte.chemin("cote"), encoding="utf-8").read() == open(os.path.join(vrai[0], "cote.json"), encoding="utf-8").read(),
        "éditeur : la carte de base n'est pas touchée")
-    ok(editeur.lire("pre", "ete")[1] != editeur.lire("pre")[1] and json.loads(editeur.lire("pre", "ete")[0]) == c,
+    ok(editeur.lire("cote", "ete")[1] != editeur.lire("cote")[1] and json.loads(editeur.lire("cote", "ete")[0]) == c,
        "éditeur : la carte relue est celle de l'épisode")
-    ok(editeur.enregistrer_surcharge(pre, "pre", "ete") == [] and not os.path.exists(f), "éditeur : plus rien à redire, la surcharge est retirée")
-    ok(editeur.enregistrer_surcharge(dict(pre, w=3), "pre", "ete") != [] and not os.path.exists(f), "éditeur : un épisode ne change pas la taille de la carte")
+    ok(editeur.enregistrer_surcharge(cote, "cote", "ete") == [] and not os.path.exists(f), "éditeur : plus rien à redire, la surcharge est retirée")
+    ok(editeur.enregistrer_surcharge(dict(cote, w=3), "cote", "ete") != [] and not os.path.exists(f), "éditeur : un épisode ne change pas la taille de la carte")
 finally:
     carte.DOSSIER, carte.FICHIER = vrai
     shutil.rmtree(tmp, ignore_errors=True)

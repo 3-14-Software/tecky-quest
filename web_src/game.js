@@ -1605,6 +1605,10 @@ const FOOT = {
   house_red: [-76, -84, 76, -2], house_blue: [-76, -84, 76, -2], house_timber: [-70, -84, 70, -2], house_tall: [-76, -84, 76, -2],
   bakery: [-90, -84, 90, -2], stall_fruit: [-52, -24, 52, 0], stall_veg: [-52, -24, 52, 0], stall_flower: [-52, -24, 52, 0],
   cafe_table: [-22, -10, 22, 0], doghouse: [-28, -26, 28, 0],
+  // la côte : poissonnerie, marchand de glaces, maisons et cabanes de pêcheurs
+  stall_fish: [-52, -24, 52, 0], stall_ice: [-52, -24, 52, 0], house_fisher: [-72, -72, 72, -2], hut_fisher: [-50, -50, 54, -2],
+  // le phare, le casino, le manège, les cabines de plage (le cargo et les bateaux de pêche sont sur l'eau : pas de collision)
+  lighthouse: [-46, -30, 46, -2], casino: [-148, -92, 144, -2], carousel: [-86, -30, 86, -2], beach_hut: [-28, -28, 34, -2],
   bench: [-40, -20, 40, 0], mailbox: [-7, -6, 7, 0], hedge: [0, -36, 64, 0], flower_pot: [-14, -18, 14, 0],
   warehouse: [-116, -104, 116, -4], container: [-92, -54, 92, 0], pallet: [-26, -16, 26, 0],
   barrel_blue: [-18, -16, 18, 0], barrel_red: [-18, -16, 18, 0], crate: [-24, -22, 24, 0],
@@ -1623,10 +1627,12 @@ const FOOT = {
   tunnel: [-200, -420, 40, 0],
 };
 for (const n in MAP.grow) if (FOOT[n]) FOOT[n] = FOOT[n].map(v => Math.round(v * MAP.grow[n]));   // décors agrandis (batiments.py, decor.py : ECH)
-const FLAT = new Set(['bridge', 'sandbox', 'burrow', 'rail', 'dog_bed', 'fallen_apples']);   // posés à plat : dessinés sous les personnages
+const FLAT = new Set(['bridge', 'bridge_h', 'sandbox', 'burrow', 'rail', 'dog_bed', 'fallen_apples']);   // posés à plat : dessinés sous les personnages
 // collisions en plusieurs morceaux : garde-corps du pont (son tablier n'est pas de l'eau, voir BRIDGES dans
 // pack_web.py), pieds du portique du port
-const RAILS = { bridge: [[-80, -320, -62, 0], [62, -320, 80, 0]], crane: [[-197, -24, -135, 0], [135, -24, 197, 0]],
+const RAILS = { bridge: [[-80, -320, -62, 0], [62, -320, 80, 0]],
+  bridge_h: [[-224, -176, 224, -158], [-224, -34, 224, -16]],                // (le pont en travers : garde-corps du nord et du sud)
+  crane: [[-197, -24, -135, 0], [135, -24, 197, 0]],
   goal_net: [[-90, -58, -72, 0], [72, -58, 90, 0], [-80, -64, 80, -52]] };   // filet de Léon : côtés et fond
 for (const n in MAP.grow) if (RAILS[n]) RAILS[n] = RAILS[n].map(r => r.map(v => Math.round(v * MAP.grow[n])));
 let solids = [];
@@ -1729,7 +1735,9 @@ function edgeBump(dt, ix, iy, ox, oy) {
   P.edgeT = outX || outY ? P.edgeT + dt : 0;
   if (P.edgeT < EDGE.push) return;
   // au bout de la grande route (ou juste à côté de la butte du tunnel)
-  const [r0, r1] = MAP.traffic.road, tunnel = outX && P.y > r0 - EDGE.tunnelY && P.y < r1 + EDGE.tunnelY;
+  // (de ce côté de la carte seulement s'il y a un tunnel : sur la côte, la route s'arrête au parking)
+  const [r0, r1] = MAP.traffic.road, est = P.x > MAP.w * TS / 2;
+  const tunnel = outX && P.y > r0 - EDGE.tunnelY && P.y < r1 + EDGE.tunnelY && MAP.roadTunnels.some(t => t[2] === est);
   const pass = tunnel && state === 'play' && P.mode === 'free' && passageHere();
   if (pass) {                                        // ce tunnel mène à une autre carte : on y entre par la route
     if (P.y > r0 + 8 && P.y < r1 + 8) travel(pass[1], pass[2]);

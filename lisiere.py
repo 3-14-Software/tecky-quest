@@ -89,6 +89,9 @@ DECOR = {   # nom : fonction qui rend un nature.Sprite ; dessinés dans l'atlas 
 # encombrement à l'écran (demi-largeur, hauteur au-dessus du pied), en tuiles : rien d'important ne doit être caché
 SIZE = {"thicket": (0.84, 0.95), "thicket_dark": (0.84, 0.95), "tree": (0.8, 1.75), "fir": (0.9, 2.3)}
 TUNNEL_H = 6.6                # hauteur de la butte du tunnel au-dessus de son pied (tuiles)
+# terrains du bord de la carte où la lisière ne pousse pas : l'eau et la route continuent au-delà ; sur la côte, la
+# plage, les planches et la paroi de la falaise aussi (un arbre planté dans le sable ou sur la roche)
+LIBRES = ("water", "sea", "road", "sand", "planks", "chalk", "stairs")
 
 
 def decor(g, mw, mh, keep, forest, tunnels):
@@ -104,8 +107,8 @@ def decor(g, mw, mh, keep, forest, tunnels):
         return g[min(max(int(round(y)), 0), mh)][min(max(int(round(x)), 0), mw)]
 
     def put(n, x, y):
-        if any(corner(x + dx, y + dy) in ("water", "road") for dx in (-0.8, 0, 0.8) for dy in (-0.8, 0, 0.8)):
-            return                                  # la rivière, le ruisseau et la route passent
+        if any(corner(x + dx, y + dy) in LIBRES for dx in (-0.8, 0, 0.8) for dy in (-0.8, 0, 0.8)):
+            return                                  # la rivière, le ruisseau et la route passent ; la plage aussi
         if any(abs(x - tx) < 1.5 and ty - TUNNEL_H < y < ty + 0.8 for tx, ty, _ in tunnels):
             return                                  # la butte du tunnel
         hw, h = SIZE[n]

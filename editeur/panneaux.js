@@ -20,10 +20,10 @@
 
   const TERRAINS = { grass: 'Herbe', dirt: 'Terre (chemin)', road: 'Route', paving: 'Pavés', concrete: 'Béton',
     sidewalk: 'Trottoir', water: 'Eau', field: 'Champ labouré', forest: 'Sous-bois',
-    sand: 'Sable (plage)', planks: 'Planches', heath: 'Plateau (lande)', chalk: 'Paroi de falaise', stairs: 'Escalier' };
+    sand: 'Sable (plage)', planks: 'Planches', heath: 'Plateau (lande)', chalk: 'Paroi de falaise', stairs: 'Escalier', sea: 'Mer' };
   const COULEURS = { grass: '#7CC36B', dirt: '#D9B47A', road: '#5B5E68', paving: '#D4CBB8', concrete: '#A9ACB2',
     sidewalk: '#CDD0D5', water: '#5DADE2', field: '#B07A45', forest: '#5A9A4E',
-    sand: '#F2DFA8', planks: '#B98A5C', heath: '#C4C658', chalk: '#EAE3CF', stairs: '#DCD3BC' };
+    sand: '#F2DFA8', planks: '#B98A5C', heath: '#C4C658', chalk: '#EAE3CF', stairs: '#DCD3BC', sea: '#2F9CCB' };
   P.couleurTerrain = t => COULEURS[t] || '#FFFFFF';
   const OUTILS = [['select', 'Sélection', 'V'], ['pinceau', 'Pinceau', 'B'], ['rect', 'Rectangle', 'R'], ['remplir', 'Remplir', 'G'],
     ['pipette', 'Pipette', 'I'], ['details', 'Détails au sol', 'D'], ['poser', 'Poser', 'P']];

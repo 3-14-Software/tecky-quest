@@ -34,7 +34,8 @@ FIXES = ("format", "annexe", "w", "h", "legende")       # ce qu'une surcharge ne
 # une lettre par terrain dans les lignes de « terrain » (une ligne par rangée de coins)
 LEGENDE = {".": "grass", "t": "dirt", "r": "road", "p": "paving", "b": "concrete", "s": "sidewalk", "~": "water",
            "c": "field", "f": "forest", "a": "sand", "l": "planks", "k": "chalk",      # (sable, lames, craie : la paroi de la falaise)
-           "h": "heath", "e": "stairs"}                    # (la lande du plateau, l'escalier qui franchit la paroi)
+           "h": "heath", "e": "stairs",                    # (la lande du plateau, l'escalier qui franchit la paroi)
+           "m": "sea"}                                     # (la mer : de l'eau, mais d'une autre couleur que l'eau douce)
 
 # Terrains qui ne se touchent jamais. Les planches sont à plat, la falaise est un mur de craie vu de face : une
 # promenade qui se fondrait dans la falaise n'a pas de sens (Christophe, 12 novembre 2026 : « il ne faut pas de
@@ -379,6 +380,8 @@ def valider(c, avec_genres=True, variante=False):
     for i, d in enumerate(c.get("decor", [])):
         if nomme(d) and d[0] == "bridge" and not (float(d[1]).is_integer() and float(d[2]).is_integer()):
             err.append(f"decor[{i}] : le pont se pose sur une position entière")
+        if nomme(d) and d[0] == "bridge_h" and (d[1] % 1, d[2] % 1) != (0.5, 0.5):
+            err.append(f"decor[{i}] : le pont en travers se pose au milieu d'une tuile (x,5 ; y,5)")
     return err
 
 

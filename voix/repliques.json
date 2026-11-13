@@ -957,13 +957,57 @@
     },
     {
       "voix": "info",
-      "fichier": "info-f5ac6f1a",
+      "fichier": "info-c3e4278b",
       "personnage": "Narrateur",
       "type": "dialogue",
       "appareil": "",
       "ton": "",
-      "texte": "Par le tunnel, à l'ouest : le village et la ferme des Tilleuls.",
-      "affiche": "Par le tunnel, à l'ouest : le village et la ferme des Tilleuls.",
+      "texte": "Par le tunnel, à l'ouest : le village de Tecky et la ferme des Tilleuls.",
+      "affiche": "Par le tunnel, à l'ouest : le village de Tecky et la ferme des Tilleuls.",
+      "contexte": "Panneau"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-5bc555b7",
+      "personnage": "Narrateur",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Le village de pêcheurs est juste en bas. Pour la plage, suivez le quai jusqu'aux planches.",
+      "affiche": "Le village de pêcheurs est juste en bas. Pour la plage, suivez le quai jusqu'aux planches.",
+      "contexte": "Panneau"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-593f648b",
+      "personnage": "Narrateur",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Le pont de la rivière. En face : la ville, son casino et ses jardins.",
+      "affiche": "Le pont de la rivière. En face : la ville, son casino et ses jardins.",
+      "contexte": "Panneau"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-10155f6a",
+      "personnage": "Narrateur",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Sentier des falaises. Le phare est tout au bout. Attention au bord !",
+      "affiche": "Sentier des falaises. Le phare est tout au bout. Attention au bord !",
+      "contexte": "Panneau"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-84a34e45",
+      "personnage": "Narrateur",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Les Planches : la promenade du bord de mer. La jetée est à l'embouchure de la rivière.",
+      "affiche": "Les Planches : la promenade du bord de mer. La jetée est à l'embouchure de la rivière.",
       "contexte": "Panneau"
     },
     {

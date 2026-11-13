@@ -73,15 +73,17 @@
     for (let ty = 0; ty < H; ty++) for (let tx = 0; tx < W; tx++)
       ground[ty * W + tx] = pick([g[ty][tx], g[ty][tx + 1], g[ty + 1][tx], g[ty + 1][tx + 1]], tx, ty);
     // (une carte annexe peut ne pas avoir de grande route : road = -9, aucune rangée)
+    // (les marquages, tant que la route dure : sur la côte, elle s'arrête au parking — pack_web.build_map : chaussee())
     const road = c.traffic ? c.traffic.y : -9, full = tileIndex('road', 15, 'grass', I), mark = tx => (tx % 2 === 0 ? 5 : full);
-    if (c.traffic) for (let tx = 0; tx < W; tx++) ground[(road + 1) * W + tx] = mark(tx);
+    const at = (x, y) => g[Math.min(Math.max(y, 0), H)][Math.min(Math.max(x, 0), W)];
+    const chaussee = tx => !!c.traffic && [0, 1].every(i => [0, 1].every(j => at(tx + i, road + 1 + j) === 'road'));
+    for (let tx = 0; tx < W; tx++) if (chaussee(tx)) ground[(road + 1) * W + tx] = mark(tx);
     // lisière : I.lisiere tuiles autour de la carte, coins ramenés sur le bord
     const R = I.lisiere, ring = [];
-    const at = (x, y) => g[Math.min(Math.max(y, 0), H)][Math.min(Math.max(x, 0), W)];
     for (let ty = -R; ty < H + R; ty++) for (let tx = -R; tx < W + R; tx++) {
       if (tx >= 0 && tx < W && ty >= 0 && ty < H) continue;
       const idx = pick([at(tx, ty), at(tx + 1, ty), at(tx, ty + 1), at(tx + 1, ty + 1)], tx, ty);
-      ring.push([tx, ty, ty === road + 1 ? mark(tx) : idx]);
+      ring.push([tx, ty, ty === road + 1 && chaussee(tx) ? mark(tx) : idx]);
     }
     for (const tx of (c.traffic ? c.traffic.crossings : [])) for (const ty of [road, road + 1, road + 2]) ground[ty * W + tx] = ground[ty * W + tx + 1] = 7;
     const over = new Array(W * H).fill(0), ov = I.overlayRow * I.cols;

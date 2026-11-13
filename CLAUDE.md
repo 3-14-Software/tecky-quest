@@ -231,10 +231,74 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   carte sans falaise. **Planches et falaise ne se touchent jamais** (Christophe : « il ne faut pas de liaison
   possible entre les planches (horizontal) et les falaises (vertical) ») : `carte.INCOMPATIBLES` (planches /
   paroi, planches / plateau), `valider()` refuse toute tuile qui a un coin de l'un et un coin de l'autre —
-  l'éditeur aussi, à l'enregistrement. La carte d'essai `cartes/pre.json` a un bout de plage (planches, sable,
-  jetée, mer) et un plateau avec sa paroi et son escalier, qui éprouvent tout cela (`tests/cartes.js` : Tecky
-  monte l'escalier, le bord du plateau l'arrête). Pas encore fait : l'habillage du sable par le jeu, la nage,
+  l'éditeur aussi, à l'enregistrement. La carte de la côte éprouve tout cela (`tests/cartes.js` : Tecky monte
+  les deux escaliers, le bord du plateau l'arrête). Pas encore fait : l'habillage du sable par le jeu, la nage,
   les vagues animées ; les cailloux de la lande se répètent toutes les six tuiles.
+  **La carte de la côte** (`cartes/cote.json`, 96 x 64, carte annexe de l'été ; 13 novembre 2026), d'après le
+  plan `reference/v2/ete_plan.png` (une tuile pour 20 px du plan) ; aperçu de la carte entière :
+  `reference/v2/cote_carte.png`. La route sort du tunnel de l'ouest et **finit au parking** (x 24..36, y 4..13) ;
+  la rivière descend du nord à la mer (x 39..45), franchie par **un pont en travers** (décor `bridge_h`, voir
+  plus bas) ; à l'ouest le port (béton, x 2..13, y 24..50, quai sur la mer) et le village de pêcheurs autour de
+  son bassin (pavés ; maisons `house_fisher`, cabanes `hut_fisher`, poissonnerie `stall_fish`) ; à l'est la ville
+  (dalles : la place du casino en haut, les jardins au milieu, les maisons du front de mer en bas) ; au
+  nord-est la campagne normande (pommiers, vaches) ; à l'est le plateau des falaises (deux escaliers : côté
+  ville en x 77..78, côté plage en x 83..84 ; le phare ira en 90,5 ; 31,5) ; en bas les planches (une bande de
+  trois rangées de coins qui suit la baie, de part et d'autre de la rivière), la plage, la jetée (x 48..49) et
+  la mer. Zones : le port (`industrie`), le village de pêcheurs (`village`), la ville (musique du parc), les
+  falaises (musique de la forêt), la plage (musique de la campagne), la campagne normande (`ferme`), et « La
+  Côte Fleurie » pour le reste — les ids repris du monde donnent leur ambiance sonore (`AMB_EVENTS`) ; la plage
+  et la ville n'en ont pas encore. Elle n'a pour l'instant que des décors déjà dessinés, des objets, des os
+  dorés, sept chiens, des canards, des vaches, des petites bêtes et des papillons : **pas encore** de porche
+  au parking ni de voitures garées, aucun personnage, ni indices ni Alice, et rien ne roule sur la route
+  (`traffic.vehicles` vide). Premier jet posé par
+  `v2/cote_carte.py`, **gelé depuis** : Christophe retouche la carte dans l'éditeur, c'est
+  `cartes/cote.json` qui fait foi (le script refuse d'écraser une carte qui existe ; ses listes ne sont plus
+  à jour ; `python3 v2/cote_carte.py --apercu` redessine l'aperçu à partir du fichier). Rien ne dépend de
+  la place exacte du casino ni du phare, sauf la zone calme autour du phare, les étiquettes « Casino » et
+  « Phare » de la carte de la pause (`landmarks`) et `tests/cartes.js`, qui marche en (87 ; 30) sur le
+  plateau, monte les escaliers et longe le bord : à suivre si la carte change. Ce que la côte a demandé au moteur : les marquages de la
+  route ne sont posés que sur les tuiles de pleine chaussée (`chaussee()` dans `pack_web.build_map()` et
+  `editeur/sol.js`) ; `edgeBump()` ne parle du tunnel que du côté où il y en a un ; la lisière ne pousse ni
+  sur le sable, ni sur les planches, ni sur la paroi (`lisiere.LIBRES`).
+  **Retours de Christophe sur le premier jet** (13 novembre 2026 : « le tracé général est excellent », mais
+  les décors repris du printemps ne sont que des bouche-trous en attendant les dessins de l'été) :
+  - **La mer est un terrain à part** (`sea`, lettre `m`) : la rivière « doit avoir une couleur moins prononcée
+    que la mer ». La mer garde le turquoise choisi, l'eau douce (`water`) son bleu, été compris (`saisons.py`
+    ne change plus l'eau). `tiles.EAUX` = les deux : de l'eau pour les collisions (`MAP.water`), froissées le
+    long d'une rive. La paire qui a sa rangée est (mer, sable) — le bord de mer `PLAGE` — à la place de (eau,
+    sable) ; la mer pleine, la mer le long d'un quai ou de l'herbe sont des tuiles composées (hauts-fonds de
+    `PLAGE`) ; là où la rivière traverse la plage, du sable mouillé. À l'embouchure, la mer se fond sur l'eau
+    douce sans rive (`_layer()` : mer sur eau), et la carte y avance l'eau douce en langue dans la mer (une
+    ligne droite se voyait). L'habillage de l'eau par le jeu (nénuphars, galets, fonds sombres :
+    `MAP.shore`) ne concerne que l'eau douce. Le bassin du village est de la mer.
+  - **Le pont en travers** (`decor.bridge_h()`, décor `bridge_h`) : le pont de bois du monde, dans l'autre
+    sens, pour une rivière qui descend du nord au sud ; 224 x 96 (sept tuiles sur trois), tablier de deux
+    tuiles, garde-corps au nord et au sud (`RAILS.bridge_h`), à plat (`FLAT`), sans ombre portée. Il se pose
+    au milieu d'une tuile (x,5 ; y,5 : `carte.valider()`, contrainte « centre » dans l'éditeur) ; les coins
+    sous son tablier ne sont plus de l'eau (`BRIDGES` dans `pack_web.charger_carte()`).
+  - **Étals de la côte** (`batiments.etal()`, `STORES`, `PEINTS`) : la poissonnerie (`stall_fish` : store
+    bleu, comptoir blanc, bacs de glace pilée, poissons, rougets, moules ; un poisson en enseigne) et le
+    marchand de glaces (`stall_ice` : store vert d'eau, comptoir crème, bacs de boules ; un cornet en
+    enseigne).
+  - **Village de pêcheurs** (`batiments.py`) : `maison_pecheur()` (basse, chaulée, toit d'ardoises, volets et
+    porte bleus ou verts, une bouée `_bouee()`), sa variante à pignon aux volets rouges, et
+    `cabane_pecheur(couleur)` (planches peintes debout, rives et angles blancs, porte de remise, toit
+    goudronné ; rouge, bleue, jaune, verte). Décors `house_fisher` et `hut_fisher` : le modèle se tire de la
+    position **en pixels** (`decorLook()` : un dixième de tuile suffit à en changer — c'est ainsi que la carte
+    alterne les modèles). Planche : `reference/v2/cote_pecheurs.png`.
+  - **Bord de mer** (même jour, après son « c'est parfait, tu peux continuer ») : dans `batiments.py`, le phare
+    (`phare()`, décor `lighthouse` : tour blanche à bandes rouges, galerie, lanterne vitrée — ses vitres sont
+    des `vitres`, elle s'allume donc le soir avec les fenêtres : c'est le phare de la scène de fin), le casino
+    (`casino()`, décor `casino` : façade crème à fenêtres cintrées, avant-corps à fronton dessiné **après** le
+    toit, marquise rouge, ampoules), le manège (`manege()`, décor `carousel` : plateau, mât, chevaux de bois
+    `_cheval()`, chapiteau à quartiers ; ses ampoules s'allument le soir ; il ne tourne pas encore) et les
+    cabines de plage (`cabine_plage(couleur)`, décor `beach_hut` : quatre couleurs tirées de la position) ;
+    dans `mobilier.py`, le cargo (`cargo()`, décor `cargo`) qui remplace la péniche au port — « la péniche
+    n'a rien à faire dans la mer » — et les bateaux de pêche (`bateau_de_peche(couleur)`, décor
+    `fishing_boat`, trois couleurs), sur l'eau comme la péniche (`Sprite.sol = None`, pas de collision) ;
+    ils sont **au large** : dans le « minuscule bassin qui n'est même pas relié à la mer », Christophe les
+    a trouvés « bizarres » (le bassin n'a que des barques).
+    Planche : `reference/v2/cote_bord_de_mer.png`. La barque (`boat`) reste une barque de rivière.
 - `music.py` : **source unique** de la musique (v2 : **un morceau par zone**, dans son ton, à son tempo, avec ses
   instruments). `songs()` → `SONGS` du jeu ; `python3 music.py` contrôle les partitions (notes des temps hors de
   l'accord, hors de la gamme, étendue). Niche et écran titre : « Promenade de Tecky », le thème (do, 140 ; 32
@@ -345,7 +409,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `valider()`, `python3 episodes.py`) donne les épisodes dans l'ordre où ils s'ouvrent : `id`, `saison`, `cartes`
   (un passage vers une carte qui n'en fait pas partie est fermé : `passageHere()`), `depart` (la carte de la
   niche), `chantier` (pas encore jouable). Aujourd'hui : `printemps` (le monde seul : le tunnel y est « pour les
-  voitures ») et `ete` (le monde et `pre`), en chantier. `pack_web.py` les embarque (`EPISODES`). `game.js` :
+  voitures ») et `ete` (le monde et la côte, `cote`), en chantier. `pack_web.py` les embarque (`EPISODES`). `game.js` :
   `episode` = celui de la partie en cours et, sur l'écran titre, celui que le joueur a choisi ; `EP()` ses
   données ; `epOpen()` : le premier, ou un épisode prêt dont le précédent a été gagné (`epWon()` lit les
   records : pas d'autre donnée gardée ; n'importe quel mode ouvre le suivant) ; `openEpisodes()`, `lastOpen()`.
@@ -381,16 +445,16 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   (`CLUES` est encore celui du printemps). Tests : `tests/surcharges.py`, `episodes.js`.
 - **Plusieurs cartes** (lot 6, jalon « deux cartes », 12 novembre 2026). Le jeu a la carte du monde (`carte.json`,
   « monde » : toute l'aventure) et des **cartes annexes** (`cartes/<nom>.json`, `"annexe": true` ; aujourd'hui
-  `cartes/pre.json`, 40 x 24, petite et vide : elle prouve le moteur). `carte.noms()`, `carte.chemin(nom)`. Une
+  `cartes/cote.json`, la côte de l'été, 96 x 64 ; la petite carte d'essai `pre` qui a prouvé le moteur a été retirée). `carte.noms()`, `carte.chemin(nom)`. Une
   carte annexe n'a que ce qu'elle déclare : `carte.completer()` met le reste hors de la carte (`HORS`, loin de
   tout) ou vide, et en donne la liste (`absents`) ; `valider()` ne l'exige pas. On passe d'une carte à l'autre par
   un tunnel de la grande route : `"passages": [[n° du tunnel dans roadTunnels, carte, n° du tunnel d'arrivée]]`
-  (le tunnel de l'est du monde mène à celui de l'ouest de `pre`, et retour ; `pack_web.py` refuse un passage
+  (le tunnel de l'est du monde mène à celui de l'ouest de `cote`, et retour ; `pack_web.py` refuse un passage
   vers une carte ou un tunnel qui n'existe pas ; le passage n'est ouvert que dans un épisode qui a les deux
   cartes : l'été).
   `pack_web.py` : `charger_carte(nom)` fait d'une carte la carte courante (ses variables de module : `MW`,
   `DECOR`, `EDGE`… ; « monde » à l'import, pour l'éditeur) ; `build_map()` rend ses données, `build_jeu()` celles
-  du jeu, les mêmes partout (dessins, ombres, cadences) ; la page embarque `JEU` et `CARTES = { monde, pre }`. Les
+  du jeu, les mêmes partout (dessins, ombres, cadences) ; la page embarque `JEU` et `CARTES = { monde, cote }`. Les
   tuiles composées (`COMPOSITES`) sont numérotées à la suite pour toutes les cartes.
   `game.js` : **`MAP` est la carte courante**, qui hérite de `JEU` (`carteOf(id)` : `MAP.w` comme `MAP.ts`) ;
   `useMap(id)` en change et refait ce qui se calcule une fois par carte (`EDGE_DECOR`, `EDGE_SOLIDS`, `ZONES`,
@@ -411,9 +475,9 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   qu'elle n'a pas est en `HORS`, inerte ; un nouveau champ de carte lu par le moteur doit avoir sa valeur neutre
   dans `carte.completer()` et `build_map()` ; un cache construit à partir de la carte doit être vidé par
   `useMap()`. `check_placement.js --carte nom` vérifie chaque carte (sur une annexe, Tecky part de la sortie du
-  tunnel, et chaque sortie de tunnel doit être praticable). Éditeur : `http://127.0.0.1:8770/?carte=pre`, ou le
+  tunnel, et chaque sortie de tunnel doit être praticable). Éditeur : `http://127.0.0.1:8770/?carte=cote`, ou le
   choix « Carte » en haut à droite ; les passages se modifient dans le fichier. Tests : `cartes.js`
-  (aller-retour, état gardé, reprise sur la deuxième carte, sauvegarde v2), `editeur_sol.js` (sol de `pre`).
+  (aller-retour, état gardé, reprise sur la deuxième carte, sauvegarde v2), `editeur_sol.js` (sol de `cote`).
 - **La carte est une donnée** : `carte.json` (en tuiles ; `carte.py` : `charger()`, `valider()`, `enregistrer()`, format
   stable, une entrée par ligne ; `python3 carte.py --verifier` dans `run_all.sh`). Terrain = 65 lignes de 97 coins (une
   lettre par terrain, `LEGENDE`), `details` (détails au sol, tuile entière ; « fleurs » = massifs, perchoirs des

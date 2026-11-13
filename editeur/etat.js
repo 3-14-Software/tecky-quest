@@ -129,7 +129,7 @@
 
   function objets(c) {
     const out = [], I = ED.I;
-    const flat = new Set((I.jeu && I.jeu.flat) || ['bridge', 'sandbox', 'burrow', 'rail', 'dog_bed', 'fallen_apples']);
+    const flat = new Set((I.jeu && I.jeu.flat) || ['bridge', 'bridge_h', 'sandbox', 'burrow', 'rail', 'dog_bed', 'fallen_apples']);
     // un élément de liste [genre, x, y, …] ou [x, y, …]
     const liste = (type, calque, opts = {}) => (c[type] || []).forEach((e, i) => {
       const nomme = typeof e[0] === 'string', o = nomme ? 1 : 0;
@@ -146,7 +146,7 @@
       out.push(Object.assign({ id: type, type, calque, x: p[0], y: p[1], spr: key, frame,
         set: (x, y) => { const v = get(ED.c); v[0] = r4(x); v[1] = r4(y); } }, opts));
     };
-    liste('decor', 'decors', e => ({ flat: flat.has(e[0]), contrainte: e[0] === 'bridge' ? 'entier' : null }));
+    liste('decor', 'decors', e => ({ flat: flat.has(e[0]), contrainte: e[0] === 'bridge' ? 'entier' : e[0] === 'bridge_h' ? 'centre' : null }));
     liste('items', 'objets', e => ({ indice: I.indices.includes(e[0]) }));
     liste('dig', 'tresors', { contrainte: 'centre', alpha: 0.9 });
     liste('enemies', 'chiens', { num: true });

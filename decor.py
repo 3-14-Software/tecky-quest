@@ -1112,6 +1112,41 @@ def bridge():
     return d
 
 
+def bridge_h():
+    """Le même pont de bois, dans l'autre sens : il enjambe d'ouest en est une rivière qui descend du nord au sud
+    (la côte de l'été). Vu de dessus, posé à plat : tablier y 16..80 (deux tuiles), garde-corps y 8..16 et 80..88,
+    toute la largeur (224 : sept tuiles)."""
+    L = 224
+    d = Drawing(L, 96)
+    # ombre portée sur l'eau (un peu décalée vers le bas à droite)
+    d.under.append(f'<rect x="3" y="11" width="{L - 3}" height="81" rx="2" fill="#000" opacity="0.16"/>')
+    # longerons sous les garde-corps
+    for y in (8, 80):
+        d.add(rect(0, y, L, 8, 1), "#8A5A3A")
+    # tablier : planches en travers du passage
+    d.add(rect(0, 15, L, 66, 0), "#C98A4B")
+    cols = ("#C98A4B", "#D49A5B", "#BE8045", "#CF9352")
+    for k in range(L // 8):
+        x = k * 8
+        d.add(rect(x + 0.6, 16, 6.8, 64, 1), cols[k % 4], sil=False)
+        d.raw(line(f"M{x + 0.3},16 L{x + 0.3},80", "#8A5A3A", 0.9))        # joint entre planches
+        gy = 30 + (k * 17) % 34                                           # veinage léger, décalé d'une planche à l'autre
+        d.raw(line(f"M{x + 4},{gy} L{x + 4},{gy + 10}", "#A36D37", 0.6))
+        for ny in (19, 77):                                               # clous aux deux bouts (sur les longerons)
+            d.add(circle(x + 4, ny, 0.65), "#6E4428", sil=False)
+    d.add(rect(0, 16, L, 3.2, 0), "#5E3A1E", sil=False, opacity=0.22)      # l'ombre du garde-corps du nord
+    for x in (0, L - 4):                                                  # traverses aux deux bouts
+        d.add(rect(x, 16, 4, 64, 0.5), "#A36D37", sil=False, edge=True)
+    # garde-corps : lisse + poteaux (chapeau clair, face sud plus sombre)
+    for y in (8, 80):
+        d.add(rect(0, y + 2.2, L, 3.6, 1.2), "#B98556", sil=False, edge=True)
+        d.raw(line(f"M1.5,{y + 3.4} L{L - 1.5},{y + 3.4}", "#D9A46A", 0.7))
+        for x in (2, 33, 64, 95, 126, 157, 188, 214.5):
+            d.add(rect(x, y + 0.4, 7.5, 7.4, 1.4), "#7E5433", sil=False, edge=True)   # face du poteau
+            d.add(rect(x, y + 0.4, 7.5, 4.6, 1.4), "#C98A4B", sil=False, edge=True)   # dessus du poteau
+    return d
+
+
 def reeds():
     """Touffe de roseaux avec quelques massettes, pour le bord de l'eau."""
     d = Drawing(32, 32)
@@ -1634,7 +1669,7 @@ ECH = {"truck": 1.5, "tractor": 1.5, "forklift": 1.4}
 # posés à plat ou sur l'eau et le filet. Ils touchent le sol par tout le bas de leur silhouette (« contour ») ou,
 # pour ce qui tient sur un pied, des pieds ou des roues, à la hauteur de leur origine (« pied »). Leur ancien ovale
 # n'est plus dessiné (svgs()).
-SANS_OMBRE = {"bridge", "sandbox", "burrow", "rail", "dog_bed", "fallen_apples", "boat", "barge", "goal_net"}
+SANS_OMBRE = {"bridge", "bridge_h", "sandbox", "burrow", "rail", "dog_bed", "fallen_apples", "boat", "barge", "goal_net", "cargo", "fishing_boat"}
 SUR_PIED = {"lamppost", "signpost", "road_sign", "scarecrow", "mailbox", "cafe_table", "bicycle", "swing", "slide",
             "tractor", "truck", "forklift", "crane", "ladder", "bench", "buffer_stop"}
 
@@ -1703,6 +1738,17 @@ DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x)
     "stall_fruit": (lambda: market_stall("fruit"), (64, 64), (32, 58)),
     "stall_veg": (lambda: market_stall("veg"), (64, 64), (32, 58)),
     "stall_flower": (lambda: market_stall("flower"), (64, 64), (32, 58)),
+    # (la côte : leurs dessins sont ceux de batiments.py ; l'ancien dessin ne sert pas)
+    "stall_fish": (lambda: market_stall("fruit"), (64, 64), (32, 58)),
+    "stall_ice": (lambda: market_stall("flower"), (64, 64), (32, 58)),
+    "house_fisher": (house, (96, 96), (48, 92)),
+    "hut_fisher": (playhouse, (64, 64), (32, 60)),
+    "lighthouse": (house_tall, (96, 120), (48, 116)),
+    "casino": (warehouse, (128, 96), (64, 92)),
+    "carousel": (fountain, (64, 64), (32, 58)),
+    "beach_hut": (playhouse, (64, 64), (32, 60)),
+    "cargo": (barge, (176, 48), (88, 42)),
+    "fishing_boat": (boat, (64, 32), (32, 26)),
     "cafe_table": (cafe_table, (48, 64), (24, 58)),
     "doghouse": (doghouse, (48, 48), (24, 44)),
     "bench": (bench, (48, 32), (24, 28)),
@@ -1737,6 +1783,7 @@ DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x)
     "tractor": (tractor, (64, 48), (32, 44)),
     "scarecrow": (scarecrow, (32, 64), (16, 60)),
     "bridge": (bridge, (96, 160), (48, 160)),
+    "bridge_h": (bridge_h, (224, 96), (112, 96)),
     "reeds": (reeds, (32, 32), (16, 28)),
     "boat": (boat, (64, 32), (32, 26)),
     # forêt et parc
