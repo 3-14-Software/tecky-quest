@@ -1,0 +1,62 @@
+// le voyage en voiture de l'été : la partie commence par une cinématique (le papa, Alice et Tecky montent en voiture
+// devant le chemin de la niche, la voiture prend le tunnel, arrive sur la côte, entre sous le porche du parking), puis
+// Tecky a la main sur le parking ; la partie y est enregistrée et y reprend ; à pied, les tunnels restent fermés
+const fs = require('fs'), path = require('path');
+const base = fs.readFileSync(path.join(__dirname, 'sim.js'), 'utf8').split("setTimeout(() => {")[0];
+function main() {
+  const jusqua = (cond, max) => { let k = 0; while (!run(cond) && k++ < max) step(1); return run(cond); };
+  ok(run('EPISODES[1].voyage') === 'cote' && run('CARTES.cote.start[0]') > 0 && run('CARTES.cote.papa[0]') > 0
+     && run('CARTES.monde.absents.includes("papa")') && !run('CARTES.cote.absents.includes("papa")') && !run('CARTES.cote.absents.includes("start")'),
+     'l\'été voyage vers la côte, qui a son point de départ (le parking) et le papa d\'Alice');
+  run('EPISODES[1].chantier = false; audioOn(); episode = "ete"; toTitle(); resetProgress(); episode = "ete";');
+  // 1. nouvelle aventure : la cinématique, sur la carte de départ
+  run('newGame("aventure");'); step(2);
+  ok(run('state') === 'trip' && run('MAP.id') === 'monde' && run('trip.car.name') === 'sport_vide' && run('!alice.hidden') && run('alice.kind') === 'alice'
+     && run('cars.length') === 0 && !run('loadSave()'),
+     'nouvelle aventure d\'été : la cinématique commence dans le monde, la voiture du papa garée au bas du chemin de la niche');
+  ok(jusqua('state === "dialog"', 900) && run('dialog.lines[0].who') === 'papa' && run('dialog.lines.length') === 3
+     && run('Math.abs(alice.y - trip.car.y) < 60 && Math.abs(P.y - trip.car.y) < 60'),
+     'Alice et Tecky descendent jusqu\'à la voiture ; le papa : « ' + run('dialog.lines[0].text') + ' »');
+  advanceDialog();
+  ok(run('state') === 'trip' && jusqua('trip.aboard', 600) && run('alice.hidden') && run('trip.car.name') === 'sport' && run('trip.papa') === null,
+     'tout le monde monte : la voiture a ses passagers, plus personne à côté');
+  ok(jusqua('MAP.id === "cote"', 900) && run('state') === 'trip' && run('trip.step') === 'arrivee' && run('trip.car.x') < 0,
+     'la voiture s\'en va ; au noir, la côte : elle sort du tunnel');
+  ok(jusqua('state === "dialog"', 1500) && run('dialog.lines[0].who') === 'alice' && run('trip.car') === null
+     && run('Math.abs(P.x - MAP.start[0]) < 1 && Math.abs(P.y - MAP.start[1]) < 1') && run('!alice.hidden') && run('villagers.some(v => v.kind === "papa")'),
+     'elle roule jusqu\'au porche et y entre ; sur le parking, Alice : « ' + run('dialog.lines[0].text') + ' »');
+  advanceDialog();
+  ok(jusqua('state === "play"', 400) && run('trip') === null && run('alice.hidden') && run('cars.length') === 3 && run('P.mode') === 'free'
+     && run('(() => { const s = loadSave(); return !!s && s.ep === "ete" && s.carte === "cote" && Math.abs(s.x - MAP.start[0]) < 1; })()'),
+     'Alice file se cacher : Tecky a la main sur le parking, la partie y est enregistrée');
+  // 2. le papa salue comme un villageois ; à pied, le tunnel est pour les voitures
+  run('cars = []; dogs = []; pops = []; var V = villagers.find(v => v.kind === "papa"); V.near = false; V.cd = 0; P.x = V.x - 60; P.y = V.y + 60;'); step(2);
+  ok(run('pops.some(p => p.text === txt("villageois.papa.0"))') && run('V.anim') === 'wave', 'le papa, resté près du parking : « ' + run('txt("villageois.papa.0")') + ' »');
+  run('{ const [x, y] = arrivalAt(0); P.x = x - 10; P.y = y; P.mode = "free"; P.edgeAt = -99; pops = []; }');
+  step(70, 'held.left = true; cars = [];'); run('held.left = false;');
+  ok(run('MAP.id') === 'cote' && run('passageHere()') === null && run('pops.some(p => p.text === txt("bord.tunnel"))'),
+     'à pied, le tunnel est pour les voitures : rien ne ramène au monde');
+  // 3. Continuer reprend sur la côte ; recommencer aussi, sans la cinématique
+  run('P.x = MAP.start[0] + 200; score = 44; saveGame(); toTitle();');
+  ok(run('MAP.id') === 'monde' && run('menu.items[0].id') === 'continue', 'retour au titre : « Continuer »');
+  run('loadGame(loadSave(), false);'); advanceDialog();
+  ok(run('MAP.id') === 'cote' && run('state') === 'play' && run('score') === 44 && run('Math.abs(P.x - MAP.start[0] - 200) < 1'), 'Continuer : sur la côte, là où la partie a été enregistrée');
+  run('newGame("balade", true);');
+  ok(run('MAP.id') === 'cote' && run('state') === 'dialog' && run('trip') === null && run('Math.abs(P.x - MAP.start[0]) < 1'), 'recommencer : directement sur le parking');
+  advanceDialog();
+  // 4. passer la scène ; une partie enregistrée pendant la scène reprend sur la côte
+  run('newGame("aventure");'); step(30); run('pressed.ok = true'); step(1);
+  ok(run('state') === 'trip', 'la première seconde, on ne passe pas la scène');
+  step(45); run('pressed.ok = true'); step(1);
+  ok(run('state') === 'play' && run('MAP.id') === 'cote' && run('trip') === null && run('alice.hidden') && run('Math.abs(P.x - MAP.start[0]) < 1') && run('cars.length') === 3,
+     'ensuite, un bouton la passe : Tecky est sur le parking');
+  run('newGame("aventure");'); step(20); run('saveGame(); var S = loadSave();');
+  ok(run('S.carte') === 'monde' && run('S.ep') === 'ete', 'une partie enregistrée pendant la scène est encore dans le monde');
+  run('toTitle(); loadGame(loadSave(), false);'); advanceDialog();
+  ok(run('MAP.id') === 'cote' && run('state') === 'play' && run('Math.abs(P.x - MAP.start[0]) < 1 && Math.abs(P.y - MAP.start[1]) < 1'),
+     'elle reprend sur la côte, au parking : en été, on ne joue pas dans le monde');
+  // 5. le printemps n'a pas de voyage
+  run('episode = "printemps"; newGame("aventure");'); advanceDialog();
+  ok(run('state') === 'play' && run('MAP.id') === 'monde' && run('trip') === null && run('!villagers.some(v => v.kind === "papa")'), 'au printemps : pas de voyage, la partie commence à la niche');
+}
+eval(base + 'setTimeout(' + main.toString() + ', 50);');

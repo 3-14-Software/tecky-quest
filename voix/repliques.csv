@@ -32,6 +32,8 @@ tecky-b1b309e5;Tecky;dialogue;;joyeux;Ouaf ! Je vais marquer des buts !;Léon : 
 tecky-ff4938ca;Tecky;dialogue;;inquiet;Ouaf ! Iris ! Elle joue à cache-cache, et je ne la trouve pas…;Iris : demande
 tecky-f769abf8;Tecky;dialogue;;joyeux;Ouaf ! « Va chercher », c'est mon jeu préféré !;Iris : demande
 tecky-348e99e9;Tecky;dialogue;;joyeux;Ouaf ! Moi aussi, je cherche quelqu'un qui joue à cache-cache !;Maman Piquette : demande
+tecky-75b457ab;Tecky;dialogue;;;(La mer ? Je ne l'ai jamais vue… Wouf ! J'arrive !);Le départ en voiture (été)
+tecky-3e444da6;Tecky;dialogue;;;(Un, deux, trois… dix ! Prête ou pas, me voilà !);L’arrivée au parking (été)
 tecky-9232cc10;Tecky;dialogue;;joyeux;Ouaf ! Ouaf ouaf !;Retrouvailles avec Alice
 tecky-e08772a9;Tecky;dialogue;;inquiet;Grr… Ce doberman n'a pas peur de mes aboiements. Il va falloir le mordre !;Premier aboiement sur le doberman
 tecky-48c853ee;Tecky;dialogue;;joyeux;Te voilà, Pompon ! Viens, on rentre chez Mamie Rose.;Tecky retrouve Pompon
@@ -55,6 +57,8 @@ tecky-ea351913;Tecky;bulle;;;Snif snif…;Tecky flaire la piste
 tecky-eb42144d;Tecky;bulle;;;Hmm…;Tecky flaire (pas de piste par ici)
 tecky-e1959b96;Tecky;bulle;;;Un os de plus !;Tecky ramasse un objet
 tecky-7e320ec6;Tecky;bulle;;;Os doré !;Tecky ramasse un objet
+alice-881bca92;Alice;dialogue;;;Youpi ! Viens vite, Tecky !;Le départ en voiture (été)
+alice-716c2d0b;Alice;dialogue;;;On est arrivés ! Tecky, on joue à cache-cache ? Compte jusqu'à dix… et cherche-moi !;L’arrivée au parking (été)
 alice-4ea2cf40;Alice;dialogue;;joyeux;Tecky ! Tu m'as trouvée ! Tu as vu ma super cachette dans la cabane ?;Retrouvailles avec Alice
 alice-e5612b71;Alice;dialogue;;;Et tu as ramassé ma barrette, ma chaussure et mon doudou ! Merci mon Tecky.;Retrouvailles avec Alice
 alice-2584e8ec;Alice;dialogue;;;Viens, on rentre à la maison. Tu as bien mérité une grosse saucisse !;Retrouvailles avec Alice
@@ -230,3 +234,8 @@ florist-5709388a;Lili;bulle;;;Coucou, Tecky !;Lili salue Tecky qui passe
 florist-28ca0991;Lili;bulle;;;Une jolie fleur ?;Lili salue Tecky qui passe
 kid-e76f8779;Lucas;bulle;;;Un toutou !;Lucas salue Tecky qui passe
 kid-3d8b3952;Lucas;bulle;;;Regarde mon ballon !;Lucas salue Tecky qui passe
+papa-ee2b1f65;Papa;dialogue;;;En voiture, les enfants ! C'est les vacances : direction la mer !;Le départ en voiture (été)
+papa-74ae9d38;Papa;dialogue;;;Ne t'éloigne pas trop, Alice ! Moi, je vous attends ici, près de la voiture.;L’arrivée au parking (été)
+papa-0a0fc5dd;Papa;bulle;;;Alors, Tecky, tu l'as trouvée ?;Papa salue Tecky qui passe
+papa-7f666603;Papa;bulle;;;Cherche bien : Alice adore se cacher !;Papa salue Tecky qui passe
+papa-7595fd83;Papa;bulle;;;Bonne chasse, mon grand !;Papa salue Tecky qui passe

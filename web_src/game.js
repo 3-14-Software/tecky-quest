@@ -1927,7 +1927,9 @@ function useMap(id) {
 }
 /* Nouvelle partie : Tecky, l'état des quêtes, les compteurs ; puis les habitants de la carte courante (resetWorld,
    qui sert aussi à chaque changement de carte : travel()). */
+let trip = null;                        // le voyage en voiture en cours (la cinématique de l'été : startTrip())
 function reset() {
+  trip = null;                          // (une partie qui commence ou qui se charge : plus de cinématique en cours)
   P = new Actor('tecky', MAP.start[0], MAP.start[1]);
   P.fps = Object.assign({}, FPS, MAP.teckyFps);      // ses cadences à lui (tecky2.py : la marche a 8 images)
   // 5 emplacements d'os (2 PV par os) ; Tecky démarre avec 3 os pleins
@@ -1974,6 +1976,7 @@ function resetWorld() {
   iris = Object.assign(newNpc('iris', MAP.iris, 0.8), { markY: IRIS.markY, woof: true, tip: iris ? iris.tip : 0 });
   toys = MAP.toys.map(newToy);
   villagers = MAP.villagers.map(newVillager);
+  if (ici('papa')) villagers.push(newVillager(['papa', MAP.papa[0], MAP.papa[1]]));     // (le papa d'Alice, au parking de la côte)
   train = newTrain();
   piquette = Object.assign(newNpc('piquette', MAP.piquette, 1.3), { markY: BABY.markY });
   babies = MAP.babies.map(newBaby); babySeq = 0;
@@ -2006,6 +2009,7 @@ function arrivalAt(i, dy) {
   return [tx + (flip ? -1 : 1) * PASSAGE.out, y, flip ? 'left' : 'right'];
 }
 function passageHere() {                // le passage du tunnel contre lequel Tecky pousse, s'il y en a un
+  if (EP().voyage) return null;         // (un épisode où l'on voyage en voiture : à pied, les tunnels sont pour les voitures)
   const i = MAP.roadTunnels.findIndex(t => t[2] === (P.x > MAP.w * TS / 2));
   return MAP.passages.find(q => q[0] === i && EP().cartes.includes(q[1])) || null;     // (une carte de l'épisode)
 }
@@ -3371,8 +3375,8 @@ function talkIris() {
    VILLAGER_LINES ; pas plus d'une fois toutes les VILLAGER.again s) et de la main (Lucas sautille). On ne leur parle
    pas : ni « ! » ni « Parler » (ils ne sont pas dans npcList). Obstacles, comme les personnages. Rien n'est sauvegardé. */
 const VILLAGER = { near: 170, again: 10, wave: 1.8, markY: 150, kidMarkY: 112 };
-const VILLAGER_LINES = { baker: 2, vendor: 2, florist: 2, kid: 2 };     // combien de phrases chacun (textes : villageois.<qui>.<i>)
-const VILLAGER_PITCH = { baker: 0.85, vendor: 1.15, florist: 1.35, kid: 1.7 };
+const VILLAGER_LINES = { baker: 2, vendor: 2, florist: 2, kid: 2, papa: 3 };     // combien de phrases chacun (textes : villageois.<qui>.<i>)
+const VILLAGER_PITCH = { baker: 0.85, vendor: 1.15, florist: 1.35, kid: 1.7, papa: 0.9 };
 let villagers = [];
 function newVillager([kind, x, y]) {
   solids.push([x - 16, y - 12, x + 16, y]);
@@ -4424,8 +4428,11 @@ function loadGame(s, rested) {
   transition();
   gameDiff = s.diff === 'facile' ? 'facile' : 'normal';
   episode = epOfSave(s);
-  const id = s.carte || 'monde', la = !!CARTES[id] && EP().cartes.includes(id);
-  useMap(la ? id : EP().depart);                     // la carte où la partie a été enregistrée
+  // (un épisode où l'on voyage en voiture ne se joue que sur la carte d'arrivée : une partie enregistrée ailleurs,
+  // pendant la cinématique par exemple, y reprend, à son point de départ)
+  const voyage = EP().voyage, id = s.carte || 'monde';
+  const la = !!CARTES[id] && EP().cartes.includes(id) && !(voyage && id !== voyage);
+  useMap(la ? id : voyage || EP().depart);           // la carte où la partie a été enregistrée
   reset();
   elsewhere = Object.assign({}, s.ailleurs);
   for (const k in elsewhere) if (!CARTES[k] || !EP().cartes.includes(k)) delete elsewhere[k];
@@ -4462,6 +4469,8 @@ function newGame(mode, again) {
   if (!again) { camX = cx; camY = cy; }          // depuis l'écran titre, la caméra glisse du village jusqu'à la niche
   state = 'play';
   Music.start();
+  if (EP().voyage && !again) { startTrip(); return; }      // (l'été : la partie commence par le voyage en voiture)
+  if (EP().voyage) tripDone();                             // (recommencer : directement sur le parking)
   say(again ? [{ who: 'tecky', face: 0, text: txt('tecky.reparti') }] : introLines(),
     () => { showArrow(); saveGame(); });
 }
@@ -4585,6 +4594,7 @@ function titleScene() {
 const TITLE_MUSIC = 'niche';
 function toTitle() {
   transition();
+  trip = null;
   if (opened) { episode = opened; opened = null; }   // la victoire a ouvert un épisode : c'est lui qui est proposé
   titleScene();
   gameMode = 'aventure';
@@ -5407,6 +5417,140 @@ function drawEnding() {
   if (tf > 0) { ctx.globalAlpha = Math.min(1, tf / 0.6); outlined(txt('fin.mot'), GW / 2, GH / 2 + 45, 130, '#FFF7E6'); ctx.globalAlpha = 1; }
 }
 
+/* ------------------------------------------------------------------ le voyage en voiture */
+/* Un épisode qui a un « voyage » (episodes.json : l'été, vers la côte) commence par une cinématique. Sur la carte de
+   départ, le papa d'Alice attend près de sa voiture, au bas du chemin de la niche ; Alice et Tecky descendent le
+   rejoindre, tout le monde monte, la voiture s'en va. Au noir, on change de carte : elle sort du tunnel, roule
+   jusqu'au porche du parking et y entre ; au noir encore, Alice et Tecky sont sur le parking (MAP.start), le papa
+   à sa place (MAP.papa, il salue ensuite comme un villageois) ; Alice propose une partie de cache-cache et file se
+   cacher. Tecky a la main : la partie est enregistrée là, et c'est là qu'elle reprend. Après `skip` s, un bouton
+   passe la scène (tripDone). Pendant la scène, le monde est figé : seuls ses acteurs bougent.
+   Distances en pixels du monde ; car : vitesse de la voiture ; kids, papa : où ils se tiennent, à partir de
+   l'arrière de la voiture ; door : où l'on monte ; away : jusqu'où Alice s'éloigne, en s. */
+const TRIP = { skip: 1, fade: 0.6, walk: 110, car: 300, accel: 260, park: 140, papa: [-46, -22], kids: [[-116, -26], [-168, -4]],
+  door: [26, -6], wait: 0.5, away: 2.4 };
+const tripActor = (a, x, y, dir) => { a.x = x; a.y = y; a.dir = dir; a.setAnim('idle'); };
+// fait marcher un acteur vers (x, y) ; rend vrai quand il y est
+function tripWalk(a, x, y, dt) {
+  const dx = x - a.x, dy = y - a.y, d = Math.hypot(dx, dy), s = TRIP.walk * dt;
+  if (d <= s) { a.x = x; a.y = y; if (a.anim === 'walk') a.setAnim('idle'); return true; }
+  a.x += dx / d * s; a.y += dy / d * s;
+  a.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+  if (a.anim !== 'walk') a.setAnim('walk');
+  return false;
+}
+// ce qui se dit au départ, puis à l'arrivée sur le parking
+const tripDepartLines = () => [{ who: 'papa', text: txt('voyage.papa.depart') }, { who: 'alice', face: 0, text: txt('voyage.alice.depart') },
+  { who: 'tecky', face: 0, text: txt('voyage.tecky.depart') }];
+const tripArrivalLines = () => [{ who: 'alice', face: 0, text: txt('voyage.alice.arrivee') }, { who: 'papa', text: txt('voyage.papa.arrivee') },
+  { who: 'tecky', face: 0, text: txt('voyage.tecky.arrivee') }];
+function startTrip() {
+  const [r0, r1] = MAP.traffic.road, lane = MAP.traffic.lanes[1], half = VEHICLE.sport.len / 2;
+  const car = { name: 'sport_vide', x: MAP.start[0] + TRIP.park + half, y: lane, v: 0, t: 0 }, rear = car.x - half;
+  state = 'trip';
+  trip = { t: 0, step: 'descente', s: 0, a: 0, fade: 0, then: null, aboard: false, car,
+    papa: { x: rear + TRIP.papa[0], y: lane + TRIP.papa[1], anim: 'wave', t: 0 } };
+  cars = []; dogs = []; pops = [];
+  camX = camClampX(car.x - VW / 2); camY = camClampY((r0 + r1) / 2 - 60 - VH / 2);
+  alice.kind = 'alice'; alice.hidden = false;                  // (ses deux chaussures : c'est une autre saison)
+  tripActor(alice, MAP.start[0] - 76, camY - 30, 'down');
+  tripActor(P, MAP.start[0] - 44, camY - 70, 'down');
+  P.mode = 'free';
+}
+// passe au noir, fait `then`, puis revient
+function tripFade(then) { trip.fade = 1; trip.then = then; }
+// au noir : la côte ; la voiture sort du tunnel
+function tripCoast() {
+  useMap(EP().voyage); resetWorld();
+  cars = []; dogs.forEach(d => { d.x = d.hx; d.y = d.hy; });
+  const [r0, r1] = MAP.traffic.road, half = VEHICLE.sport.len / 2;
+  Object.assign(trip.car, { name: 'sport', x: -half - 20, y: MAP.traffic.lanes[1], v: TRIP.car });
+  trip.papa = null; trip.step = 'arrivee';
+  camX = camClampX(trip.car.x - VW * 0.45); camY = camClampY((r0 + r1) / 2 - 20 - VH / 2);
+  SFX.tunnel();
+}
+// au noir : tout le monde est descendu ; Alice et Tecky sur le parking
+function tripParking() {
+  trip.car = null; trip.aboard = false; trip.step = 'parking';
+  alice.kind = 'alice'; alice.hidden = false;
+  tripActor(P, MAP.start[0], MAP.start[1], 'left');
+  tripActor(alice, MAP.start[0] - 64, MAP.start[1] - 6, 'right');
+  camX = camClampX(P.x - VW / 2); camY = camClampY(P.y - 40 - VH / 2);
+}
+// la scène est finie, ou passée : Tecky sur le parking, Alice partie se cacher, la partie enregistrée
+function tripDone() {
+  const passee = !!trip && trip.step !== 'cache';
+  if (MAP.id !== EP().voyage) { useMap(EP().voyage); resetWorld(); }
+  trip = null; state = 'play'; elsewhere = {};
+  alice.kind = 'alice'; alice.hidden = true; alice.x = MAP.alice[0]; alice.y = MAP.alice[1];
+  tripActor(P, MAP.start[0], MAP.start[1], 'down');
+  P.mode = 'free';
+  cars = MAP.traffic.vehicles.map(newVehicle);
+  camX = camClampX(P.x - VW / 2); camY = camClampY(P.y - 40 - VH / 2);
+  if (passee) fadeFrom(0.5);
+  showArrow(); saveGame();
+}
+function updateTrip(dt) {
+  const T = TRIP, e = trip, c = e.car;
+  e.t += dt; e.s += dt; alice.t += dt; P.t += dt;
+  if (e.papa) e.papa.t += dt;
+  updateFx(dt);
+  if (e.t > T.skip && (pressed.ok || pressed.bite || pressed.bark || pressed.act || pressed.pause)) { tripDone(); return; }
+  if (e.fade) {                                          // un fondu en cours : au noir, la suite, puis le retour
+    e.a = clamp(e.a + e.fade * dt / T.fade, 0, 1);
+    if (e.fade > 0 && e.a === 1) { e.fade = -1; const f = e.then; e.then = null; f(); }
+    else if (e.fade < 0 && e.a === 0) e.fade = 0;
+    if (e.fade > 0) return;
+  }
+  if (c) { c.x += c.v * dt; c.t += dt * c.v / 90; }
+  const half = VEHICLE.sport.len / 2;
+  switch (e.step) {
+    case 'descente': {                                   // Alice et Tecky descendent le chemin jusqu'à la voiture
+      const rear = c.x - half, k = T.kids;
+      const a = tripWalk(alice, rear + k[0][0], c.y + k[0][1], dt), b = tripWalk(P, rear + k[1][0], c.y + k[1][1], dt);
+      if (!a || !b) break;
+      alice.dir = P.dir = 'right'; e.papa.anim = 'talk'; e.step = 'paroles';
+      say(tripDepartLines(), () => { trip.step = 'embarque'; trip.papa.anim = 'idle'; });
+      break;
+    }
+    case 'embarque': {                                   // tout le monde monte : chacun disparaît à la portière
+      const x = c.x - half + T.door[0], y = c.y + T.door[1];
+      if (!alice.hidden && tripWalk(alice, x, y, dt)) alice.hidden = true;
+      if (alice.hidden && !e.aboard && tripWalk(P, x, y, dt)) e.aboard = true;
+      if (!e.aboard) break;
+      e.papa = null; c.name = 'sport'; e.step = 'route';
+      SFX.honk(VEHICLE.sport.pitch, c);
+      break;
+    }
+    case 'route':                                        // la voiture s'en va ; hors de l'écran, le noir, puis la côte
+      c.v = Math.min(T.car, c.v + T.accel * dt);
+      if (c.x - half > camX + VW + 30 && !e.fade) tripFade(tripCoast);
+      break;
+    case 'arrivee':                                      // elle sort du tunnel et roule jusqu'au porche du parking
+      camX = camClampX(Math.max(camX, c.x - VW * 0.45));
+      if (c.x - half > MAP.traffic.end + TRAFFIC.porch) { c.v = 0; e.step = 'garee'; e.s = 0; }
+      break;
+    case 'garee':
+      if (e.s > T.wait && !e.fade) tripFade(tripParking);
+      break;
+    case 'parking':                                      // sur le parking : la partie de cache-cache commence
+      if (e.a > 0) break;
+      e.step = 'paroles';
+      say(tripArrivalLines(), () => { trip.step = 'cache'; trip.s = 0; });
+      break;
+    case 'cache':                                        // Alice file se cacher
+      tripWalk(alice, MAP.start[0] - 70, MAP.start[1] + 420, dt * 1.5);
+      if (e.s > T.away) tripDone();
+      break;
+  }
+}
+// repère GUI : le noir des fondus
+function drawTrip() {
+  if (!trip || trip.a <= 0) return;
+  guiTransform();
+  ctx.fillStyle = `rgba(0, 0, 0, ${trip.a})`; ctx.fillRect(0, 0, GW, GH);
+}
+
 /* Fondus de l'écran entier, au-dessus de tout. fadeFrom(d) : part du noir et s'éclaircit en d secondes. transition() :
    change d'écran en passant par le noir (titre <-> jeu, Continuer, Recommencer) ; le jeu change d'écran tout de suite,
    une image de l'écran qu'on quitte (snap) s'assombrit pendant la première moitié, puis le nouveau se découvre. */
@@ -5532,6 +5676,9 @@ function update(dt) {
     case 'ending':
       updateEnding(dt);
       break;
+    case 'trip':
+      updateTrip(dt);
+      break;
     case 'over':
     case 'win':
       overT += dt;
@@ -5609,7 +5756,12 @@ function drawWorld() {
   for (const c of critters) if (critterVisible(c) && vis(c.x, c.y - c.h, 60))
     list.push({ y: c.h > 0 && c.ref ? c.ref.y + 2 : c.y, draw: () => drawCritter(c) });
   const blink = P.inv > 0 && P.mode !== 'ko' && Math.floor(P.inv * 12) % 2 === 0;
-  list.push({ y: P.y, draw: () => P.draw((blink ? 0.35 : 1) * P.alpha) });   // P.alpha : 0 sous le grillage
+  if (!(trip && trip.aboard)) list.push({ y: P.y, draw: () => P.draw((blink ? 0.35 : 1) * P.alpha) });   // P.alpha : 0 sous le grillage
+  if (trip) {                                          // le voyage en voiture : la voiture du papa, et lui à côté
+    const c = trip.car, p = trip.papa;
+    if (c) list.push({ y: c.y, draw: () => drawSpr('vehicle/' + c.name, Math.floor(c.t * 4), c.x, c.y) });
+    if (p) list.push({ y: p.y, draw: () => drawSpr('papa/' + p.anim, Math.floor(p.t * ((MAP.npcFps.papa || {})[p.anim] || 6)), p.x, p.y) });
+  }
   list.sort((a, b) => a.y - b.y);
   drawCastShadows(list, cx, cy);          // les ombres portées de ce qui bouge, sous tous les sprites
   for (const o of list) o.draw();
@@ -6065,8 +6217,9 @@ function render() {
   else if (state === 'options' && optReturn === 'title') { veil(0.35); drawOptions(); }
   else if (state === 'badges') { veil(0.35); drawBadges(); }
   else if (state === 'ending') drawEnding();
+  else if (state === 'trip') drawTrip();
   else {
-    drawHUD();
+    if (!trip) drawHUD();                              // (pendant le voyage en voiture : les dialogues seuls)
     if (state === 'dialog' && dialog) drawDialog();
     if (state === 'pause') {
       veil(0.6);

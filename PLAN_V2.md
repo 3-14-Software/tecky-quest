@@ -551,6 +551,13 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
    - *Route sans issue, faite le 13 novembre 2026* : la route de la côte finit sous le porche d'un parking
      couvert (`traffic.fin`) ; les voitures y entrent, s'y garent un moment hors de vue et repartent vers le
      tunnel, où elles font de même. Christophe a déplacé le casino et le phare dans l'éditeur de carte.
+   - *Le départ en voiture, fait le 13 novembre 2026* : une nouvelle partie d'été commence par la cinématique
+     (le papa attend près de sa voiture au bas du chemin de la niche, Alice et Tecky montent, la voiture s'en
+     va ; sur la côte, elle sort du tunnel, roule jusqu'au porche du parking ; Alice propose une partie de
+     cache-cache et file se cacher). Tecky a la main sur le parking, où la partie est enregistrée et reprend ;
+     à pied, les tunnels sont redevenus « pour les voitures » ; le papa reste près du parking et salue Tecky.
+     La scène se passe d'un bouton. Répliques à valider par Christophe (`textes/fr.json` : `voyage`,
+     `villageois.papa`).
    - *À dessiner* : les motos, Tecky qui nage, les six personnages
      des quêtes, le caniche, les moutons, les mouettes, les crabes ; les voitures garées ; les vagues de la
      mer ; les objets (chapeau, pelle, tong, coquillages, bouées, jouets de plage). (Faits le 13 novembre

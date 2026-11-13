@@ -83,6 +83,10 @@
     "kid": {
       "nom": "Lucas",
       "voix": "un petit garçon d’environ 6 ans, tout content : voix aiguë et enthousiaste"
+    },
+    "papa": {
+      "nom": "Papa",
+      "voix": "le papa d’Alice : la quarantaine, voix chaleureuse et tranquille, celle d’un papa en vacances"
     }
   },
   "repliques": [
@@ -451,6 +455,28 @@
     },
     {
       "voix": "tecky",
+      "fichier": "tecky-75b457ab",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "(La mer ? Je ne l'ai jamais vue… Wouf ! J'arrive !)",
+      "affiche": "(La mer ? Je ne l'ai jamais vue… Wouf ! J'arrive !)",
+      "contexte": "Le départ en voiture (été)"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-3e444da6",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "(Un, deux, trois… dix ! Prête ou pas, me voilà !)",
+      "affiche": "(Un, deux, trois… dix ! Prête ou pas, me voilà !)",
+      "contexte": "L’arrivée au parking (été)"
+    },
+    {
+      "voix": "tecky",
       "fichier": "tecky-9232cc10",
       "personnage": "Tecky",
       "type": "dialogue",
@@ -701,6 +727,28 @@
       "texte": "Os doré !",
       "affiche": "Os doré !",
       "contexte": "Tecky ramasse un objet"
+    },
+    {
+      "voix": "alice",
+      "fichier": "alice-881bca92",
+      "personnage": "Alice",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Youpi ! Viens vite, Tecky !",
+      "affiche": "Youpi ! Viens vite, Tecky !",
+      "contexte": "Le départ en voiture (été)"
+    },
+    {
+      "voix": "alice",
+      "fichier": "alice-716c2d0b",
+      "personnage": "Alice",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "On est arrivés ! Tecky, on joue à cache-cache ? Compte jusqu'à dix… et cherche-moi !",
+      "affiche": "On est arrivés ! Tecky, on joue à cache-cache ? Compte jusqu'à dix… et cherche-moi !",
+      "contexte": "L’arrivée au parking (été)"
     },
     {
       "voix": "alice",
@@ -2626,6 +2674,61 @@
       "texte": "Regarde mon ballon !",
       "affiche": "Regarde mon ballon !",
       "contexte": "Lucas salue Tecky qui passe"
+    },
+    {
+      "voix": "papa",
+      "fichier": "papa-ee2b1f65",
+      "personnage": "Papa",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "En voiture, les enfants ! C'est les vacances : direction la mer !",
+      "affiche": "En voiture, les enfants ! C'est les vacances : direction la mer !",
+      "contexte": "Le départ en voiture (été)"
+    },
+    {
+      "voix": "papa",
+      "fichier": "papa-74ae9d38",
+      "personnage": "Papa",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Ne t'éloigne pas trop, Alice ! Moi, je vous attends ici, près de la voiture.",
+      "affiche": "Ne t'éloigne pas trop, Alice ! Moi, je vous attends ici, près de la voiture.",
+      "contexte": "L’arrivée au parking (été)"
+    },
+    {
+      "voix": "papa",
+      "fichier": "papa-0a0fc5dd",
+      "personnage": "Papa",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Alors, Tecky, tu l'as trouvée ?",
+      "affiche": "Alors, Tecky, tu l'as trouvée ?",
+      "contexte": "Papa salue Tecky qui passe"
+    },
+    {
+      "voix": "papa",
+      "fichier": "papa-7f666603",
+      "personnage": "Papa",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Cherche bien : Alice adore se cacher !",
+      "affiche": "Cherche bien : Alice adore se cacher !",
+      "contexte": "Papa salue Tecky qui passe"
+    },
+    {
+      "voix": "papa",
+      "fichier": "papa-7595fd83",
+      "personnage": "Papa",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Bonne chasse, mon grand !",
+      "affiche": "Bonne chasse, mon grand !",
+      "contexte": "Papa salue Tecky qui passe"
     }
   ]
 }

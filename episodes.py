@@ -8,6 +8,9 @@ episodes.json en donne la liste, dans l'ordre où ils s'ouvrent :
     cartes    les cartes où il se joue (carte.noms()) ; un passage vers une carte qui n'en fait pas partie est fermé ;
               cartes/<id>/<carte>.json, s'il existe, dit ce que l'épisode change à cette carte (carte.py : surcharge)
     depart    celle où la partie commence (elle a la niche : `start`)
+    voyage    (facultatif) la carte où l'on part en voiture dès le début : la partie commence par une cinématique
+              sur la carte de départ, la voiture prend le tunnel, et le jeu se joue sur cette carte-là, à partir
+              de son point `start` ; à pied, les tunnels restent « pour les voitures » (game.js : startTrip())
     chantier  vrai tant qu'il n'est pas jouable : le jeu ne le propose pas (sauf avec ?chantier dans l'adresse)
 
     python3 episodes.py       # vérifie episodes.json
@@ -23,7 +26,7 @@ import carte
 ROOT = os.path.dirname(os.path.abspath(__file__))
 FICHIER = os.path.join(ROOT, "episodes.json")
 SAISONS = ("printemps", "ete", "automne", "hiver")
-CHAMPS = ("id", "saison", "cartes", "depart", "chantier")
+CHAMPS = ("id", "saison", "cartes", "depart", "voyage", "chantier")
 
 
 def charger(chemin=FICHIER):
@@ -61,6 +64,14 @@ def valider(eps, cartes=None):
             pb.append(f"épisode « {nom} » : la carte de départ « {dep} » n'est pas dans ses cartes")
         elif dep in cartes and "start" not in cartes[dep]:
             pb.append(f"épisode « {nom} » : la carte de départ « {dep} » n'a pas de niche (start)")
+        if "voyage" in e:
+            v = e["voyage"]
+            if v not in les or v == dep:
+                pb.append(f"épisode « {nom} » : le voyage mène à une autre de ses cartes, pas à « {v} »")
+            elif v in cartes and "start" not in cartes[v]:
+                pb.append(f"épisode « {nom} » : la carte du voyage « {v} » n'a pas de point de départ (start)")
+            elif not any(q[1] == v for q in cartes.get(dep, {}).get("passages", ())):
+                pb.append(f"épisode « {nom} » : aucun tunnel de « {dep} » ne mène à « {v} »")
         if "chantier" in e and not isinstance(e["chantier"], bool):
             pb.append(f"épisode « {nom} » : chantier vaut true ou false")
         # chaque carte de l'épisode se rejoint depuis celle du départ, par les passages qui restent dans l'épisode

@@ -119,7 +119,7 @@ def edge_keep():
     return ([(x, y) for _, x, y, *_ in ITEMS + ENEMIES + HENS + DUCKS + CRITTERS + BUTTERFLIES + COWS + VILLAGERS]
             + list(DIG)
             + LETTERS + TOYS + BALLS + BABIES + [p for ab in TUNNELS for p in ab] + [(x, y) for x, y, _ in SIGNS]
-            + [FARMER, POSTMAN, NEIGHBOR, POMPON, LEON, IRIS, PIQUETTE, START, ALICE])
+            + [FARMER, POSTMAN, NEIGHBOR, POMPON, LEON, IRIS, PIQUETTE, PAPA, START, ALICE])
 
 
 def edge_decor(g, keep):
@@ -136,7 +136,7 @@ def charger_carte(nom=carte.MONDE, episode=None):
     global NOM, CARTE, MW, MH, ITEMS, ENEMIES, DIG, SIGNS, HENS, DUCKS, COWS, CRITTERS, BUTTERFLIES, VILLAGERS
     global LETTERS, BALLS, TOYS, BABIES, TUNNELS, START, ALICE, TITLE, FARMER, POSTMAN, NEIGHBOR, POMPON
     global LEON, GOAL, IRIS, PIQUETTE, PEN, PEN_GATE, TRACK, CALM, ROAD_TUNNELS, ROAD, CROSSINGS, TRAFFIC
-    global DETAILS, FLOWER_BEDS, DECOR, BRIDGES, EDGE, ROAD_FIN
+    global DETAILS, FLOWER_BEDS, DECOR, BRIDGES, EDGE, ROAD_FIN, PAPA
     NOM = nom
     CARTE = carte.completer(carte.charger_episode(nom, episode))
     MW, MH = CARTE["w"], CARTE["h"]
@@ -147,6 +147,7 @@ def charger_carte(nom=carte.MONDE, episode=None):
     START, ALICE, TITLE = _P("start"), _P("alice"), _P("title")
     FARMER, POSTMAN, NEIGHBOR, POMPON = _P("farmer"), _P("postman"), _P("neighbor"), _P("pompon")
     LEON, GOAL, IRIS, PIQUETTE = _P("leon"), _P("goal"), _P("iris"), _P("piquette")
+    PAPA = _P("papa")                     # le papa d'Alice, au parking de la côte (hors de la carte ailleurs)
     PEN, PEN_GATE = _P("pen"), _P("penGate")
     TRACK = _P("track") if CARTE["track"] else None           # (None : pas de voie ferrée sur cette carte)
     CALM = _T("calm")
@@ -266,6 +267,7 @@ def build_map():
         "iris": [px(IRIS[0]), px(IRIS[1])], "toys": [[px(x), px(y)] for x, y in TOYS],
         "track": [px(v) for v in TRACK] if TRACK else [hors, hors + 1, hors],
         "piquette": [px(PIQUETTE[0]), px(PIQUETTE[1])], "babies": [[px(x), px(y)] for x, y in BABIES],
+        "papa": [px(PAPA[0]), px(PAPA[1])],
         "critters": [[n, px(x), px(y)] for n, x, y in CRITTERS],
         "ducks": [[n, px(x), px(y), f] for n, x, y, f in DUCKS],
         "cows": [[n, px(x), px(y)] for n, x, y in COWS],
@@ -325,7 +327,9 @@ def build_jeu():
         "dogFps": {a: fps for a, (_, fps, _) in chiens2.ANIMS.items()},      # celles des chiens (chiens2.py)
         "badges": hud.BADGES,
         "keys": hud.KEYS, "pads": [k for k, _ in hud.PAD_BUTTONS],   # noms des images de hud/key et hud/pad
-        "villagerFps": {k: {a: v[1] for a, v in villageois.ANIMS[k].items()} for k in villageois.KINDS},
+        # (le papa d'Alice salue comme un villageois : game.js, newVillager(['papa', …]))
+        "villagerFps": dict({k: {a: v[1] for a, v in villageois.ANIMS[k].items()} for k in villageois.KINDS},
+                            papa={a: v[1] for a, v in npcs.ANIMS["papa"].items()}),
         "cowFps": {k: {a: fps for a, (_, fps, _) in cows.anims(k).items()} for k in cows.KINDS},
         "duckFps": {k: {a: fps for a, (_, fps, _) in ducks.anims(k).items()} for k in ducks.KINDS},
         "duckLoop": {k: {a: loop for a, (_, _, loop) in ducks.anims(k).items()} for k in ducks.KINDS},

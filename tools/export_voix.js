@@ -37,6 +37,7 @@ const VOICES = {
   vendor: ['Josette', 'la marchande de fruits : voix chantante, un peu gouailleuse, de marché'],
   florist: ['Lili', 'la fleuriste : jeune femme, voix douce et souriante'],
   kid: ['Lucas', 'un petit garçon d’environ 6 ans, tout content : voix aiguë et enthousiaste'],
+  papa: ['Papa', 'le papa d’Alice : la quarantaine, voix chaleureuse et tranquille, celle d’un papa en vacances'],
 };
 // répliques dont le texte est calculé (pas une chaîne écrite en dur) : chacune doit être produite ci-dessous ; si ce
 // nombre change, une réplique calculée a été ajoutée ou retirée dans game.js : adapter ce fichier
@@ -149,6 +150,11 @@ function main() {
     for (let i = 0; i < 2; i++)
       ask(`${VOICES[k][0]} salue Tecky qui passe`, `var V = villagers.find(v => v.kind === "${k}"); V.near = false; V.cd = 0; V.i = ${i};` +
           ' P.x = V.x; P.y = V.y + 100; P.mode = "free"; updateVillager(V, 0);');
+  for (let i = 0; i < 3; i++)                        // (le papa d'Alice, au parking de la côte : il salue comme un villageois)
+    ask('Papa salue Tecky qui passe', `var V = newVillager(["papa", 3000, 3000]); V.near = false; V.cd = 0; V.i = ${i};` +
+        ' P.x = V.x; P.y = V.y + 100; P.mode = "free"; updateVillager(V, 0);');
+  ask('Le départ en voiture (été)', 'say(tripDepartLines());');
+  ask('L’arrivée au parking (été)', 'say(tripArrivalLines());');
   ask('Retrouvailles avec Alice', 'finale();');
   const rec = JSON.parse(run('JSON.stringify(REC)'));
 

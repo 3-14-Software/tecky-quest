@@ -5,6 +5,9 @@
 const fs = require('fs'), path = require('path');
 const base = fs.readFileSync(path.join(__dirname, 'sim.js'), 'utf8').split("setTimeout(() => {")[0];
 function main() {
+  // (l'été part en voiture, et ses tunnels sont fermés à pied : tests/voyage.js ; ici, le moteur des passages à pied,
+  // gardé pour d'autres cartes : on retire le voyage de l'épisode)
+  run('delete EPISODES[1].voyage;');
   run('episode = "ete"; audioOn(); pressed.ok = true'); step(1); advanceDialog();
   run('dogs.forEach(d => { d.x = d.hx; d.y = d.hy; }); cars = []; P.inv = 99;');
   ok(run('Object.keys(CARTES).join()') === 'monde,cote' && run('MAP.id') === 'monde' && run('MAP.ts') === 64 && run('MAP.w') === 96,

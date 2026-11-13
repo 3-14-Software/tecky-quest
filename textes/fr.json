@@ -592,6 +592,11 @@
     "kid": [
       "Un toutou !",
       "Regarde mon ballon !"
+    ],
+    "papa": [
+      "Alors, Tecky, tu l'as trouvée ?",
+      "Cherche bien : Alice adore se cacher !",
+      "Bonne chasse, mon grand !"
     ]
   },
   "modes": {
@@ -603,5 +608,19 @@
     },
     "facile": " facile"
   },
-  "temps": "{m} min {s} s"
+  "temps": "{m} min {s} s",
+  "voyage": {
+    "papa": {
+      "depart": "En voiture, les enfants ! C'est les vacances : direction la mer !",
+      "arrivee": "Ne t'éloigne pas trop, Alice ! Moi, je vous attends ici, près de la voiture."
+    },
+    "alice": {
+      "depart": "Youpi ! Viens vite, Tecky !",
+      "arrivee": "On est arrivés ! Tecky, on joue à cache-cache ? Compte jusqu'à dix… et cherche-moi !"
+    },
+    "tecky": {
+      "depart": "(La mer ? Je ne l'ai jamais vue… Wouf ! J'arrive !)",
+      "arrivee": "(Un, deux, trois… dix ! Prête ou pas, me voilà !)"
+    }
+  }
 }

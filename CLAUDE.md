@@ -259,7 +259,31 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   (`v.hidden`, `TRAFFIC.park` / `away`), puis repart dès que la voie est libre devant sa sortie ; les autres
   ne gardent pas leurs distances avec un véhicule caché. Le porche couvre 4,7 tuiles : pas de bus sur une
   route sans issue (il dépasserait). Sur la côte : trois voitures, un passage piéton devant le chemin du
-  port. Test : `cartes.js`. Premier jet posé par
+  port. Test : `cartes.js`.
+  **Le voyage en voiture** (13 novembre 2026 ; `game.js`, section « le voyage en voiture ») : un épisode
+  qui a un champ `voyage` dans `episodes.json` (l'été : `"voyage": "cote"`) commence par une cinématique et
+  se joue sur cette carte-là. `newGame()` → `startTrip()` : `state === 'trip'`, `trip` (étape `step`, la
+  voiture `car`, le papa `papa`, `aboard`, le noir `a` / `fade` / `then`), `TRIP` (durées, vitesses, places à
+  partir de l'arrière de la voiture). Étapes de `updateTrip()` : `descente` (Alice et Tecky descendent le
+  chemin de la niche jusqu'à la voiture garée sur la voie du bas, `tripWalk()`), les répliques du départ
+  (`tripDepartLines()`), `embarque` (chacun disparaît à la portière, la voiture passe de `sport_vide` à
+  `sport`), `route`, le noir (`tripFade(tripCoast)` : `useMap(voyage)`, la voiture sort du tunnel),
+  `arrivee` (la caméra la suit jusqu'au porche), `garee`, le noir (`tripParking`), les répliques de
+  l'arrivée (`tripArrivalLines()` : Alice propose le cache-cache), `cache` (elle file), puis `tripDone()` :
+  Tecky a la main en `MAP.start` de la carte du voyage (le parking), la partie est enregistrée. Un bouton
+  passe la scène après `TRIP.skip` s ; « Recommencer » va droit au parking. Pendant la scène, le monde est
+  figé, le HUD caché (les dialogues restent), Tecky n'est pas dessiné quand il est à bord. Avec un voyage :
+  `passageHere()` rend toujours null (à pied, les tunnels sont « pour les voitures » — les passages de la
+  carte ne servent qu'à dire où mène le tunnel) ; `loadGame()` ramène au point de départ de la carte du
+  voyage une partie enregistrée ailleurs (pendant la scène, par exemple) ; `reset()` et `toTitle()` vident
+  `trip`. Données : `start` de `cartes/cote.json` (le parking), et le point libre `papa`
+  (`carte.POINTS_LIBRES` : jamais exigé) — le papa d'Alice y attend et **salue comme un villageois**
+  (`newVillager(['papa', …])` dans `resetWorld()`, `VILLAGER_LINES.papa`, textes `villageois.papa.<i>`,
+  `MAP.villagerFps.papa`). Textes : `voyage.<qui>.depart` / `.arrivee`. `tools/export_voix.js` produit ces
+  répliques (voix « Papa »). `tests/voyage.js` ; `cartes.js` et `episodes.js` retirent le voyage de
+  l'épisode (`delete EPISODES[1].voyage`) pour éprouver les passages à pied et les surcharges, qui restent
+  dans le moteur. Pas encore fait : un vrai trajet jusqu'au tunnel dans le monde (la voiture sort de l'écran
+  et c'est le noir), les indices et la cachette d'Alice sur la côte (la flèche montre encore le tunnel). Premier jet posé par
   `v2/cote_carte.py`, **gelé depuis** : Christophe retouche la carte dans l'éditeur, c'est
   `cartes/cote.json` qui fait foi (le script refuse d'écraser une carte qui existe ; ses listes ne sont plus
   à jour ; `python3 v2/cote_carte.py --apercu` redessine l'aperçu à partir du fichier). Rien ne dépend de

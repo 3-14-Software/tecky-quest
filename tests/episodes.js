@@ -15,8 +15,10 @@ function main() {
 
   // 1. les données, et un jeu qui n'a qu'un épisode ouvert : l'écran titre d'avant
   ok(run('EPISODES.map(e => e.id).join()') === 'printemps,ete' && run('EPISODES[0].cartes.join()') === 'monde'
-     && run('EPISODES[1].cartes.join()') === 'monde,cote' && run('EPISODES[1].chantier') === true,
+     && run('EPISODES[1].cartes.join()') === 'monde,cote' && run('EPISODES[1].chantier') === true && run('EPISODES[1].voyage') === 'cote',
      'deux épisodes : le printemps (le monde), l\'été (le monde et la deuxième carte), encore en chantier');
+  // (le voyage en voiture de l'été a son test, voyage.js ; ici, un épisode qui se joue sur sa carte de départ)
+  run('delete EPISODES[1].voyage;');
   ok(run('state') === 'title' && run('episode') === 'printemps' && run('openEpisodes().length') === 1
      && run('menu.items.map(it => it.id).join()') === 'aventure,balade,options,badges',
      'au départ : le printemps seul, et le menu de toujours');

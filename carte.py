@@ -48,7 +48,7 @@ ORDRE = ["format", "annexe", "w", "h", "legende", "terrain", "details", "decor",
          "items", "dig", "enemies", "signs", "tunnels",
          "hens", "ducks", "cows", "critters", "butterflies", "villagers",
          "start", "alice", "title", "ending",
-         "farmer", "postman", "neighbor", "pompon", "leon", "iris", "piquette",
+         "farmer", "postman", "neighbor", "pompon", "leon", "iris", "piquette", "papa",
          "letters", "balls", "toys", "babies", "goal", "ballBox", "pen", "penGate", "track",
          "roadTunnels", "passages", "traffic", "calm", "zones", "landmarks"]
 
@@ -70,6 +70,9 @@ DECORS_DEDUITS = ("signpost", "burrow", "goal_net", "rail", "buffer_stop")
 
 # personnages et repères : un point (x, y) chacun
 POINTS = ["start", "alice", "title", "farmer", "postman", "neighbor", "pompon", "leon", "iris", "piquette", "goal"]
+# points qu'une carte peut avoir en plus (jamais exigés, même sur la carte du monde) : le papa d'Alice, qui attend
+# au parking de la côte
+POINTS_LIBRES = ["papa"]
 # listes [genre, x, y] (genres() dit lesquels existent)
 NOMMEES = ["decor", "items", "enemies", "cows", "critters", "butterflies", "villagers"]
 # listes de points [x, y]
@@ -84,7 +87,7 @@ SPRITES = {
     "letters": "item/letter", "balls": ["port/balloon"], "toys": ["port/toy"], "babies": "hedgehog/idle",
     "start": "tecky/idle/down", "alice": "alice/idle/down", "farmer": "farmer/idle", "postman": "postman/idle",
     "neighbor": "neighbor/idle", "pompon": "cat_white/idle", "leon": "leon/idle", "iris": "iris/idle",
-    "piquette": "piquette/idle", "goal": "decor/goal_net", "roadTunnels": "decor/tunnel",
+    "piquette": "piquette/idle", "papa": "papa/idle", "goal": "decor/goal_net", "roadTunnels": "decor/tunnel",
 }
 
 
@@ -201,7 +204,8 @@ def completer(c):
     absents = [k for k in POINTS + ["pen", "ballBox", "track", "traffic", "ending"] if k not in c]
     for k in _LISTES:
         c.setdefault(k, [])
-    for k in POINTS:
+    absents += [k for k in POINTS_LIBRES if k not in c]
+    for k in POINTS + POINTS_LIBRES:
         c.setdefault(k, [HORS, HORS])
     c.setdefault("pen", list(_RECT))
     c.setdefault("ballBox", list(_RECT))
@@ -295,6 +299,9 @@ def valider(c, avec_genres=True, variante=False):
             err.append(f"dig[{i}] ({x}, {y}) : un trésor est au centre d'une tuile (x,5 ; y,5)")
     for cle in POINTS:
         if la(cle) and not _pt(c.get(cle)):
+            err.append(f"{cle} : un point [x, y]")
+    for cle in POINTS_LIBRES:
+        if cle in c and not _pt(c[cle]):
             err.append(f"{cle} : un point [x, y]")
     det = lambda e: isinstance(e, list) and len(e) == 3 and isinstance(e[0], str) and all(isinstance(a, int) for a in e[1:])
     for i, e in enumerate(liste("details", det, "[nom, tx, ty] (tuile entière)")):
