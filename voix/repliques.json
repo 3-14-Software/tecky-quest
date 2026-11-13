@@ -246,6 +246,83 @@
     },
     {
       "voix": "tecky",
+      "fichier": "tecky-cc515f57",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Le chapeau de paille d'Alice ! Elle est passée par le village de pêcheurs.",
+      "affiche": "Le chapeau de paille d'Alice ! Elle est passée par le village de pêcheurs.",
+      "contexte": "Indice trouvé (été)"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-852232b1",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "La pelle d'Alice ! Elle a joué dans les jardins de la ville.",
+      "affiche": "La pelle d'Alice ! Elle a joué dans les jardins de la ville.",
+      "contexte": "Indice trouvé (été)"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-a5a9540a",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Une tong d'Alice ! Elle a couru sur la plage.",
+      "affiche": "Une tong d'Alice ! Elle a couru sur la plage.",
+      "contexte": "Indice trouvé (été)"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-6e7ad18b",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Ça sent le sel et le poisson… Je vais chercher au village de pêcheurs, juste en bas du parking.",
+      "affiche": "Ça sent le sel et le poisson… Je vais chercher au village de pêcheurs, juste en bas du parking.",
+      "contexte": "Où chercher ensuite (été)"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-80d44230",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Ses traces passent le pont de la rivière… Elle est allée en ville, du côté des jardins !",
+      "affiche": "Ses traces passent le pont de la rivière… Elle est allée en ville, du côté des jardins !",
+      "contexte": "Où chercher ensuite (été)"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-ae1f6490",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Elle est descendue vers la mer. Cherchons sur la plage, au pied des planches !",
+      "affiche": "Elle est descendue vers la mer. Cherchons sur la plage, au pied des planches !",
+      "contexte": "Où chercher ensuite (été)"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-9cae28fe",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Et maintenant, je sens son odeur ! Elle a grimpé tout en haut de la falaise, bien après le phare !",
+      "affiche": "Et maintenant, je sens son odeur ! Elle a grimpé tout en haut de la falaise, bien après le phare !",
+      "contexte": "Où chercher ensuite (été)"
+    },
+    {
+      "voix": "tecky",
       "fichier": "tecky-d12f8cf7",
       "personnage": "Tecky",
       "type": "dialogue",
@@ -484,7 +561,7 @@
       "ton": "joyeux",
       "texte": "Ouaf ! Ouaf ouaf !",
       "affiche": "Ouaf ! Ouaf ouaf !",
-      "contexte": "Retrouvailles avec Alice"
+      "contexte": "Retrouvailles avec Alice ; Retrouvailles avec Alice (été)"
     },
     {
       "voix": "tecky",
@@ -782,6 +859,39 @@
       "texte": "Viens, on rentre à la maison. Tu as bien mérité une grosse saucisse !",
       "affiche": "Viens, on rentre à la maison. Tu as bien mérité une grosse saucisse !",
       "contexte": "Retrouvailles avec Alice"
+    },
+    {
+      "voix": "alice",
+      "fichier": "alice-93732151",
+      "personnage": "Alice",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tecky ! Tu m'as trouvée ! Elle est chouette, ma cachette, tout en haut de la falaise !",
+      "affiche": "Tecky ! Tu m'as trouvée ! Elle est chouette, ma cachette, tout en haut de la falaise !",
+      "contexte": "Retrouvailles avec Alice (été)"
+    },
+    {
+      "voix": "alice",
+      "fichier": "alice-73cb5baf",
+      "personnage": "Alice",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Et tu as rapporté mon chapeau, ma pelle et ma tong ! Merci mon Tecky.",
+      "affiche": "Et tu as rapporté mon chapeau, ma pelle et ma tong ! Merci mon Tecky.",
+      "contexte": "Retrouvailles avec Alice (été)"
+    },
+    {
+      "voix": "alice",
+      "fichier": "alice-e4663dfb",
+      "personnage": "Alice",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Viens, on redescend au phare : le soleil se couche, il va s'allumer !",
+      "affiche": "Viens, on redescend au phare : le soleil se couche, il va s'allumer !",
+      "contexte": "Retrouvailles avec Alice (été)"
     },
     {
       "voix": "info",

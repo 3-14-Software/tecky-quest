@@ -11,6 +11,8 @@ episodes.json en donne la liste, dans l'ordre où ils s'ouvrent :
     voyage    (facultatif) la carte où l'on part en voiture dès le début : la partie commence par une cinématique
               sur la carte de départ, la voiture prend le tunnel, et le jeu se joue sur cette carte-là, à partir
               de son point `start` ; à pied, les tunnels restent « pour les voitures » (game.js : startTrip())
+    indices   (facultatif) les trois affaires d'Alice à trouver, dans l'ordre (des objets de items.py) ; sans cela,
+              celles du printemps ; la carte où l'épisode se joue en a exactement une de chaque, et Alice
     chantier  vrai tant qu'il n'est pas jouable : le jeu ne le propose pas (sauf avec ?chantier dans l'adresse)
 
     python3 episodes.py       # vérifie episodes.json
@@ -26,7 +28,7 @@ import carte
 ROOT = os.path.dirname(os.path.abspath(__file__))
 FICHIER = os.path.join(ROOT, "episodes.json")
 SAISONS = ("printemps", "ete", "automne", "hiver")
-CHAMPS = ("id", "saison", "cartes", "depart", "voyage", "chantier")
+CHAMPS = ("id", "saison", "cartes", "depart", "voyage", "indices", "chantier")
 
 
 def charger(chemin=FICHIER):
@@ -72,6 +74,19 @@ def valider(eps, cartes=None):
                 pb.append(f"épisode « {nom} » : la carte du voyage « {v} » n'a pas de point de départ (start)")
             elif not any(q[1] == v for q in cartes.get(dep, {}).get("passages", ())):
                 pb.append(f"épisode « {nom} » : aucun tunnel de « {dep} » ne mène à « {v} »")
+        ind = e.get("indices", list(carte.INDICES))
+        if not (isinstance(ind, list) and len(ind) == 3 and all(isinstance(n, str) for n in ind)):
+            pb.append(f"épisode « {nom} » : indices = trois noms d'objets")
+        elif "indices" in e:              # (sans ce champ, ceux du printemps : carte.valider() les exige déjà du monde)
+            jeu = e.get("voyage", dep)    # la carte où l'épisode se joue
+            c = cartes.get(jeu)
+            if c is not None:
+                for n in ind:
+                    k = sum(1 for it in c.get("items", []) if it and it[0] == n)
+                    if k != 1:
+                        pb.append(f"épisode « {nom} » : la carte « {jeu} » doit avoir exactement un indice « {n} » (elle en a {k})")
+                if "alice" not in c:
+                    pb.append(f"épisode « {nom} » : Alice n'a pas de cachette sur la carte « {jeu} »")
         if "chantier" in e and not isinstance(e["chantier"], bool):
             pb.append(f"épisode « {nom} » : chantier vaut true ou false")
         # chaque carte de l'épisode se rejoint depuis celle du départ, par les passages qui restent dans l'épisode

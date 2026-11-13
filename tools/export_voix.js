@@ -41,7 +41,7 @@ const VOICES = {
 };
 // répliques dont le texte est calculé (pas une chaîne écrite en dur) : chacune doit être produite ci-dessous ; si ce
 // nombre change, une réplique calculée a été ajoutée ou retirée dans game.js : adapter ce fichier
-const DYNAMIC_SITES = 19;
+const DYNAMIC_SITES = 23;
 const DYNAMIC_POPS = 10;          // de même pour les bulles (texte calculé : comptes, noms des jouets, mot passé à dropToy)
 const NPC_VARS = { farmer: 'farmer', postman: 'postman', neighbor: 'neighbor', leon: 'leon', iris: 'iris', piquette: 'piquette' };
 // répliques relevées dans le code (écrites en dur, dites en cours de route) : contexte selon la fonction qui les dit
@@ -75,6 +75,9 @@ function main() {
   // indices d'Alice, os dorés, panneaux
   ask('Indice trouvé', '[0, 1, 2].forEach(i => say([{ who: "tecky", text: clueFound(i) }]));');
   ask('Où chercher ensuite', '[0, 1, 2, 3].forEach(i => say([{ who: "tecky", text: clueNext(i) }]));');
+  // (les indices de l'été, sur la côte : le chapeau de paille, la pelle, la tong)
+  ask('Indice trouvé (été)', 'episode = "ete"; [0, 1, 2].forEach(i => say([{ who: "tecky", text: clueFound(i) }])); episode = "printemps";');
+  ask('Où chercher ensuite (été)', 'episode = "ete"; [0, 1, 2, 3].forEach(i => say([{ who: "tecky", text: clueNext(i) }])); episode = "printemps";');
   ask('Os doré déterré', 'treasures = 0; digs.forEach(g => uncover(g));');
   // (de toutes les cartes, et de celles qu'un épisode change : SURCHARGES)
   ask('Panneau', '[...Object.values(CARTES), ...Object.values(SURCHARGES).flatMap(e => Object.values(e))].forEach(c => (c.signs || []).forEach(s => say([{ who: "info", text: s[2] }])));');
@@ -156,6 +159,7 @@ function main() {
   ask('Le départ en voiture (été)', 'say(tripDepartLines());');
   ask('L’arrivée au parking (été)', 'say(tripArrivalLines());');
   ask('Retrouvailles avec Alice', 'finale();');
+  ask('Retrouvailles avec Alice (été)', 'episode = "ete"; [0, 1, 2, 3].forEach(i => say([{ who: i === 1 ? "tecky" : "alice", text: reunionLine(i) }])); episode = "printemps";');
   const rec = JSON.parse(run('JSON.stringify(REC)'));
 
   // répliques écrites en dur dans game.js : toutes doivent être là (sinon, on les ajoute avec leur fonction comme contexte)

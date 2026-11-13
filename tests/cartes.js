@@ -34,9 +34,9 @@ function main() {
   ok(Math.abs(run('P.y - MAP.traffic.road[0]') - run('yEntree')) < 30, 'à la hauteur où il est entré : ' + Math.round(run('yEntree')) + ' px sous le bord de la chaussée, ' + Math.round(run('P.y - MAP.traffic.road[0]')) + ' à la sortie');
   ok(run('score') === 321 && run('farm.state') === 'asked' && run('treasures') === 1 && run('P.hp') > 0, 'la partie continue : score, quêtes et trésors le suivent');
   ok(run('dogs.length') === run('MAP.enemies.length') && run('dogs.length') > 3 && run('items.length') > 15 && run('npcList().length') === 0
-     && run('decor.length') > 150 && run('butterflies.length') === 7 && run('cars.length') === 3 && run('alice.hidden') && !run('ici("alice")')
+     && run('decor.length') > 150 && run('butterflies.length') === 7 && run('cars.length') === 3 && run('alice.hidden') && run('ici("alice")')
      && !run('ici("track")') && run('ici("traffic")'),
-     'la côte a ses décors, ses chiens, ses objets, ses papillons et ses voitures ; pas encore de personnages ni d\'Alice ; pas de voie ferrée');
+     'la côte a ses décors, ses chiens, ses objets, ses papillons et ses voitures, Alice dans sa cachette ; pas encore de personnages ; pas de voie ferrée');
   // la route sans issue : une voiture entre sous le porche du parking, s'y gare, repart par l'autre voie ; au tunnel, de même
   ok(run('MAP.traffic.end') === 30 * 64 && run('CARTES.monde.traffic.end') === null && run('MAP.decor.filter(d => d[0] === "porche").length') === 1
      && run('blockedFeet(MAP.traffic.end + 60, 8 * TS, 16)') && !run('blockedFeet(MAP.traffic.end - 60, 8 * TS, 16)'),
@@ -78,7 +78,7 @@ function main() {
   step(150, 'held.up = true;'); run('held.up = false;');
   ok(run('P.y') < run('38.2 * TS') && run('Math.abs(P.x - 83 * TS) < 40') && run('cornerVal(MAP.plateau, P.x, P.y)') > 0.9,
      'Tecky monte l\'escalier depuis la plage et arrive sur le plateau (y = ' + (run('P.y') / 64).toFixed(1) + ')');
-  run('P.x = 89.5 * TS; P.y = 38 * TS;');
+  run('P.x = 90.6 * TS; P.y = 38 * TS;');
   step(150, 'held.down = true;'); run('held.down = false;');
   ok(run('P.y') > run('40 * TS') && run('P.y') < run('41.6 * TS') && run('cornerVal(MAP.plateau, P.x, P.y)') > 0.5,
      'du plateau, il ne saute pas dans le vide : le bord l\'arrête (y = ' + (run('P.y') / 64).toFixed(1) + ')');
@@ -105,7 +105,7 @@ function main() {
   ok(run('mapImg !== null') && run('seenCells.length') === run('cellsW() * cellsH()') && run('seenCells.some(v => v)'), 'la carte de la pause est celle de cette carte');
   run('var b0 = JSON.stringify(badges); seenCells.fill(1); checkBadges();');
   ok(run('JSON.stringify(badges)') === run('b0'), 'pas de badge gagné parce que la carte est vide (bêtes, canards, os dorés, explorateur)');
-  ok(run('(() => { const a = arrowTarget(), [x, y] = arrivalAt(0); return a.x === x && a.y === y; })()'), 'la flèche et le flair ramènent au tunnel : l\'indice suivant n\'est pas ici');
+  ok(run('arrowTarget().n') === 'hat' && run('clueNames().join()') === 'hat,spade,flipflop', 'la flèche et le flair mènent au premier indice de l\'été : le chapeau de paille');
   // partie enregistrée là-bas : elle reprend là-bas
   run('P.x = 700; P.y = 1100; saveGame(); var S = STORE.get(SAVE_KEY), chatAvant = S.ailleurs.monde.cat.slice();');
   ok(run('S.v') === 3 && run('S.ep') === 'ete' && run('S.carte') === 'cote' && run('!!S.ailleurs.monde') && run('(() => { const m = S.ailleurs.monde, a = JSON.parse(avant); return m.items.length === nItems && JSON.stringify(m.dogs) === JSON.stringify(a.dogs) && JSON.stringify(m.dug) === JSON.stringify(a.dug); })()'),

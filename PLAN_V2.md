@@ -558,6 +558,13 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      à pied, les tunnels sont redevenus « pour les voitures » ; le papa reste près du parking et salue Tecky.
      La scène se passe d'un bouton. Répliques à valider par Christophe (`textes/fr.json` : `voyage`,
      `villageois.papa`).
+   - *Indices, cachette et fin de l'été, faits le 13 novembre 2026* : le chapeau de paille (au village de
+     pêcheurs), la pelle (dans les jardins de la ville) et la tong (sur la plage) sont dessinés et posés ; la
+     flèche et le flair y mènent l'un après l'autre ; Alice sort de sa cachette tout en haut des falaises
+     (Christophe : « plus haut dans les falaises, puisque la cinématique la fait redescendre vers le
+     phare ») ; les retrouvailles, puis la scène de fin (ils redescendent au pied du phare, la nuit tombe,
+     la lanterne s'allume). **L'été se joue du départ à la victoire** (sans quêtes encore). Répliques à valider
+     (`textes/fr.json` : `indices_ete`, `retrouvailles_ete`).
    - *À dessiner* : les motos, Tecky qui nage, les six personnages
      des quêtes, le caniche, les moutons, les mouettes, les crabes ; les voitures garées ; les vagues de la
      mer ; les objets (chapeau, pelle, tong, coquillages, bouées, jouets de plage). (Faits le 13 novembre

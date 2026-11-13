@@ -55,7 +55,37 @@ function main() {
   run('toTitle(); loadGame(loadSave(), false);'); advanceDialog();
   ok(run('MAP.id') === 'cote' && run('state') === 'play' && run('Math.abs(P.x - MAP.start[0]) < 1 && Math.abs(P.y - MAP.start[1]) < 1'),
      'elle reprend sur la côte, au parking : en été, on ne joue pas dans le monde');
-  // 5. le printemps n'a pas de voyage
+  // 5. les indices de l'été, la cachette d'Alice, la fin
+  run('episode = "ete"; newGame("aventure");'); step(70); run('pressed.ok = true'); step(1);
+  run('cars = []; dogs = []; P.inv = 99;');
+  ok(run('state') === 'play' && run('clueNames().join()') === 'hat,spade,flipflop' && run('arrowTarget().n') === 'hat' && run('alice.hidden') && run('alice.kind') === 'alice'
+     && run('Math.abs(alice.x - MAP.alice[0]) < 1') && run('MAP.alice[0]') > run('90 * TS') && run('MAP.alice[1]') < run('MAP.ending.alice[1] - 15 * TS'),
+     'en été : trois autres indices (chapeau, pelle, tong), la flèche montre le chapeau ; Alice est cachée tout en haut des falaises, bien au-dessus du phare');
+  const ramasser = n => { run(`{ const it = items.find(i => i.n === "${n}"); P.x = it.x; P.y = it.y + 8; P.mode = "free"; }`); step(3); };
+  ramasser('hat');
+  ok(run('state') === 'dialog' && run('dialog.lines[0].text') === run('txt("indices_ete.trouve.0")') && run('dialog.lines[1].text') === run('txt("indices_ete.ensuite.1")')
+     && run('clues[0]') === true, 'le chapeau de paille : « ' + run('dialog.lines[0].text') + ' »');
+  advanceDialog();
+  ok(run('arrowTarget().n') === 'spade', 'la flèche montre la pelle, en ville');
+  ramasser('spade'); advanceDialog(); ramasser('flipflop');
+  ok(run('state') === 'dialog' && run('dialog.lines[1].text') === run('txt("indices_ete.ensuite.3")') && run('!alice.hidden'), 'la tong : Alice sort de sa cachette — « ' + run('dialog.lines[1].text') + ' »');
+  advanceDialog();
+  ok(run('arrowTarget() === alice') && run('sunGoal()') === 3, 'la flèche mène à Alice, le soleil se couche');
+  run('P.x = alice.x - 70; P.y = alice.y + 20; P.mode = "free";'); step(3);
+  ok(run('state') === 'dialog' && run('alice.found') && run('dialog.lines[0].text') === run('txt("retrouvailles_ete.0")') && run('dialog.lines.length') === 4,
+     'les retrouvailles en haut des falaises : « ' + run('dialog.lines[0].text') + ' »');
+  advanceDialog();
+  ok(run('state') === 'ending', 'puis la scène de fin');
+  step(90);
+  ok(run('ending.home') && run('alice.y') < run('MAP.ending.alice[1]') && run('alice.dir') === 'down' && run('Math.abs(alice.x - MAP.ending.alice[0]) < 1'),
+     'au noir : Alice et Tecky redescendent du haut du plateau vers le pied du phare');
+  step(420);
+  ok(run('Math.abs(alice.y - MAP.ending.alice[1]) < 1') && run('Math.abs(P.x - MAP.ending.tecky[0]) < 1') && ['sit', 'yawn', 'sleep'].includes(run('P.anim')) && run('sun') > 3,
+     'ils sont au pied du phare, Tecky s\'installe, la nuit tombe (le phare s\'allume)');
+  run('endingDone();');
+  ok(run('state') === 'win' && run('recs["ete:aventure"].wins') === 1 && !run('loadSave()'), 'la victoire de l\'été : ses records à part, plus de partie à continuer');
+  run('pressed.ok = true'); step(1);
+  // 6. le printemps n'a pas de voyage
   run('episode = "printemps"; newGame("aventure");'); advanceDialog();
   ok(run('state') === 'play' && run('MAP.id') === 'monde' && run('trip') === null && run('!villagers.some(v => v.kind === "papa")'), 'au printemps : pas de voyage, la partie commence à la niche');
 }

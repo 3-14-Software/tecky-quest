@@ -335,8 +335,8 @@ def valider(c, avec_genres=True, variante=False):
     if la("track") and not (isinstance(tr, list) and len(tr) == 3 and all(_num(a) for a in tr) and tr[0] < tr[1]):
         err.append("track : [x ouest, x est, y]")
     e = c.get("ending")
-    if la("ending") and not (isinstance(e, dict) and _pt(e.get("alice")) and _pt(e.get("tecky"))):
-        err.append("ending : {alice: [x, y], tecky: [x, y]}")
+    if la("ending") and not (isinstance(e, dict) and _pt(e.get("alice")) and _pt(e.get("tecky")) and ("from" not in e or _pt(e["from"]))):
+        err.append("ending : {alice: [x, y], tecky: [x, y], from?: [dx, dy] (d'où ils arrivent, à partir de leur place)}")
     r = c.get("traffic")
     if not la("traffic"):
         pass

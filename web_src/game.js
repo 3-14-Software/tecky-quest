@@ -1883,13 +1883,24 @@ const ITEM = {
   bone: { heal: 2 }, sausage: { grow: true },
   medal: { pts: 100 }, squeaky: { pts: 50 }, ball: { pts: 20 },
   hairclip: { clue: 0 }, shoe: { clue: 1 }, plush: { clue: 2 },
+  hat: { clue: 0 }, spade: { clue: 1 }, flipflop: { clue: 2 },      // (les indices de l'été : chapeau de paille, pelle, tong)
   goldbone: { pts: 100, gold: true },     // trésor enterré (os doré), à collectionner
 };
 /* Indices : Alice joue à cache-cache et a semé trois affaires. Chacune oriente vers la suivante (la flèche
    au bord de l'écran aussi) ; Alice ne sort de sa cachette, la cabane du parc, qu'une fois les trois trouvées. */
+/* Chaque épisode a ses trois indices (episodes.json : indices ; sans cela, ceux du printemps), leurs textes et ceux
+   des retrouvailles (CLUE_TXT : le premier épisode garde ses clés d'avant), et leur icône dans la flèche et sur la
+   carte de la pause (CLUE_ICON : l'image de hud/arrow_icon ; la 3 est la tête d'Alice). */
 const CLUES = ['hairclip', 'shoe', 'plush'];
-const clueFound = i => txt('indices.trouve.' + i);
-const clueNext = i => txt('indices.ensuite.' + i);      // où chercher ensuite : le prochain indice, puis Alice
+const clueNames = () => EP().indices || CLUES;
+const CLUE_ICON = { hairclip: 0, shoe: 1, plush: 2, hat: 4, spade: 5, flipflop: 6 };
+const CLUE_TXT = {
+  ete: { trouve: i => txt('indices_ete.trouve.' + i), ensuite: i => txt('indices_ete.ensuite.' + i), fin: i => txt('retrouvailles_ete.' + i) },
+};
+const clueFound = i => CLUE_TXT[episode] ? CLUE_TXT[episode].trouve(i) : txt('indices.trouve.' + i);
+// où chercher ensuite : le prochain indice, puis Alice
+const clueNext = i => CLUE_TXT[episode] ? CLUE_TXT[episode].ensuite(i) : txt('indices.ensuite.' + i);
+const reunionLine = i => CLUE_TXT[episode] ? CLUE_TXT[episode].fin(i) : txt('retrouvailles.' + i);
 let clues = [false, false, false];
 function nextClue() { const i = clues.indexOf(false); return i < 0 ? 3 : i; }
 /* La flèche n'est pas permanente : elle s'affiche quelques secondes quand Tecky apprend où chercher (intro, indice),
@@ -1899,7 +1910,7 @@ let arrowT = 0, stuckT = 0;
 function showArrow(t) { arrowT = Math.max(arrowT, t || ARROW.show); stuckT = 0; }
 function arrowTarget() {
   const k = nextClue();
-  const it = k < 3 && items.find(it => it.n === CLUES[k]);
+  const it = k < 3 && items.find(it => it.n === clueNames()[k]);
   if (it) return it;
   if (ici('alice')) return alice;
   const [x, y] = arrivalAt(MAP.passages[0][0]);      // (carte annexe : ni indice ni Alice ici, on repasse le tunnel)
@@ -1953,7 +1964,8 @@ function resetWorld() {
     return Object.assign({ x, y, n }, decorLook(n, x, y));
   });
   solids.push(...EDGE_SOLIDS);                       // les buttes des tunnels, au bord de la carte
-  alice = new Actor('alice1', MAP.alice[0], MAP.alice[1]);      // un pied nu : elle a perdu une chaussure en chemin
+  // (au printemps, un pied nu : elle a perdu une chaussure en chemin ; les autres épisodes : ses deux chaussures)
+  alice = new Actor(episode === EPISODES[0].id ? 'alice1' : 'alice', MAP.alice[0], MAP.alice[1]);
   alice.fps = Object.assign({}, FPS, MAP.aliceFps);
   alice.found = false;
   alice.hidden = true;               // dans la cabane jusqu'aux trois indices
@@ -4329,9 +4341,9 @@ function drawPauseMap() {
   for (const z of ZONES.concat(LANDMARKS)) if (seenAt(z.at[0], z.at[1])) outlined(z.label, mx(z.at[0] * TS), my(z.at[1] * TS) + 12, 30, '#FFF7E6');
   // repères
   for (const g of digs) if (g.dug) drawSpr('item/goldbone', 0, mx(g.x), my(g.y) - 4, { sc: 0.55 });
-  CLUES.forEach((n, i) => {
+  clueNames().forEach((n, i) => {
     const it = MAP.items.find(e => e[0] === n);
-    if (clues[i] && it) drawSpr('hud/arrow_icon', i, mx(it[1]), my(it[2]), { sc: 1.1 });
+    if (clues[i] && it) drawSpr('hud/arrow_icon', CLUE_ICON[n], mx(it[1]), my(it[2]), { sc: 1.1 });
   });
   if (!alice.hidden && ici('alice')) drawSpr('hud/arrow_icon', 3, mx(alice.x), my(alice.y) - 10, { sc: 1.2 });
   if (farm.state === 'asked' && ici('pen')) drawSpr('hen/idle/right', 0, mx((MAP.pen[0] + MAP.pen[2]) / 2), my(MAP.pen[3]) + 6, { sc: 0.7 });
@@ -5313,10 +5325,10 @@ function finale() {
   Music.stop();
   Music.start('win');
   say([
-    { who: 'alice', face: 2, text: txt('retrouvailles.0') },
-    { who: 'tecky', face: 2, text: txt('retrouvailles.1') },
-    { who: 'alice', face: 0, text: txt('retrouvailles.2') },
-    { who: 'alice', face: 0, text: txt('retrouvailles.3') },
+    { who: 'alice', face: 2, text: reunionLine(0) },
+    { who: 'tecky', face: 2, text: reunionLine(1) },
+    { who: 'alice', face: 0, text: reunionLine(2) },
+    { who: 'alice', face: 0, text: reunionLine(3) },
   ], startEnding);
 }
 
@@ -5327,7 +5339,9 @@ function finale() {
    de victoire. La berceuse (variation lente du thème) joue jusqu'au retour au menu. Après `skip` s, un bouton passe
    directement à la victoire. Positions en pixels du monde (MAP.ending : Alice devant la niche, Tecky à ses pieds) ;
    `from` : ils partent de ce nombre de pixels sous le bas de l'écran. */
-const ENDING = { fade: 1, from: 60, get alice() { return MAP.ending.alice; }, get tecky() { return MAP.ending.tecky; }, spd: 105, happy: 1.6, sit: 1.4, yawn: 1.4,
+const ENDING = { fade: 1, from: 60, get alice() { return MAP.ending.alice; }, get tecky() { return MAP.ending.tecky; },
+  get start() { return MAP.ending.from; },          // (d'où ils arrivent, à partir de leur place : sans cela, d'en bas de l'écran)
+  spd: 105, happy: 1.6, sit: 1.4, yawn: 1.4,
   iris: 9, irisDur: 1.6, irisR: 170, hold: 1.2, close: 0.5, fin: 2.4, skip: 1, flies: 12 };
 let ending = null;
 function startEnding() {
@@ -5341,10 +5355,10 @@ function endingHome() {
   ending.home = true;
   // (cadrage fixe, dans la carte : la lisière n'y entre pas) ; ils arrivent d'un peu plus bas que l'écran (from)
   camX = clamp(E.alice[0] - VW / 2, 0, MAP.w * TS - VW); camY = clamp(E.alice[1] - 40 - VH / 2, 0, MAP.h * TS - VH);
-  const y0 = camY + VH + E.from;
+  const y0 = camY + VH + E.from, d = E.start;
   alice.kind = 'alice';                // au noir, elle a remis la chaussure que Tecky lui a rapportée
-  alice.x = E.alice[0]; alice.y = y0; alice.dir = 'up'; alice.setAnim('walk');
-  P.x = E.tecky[0]; P.y = y0 + 30; P.dir = 'up'; P.mode = 'free'; P.setAnim('walk');
+  alice.x = E.alice[0] + (d ? d[0] : 0); alice.y = d ? E.alice[1] + d[1] : y0; alice.dir = 'up'; alice.setAnim('walk');
+  P.x = E.tecky[0] + (d ? d[0] : 0); P.y = d ? E.tecky[1] + d[1] - 30 : y0 + 30; P.dir = 'up'; P.mode = 'free'; P.setAnim('walk');
   fxs = []; pops = []; rings = []; dusts = []; leaves = []; butterflies = []; drops = []; flakes = [];
   dogs = dogs.filter(d => d.x < camX - 150 || d.x > camX + VW + 150 || d.y < camY - 100 || d.y > camY + VH + 200);   // pas de chiens
   weather.k = 0; weather.on = false; sun = 3; hug = 1;     // (au noir : sans transition, si le joueur a fait vite)
@@ -5365,6 +5379,14 @@ function endingDone() {
   fadeFrom(0.8);
 }
 const endingEnd = () => ENDING.iris + ENDING.irisDur + ENDING.hold + ENDING.close + ENDING.fin;
+// un pas vers sa place, tout droit ; rend vrai quand il y est (le printemps : en remontant le chemin de la niche)
+function endingWalk(a, [x, y], dt) {
+  const dx = x - a.x, dy = y - a.y, d = Math.hypot(dx, dy), s = ENDING.spd * dt;
+  if (d <= s) { a.x = x; a.y = y; return true; }
+  a.x += dx / d * s; a.y += dy / d * s;
+  a.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+  return false;
+}
 function updateEnding(dt) {
   const E = ENDING, e = ending;
   e.t += dt; alice.t += dt; P.t += dt;
@@ -5374,13 +5396,11 @@ function updateEnding(dt) {
   if (!e.home) { if (e.t >= E.fade) endingHome(); return; }
   // Alice remonte le chemin, puis saute de joie devant la niche
   if (alice.anim === 'walk') {
-    alice.y = Math.max(E.alice[1], alice.y - E.spd * dt);
-    if (alice.y === E.alice[1]) { alice.dir = 'down'; alice.setAnim('happy'); e.happyT = 0; }
+    if (endingWalk(alice, E.alice, dt)) { alice.dir = 'down'; alice.setAnim('happy'); e.happyT = 0; }
   } else if (alice.anim === 'happy' && (e.happyT += dt) > E.happy) alice.setAnim('idle');
   // Tecky la suit, s'assoit à côté d'elle, bâille et s'endort
   if (P.anim === 'walk') {
-    P.y = Math.max(E.tecky[1], P.y - E.spd * dt);
-    if (P.y === E.tecky[1]) { P.dir = 'left'; P.setAnim('sit'); e.restT = 0; }
+    if (endingWalk(P, E.tecky, dt)) { P.dir = 'left'; P.setAnim('sit'); e.restT = 0; }
   } else if (P.anim === 'sit' || P.anim === 'yawn') {
     e.restT += dt;
     if (P.anim === 'sit' && e.restT > E.sit) { P.setAnim('yawn'); SFX.yawn(); }
@@ -6008,7 +6028,7 @@ function drawHUD() {
 
   // indices d'Alice : trois cases sous la vie, l'objet apparaît quand il est retrouvé
   drawNine('hud/panel_dark', 24, 166, 24 + CLUES.length * 76, 88, 32);
-  CLUES.forEach((n, i) => drawSpr('item/' + n, 0, 24 + 12 + 38 + i * 76, 166 + 44 + 4, { alpha: clues[i] ? 1 : 0.22 }));
+  clueNames().forEach((n, i) => drawSpr('item/' + n, 0, 24 + 12 + 38 + i * 76, 166 + 44 + 4, { alpha: clues[i] ? 1 : 0.22 }));
 
   // flèche (quelques secondes) vers le prochain indice, puis vers Alice ; seule la pointe tourne, l'icône reste droite
   if (!alice.found && state === 'play' && arrowT > 0) {
@@ -6019,7 +6039,7 @@ function drawHUD() {
       const px = clamp(ax, m, GW - m), py = clamp(ay, 300, GH - m);
       drawSpr('hud/arrow', Math.floor(performance.now() / 150), px, py, { angle: ang, alpha: a, sc });
       // centre de la pastille : 6 px derrière le centre de rotation ; icône 0..2 = indices, 3 = Alice
-      drawSpr('hud/arrow_icon', tg === alice ? 3 : nextClue(), px - Math.cos(ang) * 6 * sc, py - Math.sin(ang) * 6 * sc, { alpha: a, sc });
+      drawSpr('hud/arrow_icon', tg === alice ? 3 : CLUE_ICON[clueNames()[nextClue()]] || 0, px - Math.cos(ang) * 6 * sc, py - Math.sin(ang) * 6 * sc, { alpha: a, sc });
     }
   }
 

@@ -413,23 +413,24 @@ def arrow(scale):
 
 def arrow_icons(scale):
     """Contenu de la pastille (disque de 20 dans un cadre de 22, marge comprise) : barrette, chaussure, doudou
-    (indices dans l'ordre), puis tête d'Alice."""
+    (indices dans l'ordre), puis tête d'Alice ; à la suite, les indices de l'été (chapeau, pelle, tong : images 4 à 6)."""
     n, m = 20 * scale, 22 * scale
     mask = Image.new("L", (n, n), 0)
     ImageDraw.Draw(mask).ellipse([0, 0, n - 1, n - 1], fill=255)
-    out = []
-    for name in items.CLUES:
+    def icone(name):
         d = Drawing(32, 32)
         items.ITEMS[name][0](d)
         im = render_svg(d.svg(), 32, 32, scale).resize((int(21 * scale), int(21 * scale)), Image.LANCZOS)
         cell = Image.new("RGBA", (m, m), (0, 0, 0, 0))
         cell.alpha_composite(im, ((m - im.width) // 2, (m - im.height) // 2))
-        out.append(cell)
+        return cell
+    out = [icone(name) for name in items.CLUES]
     face = _crop_face(alice2.portrait().svg(outline_w=alice2.TRAIT), 30, 20.4, 15.6, scale, 60, 76).resize((n, n), Image.LANCZOS)
     disc = Image.composite(face, Image.new("RGBA", (n, n), (0, 0, 0, 0)), Image.composite(face.getchannel("A"), mask, mask))
     cell = Image.new("RGBA", (m, m), (0, 0, 0, 0))
     cell.alpha_composite(disc, (scale, scale))
     out.append(cell)
+    out += [icone(name) for name in items.CLUES_ETE]
     return out
 
 

@@ -148,7 +148,7 @@ eval(base + `setTimeout(() => {
   // objets à ramasser, lettres, jouets : posés au sol, réduits (POSED.sc), avec leur ombre portée (drawPosed)
   run('var poses = [], drawSpr2 = drawSpr; drawSpr = function (k, i, x, y, o) { poses.push([k, x, y, o || {}]); };'
     + ' drawPosed("item/bone", 0, 500, 700, MAP.itemBase.bone, 0.1, 0); drawPosed("item/medal", 0, 500, 700, MAP.itemBase.medal, 5, 30); drawSpr = drawSpr2;');
-  ok(run('MAP.cast.includes("item") && MAP.cast.includes("port")') && run('Object.keys(MAP.itemBase).length') === 10 && run('MAP.toyBase.length') === 3
+  ok(run('MAP.cast.includes("item") && MAP.cast.includes("port")') && run('Object.keys(MAP.itemBase).length') === 13 && run('MAP.toyBase.length') === 3
      && run('Object.values(MAP.itemBase).concat(MAP.toyBase).every(b => b > 4 && b < 32)'),
      'objets, lettre et jouets : chacun sait où est le bas de son dessin (' + run('JSON.stringify(MAP.itemBase)') + ')');
   ok(run('poses[0][0] === "item/bone" && poses[0][3].sc === POSED.sc && Math.abs(poses[0][2] + poses[0][3].lift - 700) < 0.01')

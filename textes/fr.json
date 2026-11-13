@@ -622,5 +622,24 @@
       "depart": "(La mer ? Je ne l'ai jamais vue… Wouf ! J'arrive !)",
       "arrivee": "(Un, deux, trois… dix ! Prête ou pas, me voilà !)"
     }
-  }
+  },
+  "indices_ete": {
+    "trouve": [
+      "Le chapeau de paille d'Alice ! Elle est passée par le village de pêcheurs.",
+      "La pelle d'Alice ! Elle a joué dans les jardins de la ville.",
+      "Une tong d'Alice ! Elle a couru sur la plage."
+    ],
+    "ensuite": [
+      "Ça sent le sel et le poisson… Je vais chercher au village de pêcheurs, juste en bas du parking.",
+      "Ses traces passent le pont de la rivière… Elle est allée en ville, du côté des jardins !",
+      "Elle est descendue vers la mer. Cherchons sur la plage, au pied des planches !",
+      "Et maintenant, je sens son odeur ! Elle a grimpé tout en haut de la falaise, bien après le phare !"
+    ]
+  },
+  "retrouvailles_ete": [
+    "Tecky ! Tu m'as trouvée ! Elle est chouette, ma cachette, tout en haut de la falaise !",
+    "Ouaf ! Ouaf ouaf !",
+    "Et tu as rapporté mon chapeau, ma pelle et ma tong ! Merci mon Tecky.",
+    "Viens, on redescend au phare : le soleil se couche, il va s'allumer !"
+  ]
 }

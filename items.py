@@ -166,6 +166,53 @@ def plush(d):
     d.add(ellipse(16, 16.8, 1.1, 0.75), ink, sil=False)
 
 
+# --- les affaires d'Alice à la mer (l'été) : son chapeau de paille, sa pelle de plage, une tong
+def hat(d):
+    """Chapeau de paille à ruban rose, posé au sol, vu d'un peu au-dessus."""
+    bord = ellipse(16, 20.4, 12.6, 6.6)
+    d.clip("bord", [bord])
+    d.add(bord, "#EFCB6E")
+    _dans(d, "bord", ellipse(15, 19.2, 12.2, 6.2), "#F7DD92")                         # (un croissant d'ombre en bas à droite)
+    d.raw(line("M5.6,21 Q16,26.4 26.4,21 M8.4,23.2 Q16,27.4 23.6,23.2", "#D8AE4E", 0.7))
+    calotte = path("M8.6,19 Q8.2,8.4 16,8.2 Q23.8,8.4 23.4,19 Q16,22.4 8.6,19 Z")
+    d.clip("calotte", [calotte])
+    d.add(calotte, "#EFCB6E")
+    _dans(d, "calotte", path("M7.6,18 Q7.2,7.4 15,7.2 Q22.8,7.4 22.4,18 Q15,21.4 7.6,18 Z"), "#F9E3A0")
+    _dans(d, "calotte", path("M8,15.4 Q16,19 24,15.4 L24,19.6 Q16,23.2 8,19.6 Z"), "#F28CB8")       # le ruban
+    _dans(d, "calotte", path("M8,15.4 Q16,19 24,15.4 L24,16.6 Q16,20.2 8,16.6 Z"), "#F9BBD4")
+    d.raw(line("M11,11.6 Q16,9.4 21,11.6 M10,14 Q16,11.6 22,14", "#D8AE4E", 0.6))
+    d.add(ellipse(12.6, 10.8, 2.2, 1.1, "rotate(-25 12.6 10.8)"), "#FFFFFF", sil=False, opacity=0.6)
+
+
+def spade(d):
+    """Pelle de plage en plastique : pelle rouge, manche jaune à poignée."""
+    tr = "rotate(-38 16 16)"
+    d.add(rect(14.7, 7, 2.6, 12.4, 1.2, tr), "#F2C230")                               # le manche
+    d.add(rect(11.4, 3.2, 9.2, 4.6, 2.3, tr), "#F2C230")                              # la poignée
+    d.add(rect(13.6, 4.6, 4.8, 1.8, 0.9, tr), "#B98A1C", sil=False)
+    d.add(rect(15.2, 8, 0.9, 10.4, 0.4, tr), "#FBE07A", sil=False)
+    lame = path("M10.6,18 L21.4,18 L21.4,24.4 Q21.4,29.6 16,29.6 Q10.6,29.6 10.6,24.4 Z", tr)
+    d.clip("lame", [lame])
+    d.add(lame, "#D93A30")
+    _dans(d, "lame", path("M9.6,17 L20.4,17 L20.4,23.4 Q20.4,28.6 15,28.6 Q9.6,28.6 9.6,23.4 Z", tr), "#EE6A5E")
+    d.raw(line("M16,20 L16,27", "#B02620", 0.9).replace("<path", f'<path transform="{tr}"'))
+    d.add(ellipse(13.4, 21, 1.2, 2.4, tr), "#FFFFFF", sil=False, opacity=0.55)
+
+
+def flipflop(d):
+    """Une tong rose à bride jaune : elle répond à la chaussure du printemps."""
+    tr = "rotate(-28 16 16)"
+    semelle = path("M16,4.6 Q22.4,4.6 22.2,12 Q22,16.4 21,20.4 Q20.6,27.6 16,27.6 Q11.4,27.6 11,20.4 Q10,16.4 9.8,12 Q9.6,4.6 16,4.6 Z", tr)
+    d.clip("semelle", [semelle])
+    d.add(semelle, "#E86AA0")
+    _dans(d, "semelle", path("M15,3.6 Q21.4,3.6 21.2,11 Q21,15.4 20,19.4 Q19.6,26.6 15,26.6 Q10.4,26.6 10,19.4 Q9,15.4 8.8,11 Q8.6,3.6 15,3.6 Z", tr), "#F79AC0")
+    d.add(ellipse(16, 21.6, 2.6, 3.4, tr), "#E86AA0", sil=False, opacity=0.5)          # l'empreinte du talon
+    for x in (11.4, 20.6):                                                             # la bride, en Y
+        d.raw(line(f"M16,9.6 Q{(16 + x) / 2},11 {x},16.6", "#3A1E12", 3.0).replace("<path", f'<path transform="{tr}"'))
+        d.raw(line(f"M16,9.6 Q{(16 + x) / 2},11 {x},16.6", "#F7D154", 1.7).replace("<path", f'<path transform="{tr}"'))
+    d.add(circle(16, 9.6, 1.5, tr), "#F7D154", sil=False, edge=True)
+
+
 def goldbone(d):
     """Os doré : le trésor enterré sous les traces de pattes."""
     bone(d, "#F2C14E", "#D0921F", "#FFF4C4", "or")
@@ -181,9 +228,13 @@ ITEMS = {   # nom : (fonction de dessin, rôle)
     "hairclip": (hairclip, "indice : barrette d'Alice"),
     "shoe": (shoe, "indice : chaussure d'Alice"),
     "plush": (plush, "indice : doudou d'Alice"),
+    "hat": (hat, "indice de l'été : chapeau de paille d'Alice"),
+    "spade": (spade, "indice de l'été : pelle de plage d'Alice"),
+    "flipflop": (flipflop, "indice de l'été : tong d'Alice"),
     "goldbone": (goldbone, "os doré : trésor enterré, à collectionner"),
 }
 CLUES = ("hairclip", "shoe", "plush")   # dans l'ordre du jeu
+CLUES_ETE = ("hat", "spade", "flipflop")  # ceux de l'été, sur la côte (episodes.json : indices)
 
 
 def item_frames(name):

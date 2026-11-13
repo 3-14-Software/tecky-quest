@@ -283,7 +283,26 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   répliques (voix « Papa »). `tests/voyage.js` ; `cartes.js` et `episodes.js` retirent le voyage de
   l'épisode (`delete EPISODES[1].voyage`) pour éprouver les passages à pied et les surcharges, qui restent
   dans le moteur. Pas encore fait : un vrai trajet jusqu'au tunnel dans le monde (la voiture sort de l'écran
-  et c'est le noir), les indices et la cachette d'Alice sur la côte (la flèche montre encore le tunnel). Premier jet posé par
+  et c'est le noir).
+  **Indices, cachette et fin par épisode** (13 novembre 2026) : `episodes.json` → `indices` (trois objets de
+  `items.py`, dans l'ordre ; sans ce champ, ceux du printemps). L'été : `hat` (le chapeau de paille, au
+  village de pêcheurs), `spade` (la pelle, dans les jardins de la ville), `flipflop` (la tong, sur la plage),
+  dessinés dans `items.py` (`CLUES_ETE`) ; Alice est cachée **tout en haut des falaises**, au nord du plateau
+  (`alice` de `cartes/cote.json`, entre un rocher et un buisson) — pas au phare : Christophe l'a voulue « plus
+  haut dans les falaises, puisque la cinématique la fait redescendre vers le phare ».
+  `episodes.py` vérifie que la carte où l'épisode se joue a exactement un de chaque indice, et Alice.
+  `game.js` : `clueNames()` (ceux de l'épisode ; `CLUES` reste la liste du printemps), `CLUE_ICON` (l'image de
+  `hud/arrow_icon` : 0 à 2 le printemps, 3 la tête d'Alice, 4 à 6 l'été — `hud.arrow_icons()` les ajoute à la
+  fin), `CLUE_TXT[épisode]` (les textes : `indices_ete.trouve.<i>` / `.ensuite.<i>`, `retrouvailles_ete.<i>` ;
+  le premier épisode garde `indices.…` et `retrouvailles.…` ; chaque `txt()` a son début de clé écrit en
+  toutes lettres, pour `tests/textes.js`), `clueFound()`, `clueNext()`, `reunionLine()`. Alice a ses deux
+  chaussures hors du printemps (`resetWorld()`). **Scène de fin** : `ending.from` d'une carte (facultatif :
+  d'où Alice et Tecky arrivent, à partir de leur place ; sans cela, d'en bas de l'écran, comme au printemps),
+  `ENDING.start`, `endingWalk()` (un pas tout droit vers sa place). Sur la côte, ils arrivent par le haut du
+  plateau (depuis la cachette) au pied du phare, la nuit tombe et la lanterne s'allume avec les fenêtres. Voix : les cas de l'été
+  sont produits par `tools/export_voix.js` (`DYNAMIC_SITES` = 23). Tests : `voyage.js` joue l'été du départ à
+  la victoire. Pas encore fait : la tenue d'été d'Alice (elle garde ses chaussures rouges), une tong à un
+  pied, les six quêtes. Premier jet posé par
   `v2/cote_carte.py`, **gelé depuis** : Christophe retouche la carte dans l'éditeur, c'est
   `cartes/cote.json` qui fait foi (le script refuse d'écraser une carte qui existe ; ses listes ne sont plus
   à jour ; `python3 v2/cote_carte.py --apercu` redessine l'aperçu à partir du fichier). Rien ne dépend de

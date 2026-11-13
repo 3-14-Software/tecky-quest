@@ -13,6 +13,13 @@ tecky-6c94ced6;Tecky;dialogue;;;Le doudou d'Alice ! Elle ne doit plus être bien
 tecky-05ff58c5;Tecky;dialogue;;;Ses traces partent vers le pont, au sud de la ferme… Elle est allée dans la forêt !;Où chercher ensuite
 tecky-c8b5e50c;Tecky;dialogue;;;Elle a continué à travers la forêt, vers l'ouest. Ça sent le parc, par là !;Où chercher ensuite
 tecky-f99865c0;Tecky;dialogue;;;Et maintenant, je sens son odeur ! Elle se cache au parc, du côté de la cabane.;Où chercher ensuite
+tecky-cc515f57;Tecky;dialogue;;;Le chapeau de paille d'Alice ! Elle est passée par le village de pêcheurs.;Indice trouvé (été)
+tecky-852232b1;Tecky;dialogue;;;La pelle d'Alice ! Elle a joué dans les jardins de la ville.;Indice trouvé (été)
+tecky-a5a9540a;Tecky;dialogue;;;Une tong d'Alice ! Elle a couru sur la plage.;Indice trouvé (été)
+tecky-6e7ad18b;Tecky;dialogue;;;Ça sent le sel et le poisson… Je vais chercher au village de pêcheurs, juste en bas du parking.;Où chercher ensuite (été)
+tecky-80d44230;Tecky;dialogue;;;Ses traces passent le pont de la rivière… Elle est allée en ville, du côté des jardins !;Où chercher ensuite (été)
+tecky-ae1f6490;Tecky;dialogue;;;Elle est descendue vers la mer. Cherchons sur la plage, au pied des planches !;Où chercher ensuite (été)
+tecky-9cae28fe;Tecky;dialogue;;;Et maintenant, je sens son odeur ! Elle a grimpé tout en haut de la falaise, bien après le phare !;Où chercher ensuite (été)
 tecky-d12f8cf7;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 1 sur 12;Os doré déterré
 tecky-e28649f8;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 2 sur 12;Os doré déterré
 tecky-4b9657a9;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 3 sur 12;Os doré déterré
@@ -34,7 +41,7 @@ tecky-f769abf8;Tecky;dialogue;;joyeux;Ouaf ! « Va chercher », c'est mon jeu pr
 tecky-348e99e9;Tecky;dialogue;;joyeux;Ouaf ! Moi aussi, je cherche quelqu'un qui joue à cache-cache !;Maman Piquette : demande
 tecky-75b457ab;Tecky;dialogue;;;(La mer ? Je ne l'ai jamais vue… Wouf ! J'arrive !);Le départ en voiture (été)
 tecky-3e444da6;Tecky;dialogue;;;(Un, deux, trois… dix ! Prête ou pas, me voilà !);L’arrivée au parking (été)
-tecky-9232cc10;Tecky;dialogue;;joyeux;Ouaf ! Ouaf ouaf !;Retrouvailles avec Alice
+tecky-9232cc10;Tecky;dialogue;;joyeux;Ouaf ! Ouaf ouaf !;"Retrouvailles avec Alice ; Retrouvailles avec Alice (été)"
 tecky-e08772a9;Tecky;dialogue;;inquiet;Grr… Ce doberman n'a pas peur de mes aboiements. Il va falloir le mordre !;Premier aboiement sur le doberman
 tecky-48c853ee;Tecky;dialogue;;joyeux;Te voilà, Pompon ! Viens, on rentre chez Mamie Rose.;Tecky retrouve Pompon
 tecky-72e5a7c8;Tecky;dialogue;;fier;Un teckel, ça creuse des terriers : hop, sous le grillage ! Les autres chiens, eux, doivent faire le tour.;Premier terrier
@@ -62,6 +69,9 @@ alice-716c2d0b;Alice;dialogue;;;On est arrivés ! Tecky, on joue à cache-cache 
 alice-4ea2cf40;Alice;dialogue;;joyeux;Tecky ! Tu m'as trouvée ! Tu as vu ma super cachette dans la cabane ?;Retrouvailles avec Alice
 alice-e5612b71;Alice;dialogue;;;Et tu as ramassé ma barrette, ma chaussure et mon doudou ! Merci mon Tecky.;Retrouvailles avec Alice
 alice-2584e8ec;Alice;dialogue;;;Viens, on rentre à la maison. Tu as bien mérité une grosse saucisse !;Retrouvailles avec Alice
+alice-93732151;Alice;dialogue;;;Tecky ! Tu m'as trouvée ! Elle est chouette, ma cachette, tout en haut de la falaise !;Retrouvailles avec Alice (été)
+alice-73cb5baf;Alice;dialogue;;;Et tu as rapporté mon chapeau, ma pelle et ma tong ! Merci mon Tecky.;Retrouvailles avec Alice (été)
+alice-e4663dfb;Alice;dialogue;;;Viens, on redescend au phare : le soleil se couche, il va s'allumer !;Retrouvailles avec Alice (été)
 info-c8ba57ad;Narrateur;dialogue;clavier;;Les flèches ou Z, Q, S, D pour marcher, la touche X pour aboyer, la touche R pour flairer la piste d'Alice. La touche P pour la pause, la touche M pour le son.;"Introduction (aventure) ; Introduction (balade)"
 info-d7d65135;Narrateur;dialogue;manette;;Le stick ou la croix pour marcher, le bouton X pour aboyer, le bouton Y pour flairer la piste d'Alice. Le bouton Start pour la pause, le bouton Select pour le son.;"Introduction (aventure) ; Introduction (balade)"
 info-bb99a061;Narrateur;dialogue;clavier;;La touche C sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.;Introduction (aventure)
