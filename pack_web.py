@@ -236,9 +236,8 @@ def build_map():
         over[ty * MW + tx] = ovrow + OV[name]
     for n, tx, ty in DETAILS:                         # (dans l'ordre : le dernier posé sur une tuile l'emporte)
         put(n, tx, ty)
-    # traces de pattes des trésors (par-dessus)
-    for x, y in DIG:
-        over[int(y) * MW + int(x)] = ovrow + OV["traces de pattes"]
+    # (les os dorés enterrés n'ont plus de traces de pattes dans le sol : le jeu pose une butte, comme pour les
+    # coquillages — game.js, sprites « butte/… »)
     for x0, y0, x1, y1 in BRIDGES:
         for y in range(y0, y1 + 1):
             for x in range(x0, x1 + 1):
@@ -442,7 +441,8 @@ def collect(r=1):
     out.append(("item/letter", [render_svg(sv, 32, 32, R, PAD) for sv in npcs.letter_frames()], (32 + M, 32 + M), True))
     # la plage de l'été : les coquillages de Zoé (posés au sol comme la lettre), la butte de sable, la gerbe de sable
     out.append(("item/shell", [render_svg(sv, 32, 32, R, PAD) for sv in plage.shell_frames()], (32 + M, 32 + M), True))
-    out.append(("sable/butte", [render_svg(sv, 32, 32, R, PAD) for sv in plage.mound_frames()], (32 + M, 32 + M), True))
+    for nom, sol, pointe in (("coquillage", "sable", "coquillage"), ("os_sable", "sable", "os"), ("os_terre", "terre", "os")):     # buttes des trésors enfouis
+        out.append((f"butte/{nom}", [render_svg(sv, 32, 32, R, PAD) for sv in plage.mound_frames(sol, pointe)], (32 + M, 32 + M), True))
     out.append(("fx/sand", [render_svg(sv, 32, 32, R, PAD) for sv in plage.fx_sand()], (32 + M, 32 + M), True))
     out.append(("port/balloon", [render_svg(sv, 32, 32, R, PAD) for sv in port.balloon_frames()], (16 * S + M, 16 * S + M), True))
     out.append(("port/toy", [render_svg(sv, 32, 32, R, PAD) for sv in port.toy_frames()], (16 * S + M, 16 * S + M), True))

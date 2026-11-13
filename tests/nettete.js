@@ -68,8 +68,6 @@ eval(base + `setTimeout(() => {
   const n1 = run('calls.filter(c => c[0] === T4).length');
   run('calls = []; drawGround(-64, -64);');
   ok(n1 > 0 && run('calls.filter(c => c[0] === T4).length') === 0, 'un bloc déjà peint n\\'est pas repeint');
-  run('calls = []; drawHole(500, 500);');
-  ok(run('calls[0][0] === T4') && run('calls[0][3]') === 128 && run('calls[0][7]') === 64, 'le trou d\\'un trésor aussi vient du tileset net');
   // --- la carte de la pause se construit toujours, avec le tileset x2
   run('calls = []; mapImg = null; buildMapImg();');
   ok(run('!!mapImg') && run('calls.some(c => c[0] === tilesImg)') && !run('calls.some(c => c[0] === T4)'), 'la carte de la pause garde le tileset x2 (elle est au quart)');

@@ -13,7 +13,8 @@ for t in sim immune threat read ring clues berger map nettete hens traffic butte
   echo "$out" | grep -E "ÉCHEC|^PB |problèmes [1-9]|Error" && fail=1 || true
   echo "$out" | grep -c "^ok" | sed 's/^/   ok : /'
 done
-python3 tests/edges.py | tail -3
+out=$(python3 tests/edges.py) || fail=1         # aucun sprite coupé par son cadre
+echo "$out" | tail -3
 out=$(python3 tests/surcharges.py) || fail=1  # cartes changées par un épisode (carte.py, enregistrement de l'éditeur)
 echo "$out" | grep -E "ÉCHEC|^surcharges"
 python3 tests/nettete.py || fail=1     # images x4 : mêmes places que les images x2

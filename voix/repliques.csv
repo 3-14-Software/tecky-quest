@@ -86,7 +86,7 @@ info-c8ba57ad;Narrateur;dialogue;clavier;;Les flèches ou Z, Q, S, D pour marche
 info-d7d65135;Narrateur;dialogue;manette;;Le stick ou la croix pour marcher, le bouton X pour aboyer, le bouton Y pour flairer la piste d'Alice. Le bouton Start pour la pause, le bouton Select pour le son.;"Introduction (aventure) ; Introduction (balade)"
 info-bb99a061;Narrateur;dialogue;clavier;;La touche C sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.;Introduction (aventure)
 info-147a51f2;Narrateur;dialogue;manette;;Le bouton A sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.;Introduction (aventure)
-info-4e659a1b;Narrateur;dialogue;;;Les os rendent un os perdu, les saucisses ajoutent un os en plus. Et des traces de pattes au sol cachent peut-être un trésor : il n'y a plus qu'à gratter !;"Introduction (aventure) ; Introduction (aventure, au toucher) ; Introduction (balade) ; Introduction (balade, au toucher)"
+info-14520d8a;Narrateur;dialogue;;;Les os rendent un os perdu, les saucisses ajoutent un os en plus. Et une petite butte de terre remuée cache un trésor : il n'y a plus qu'à gratter !;"Introduction (aventure) ; Introduction (aventure, au toucher) ; Introduction (balade) ; Introduction (balade, au toucher)"
 info-07958d3d;Narrateur;dialogue;;;Glisse le doigt à gauche pour marcher. Les boutons à droite servent à aboyer, à mordre et à flairer la piste d'Alice.;"Introduction (aventure, au toucher) ; Introduction (balade, au toucher)"
 info-295a8ab7;Narrateur;dialogue;;;Le bouton de morsure sert à mordre, mais aussi à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.;Introduction (aventure, au toucher)
 info-e7f40632;Narrateur;dialogue;clavier;;En balade, personne ne se fait mal : la touche C sert à jouer avec un chien, à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.;Introduction (balade)
@@ -318,11 +318,11 @@ zoe-b6e93493;Zoé;dialogue;;;Tu en as déjà trouvé 1 ? Trop fort ! J'en avais 
 zoe-82aef184;Zoé;dialogue;;;Tu en as déjà trouvé 2 ? Trop fort ! J'en avais cinq, cachés sous le sable de la plage. Tu me les rapportes ?;Zoé : demande
 zoe-8b1cc731;Zoé;dialogue;;;Tu en as déjà trouvé 3 ? Trop fort ! J'en avais cinq, cachés sous le sable de la plage. Tu me les rapportes ?;Zoé : demande
 zoe-e79853d2;Zoé;dialogue;;;Tu en as déjà trouvé 4 ? Trop fort ! J'en avais cinq, cachés sous le sable de la plage. Tu me les rapportes ?;Zoé : demande
-zoe-e1ce647b;Zoé;dialogue;;;Il m'en manque encore 5. Cherche les petites bosses dans le sable : il y a un bout de coquillage qui dépasse.;Zoé : rappel
-zoe-c53e01b0;Zoé;dialogue;;;Il m'en manque encore 4. Cherche les petites bosses dans le sable : il y a un bout de coquillage qui dépasse.;Zoé : rappel
-zoe-36839901;Zoé;dialogue;;;Il m'en manque encore 3. Cherche les petites bosses dans le sable : il y a un bout de coquillage qui dépasse.;Zoé : rappel
-zoe-d36d972e;Zoé;dialogue;;;Il m'en manque encore 2. Cherche les petites bosses dans le sable : il y a un bout de coquillage qui dépasse.;Zoé : rappel
-zoe-8495ca80;Zoé;dialogue;;;Plus qu'un ! Cherche les petites bosses dans le sable : il y a un bout de coquillage qui dépasse.;Zoé : rappel
+zoe-5a6411ad;Zoé;dialogue;;;Il m'en manque encore 5. Cherche bien les petites bosses dans le sable : ils sont dessous !;Zoé : rappel
+zoe-0da6ac92;Zoé;dialogue;;;Il m'en manque encore 4. Cherche bien les petites bosses dans le sable : ils sont dessous !;Zoé : rappel
+zoe-b4d3ca8f;Zoé;dialogue;;;Il m'en manque encore 3. Cherche bien les petites bosses dans le sable : ils sont dessous !;Zoé : rappel
+zoe-b36a8f54;Zoé;dialogue;;;Il m'en manque encore 2. Cherche bien les petites bosses dans le sable : ils sont dessous !;Zoé : rappel
+zoe-5d429c22;Zoé;dialogue;;;Plus qu'un ! Cherche bien les petites bosses dans le sable : ils sont dessous !;Zoé : rappel
 zoe-8d4860f4;Zoé;dialogue;;joyeux;Tous mes coquillages ! Merci, Tecky ! Regarde : je les pose sur mon château. C'est le plus beau de la plage !;Zoé : merci
 zoe-d8eac244;Zoé;dialogue;;;Tiens, Papi avait gardé un os pour un gentil chien. C'est toi, le gentil chien !;Zoé : merci
 zoe-2e475e51;Zoé;dialogue;;joyeux;Tu as vu mon château ? Il a des coquillages partout ! Viens te cacher dedans si tu veux.;Zoé : après la quête

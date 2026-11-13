@@ -640,8 +640,8 @@ ROUGE_PHARE = ("#D7372E", "#A82822", "#EE7068")
 def phare():
     """Le phare des falaises : une tour blanche qui s'affine, trois bandes rouges, une porte, deux petites
     fenêtres, la galerie, la lanterne vitrée (elle s'allume le soir : lumieres()) sous un dôme rouge."""
-    w, h, px, py = 84, 142, 42, 134
-    xm, yb, yg = px, py, 30                                 # l'axe, le sol, la galerie
+    w, h, px, py = 84, 154, 42, 146                         # (un cadre assez haut : la boule du dôme était coupée)
+    xm, yb, yg = px, py, 42                                 # l'axe, le sol, la galerie
     r0, r1 = 19, 12.5                                       # demi-largeur de la tour, au sol et sous la galerie
     d = _dessin(w, h)
     larg = lambda y: r1 + (r0 - r1) * (y - yg) / (yb - yg)  # demi-largeur à la hauteur y

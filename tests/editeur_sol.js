@@ -10,7 +10,7 @@ const c = JSON.parse(fs.readFileSync(root + '/carte.json', 'utf8'));
 const s = ED.calculerSol(c, I);
 const diff = (a, b) => a.reduce((n, v, i) => n + (v !== b[i] ? 1 : 0), 0) + Math.abs(a.length - b.length);
 ok(diff(s.ground, MAP.ground) === 0, 'sol : les ' + MAP.ground.length + ' tuiles de la carte (' + diff(s.ground, MAP.ground) + ' différences)');
-ok(diff(s.over, MAP.over) === 0, 'détails au sol et traces de pattes (' + diff(s.over, MAP.over) + ' différences)');
+ok(diff(s.over, MAP.over) === 0, 'détails au sol (' + diff(s.over, MAP.over) + ' différences)');
 ok(JSON.stringify(s.ring) === JSON.stringify(MAP.edge.ring), 'sol de la lisière (' + s.ring.length + ' tuiles)');
 ok(s.composites.length > 0 && s.ground.some(i => i >= I.compositeBase), s.composites.length + ' tuiles composées, mêmes index');
 // une carte annexe (cartes/cote.json) : même sol que le jeu, elle aussi, avec sa route et sa lisière

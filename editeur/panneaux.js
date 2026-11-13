@@ -150,7 +150,7 @@
         const i = ED.I.overlays.indexOf(n);
         grid.append(h('button', { class: 'pal' + (O.detail === n ? ' actif' : ''), title: n, on: { click: () => { O.detail = n; construirePalette(); } } }, vignetteTuile(ov + i), h('span', {}, n)));
       }
-      p.append(grid, h('p', { class: 'note' }, 'Les massifs de « fleurs » sont aussi des perchoirs pour les papillons. Les traces de pattes viennent des os dorés.'));
+      p.append(grid, h('p', { class: 'note' }, 'Les massifs de « fleurs » sont aussi des perchoirs pour les papillons.'));
     } else if (out === 'poser') {
       p.append(h('h3', {}, 'Poser'));
       const sel = h('select', { on: { change: e => { O.poser.type = e.target.value; O.poser.genre = genres(O.poser.type)[0] || null; construirePalette(); } } },

@@ -59,6 +59,16 @@ resize();
 const atlas = new Image();
 const tilesImg = new Image();
 atlas.src = ATLAS_SRC;
+/* Images gardées décodées. Un navigateur ne décode une image qu'à son premier dessin (56 à 134 ms pour une page de
+   4096 px, mesuré dans Firefox) et peut jeter ce qu'il a décodé quand elle ne sert plus : sur la côte, chaque zone
+   touchait une image pas encore utilisée (la page des décors de la côte, les images de l'été), d'où de gros à-coups
+   en changeant de zone. keepDecoded() en fait une ImageBitmap : décodée d'avance, hors de la boucle du jeu, et
+   gardée. atlasPx, tilesPx : l'atlas et le tileset x2 de la page, à dessiner (atlas, tilesImg : les images
+   d'origine, pour leur taille et leur chargement). Sans createImageBitmap : l'image telle quelle. */
+function keepDecoded(im) {
+  return typeof createImageBitmap === 'function' ? createImageBitmap(im).catch(() => im) : Promise.resolve(im);
+}
+let atlasPx = atlas, tilesPx = tilesImg;
 tilesImg.src = TILES_SRC;
 
 /* Images nettes. L'atlas et le tileset embarqués dans la page sont en pixels x2 : la caméra voit 960 x 540 px de monde,
@@ -82,7 +92,7 @@ function loadHD() {
   if (HD.asked || !wantHD()) return;
   HD.asked = true;
   const imgs = HD_SRC.atlas.concat([HD_SRC.tiles]).map(src => { const im = new Image(); im.src = src; return im; });
-  Promise.all(imgs.map(whenLoaded)).then(() => {
+  Promise.all(imgs.map(whenLoaded)).then(() => Promise.all(imgs.map(keepDecoded))).then(imgs => {
     const go = () => setHD(HD_SRC.k, HD_SRC.page, imgs.slice(0, -1), imgs[imgs.length - 1]);
     // (les images nettes de la saison affichée d'abord : sinon le monde repasserait un instant au printemps)
     return season ? seasonFiles(season.nom, true).then(go, go) : go();
@@ -100,7 +110,7 @@ addEventListener('resize', loadHD);     // (passage en plein écran, fenêtre ag
    `part` premiers pixels de sa largeur (jauge). */
 function blit(g, f, x, y, w, h, part) {
   const sw = part === undefined ? f[2] : part, s = f[1] >= SEASON_Y, fy = s ? f[1] - SEASON_Y : f[1];
-  if (!HD.on) { g.drawImage(s ? season.img : atlas, f[0], fy, sw, f[3], x, y, w, h); return; }
+  if (!HD.on) { g.drawImage(s ? season.img : atlasPx, f[0], fy, sw, f[3], x, y, w, h); return; }
   const k = HD.k, p = Math.floor(fy / HD.page);
   g.drawImage((s ? season.pages : HD.pages)[p], f[0] * k, (fy - p * HD.page) * k, sw * k, f[3] * k, x, y, w, h);
 }
@@ -118,7 +128,7 @@ const seasons = {};           // les saisons déjà chargées : { nom, img, tile
 let season = null, seasonAsked = 'printemps', springFrames = {};
 function loadImages(srcs) {
   const imgs = srcs.map(src => { const im = new Image(); im.src = src; return im; });
-  return Promise.all(imgs.map(whenLoaded)).then(() => imgs);
+  return Promise.all(imgs.map(whenLoaded)).then(() => Promise.all(imgs.map(keepDecoded)));
 }
 function seasonFiles(nom, hd) {         // les images de la saison (les nettes aussi si hd) : une promesse de son entrée de `seasons`
   const S = SAISONS[nom], c = seasons[nom] || (seasons[nom] = { nom });
@@ -147,7 +157,7 @@ function setSeason(c) {
   mapImg = null;                                       // la carte de la pause aussi
 }
 // le tileset du moment : celui de la saison, en x2 ou en images nettes
-const groundTiles = () => HD.k === 1 ? (season ? season.tiles : tilesImg) : (season ? season.tilesHD : HD.tiles);
+const groundTiles = () => HD.k === 1 ? (season ? season.tiles : tilesPx) : (season ? season.tilesHD : HD.tiles);
 
 /* ------------------------------------------------------------------ utilitaires */
 /* Textes. Ils sont tous dans textes/fr.json (embarqué par pack_web.py : TEXTES[langue]) ; le code ne connaît que
@@ -227,7 +237,7 @@ function buildShadowAtlas() {
   shadowAtlas = document.createElement('canvas');
   shadowAtlas.width = atlas.naturalWidth; shadowAtlas.height = atlas.naturalHeight;
   const g = shadowAtlas.getContext('2d');
-  g.drawImage(atlas, 0, 0);
+  g.drawImage(atlasPx, 0, 0);
   g.globalCompositeOperation = 'source-in';
   g.fillStyle = SHADOW.color;
   g.fillRect(0, 0, shadowAtlas.width, shadowAtlas.height);
@@ -307,7 +317,7 @@ function drawNine(key, x, y, w, h, b) {
     const ys = [[0, b, 0, b], [b, sh - b, b, h - b], [sh - b, sh, h - b, h]];
     for (const [a0, a1, d0, d1] of xs)
       for (const [c0, c1, e0, e1] of ys)
-        c.drawImage(atlas, sx + a0, sy + c0, a1 - a0, c1 - c0, d0, e0, d1 - d0, e1 - e0);
+        c.drawImage(atlasPx, sx + a0, sy + c0, a1 - a0, c1 - c0, d0, e0, d1 - d0, e1 - e0);
     NINE_CACHE.set(ck, oc);
   }
   ctx.drawImage(oc, x, y);
@@ -1561,7 +1571,7 @@ const shadowLen = () => Math.round(sunAt(SHADOW.len, clamp(sun, 0, 4)) / SHADOW.
 function blitCols(g, f, c0, c1, x, y) {       // les colonnes c0..c1 d'une image de l'atlas, posées en (x, y)
   const n = c1 - c0;
   const s = f[1] >= SEASON_Y, fy = s ? f[1] - SEASON_Y : f[1];
-  if (!HD.on) { g.drawImage(s ? season.img : atlas, f[0] + c0, fy, n, f[3], x, y, n, f[3]); return; }
+  if (!HD.on) { g.drawImage(s ? season.img : atlasPx, f[0] + c0, fy, n, f[3], x, y, n, f[3]); return; }
   const k = HD.k, p = Math.floor(fy / HD.page);
   g.drawImage((s ? season.pages : HD.pages)[p], (f[0] + c0) * k, (fy - p * HD.page) * k, n * k, f[3] * k, x, y, n, f[3]);
 }
@@ -1706,9 +1716,15 @@ function drawWater(vx, vy, time) {
     }
 }
 
-function drawHole(x, y) {
-  const idx = MAP.hole, k = HD.k, s = TS * k;
-  ctx.drawImage(groundTiles(), (idx % MAP.sheet) * s, Math.floor(idx / MAP.sheet) * s, s, s, x - TS / 2, y - TS / 2 - 6, TS, TS);
+/* La butte d'un trésor enfoui, puis son creux une fois gratté : les mêmes partout (Christophe : « uniformiser les
+   trous », sur le modèle de ceux des coquillages) — un os doré dans la terre ou dans le sable (g.sand), un
+   coquillage de Zoé (g.shell). En mode facile seulement, un bout de ce qui est caché dépasse et brille de temps en
+   temps (image 0) ; sinon la butte est nue (image 2) : au joueur de la repérer. Image 1 : le creux. */
+const MOUND = { dy: 6, every: 3.1, glint: 0.6 };
+function drawMound(g) {
+  drawSpr(g.shell ? 'butte/coquillage' : g.sand ? 'butte/os_sable' : 'butte/os_terre', g.dug ? 1 : facile() ? 0 : 2, g.x, g.y + MOUND.dy);
+  const u = g.t % MOUND.every;
+  if (!g.dug && facile() && u < MOUND.glint) drawSpr('fx/glint', Math.floor(u / MOUND.glint * ATLAS['fx/glint'].f.length), g.x + 6, g.y - 14);
 }
 
 /* ------------------------------------------------------------------ collisions */
@@ -1985,7 +2001,8 @@ const EP = () => EPISODES.find(e => e.id === episode) || EPISODES[0];
 const epWon = e => ['aventure', 'balade'].some(m => ['normal', 'facile'].some(d => (recs[recKey(m, d, e.id)] || {}).wins > 0));
 function epOpen(e) {
   const i = EPISODES.indexOf(e);
-  return i === 0 || ((!e.chantier || CHANTIER) && epOpen(EPISODES[i - 1]) && epWon(EPISODES[i - 1]));
+  if (CHANTIER) return true;           // (?chantier : tout est ouvert, sans avoir à gagner l'épisode d'avant — pour essayer)
+  return i === 0 || (!e.chantier && epOpen(EPISODES[i - 1]) && epWon(EPISODES[i - 1]));
 }
 const openEpisodes = () => EPISODES.filter(epOpen);
 const lastOpen = () => { const o = openEpisodes(); return o[o.length - 1].id; };
@@ -2118,7 +2135,7 @@ function resetWorld() {
   cars = MAP.traffic.vehicles.map(newVehicle);
   butterflies = MAP.butterflies.map(newButterfly);
   items = MAP.items.map(([n, x, y]) => ({ n, x, y, t: Math.random() * 3 }));
-  digs = MAP.dig.map(([x, y]) => ({ x, y, dug: false, t: Math.random() * 2 }));
+  digs = MAP.dig.map(([x, y]) => ({ x, y, dug: false, t: Math.random() * 2, sand: sandAt(x, y) }));
   fxs = []; pops = []; rings = []; dusts = []; leaves = []; leafTrees = null;
 }
 /* Passer d'une carte à l'autre, par un tunnel de la grande route (MAP.passages : [n° du tunnel, carte, n° du tunnel
@@ -4029,7 +4046,7 @@ function updateDig(dt) {
     P.digTick = 0.16;
     const [vx, vy] = DIRV[P.dir];
     // la terre part derrière Tecky
-    addFx(g.shell || sandAt(g.x, g.y) ? 'fx/sand' : 'fx/dirt', g.x - vx * 10 + (Math.random() - 0.5) * 16, g.y + 4 - vy * 6, { fps: 16 });
+    addFx(g.shell || g.sand ? 'fx/sand' : 'fx/dirt', g.x - vx * 10 + (Math.random() - 0.5) * 16, g.y + 4 - vy * 6, { fps: 16 });
     SFX.scratch();
   }
   P.timer -= dt;
@@ -4477,7 +4494,7 @@ function buildMapImg() {
   const g = c.getContext('2d');
   g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
   for (let cy = 0; cy < MAP.h; cy += 16) for (let cx = 0; cx < MAP.w; cx += 16) {      // (au quart : le tileset x2 suffit)
-    const ch = buildChunk(cx, cy, 16, season ? season.tiles : tilesImg, 1);
+    const ch = buildChunk(cx, cy, 16, season ? season.tiles : tilesPx, 1);
     g.drawImage(ch.c, ch.x * k, ch.y * k, ch.w * k, ch.h * k);
   }
   const sorted = decor.slice().sort((a, b) => (FLAT.has(b.n) - FLAT.has(a.n)) || a.y - b.y);
@@ -4486,7 +4503,7 @@ function buildMapImg() {
     if (!s) continue;
     const f = s.f[0];
     const sais = f[1] >= SEASON_Y;                 // (un décor aux couleurs de la saison : dans son image)
-    g.drawImage(sais ? season.img : atlas, f[0], sais ? f[1] - SEASON_Y : f[1], f[2], f[3], (d.x + f[4] - s.o[0]) * k, (d.y + f[5] - s.o[1]) * k, f[2] * k, f[3] * k);
+    g.drawImage(sais ? season.img : atlasPx, f[0], sais ? f[1] - SEASON_Y : f[1], f[2], f[3], (d.x + f[4] - s.o[0]) * k, (d.y + f[5] - s.o[1]) * k, f[2] * k, f[3] * k);
   }
   mapImg = c;
 }
@@ -5947,14 +5964,8 @@ function drawWorld() {
 
   const vis = (x, y, m) => x > cx - m && x < cx + VW + m && y > cy - m && y < cy + VH + m + 140;
   // trous et scintillements des trésors
-  for (const g of digs) {
-    if (g.dug) drawHole(g.x, g.y);
-    else if (g.t % 2.4 < 0.7) drawSpr('fx/pickup', Math.floor((g.t % 2.4) * 7), g.x, g.y - 24, { sc: 0.55, alpha: 0.9 });
-  }
-  for (const l of letters) if (l.shell && vis(l.x, l.y, 60)) {         // coquillages enfouis : la butte de sable, puis son creux
-    drawSpr('sable/butte', l.dug ? 1 : 0, l.x, l.y + 6);
-    if (!l.dug && l.t % 3.1 < 0.6) drawSpr('fx/glint', Math.floor((l.t % 3.1) / 0.6 * ATLAS['fx/glint'].f.length), l.x + 6, l.y - 14);
-  }
+  for (const g of digs) if (vis(g.x, g.y, 60)) drawMound(g);
+  for (const l of letters) if (l.shell && vis(l.x, l.y, 60)) drawMound(l);      // (les coquillages enfouis de Zoé)
   for (const d of decor) if (FLAT.has(d.n) && vis(d.x, d.y, 400)) drawSpr(d.key, 0, d.x, d.y);   // pont, bac à sable
   drawLeavesOnGround();
   drawTrail();
@@ -5979,7 +5990,9 @@ function drawWorld() {
   for (const d of dogs) if (vis(d.x, d.y, 120)) list.push({ y: d.y, draw: () => d.draw(Math.max(0, 1 - d.fade)) });
   for (const h of hens) if (vis(h.x, h.y, 60)) list.push({ y: h.y, draw: () => h.draw() });
   for (const c of cows) if (vis(c.x, c.y, 140)) list.push({ y: c.y, draw: () => drawCow(c) });
-  for (const v of villagers) if (vis(v.x, v.y, 140)) list.push({ y: v.y, draw: () => drawVillager(v) });
+  // (quand la voiture arrive sur la côte, le papa est au volant : celui du parking n'apparaît qu'une fois tout le monde descendu, au noir)
+  const papaAboard = !!trip && (trip.step === 'arrivee' || trip.step === 'garee');
+  for (const v of villagers) if (vis(v.x, v.y, 140) && !(papaAboard && v.kind === 'papa')) list.push({ y: v.y, draw: () => drawVillager(v) });
   for (const v of cars) if (vis(v.x, v.y, 280)) list.push({ y: v.y, draw: () =>
     drawSpr('vehicle/' + v.name, Math.floor(v.t * 4), v.x, v.y, { flip: v.dir < 0 }) });
   if (!alice.hidden && vis(alice.x, alice.y, 120)) list.push({ y: alice.y, draw: () => alice.draw() });
@@ -6047,10 +6060,7 @@ function drawWorld() {
   // bulles "gratter" / "lire" : ce que fait C à cet endroit (touche C devant le mot au clavier)
   const bob = Math.sin(performance.now() / 200) * 4;
   if (digHint && state === 'play' && P.mode !== 'dig') {
-    // juste au-dessus des traces de pattes, dessinées sur la tuile du sol qui contient le trésor
-    const mx = Math.floor(digHint.x / TS) * TS + TS / 2, my = Math.floor(digHint.y / TS) * TS;
-    if (digHint.shell) actionBubble(txt('actions.gratter'), digHint.x, digHint.y - 64 + bob);      // (au-dessus de la butte de sable)
-    else actionBubble(txt('actions.gratter'), mx, my - 36 + bob);
+    actionBubble(txt('actions.gratter'), digHint.x, digHint.y - 64 + bob);      // (au-dessus de la butte)
   }
   if (hintText && state === 'play') actionBubble(txt('actions.lire'), hintText.x, hintText.y + bob);
   if (playHint && state === 'play' && P.mode !== 'play') actionBubble(txt('actions.jouer'), playHint.x, playHint.y - 125 + bob);
@@ -6502,7 +6512,9 @@ function start() {
   const fontReady = document.fonts && document.fonts.load
     ? Promise.race([document.fonts.load('600 40px Fredoka'), new Promise(r => setTimeout(r, 2500))]).catch(() => {})
     : Promise.resolve();
-  Promise.all([whenLoaded(atlas), whenLoaded(tilesImg), fontReady]).then(() => {
+  Promise.all([whenLoaded(atlas), whenLoaded(tilesImg), fontReady])
+    .then(() => Promise.all([keepDecoded(atlas), keepDecoded(tilesImg)])).then(([a, t]) => {
+    atlasPx = a; tilesPx = t;
     buildGround();
     loadHD();
     buildClouds();

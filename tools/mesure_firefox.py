@@ -4,7 +4,7 @@ Mesure le coût du rendu dans Firefox, sans fenêtre : le pire cas, il dessine l
 Il faut d'abord construire le jeu (python3 pack_web.py) et servir web/tecky_quest_web sur le port 8765
 (./serve.sh 8765, ou l'aperçu « tecky-web »). Puis, depuis la racine du dépôt :
 
-    python3 tools/mesure_firefox.py [--x2] [--detail] [--sans-avance] [--dossier sous-dossier] [--json sortie.json]
+    python3 tools/mesure_firefox.py [--x2] [--detail] [--sans-avance] [--carte cote] [--dossier sous-dossier] [--json sortie.json]
 
 Le canevas est forcé à 1920 x 1080 (échelle 2), avec les images x4 (--x2 : rester en x2). La page ne fait plus
 tourner le jeu : elle place la caméra, règle le soleil et chronomètre render() image par image.
@@ -38,6 +38,12 @@ LIEUX = [("niche", 4.5, 4.2), ("place du village", 49.5, 7.3), ("marché, rue", 
          ("grande route", 30, 20), ("pré des vaches", 20, 28), ("port", 50, 35), ("verger", 62, 27),
          ("pont, rivière", 80, 43), ("parc", 20, 55), ("forêt", 78, 58)]
 BANDES = [("nord (y 8)", 8), ("milieu (y 30)", 30), ("sud (y 54)", 54)]
+# --carte cote : la côte de l'été (ses lieux, ses bandes ; la partie démarre là, en été)
+AILLEURS = {"cote": dict(essai=[31.4, 11.9, "balade", "cote", "ete"],
+                         lieux=[("parking", 31, 11), ("port", 8, 36), ("village de pêcheurs", 27, 27), ("casino", 60, 20),
+                                ("jardins", 62, 30), ("plage ouest", 30, 49), ("plage est", 62, 49), ("falaises", 86, 24),
+                                ("phare", 91, 37), ("campagne normande", 62, 6)],
+                         bandes=[("nord (y 9)", 9), ("milieu (y 30)", 30), ("sud (y 48)", 48)])}
 PREFS = {"browser.dom.window.dump.enabled": True, "privacy.reduceTimerPrecision": False,
          "privacy.resistFingerprinting": False, "browser.shell.checkDefaultBrowser": False,
          "browser.aboutwelcome.enabled": False, "datareporting.policy.dataSubmissionEnabled": False,
@@ -61,6 +67,7 @@ MESURE = r"""
 
   async function tout() {
     if (!await attendre(() => typeof state !== 'undefined' && state === 'play', 30000)) { dire({ erreur: 'la partie ne démarre pas' }); return; }
+    if (__ATTENTE__) await pause(__ATTENTE__);                 // (les images de la saison se chargent)
     const rendre = render;
     render = function () {}; update = function () {};          // la boucle du jeu tourne à vide
     cv.width = 1920; cv.height = 1080; scale = 2; offX = 0; offY = 0;
@@ -138,20 +145,21 @@ MESURE = r"""
 """
 
 
-def page(dossier, x2, detail=False, sans_avance=False):
+def page(dossier, x2, detail=False, sans_avance=False, carte=None):
     base = open(os.path.join(dossier, "index.html"), encoding="utf-8").read()
     k = base.index("<script>") + len("<script>")
-    js = (MESURE.replace("__LIEUX__", json.dumps(LIEUX, ensure_ascii=False))
-          .replace("__BANDES__", json.dumps(BANDES, ensure_ascii=False)).replace("__X2__", "true" if x2 else "false")
+    a = AILLEURS.get(carte)
+    js = (MESURE.replace("__LIEUX__", json.dumps(a["lieux"] if a else LIEUX, ensure_ascii=False))
+          .replace("__BANDES__", json.dumps(a["bandes"] if a else BANDES, ensure_ascii=False)).replace("__ATTENTE__", "8000" if a else "0").replace("__X2__", "true" if x2 else "false")
           .replace("__DETAIL__", "true" if detail else "false")
           .replace("__SANS_AVANCE__", "true" if sans_avance else "false"))
-    return base[:k] + "\nconst ESSAI = [4.5, 4.2, 'balade'];\n" + base[k:] + "<script>\n" + js + "</script>\n"
+    return base[:k] + "\nconst ESSAI = " + json.dumps(a["essai"] if a else [4.5, 4.2, "balade"]) + ";\n" + base[k:] + "<script>\n" + js + "</script>\n"
 
 
-def mesurer(sous_dossier="", x2=False, detail=False, sans_avance=False, delai=600):
+def mesurer(sous_dossier="", x2=False, detail=False, sans_avance=False, delai=600, carte=None):
     dossier = os.path.join(WEB, sous_dossier) if sous_dossier else WEB
     fichier = os.path.join(dossier, "_mesure.html")
-    open(fichier, "w", encoding="utf-8").write(page(dossier, x2, detail, sans_avance))
+    open(fichier, "w", encoding="utf-8").write(page(dossier, x2, detail, sans_avance, carte))
     profil = tempfile.mkdtemp(prefix="mesure-")
     with open(os.path.join(profil, "user.js"), "w") as f:
         for k, v in PREFS.items():
@@ -224,7 +232,8 @@ def rapport(lignes):
 if __name__ == "__main__":
     args = sys.argv[1:]
     sous = args[args.index("--dossier") + 1] if "--dossier" in args else ""
-    lignes = mesurer(sous, "--x2" in args, "--detail" in args, "--sans-avance" in args)
+    lignes = mesurer(sous, "--x2" in args, "--detail" in args, "--sans-avance" in args,
+                     carte=args[args.index("--carte") + 1] if "--carte" in args else None)
     if "--json" in args:
         json.dump(lignes, open(args[args.index("--json") + 1], "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(rapport(lignes))

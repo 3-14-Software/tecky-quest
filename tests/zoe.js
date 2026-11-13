@@ -8,7 +8,7 @@ function main() {
   ok(run('MAP.roles.postman') === 'zoe' && run('postman.kind') === 'postman' && run('postman.look') === 'zoe' && run('shells()') && run('letters.length') === 5
      && run('letters.every(l => l.shell && !l.dug && !l.got && sandAt(l.x, l.y))') && run('npcList().length') === 3,
      'sur la côte, le rôle de Marcel est tenu par Zoé, celui des lettres par cinq coquillages enfouis dans le sable');
-  ok(['zoe/idle', 'zoe/talk', 'zoe/wave', 'zoe/cheer', 'hud/portrait_zoe', 'item/shell', 'sable/butte', 'fx/sand', 'decor/chateau_de_sable', 'decor/chateau_de_sable_fini']
+  ok(['zoe/idle', 'zoe/talk', 'zoe/wave', 'zoe/cheer', 'hud/portrait_zoe', 'item/shell', 'butte/coquillage', 'butte/os_sable', 'butte/os_terre', 'fx/sand', 'decor/chateau_de_sable', 'decor/chateau_de_sable_fini']
        .every(k => run(`!!ATLAS[${JSON.stringify(k)}]`)) && run('ATLAS["item/shell"].f.length') === 5 && run('MAP.shellBase.length') === 5
      && run('WHO.zoe.name') === 'Zoé' && run('calmAt(postman.x, postman.y)') && run('decor.some(d => d.n === "sandcastle" && d.key === "decor/chateau_de_sable")'),
      'ils ont leurs dessins : Zoé, son portrait, cinq coquillages, la butte de sable, le château ; elle est en zone calme');
@@ -47,6 +47,16 @@ function main() {
   run('saveGame(); var S2 = loadSave(); loadGame(S2);'); advanceDialog();
   ok(run('post.state') === 'done' && run('decor.some(d => d.key === "decor/chateau_de_sable_fini")'), 'partie reprise : le château garde sa parure');
   run('render();');
+  ok(run('digs.some(g => g.sand) && digs.every(g => g.sand === sandAt(g.x, g.y))'), 'les os dorés de la plage sont dans le sable : la même butte, le même creux');
+  // le bout qui dépasse et son reflet : en mode facile seulement
+  run('var vus = [], drawSpr0 = drawSpr; drawSpr = function (k, f) { if (k.startsWith("butte/") || k === "fx/glint") vus.push(k + ":" + f); return drawSpr0.apply(this, arguments); };');
+  run('var G = digs.find(g => !g.dug); G.t = 0.1; gameDiff = "normal"; vus = []; drawMound(G);');
+  ok(run('vus.length') === 1 && run('vus[0].endsWith(":2")'), 'en mode normal : la butte nue, rien ne dépasse, rien ne brille');
+  run('gameDiff = "facile"; vus = []; drawMound(G);');
+  ok(run('vus.length') === 2 && run('vus[0].endsWith(":0")') && run('vus[1].startsWith("fx/glint")'), 'en mode facile : un bout dépasse et brille');
+  run('G.dug = true; vus = []; drawMound(G); G.dug = false;');
+  ok(run('vus.length') === 1 && run('vus[0].endsWith(":1")') && run('ATLAS["butte/os_terre"].f.length') === 3, 'gratté : le creux, dans les deux modes');
+  run('drawSpr = drawSpr0; gameDiff = "normal";');
   // au printemps, rien ne change : les lettres de Marcel se ramassent en passant
   run('episode = "printemps"; newGame("balade", true);'); advanceDialog();
   ok(run('!shells()') && run('postman.look') === 'postman' && run('letters.every(l => l.dug && !l.shell)') && run('MAP.sand.length') === 0, 'dans le monde : Marcel et ses lettres, comme avant');

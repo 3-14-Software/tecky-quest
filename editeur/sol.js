@@ -89,7 +89,6 @@
     const over = new Array(W * H).fill(0), ov = I.overlayRow * I.cols;
     const OV = Object.fromEntries(I.overlays.map((n, i) => [n, i]));
     for (const [n, tx, ty] of (c.details || [])) if (n in OV) over[ty * W + tx] = ov + OV[n];
-    for (const [x, y] of (c.dig || [])) over[Math.floor(y) * W + Math.floor(x)] = ov + OV['traces de pattes'];
     return { ground, over, ring, composites: comp };
   }
 

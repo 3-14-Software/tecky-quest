@@ -38,7 +38,7 @@
       "tactile": "Glisse le doigt à gauche pour marcher. Les boutons à droite servent à aboyer, à mordre et à flairer la piste d'Alice.",
       "touches": "[walk] pour marcher, [bark] pour aboyer, [sniff] pour flairer la piste d'Alice. [pause] pour la pause, [mute] pour le son."
     },
-    "os": "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Et des traces de pattes au sol cachent peut-être un trésor : il n'y a plus qu'à gratter !",
+    "os": "Les os rendent un os perdu, les saucisses ajoutent un os en plus. Et une petite butte de terre remuée cache un trésor : il n'y a plus qu'à gratter !",
     "action": {
       "balade": {
         "tactile": "En balade, personne ne se fait mal : le bouton de morsure sert à jouer avec un chien, à parler, à lire un panneau, à gratter le sol ou à passer dans un terrier, selon ce qui est tout près. Un petit mot s'affiche pour le dire.",
@@ -147,8 +147,8 @@
       "other": "Encore {n} coquillages !"
     },
     "rappel": {
-      "one": "Plus qu'un ! Cherche les petites bosses dans le sable : il y a un bout de coquillage qui dépasse.",
-      "other": "Il m'en manque encore {n}. Cherche les petites bosses dans le sable : il y a un bout de coquillage qui dépasse."
+      "one": "Plus qu'un ! Cherche bien les petites bosses dans le sable : ils sont dessous !",
+      "other": "Il m'en manque encore {n}. Cherche bien les petites bosses dans le sable : ils sont dessous !"
     },
     "deja": "Tu en as déjà trouvé {n} ? Trop fort ! J'en avais cinq, cachés sous le sable de la plage. Tu me les rapportes ?"
   },

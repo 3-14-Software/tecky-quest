@@ -97,29 +97,51 @@ def shell_frames():
 
 
 SABLE, SABLE_O, SABLE_C = "#E9CF8E", "#C9A960", "#FBEFC6"        # le sable remué, son ombre, ses grains au soleil
+# Les sols où l'on gratte : (le tas remué, son bord, ses grains au soleil, son ombre portée, les trois tons du creux)
+SOLS = {"sable": (SABLE, SABLE_O, SABLE_C, "#B9955A", ("#D9BC78", "#B9955A", "#9C7A46")),
+        "terre": ("#B98F58", "#86603A", "#D9B684", "#5E7A3A", ("#A77E4C", "#86603A", "#6A4A2A"))}
+# Ce qui dépasse de la butte : un bout de coquille, ou le bout d'un os doré
+POINTES = {
+    "coquillage": ('<path d="M14.2,15.4 L15.4,9.6 Q18.4,8.2 21.2,10.4 L21.6,15.8 Q17.8,17.4 14.2,15.4 Z" fill="#F7E6D2" stroke="#B98A6A" '
+                   'stroke-width="0.7" stroke-linejoin="round"/>'
+                   '<path d="M16.4,15.6 L16.8,10.2 M18.4,16 L18.6,9.6 M20.2,15.6 L20.2,10.6" stroke="#D9A98C" stroke-width="0.6" fill="none"/>'),
+    "os": ('<g transform="rotate(18 18 12)"><path d="M16.2,16.4 L16.2,11.2 Q13.6,10.6 14.2,8.2 Q15.0,6.2 17.0,7.0 Q18.0,5.4 19.8,6.4 '
+           'Q21.4,7.6 20.4,9.6 Q20.2,10.6 19.6,11.2 L19.6,16.4 Z" fill="#F2C14E" stroke="#A8761A" stroke-width="0.7" stroke-linejoin="round"/>'
+           '<path d="M17.0,15.6 L17.0,10.6" stroke="#FFF4C4" stroke-width="0.8" stroke-linecap="round"/>'
+           '<circle cx="16.0" cy="8.4" r="0.7" fill="#FFF7D6"/></g>'),
+}
 
 
-def mound_frames():
-    """La butte de sable d'un coquillage enfoui (32 x 32, origine au centre) : deux images — le sable remué d'où
-    dépasse un bout de coquille, puis le creux laissé une fois le coquillage sorti. Pas de contour brun : c'est du
-    sol (le même trait doux que les galets de la berge)."""
+def mound_frames(sol="sable", pointe="coquillage"):
+    """La butte d'un trésor enfoui (32 x 32, origine au centre) : trois images — le sol remué d'où dépasse un bout de
+    ce qui est caché (POINTES : une coquille, un os doré), le creux laissé une fois le trésor sorti, et la butte nue
+    (rien ne dépasse : le jeu ne montre le bout qu'en mode facile, à la demande de Christophe). Dans le
+    sable ou dans la terre (SOLS). Pas de contour brun : c'est du sol (le même trait doux que les galets de la
+    berge). Christophe a voulu les mêmes trous partout, sur le modèle de ceux des coquillages."""
+    tas, bord, clair, ombre, (c0, c1, c2) = SOLS[sol]
+
     def svg(corps):
         return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">{corps}</svg>'
-    butte = ('<ellipse cx="17" cy="21.4" rx="10.6" ry="4.2" fill="#B9955A" opacity="0.5"/>'
-             f'<path d="M6,21 Q7,13.6 16,13.2 Q25,13.6 26,21 Q16,24.6 6,21 Z" fill="{SABLE}" stroke="{SABLE_O}" stroke-width="0.8" stroke-linejoin="round"/>'
-             f'<path d="M8.6,18.6 Q10.4,14.8 16,14.6 Q13,16.4 12,19.6 Z" fill="{SABLE_C}" opacity="0.9"/>'
-             '<path d="M14.2,15.4 L15.4,9.6 Q18.4,8.2 21.2,10.4 L21.6,15.8 Q17.8,17.4 14.2,15.4 Z" fill="#F7E6D2" stroke="#B98A6A" stroke-width="0.7" stroke-linejoin="round"/>'
-             '<path d="M16.4,15.6 L16.8,10.2 M18.4,16 L18.6,9.6 M20.2,15.6 L20.2,10.6" stroke="#D9A98C" stroke-width="0.6" fill="none"/>'
+    def butte(dessus):
+        return (f'<ellipse cx="17" cy="21.4" rx="10.6" ry="4.2" fill="{ombre}" opacity="0.5"/>'
+             f'<path d="M6,21 Q7,13.6 16,13.2 Q25,13.6 26,21 Q16,24.6 6,21 Z" fill="{tas}" stroke="{bord}" stroke-width="0.8" stroke-linejoin="round"/>'
+             f'<path d="M8.6,18.6 Q10.4,14.8 16,14.6 Q13,16.4 12,19.6 Z" fill="{clair}" opacity="0.9"/>'
+             + dessus
              + "".join(f'<circle cx="{x}" cy="{y}" r="{r}" fill="{c}"/>' for x, y, r, c in
-                       ((5.0, 22.6, 0.8, SABLE_O), (27.4, 21.6, 0.7, SABLE_O), (9.4, 24.2, 0.6, SABLE), (23.6, 24.0, 0.7, SABLE),
-                        (22.4, 17.4, 0.5, SABLE_C), (11.4, 17.6, 0.5, SABLE_C))))
-    creux = ('<ellipse cx="16" cy="19.6" rx="9.6" ry="4.6" fill="#D9BC78"/>'
-             '<ellipse cx="16.6" cy="20.4" rx="6.8" ry="3.0" fill="#B9955A"/>'
-             '<ellipse cx="17.2" cy="21.0" rx="4.4" ry="1.8" fill="#9C7A46"/>'
-             f'<path d="M6.6,19 Q8,14.6 16,14.8 Q11.6,16 10,19.6 Z" fill="{SABLE_C}" opacity="0.8"/>'
-             + "".join(f'<circle cx="{x}" cy="{y}" r="{r}" fill="{SABLE}" stroke="{SABLE_O}" stroke-width="0.4"/>' for x, y, r in
+                       ((5.0, 22.6, 0.8, bord), (27.4, 21.6, 0.7, bord), (9.4, 24.2, 0.6, tas), (23.6, 24.0, 0.7, tas),
+                        (22.4, 17.4, 0.5, clair), (11.4, 17.6, 0.5, clair))))
+    # la butte nue (hors mode facile, rien ne dépasse) : le sol remué, fendillé là où il a été retourné
+    nue = (f'<path d="M14.6,16.4 Q17.2,15.2 19.4,16.6 M17.4,18.6 Q19.6,17.8 21.6,19.0 M12.4,20.0 Q14.2,19.2 16.0,20.2" stroke="{bord}" '
+           f'stroke-width="0.7" stroke-linecap="round" fill="none" opacity="0.85"/>'
+           f'<circle cx="19.6" cy="14.6" r="0.9" fill="{tas}" stroke="{bord}" stroke-width="0.4"/>'
+           f'<circle cx="15.2" cy="14.2" r="0.6" fill="{clair}"/>')
+    creux = (f'<ellipse cx="16" cy="19.6" rx="9.6" ry="4.6" fill="{c0}"/>'
+             f'<ellipse cx="16.6" cy="20.4" rx="6.8" ry="3.0" fill="{c1}"/>'
+             f'<ellipse cx="17.2" cy="21.0" rx="4.4" ry="1.8" fill="{c2}"/>'
+             f'<path d="M6.6,19 Q8,14.6 16,14.8 Q11.6,16 10,19.6 Z" fill="{clair}" opacity="0.8"/>'
+             + "".join(f'<circle cx="{x}" cy="{y}" r="{r}" fill="{tas}" stroke="{bord}" stroke-width="0.4"/>' for x, y, r in
                        ((5.4, 23.4, 1.3), (26.6, 22.6, 1.2), (24.0, 25.0, 0.9), (8.6, 25.2, 0.9))))
-    return [svg(butte), svg(creux)]
+    return [svg(butte(POINTES[pointe])), svg(creux), svg(butte(nue))]
 
 
 def fx_sand():
@@ -144,7 +166,8 @@ if __name__ == "__main__":
     import os
     from PIL import Image
     from spritelib import render_svg, PAD
-    ims = [render_svg(s, 32, 32, 8, PAD) for s in shell_frames() + mound_frames() + fx_sand()[1:4:2]]
+    ims = [render_svg(s, 32, 32, 8, PAD) for s in shell_frames() + mound_frames() + mound_frames("sable", "os") + mound_frames("terre", "os")
+           + fx_sand()[1:4:2]]
     sh = Image.new("RGBA", (sum(i.width for i in ims) + 20, ims[0].height + 20), "#F2DFA8")
     x = 10
     for i in ims:

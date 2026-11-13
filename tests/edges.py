@@ -18,3 +18,9 @@ for key, ims, o, trim in pack_web.collect():
 for k, v in sorted(res.items()):
     print(f'{k:32s} {", ".join(sorted(v))}')
 print(len(res), 'sprites touchent un bord')
+# seul « hud/enemy_bar_fill » touche son cadre exprès : tout autre sprite est coupé (le dôme du phare l'a été)
+voulus = {'hud/enemy_bar_fill'}
+coupes = sorted(set(res) - voulus)
+if coupes:
+    print('ÉCHEC : sprites coupés par leur cadre :', ', '.join(coupes))
+    sys.exit(1)

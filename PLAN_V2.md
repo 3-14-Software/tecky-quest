@@ -515,7 +515,9 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      Chacune reprend une mécanique du printemps avec une chose en plus (l'eau, le sable, la taille des bêtes) :
      le moteur des quêtes est à rendre réutilisable plutôt qu'à recopier six fois.
    - *Les adversaires* (mode aventure) : **les chiens en ville et au port**, comme au printemps ; **des crabes
-     sur la plage**, qui pincent si on leur marche dessus et s'enterrent quand Tecky aboie.
+     sur la plage**, qui pincent si on leur marche dessus et s'enterrent quand Tecky aboie. **Des goélands** aussi
+     (rappel de Christophe, 13 novembre 2026 : « ennemis crabes et/ou goélands, il ne faut pas les oublier ») :
+     ils piquent du ciel sur Tecky au port et sur la jetée, un aboiement les fait repartir.
    - *Dessinés le 12 novembre 2026* : le papa d'Alice (d'après un dessin de Christophe : cheveux ras, bouc,
      tee-shirt rouge « 3.14 », jean) et sa voiture de sport rouge (d'après une photo de la sienne, sans marque
      ni logo, un peu rehaussée ; avec ses passagers, ou garée) : `reference/v2/papa_voiture_options.png`.
@@ -598,7 +600,7 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      de mare au bord de la mer), et la musique de la côte commence quand la voiture sort du tunnel. *Reports assumés* : la tenue d'été d'Alice et sa
      tong perdue ; les trois autres quêtes (le maître-nageur et les bouées
      du pêcheur attendent la nage ; les mouettes voleuses) ; le manège qui tourne en musique ; la nage ; l'habillage du
-     sable et les vagues ; les crabes ; les motos ; les voitures garées ; le bassin du village, petit et fermé ;
+     sable et les vagues ; les crabes et les goélands (adversaires de l'aventure) ; les motos ; les voitures garées ; le bassin du village, petit et fermé ;
      le casino qui déborde de sa place ; noms des zones et répliques à valider.
    - *À dessiner* : les motos, Tecky qui nage, les quatre autres personnages
      des quêtes, le caniche, les moutons, les mouettes, les crabes ; les voitures garées ; les vagues de la

@@ -296,7 +296,8 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   voyage une partie enregistrée ailleurs (pendant la scène, par exemple) ; `reset()` et `toTitle()` vident
   `trip`. Données : `start` de `cartes/cote.json` (le parking), et le point libre `papa`
   (`carte.POINTS_LIBRES` : jamais exigé) — le papa d'Alice y attend et **salue comme un villageois**
-  (`newVillager(['papa', …])` dans `resetWorld()`, `VILLAGER_LINES.papa`, textes `villageois.papa.<i>`,
+  (il n'est pas dessiné tant que la voiture roule vers le porche, étapes `arrivee` et `garee` : il est au
+  volant ; `newVillager(['papa', …])` dans `resetWorld()`, `VILLAGER_LINES.papa`, textes `villageois.papa.<i>`,
   `MAP.villagerFps.papa`). Textes : `voyage.<qui>.depart` / `.arrivee`. `tools/export_voix.js` produit ces
   répliques (voix « Papa »). `tests/voyage.js` ; `cartes.js` et `episodes.js` retirent le voyage de
   l'épisode (`delete EPISODES[1].voyage`) pour éprouver les passages à pied et les surcharges, qui restent
@@ -357,7 +358,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   Ses cinq coquillages (`plage.py` : Saint-Jacques, bulot, coque, moule, bigorneau, sprite `item/shell`, une
   image chacun ; `MAP.shellBase`) sont **enfouis** : la liste `letters` de la carte donne leurs places, et
   `shells()` (= la carte a ce rôle) en fait des coquillages (`l.shell`, `l.dug`). Une butte de sable d'où
-  dépasse un bout de coquille (`sable/butte`, image 0 ; image 1 : le creux qui reste) signale chacun ; un
+  dépasse un bout de coquille (`butte/coquillage`, image 0 — en mode facile seulement, sinon la butte nue, image 2 ; image 1 : le creux qui reste) signale chacun ; un
   coquillage enfoui ne se ramasse pas en passant : `nearDig()` le rend comme un trésor, Tecky gratte (gerbe de
   sable `fx/sand` — aussi pour un os doré enterré dans le sable, `sandAt()`, `MAP.sand`), il saute du sable
   (`uncoverShell()`, `POST.wait` / `jump`) puis se ramasse (`SFX.shell`). La quête finie, le château prend son
@@ -530,7 +531,9 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `episode` = celui de la partie en cours et, sur l'écran titre, celui que le joueur a choisi ; `EP()` ses
   données ; `epOpen()` : le premier, ou un épisode prêt dont le précédent a été gagné (`epWon()` lit les
   records : pas d'autre donnée gardée ; n'importe quel mode ouvre le suivant) ; `openEpisodes()`, `lastOpen()`.
-  Un épisode en chantier n'est ni proposé ni ouvert, sauf avec `?chantier` à la fin de l'adresse (`CHANTIER`) :
+  Un épisode en chantier n'est ni proposé ni ouvert, sauf avec `?chantier` à la fin de l'adresse (`CHANTIER` : tous les
+  épisodes sont alors ouverts, sans avoir à gagner le précédent — les records sont gardés par adresse, et
+  Christophe ne retrouvait pas l'été sur un autre port) :
   le jeu publié n'a donc qu'un épisode et son écran titre n'a pas changé. Chaque épisode est une partie neuve et
   a ses records (`recKey(mode, diff, ep)` : le premier garde les clés d'avant, les autres « ete:aventure »). La
   sauvegarde nomme son épisode (`ep` ; sans lui, le premier : `epOfSave()`) ; si sa carte n'est plus de
@@ -946,7 +949,15 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - Flair (R, Y à la manette, bouton à truffe au toucher ; `SNIFF`) : piste des empreintes d'Alice (`fx/footprint` : une chaussure, un pied nu) vers
   `arrowTarget()`, le long d'un vrai chemin à pied (`buildWalkGrid()` : grille de 16 px rasterisée une fois,
   `fieldTo()` : distances par parcours en largeur, `scentPath()`). Les trésors proches scintillent. Test : `tunnel.js`.
-- Os dorés : le trésor sous les traces de pattes (`item/goldbone`, `treasures` = os dorés trouvés, HUD et victoire).
+- Os dorés : le trésor enterré (`item/goldbone`, `treasures` = os dorés trouvés, HUD et victoire). **Buttes et
+  creux** (13 novembre 2026 ; Christophe : « uniformiser les trous », sur le modèle de ceux des coquillages de
+  Zoé) : un trésor enfoui est signalé par une butte d'où dépasse un bout de ce qui est caché, et laisse un creux
+  une fois gratté — `drawMound()`, sprites `butte/os_terre`, `butte/os_sable` (un os doré dans le sable :
+  `g.sand`), `butte/coquillage` (`plage.mound_frames(sol, pointe)`, `SOLS`, `POINTES` : image 0 la butte et son bout qui dépasse, image 1
+  le creux, image 2 la butte nue). **Le bout qui dépasse et son reflet ne sont montrés qu'en mode facile**
+  (`facile()` ; demande de Christophe) : en mode normal, la butte nue, à repérer ; les textes ne parlent donc
+  que de « butte » et de « bosses », jamais du bout qui dépasse. Il n'y a plus de traces de pattes ni de trou dans le tileset (les tuiles restent, inutilisées : les
+  index n'ont pas bougé). Pour une autre saison (la neige) : un sol de plus dans `plage.SOLS`.
 - Compteurs du HUD (`hudCounters()`) : empilés à droite sous le score, dans l'ordre os dorés (dès le premier trouvé),
   poules rentrées, lettres retrouvées, Pompon retrouvé (0/1, 1/1) ; ceux des quêtes seulement pendant la quête
   (`asked`). Quand ils descendraient jusqu'aux boutons d'action (au toucher, le bouton du flair ; sinon, les aides de
@@ -1052,6 +1063,13 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   à l'autre, les chiffres bougent de 30 à 40 % : comparer deux mesures faites à la suite, pas à une heure d'écart.
   Lot 4 (12 novembre 2026) : 6 à 13 ms par image de jour, 9 à 17 le soir (la lumière : 3 à 6 ms ; les ombres de ce
   qui bouge : 0,3 à 2,6 ms ; les nuages : jusqu'à 3 ms) ; le point dur est la peinture d'un bloc de sol.
+  **Images gardées décodées** (`keepDecoded()`, `atlasPx`, `tilesPx` ; 13 novembre 2026) : un navigateur ne
+  décode une image qu'à son premier dessin — 56 à 134 ms d'un coup pour une page de 4096 px, mesuré dans Firefox
+  — et peut jeter ce qu'il a décodé. Sur la côte, chaque zone touchait une image pas encore utilisée (la page
+  des décors de la côte, les images de l'été) : Christophe a eu de « sérieux drops de frames en changeant de
+  zones ». Toutes les images (atlas et tileset x2, pages x4, images des saisons) deviennent des `ImageBitmap`
+  au chargement : 1 ms au premier dessin. Toute nouvelle image à dessiner doit passer par `keepDecoded()`.
+  `python3 tools/mesure_firefox.py --carte cote` mesure la côte (en été).
   Images nettes : sur un canevas de 1920 x 1080 (échelle 2), Firefox va plus vite avec les images x4 (copie à
   l'identique : 6 à 12 ms par image) qu'en agrandissant les x2 (11 à 17 ms) ; à une échelle intermédiaire (1,33),
   réduire les x4 coûtait jusqu'à 45 % de plus, d'où le seuil `HD_MIN` (1,5). La fenêtre sans tête n'est pas en

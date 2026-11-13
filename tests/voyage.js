@@ -25,9 +25,13 @@ function main() {
   ok(jusqua('MAP.id === "cote"', 900) && run('state') === 'trip' && run('trip.step') === 'arrivee' && run('trip.car.x') < 0,
      'elle s\'enfonce dans le tunnel ; au noir, la côte : elle en ressort');
   ok((run('Music.want') || run('Music.zone')) === 'cote', 'la musique de la côte commence quand la voiture sort du tunnel');
+  run('var vus = []; var dv0 = drawVillager; drawVillager = function (v) { vus.push(v.kind); return dv0.apply(this, arguments); }; camX = camClampX(MAP.papa[0] - VW / 2); camY = camClampY(MAP.papa[1] - VH / 2); render();');
+  ok(run('!vus.includes("papa")'), 'pendant que la voiture roule vers le parking, le papa n\'est pas déjà dehors : il est au volant');
   ok(jusqua('state === "dialog"', 1500) && run('dialog.lines[0].who') === 'alice' && run('trip.car') === null
      && run('Math.abs(P.x - MAP.start[0]) < 1 && Math.abs(P.y - MAP.start[1]) < 1') && run('!alice.hidden') && run('villagers.some(v => v.kind === "papa")'),
      'elle roule jusqu\'au porche et y entre ; sur le parking, Alice : « ' + run('dialog.lines[0].text') + ' »');
+  run('vus = []; render(); drawVillager = dv0;');
+  ok(run('vus.includes("papa")'), 'une fois garés, le papa est descendu');
   advanceDialog();
   ok(jusqua('state === "play"', 400) && run('trip') === null && run('alice.hidden') && run('cars.length') === 3 && run('P.mode') === 'free'
      && run('(() => { const s = loadSave(); return !!s && s.ep === "ete" && s.carte === "cote" && Math.abs(s.x - MAP.start[0]) < 1; })()'),
