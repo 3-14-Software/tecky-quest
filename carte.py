@@ -50,7 +50,12 @@ ORDRE = ["format", "annexe", "w", "h", "legende", "terrain", "details", "decor",
          "start", "alice", "title", "ending",
          "farmer", "postman", "neighbor", "pompon", "leon", "iris", "piquette", "papa",
          "letters", "balls", "toys", "babies", "goal", "ballBox", "pen", "penGate", "track",
-         "roadTunnels", "passages", "traffic", "calm", "zones", "landmarks"]
+         "roadTunnels", "passages", "traffic", "roles", "calm", "zones", "landmarks"]
+
+# Les rôles qu'une carte distribue autrement (game.js : MAP.roles) : une quête du printemps rejouée avec d'autres
+# acteurs. Sur la côte, le rôle de Mamie Rose (neighbor) est tenu par Madame Hortense, celui de Pompon par Praline,
+# son caniche. { rôle : les acteurs permis }
+ROLES = {"neighbor": ("hortense",), "pompon": ("poodle",)}
 
 # listes de taille fixe : « cinq lettres » et « cinq ballons » dans les dialogues (une couleur par ballon,
 # port.BALL_COLORS), les jouets d'Iris (port.TOYS : poulet, anneau, corde, dans cet ordre), les places des petits
@@ -111,7 +116,7 @@ def genres():
         "hens": list(hens.COLORS),
         "ducks": list(ducks.KINDS),
         "cows": list(cows.KINDS),
-        "critters": [k for k in critters.KINDS if k != "cat_white"],      # (le chat blanc, c'est Pompon)
+        "critters": [k for k in critters.KINDS if k not in ("cat_white", "poodle")],      # (le chat blanc, c'est Pompon ; le caniche, Praline)
         "butterflies": list(butterflies.COLORS),
         "villagers": list(villageois.KINDS),
         "vehicles": [n for n in vehicles.VEHICLES if n not in ("loco",) and not n.startswith("wagon")],
@@ -213,6 +218,7 @@ def completer(c):
     c.setdefault("track", None)
     c.setdefault("traffic", None)
     c.setdefault("ending", {"alice": [HORS, HORS], "tecky": [HORS, HORS]})
+    c.setdefault("roles", {})
     c["absents"] = absents
     return c
 
@@ -373,6 +379,9 @@ def valider(c, avec_genres=True, variante=False):
                                               for q in last.get("rects", [])):
             err.append("zones : la dernière couvre toute la carte (rectangle [0, 0, w, h])")
     liste("landmarks", lambda z: isinstance(z, dict) and isinstance(z.get("label"), str) and _pt(z.get("at")), "{label, at}")
+    for role, acteur in (c.get("roles") or {}).items():
+        if acteur not in ROLES.get(role, ()):
+            err.append(f"roles : « {role} » ne peut pas être tenu par « {acteur} » ({', '.join(f'{k} : {v[0]}' for k, v in ROLES.items())})")
     # passages : [n° d'un tunnel de la route (roadTunnels), carte d'arrivée, n° de son tunnel d'arrivée]
     nt = len(c["roadTunnels"]) if isinstance(c.get("roadTunnels"), list) else 0
     for i, e in enumerate(liste("passages", lambda e: isinstance(e, list) and len(e) == 3 and isinstance(e[0], int)

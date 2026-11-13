@@ -38,10 +38,12 @@ const VOICES = {
   florist: ['Lili', 'la fleuriste : jeune femme, voix douce et souriante'],
   kid: ['Lucas', 'un petit garçon d’environ 6 ans, tout content : voix aiguë et enthousiaste'],
   papa: ['Papa', 'le papa d’Alice : la quarantaine, voix chaleureuse et tranquille, celle d’un papa en vacances'],
+  hortense: ['Madame Hortense', 'la dame au caniche, devant le casino : élégante, voix chantante, un peu précieuse'],
+  poodle: ['Praline', 'le caniche de Madame Hortense : petits jappements aigus'],
 };
 // répliques dont le texte est calculé (pas une chaîne écrite en dur) : chacune doit être produite ci-dessous ; si ce
 // nombre change, une réplique calculée a été ajoutée ou retirée dans game.js : adapter ce fichier
-const DYNAMIC_SITES = 23;
+const DYNAMIC_SITES = 24;
 const DYNAMIC_POPS = 10;          // de même pour les bulles (texte calculé : comptes, noms des jouets, mot passé à dropToy)
 const NPC_VARS = { farmer: 'farmer', postman: 'postman', neighbor: 'neighbor', leon: 'leon', iris: 'iris', piquette: 'piquette' };
 // répliques relevées dans le code (écrites en dur, dites en cours de route) : contexte selon la fonction qui les dit
@@ -98,6 +100,22 @@ function main() {
   ask('Mamie Rose : rappel (Pompon suit Tecky)', 'pompon.mode = "follow"; talkNeighbor();');
   ask('Mamie Rose : merci', 'pompon.mode = "home"; talkNeighbor();');
   ask('Mamie Rose : après la quête', 'rose.state = "done"; talkNeighbor();');
+  // (la même quête sur la côte de l'été : Madame Hortense et Praline, son caniche)
+  run('neighbor.look = "hortense"; pompon.kind = "poodle";');
+  ask('Madame Hortense : demande', 'rose.state = "new"; pompon.mode = "lost"; talkNeighbor();');
+  ask('Madame Hortense : rappel', 'rose.state = "asked"; pompon.mode = "lost"; talkNeighbor();');
+  ask('Madame Hortense : rappel (Praline suit Tecky)', 'pompon.mode = "follow"; talkNeighbor();');
+  ask('Madame Hortense : merci', 'pompon.mode = "home"; talkNeighbor();');
+  ask('Madame Hortense : après la quête', 'rose.state = "done"; talkNeighbor();');
+  ask('Tecky retrouve Praline', 'say([{ who: "tecky", face: 2, text: txt("tecky.praline") }]);');
+  ask('Madame Hortense : Tecky arrive', 'rose.state = "new"; neighborGreet();');
+  for (const m of ['lost', 'home']) ask('Madame Hortense : Tecky arrive', `rose.state = "asked"; pompon.mode = "${m}"; neighborGreet();`);
+  ask('Madame Hortense : Tecky arrive', 'rose.state = "done"; neighborGreet();');
+  ask('Madame Hortense : Praline est revenue', 'npcShout(neighbor, nbTxt("viens"));');
+  ask('Praline', '["miaou", "miaou_perdu", "feule"].forEach(k => addWordPop(petTxt(k), 0, 0, petWho()));');
+  run('neighbor.look = "neighbor"; pompon.kind = "cat_white"; rose.state = "new"; pompon.mode = "lost";');
+  ask('Mamie Rose : Pompon est revenu', 'npcShout(neighbor, nbTxt("viens"));');
+  ask('Pompon', '["miaou", "miaou_perdu", "feule"].forEach(k => addWordPop(petTxt(k), 0, 0, petWho()));');
   ask('Léon : demande', 'fete.state = "new"; talkLeon();');
   for (let n = 5; n >= 1; n--)
     ask('Léon : rappel', `fete.state = "asked"; balls.forEach((b, i) => b.inNet = i >= ${n}); talkLeon();`);

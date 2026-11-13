@@ -33,10 +33,10 @@ function main() {
      'il ressort sur la route, devant la bouche du tunnel de l\'ouest');
   ok(Math.abs(run('P.y - MAP.traffic.road[0]') - run('yEntree')) < 30, 'à la hauteur où il est entré : ' + Math.round(run('yEntree')) + ' px sous le bord de la chaussée, ' + Math.round(run('P.y - MAP.traffic.road[0]')) + ' à la sortie');
   ok(run('score') === 321 && run('farm.state') === 'asked' && run('treasures') === 1 && run('P.hp') > 0, 'la partie continue : score, quêtes et trésors le suivent');
-  ok(run('dogs.length') === run('MAP.enemies.length') && run('dogs.length') > 3 && run('items.length') > 15 && run('npcList().length') === 0
+  ok(run('dogs.length') === run('MAP.enemies.length') && run('dogs.length') > 3 && run('items.length') > 15 && run('npcList().length') === 1 && run('npcList()[0].look') === 'hortense'
      && run('decor.length') > 150 && run('butterflies.length') === 7 && run('cars.length') === 3 && run('alice.hidden') && run('ici("alice")')
      && !run('ici("track")') && run('ici("traffic")'),
-     'la côte a ses décors, ses chiens, ses objets, ses papillons et ses voitures, Alice dans sa cachette ; pas encore de personnages ; pas de voie ferrée');
+     'la côte a ses décors, ses chiens, ses objets, ses papillons et ses voitures, Alice dans sa cachette, Madame Hortense devant le casino ; pas de voie ferrée');
   // la route sans issue : une voiture entre sous le porche du parking, s'y gare, repart par l'autre voie ; au tunnel, de même
   ok(run('MAP.traffic.end') === 30 * 64 && run('CARTES.monde.traffic.end') === null && run('MAP.decor.filter(d => d[0] === "porche").length') === 1
      && run('blockedFeet(MAP.traffic.end + 60, 8 * TS, 16)') && !run('blockedFeet(MAP.traffic.end - 60, 8 * TS, 16)'),

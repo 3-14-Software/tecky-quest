@@ -268,6 +268,7 @@ def build_map():
         "track": [px(v) for v in TRACK] if TRACK else [hors, hors + 1, hors],
         "piquette": [px(PIQUETTE[0]), px(PIQUETTE[1])], "babies": [[px(x), px(y)] for x, y in BABIES],
         "papa": [px(PAPA[0]), px(PAPA[1])],
+        "roles": CARTE["roles"],                      # les rôles tenus par d'autres acteurs sur cette carte (game.js : newNpc)
         "critters": [[n, px(x), px(y)] for n, x, y in CRITTERS],
         "ducks": [[n, px(x), px(y), f] for n, x, y, f in DUCKS],
         "cows": [[n, px(x), px(y)] for n, x, y in COWS],
@@ -430,7 +431,8 @@ def collect(r=1):
     # icônes des compteurs du HUD : le dessin du jeu à la taille du compteur (agrandir le sprite, réduit pour le
     # jeu, le rendait flou : vu par Christophe sur le compteur des petits hérissons)
     for n, sv, k0, k in (("hedgehog", herissons.frames("idle")[0], herissons.SCALE, 1.04), ("hen", hens.frames("hen", "idle")[0], hens.SCALE, 0.86),
-                         ("cat_white", critters.frames("cat_white", "idle")[0], critters.SCALE["cat"], 0.89)):
+                         ("cat_white", critters.frames("cat_white", "idle")[0], critters.SCALE["cat"], 0.89),
+                         ("poodle", critters.frames("poodle", "idle")[0], critters.SCALE["cat"], 0.89)):
         out.append((f"icone/{n}", [render_svg(icone(sans_ovale(sv), k0, k), 32, 32, R, PAD)], (16 * S + M, 28 * S + M), True))
     for a in herissons.ANIMS:                           # les bébés hérissons, de profil, pieds en (16, 28)
         out.append((f"hedgehog/{a}", [render_svg(sans_ovale(sv), 32, 32, R, PAD) for sv in herissons.frames(a)], (16 * S + M, 28 * S + M), True))

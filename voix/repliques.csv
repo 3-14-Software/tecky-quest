@@ -35,6 +35,8 @@ tecky-d21bf16d;Tecky;dialogue;;surpris;Wouf ! Un os doré était enterré ! 12 s
 tecky-0dd8f6c5;Tecky;dialogue;;fier;Ouaf ! Je m'en occupe !;Gaston : demande
 tecky-4a58d3aa;Tecky;dialogue;;joyeux;Ouaf ! Je vais les chercher !;Marcel : demande
 tecky-5ce738ae;Tecky;dialogue;;fier;Ouaf ! Je te le ramène !;Mamie Rose : demande
+tecky-01da17b2;Tecky;dialogue;;fier;Ouaf ! Je vous la ramène !;Madame Hortense : demande
+tecky-80f8a095;Tecky;dialogue;;joyeux;Te voilà, Praline ! Viens, on retourne voir ta maîtresse.;Tecky retrouve Praline
 tecky-b1b309e5;Tecky;dialogue;;joyeux;Ouaf ! Je vais marquer des buts !;Léon : demande
 tecky-ff4938ca;Tecky;dialogue;;inquiet;Ouaf ! Iris ! Elle joue à cache-cache, et je ne la trouve pas…;Iris : demande
 tecky-f769abf8;Tecky;dialogue;;joyeux;Ouaf ! « Va chercher », c'est mon jeu préféré !;Iris : demande
@@ -43,7 +45,6 @@ tecky-75b457ab;Tecky;dialogue;;;(La mer ? Je ne l'ai jamais vue… Wouf ! J'arri
 tecky-3e444da6;Tecky;dialogue;;;(Un, deux, trois… dix ! Prête ou pas, me voilà !);L’arrivée au parking (été)
 tecky-9232cc10;Tecky;dialogue;;joyeux;Ouaf ! Ouaf ouaf !;"Retrouvailles avec Alice ; Retrouvailles avec Alice (été)"
 tecky-e08772a9;Tecky;dialogue;;inquiet;Grr… Ce doberman n'a pas peur de mes aboiements. Il va falloir le mordre !;Premier aboiement sur le doberman
-tecky-48c853ee;Tecky;dialogue;;joyeux;Te voilà, Pompon ! Viens, on rentre chez Mamie Rose.;Tecky retrouve Pompon
 tecky-72e5a7c8;Tecky;dialogue;;fier;Un teckel, ça creuse des terriers : hop, sous le grillage ! Les autres chiens, eux, doivent faire le tour.;Premier terrier
 tecky-5dfd1ea4;Tecky;dialogue;;inquiet;Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !;Devant la cachette d’Alice, avant les trois indices
 tecky-779c33b0;Tecky;bulle;;;Une lettre ?;Tecky ramasse une lettre
@@ -150,11 +151,16 @@ neighbor-4b5ec6df;Mamie Rose;dialogue;;inquiet;Tu l'as trouvé ! Ramène-le-moi 
 neighbor-610bdefe;Mamie Rose;dialogue;;joyeux;Pompon ! Te voilà enfin, mon chaton ! J'étais si inquiète…;Mamie Rose : merci
 neighbor-b1968480;Mamie Rose;dialogue;;;Merci, Tecky ! Tiens, une bonne saucisse : tu l'as bien méritée.;Mamie Rose : merci
 neighbor-0096ec64;Mamie Rose;dialogue;;joyeux;Pompon ne quitte plus le jardin, grâce à toi. Bonne chance pour retrouver ta petite Alice !;Mamie Rose : après la quête
+neighbor-74ee01b5;Mamie Rose;bulle;;;Pompon ! Viens me voir, Tecky !;Mamie Rose : Pompon est revenu
 neighbor-45aecd27;Mamie Rose;bulle;;;Pompon ? Pompon, où es-tu ?;Mamie Rose : Tecky arrive
 neighbor-b6f75375;Mamie Rose;bulle;;;Tu as vu Pompon ?;Mamie Rose : Tecky arrive
 neighbor-94123d59;Mamie Rose;bulle;;;Mon Pompon est là !;Mamie Rose : Tecky arrive
 neighbor-2cdd7c97;Mamie Rose;bulle;;;Bonjour, Tecky !;Mamie Rose : Tecky arrive
-neighbor-74ee01b5;Mamie Rose;bulle;;;Pompon ! Viens me voir, Tecky !;Pompon
+neighbor-3fc436f0;Mamie Rose;bulle;;;viens;Pompon
+neighbor-1e63c735;Mamie Rose;bulle;;;cherche;dans neighborGreet()
+neighbor-4831c9de;Mamie Rose;bulle;;;la;dans neighborGreet()
+neighbor-5849e7f4;Mamie Rose;bulle;;;vu;dans neighborGreet()
+neighbor-53142120;Mamie Rose;bulle;;;bonjour;dans neighborGreet()
 leon-6a2c6609;Léon;dialogue;;inquiet;Salut, petit chien ! Je devais livrer ces gros ballons pour la fête du parc… mais le carton s'est ouvert, et ils ont roulé partout !;Léon : demande
 leon-ca296332;Léon;dialogue;;;Tu veux bien les pousser dans le grand filet, à côté de moi ? Fonce dedans, ou aboie derrière eux : comme au foot !;Léon : demande
 leon-03cee306;Léon;dialogue;;;Il en reste 5 ! Pousse-les dans le grand filet, à côté de moi : fonce dedans, ou aboie derrière eux.;Léon : rappel
@@ -224,9 +230,9 @@ piquette-328639f2;Maman Piquette;bulle;;;Mes petits ! Encore 1 !;Des petits hér
 doberman-5107b16b;Le doberman;bulle;;;Même pas peur !;Tecky aboie
 dog-ce1803d8;Les chiens du coin;bulle;;;Copain !;Les chiens du coin
 dog-a215d40a;Les chiens du coin;bulle;;;Grrr…;Les chiens du coin
-cat-696ac148;Les chats;bulle;;;Pfff !;Tecky aboie
 cat-edad8cdd;Les chats;bulle;;;Miaou !;Pompon
 cat-efad9003;Les chats;bulle;;;Miaou ?;Pompon
+cat-696ac148;Les chats;bulle;;;Pfff !;Pompon
 squirrel-043ce4b8;Les écureuils;bulle;;;Tchic tchic !;Écureuils et chats
 squirrel-090bba53;Les écureuils;bulle;;;Tchic !;Écureuils et chats
 duck-910eb436;Les canards;bulle;;;Coin coin !;Les canards s’envolent
@@ -249,3 +255,18 @@ papa-74ae9d38;Papa;dialogue;;;Ne t'éloigne pas trop, Alice ! Moi, je vous atten
 papa-0a0fc5dd;Papa;bulle;;;Alors, Tecky, tu l'as trouvée ?;Papa salue Tecky qui passe
 papa-7f666603;Papa;bulle;;;Cherche bien : Alice adore se cacher !;Papa salue Tecky qui passe
 papa-7595fd83;Papa;bulle;;;Bonne chasse, mon grand !;Papa salue Tecky qui passe
+hortense-70b5b963;Madame Hortense;dialogue;;inquiet;Bonjour, mon petit. Tu n'aurais pas vu Praline, mon caniche ? Elle est toute frisée, avec un nœud rose.;Madame Hortense : demande
+hortense-acec0bc3;Madame Hortense;dialogue;;;Elle a filé pendant que j'achetais une glace… Elle adore les jardins, derrière le casino.;Madame Hortense : demande
+hortense-0d1bc0fc;Madame Hortense;dialogue;;inquiet;Praline adore courir dans les jardins, derrière le casino. Regarde du côté du manège !;Madame Hortense : rappel
+hortense-274b68e5;Madame Hortense;dialogue;;inquiet;Tu l'as trouvée ! Ramène-la-moi : elle te suivra si tu ne vas pas trop vite.;Madame Hortense : rappel (Praline suit Tecky)
+hortense-368f6a68;Madame Hortense;dialogue;;joyeux;Praline ! Te voilà enfin, ma poupette ! J'ai eu si peur…;Madame Hortense : merci
+hortense-b1968480;Madame Hortense;dialogue;;;Merci, Tecky ! Tiens, une bonne saucisse : tu l'as bien méritée.;Madame Hortense : merci
+hortense-88bda46e;Madame Hortense;dialogue;;joyeux;Praline ne me quitte plus d'une patte, grâce à toi. Bonne chance pour retrouver ta petite Alice !;Madame Hortense : après la quête
+hortense-c5b3860f;Madame Hortense;bulle;;;Praline ? Praline, où es-tu ?;Madame Hortense : Tecky arrive
+hortense-11848ae5;Madame Hortense;bulle;;;Tu as vu Praline ?;Madame Hortense : Tecky arrive
+hortense-7eac5c6b;Madame Hortense;bulle;;;Ma Praline est là !;Madame Hortense : Tecky arrive
+hortense-2cdd7c97;Madame Hortense;bulle;;;Bonjour, Tecky !;Madame Hortense : Tecky arrive
+hortense-df3ab805;Madame Hortense;bulle;;;Praline ! Viens me voir, Tecky !;Madame Hortense : Praline est revenue
+poodle-c91bf5a6;Praline;bulle;;;Wif !;Praline
+poodle-e31c1e94;Praline;bulle;;;Wif ?;Praline
+poodle-13cecb30;Praline;bulle;;;Wif wif !;Praline

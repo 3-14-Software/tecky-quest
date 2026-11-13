@@ -1983,7 +1983,7 @@ function resetWorld() {
   farmer = newFarmer();
   postman = newNpc('postman', MAP.postman, 1.05);
   letters = MAP.letters.map(([x, y]) => ({ x, y, t: Math.random() * 2, got: false }));
-  neighbor = newNpc('neighbor', MAP.neighbor, 1.35); pompon = newPompon();
+  neighbor = newNpc('neighbor', MAP.neighbor, MAP.roles.neighbor ? 1.2 : 1.35, MAP.roles.neighbor); pompon = newPompon();
   leon = newNpc('leon', MAP.leon, 0.95); balls = MAP.balls.map(newBall);
   iris = Object.assign(newNpc('iris', MAP.iris, 0.8), { markY: IRIS.markY, woof: true, tip: iris ? iris.tip : 0 });
   toys = MAP.toys.map(newToy);
@@ -2054,6 +2054,7 @@ const WHO = {
   iris: { get name() { return txt('noms.iris'); }, portrait: 'hud/portrait_iris' },
   piquette: { get name() { return txt('noms.piquette'); }, portrait: 'hud/portrait_piquette' },
   papa: { get name() { return txt('noms.papa'); }, portrait: 'hud/portrait_papa' },       // le papa d'Alice (l'été)
+  hortense: { get name() { return txt('noms.hortense'); }, portrait: 'hud/portrait_hortense' },   // la dame au caniche (l'été)
   info:  { name: '', portrait: null },
 };
 // une réplique demandée pendant un dialogue passe à la suite (ex. : le fermier parle, et Tecky ramasse la barrette)
@@ -2065,7 +2066,7 @@ function say(lines, onEnd) {
 }
 /* Le babil d'une réplique : chaque personnage a sa voix (hauteur) ; Tecky et Iris, des chiens, font de petits
    « wouf » ; un texte d'information fait « tic ». Rien sur un espace ni un signe de ponctuation. */
-const VOICE = { tecky: 1.15, alice: 1.7, farmer: 0.8, postman: 1.05, neighbor: 1.35, leon: 0.95, iris: 0.8, piquette: 1.5, papa: 0.9 };
+const VOICE = { tecky: 1.15, alice: 1.7, farmer: 0.8, postman: 1.05, neighbor: 1.35, leon: 0.95, iris: 0.8, piquette: 1.5, papa: 0.9, hortense: 1.25 };
 function talkSound(L, i) {
   const k = VOICE[L.who];
   if (!k) SFX.blip();
@@ -2223,7 +2224,7 @@ function doBark() {
   }
   {                                    // Pompon n'aime pas qu'on lui aboie dessus
     const dx = pompon.x - P.x, dy = pompon.y - P.y, l = Math.hypot(dx, dy);
-    if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) { pompon.hissT = 0.8; addWordPop(txt('chat.feule'), pompon.x, pompon.y - 58, 'cat'); SFX.hiss(1, pompon); }
+    if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) { pompon.hissT = 0.8; addWordPop(petTxt('feule'), pompon.x, pompon.y - 58, petWho()); if (poodle()) SFX.yip(1.9, pompon); else SFX.hiss(1, pompon); }
   }
 }
 
@@ -2889,9 +2890,12 @@ function keepHen(h) {
     if (!hensLeft()) { farmer.waveT = 2.5; npcShout(farmer, farm.state === 'asked' ? txt('farmer.bravo') : txt('farmer.oh')); }
   }
 }
-function newNpc(kind, [x, y], pitch) {
+/* kind : le rôle du personnage dans le jeu (sa quête : NPC_DO, npcList) ; look : celui qui le tient sur cette carte
+   (MAP.roles : sur la côte, le rôle de Mamie Rose est tenu par Madame Hortense) — ses dessins, son portrait, sa voix,
+   ses textes. Sans rôle distribué, look = kind. */
+function newNpc(kind, [x, y], pitch, look) {
   solids.push([x - 16, y - 12, x + 16, y]);
-  return { kind, x, y, t: 0, anim: 'idle', near: false, waveT: 0, cheerT: 0, pitch };
+  return { kind, look: look || kind, x, y, t: 0, anim: 'idle', near: false, waveT: 0, cheerT: 0, pitch };
 }
 const newFarmer = () => newNpc('farmer', MAP.farmer, 0.8);
 const farmThanks = () => [
@@ -2939,9 +2943,9 @@ function talkFarmer() {
 function updateNpcAnim(n, dt) {       // parle, se réjouit, salue, s'inquiète ou attend
   n.t += dt;
   n.waveT = Math.max(0, n.waveT - dt); n.cheerT = Math.max(0, n.cheerT - dt);
-  const talking = state === 'dialog' && dialog && dialog.lines[dialog.i].who === n.kind;
-  const a = talking ? 'talk' : n.cheerT > 0 && ATLAS[n.kind + '/cheer'] ? 'cheer' : n.waveT > 0 ? 'wave' :
-    n.worried && ATLAS[n.kind + '/worry'] ? 'worry' : 'idle';
+  const talking = state === 'dialog' && dialog && dialog.lines[dialog.i].who === n.look;
+  const a = talking ? 'talk' : n.cheerT > 0 && ATLAS[n.look + '/cheer'] ? 'cheer' : n.waveT > 0 ? 'wave' :
+    n.worried && ATLAS[n.look + '/worry'] ? 'worry' : 'idle';
   if (a !== n.anim) { n.anim = a; n.t = 0; }
 }
 function updateFarmer(dt) {           // tous les personnages
@@ -2951,8 +2955,8 @@ function updateFarmer(dt) {           // tous les personnages
   piquette.worried = babiesLeft() > 0;
 }
 function drawNpc(n) {
-  const k = n.kind + '/' + n.anim;
-  if (ATLAS[k]) drawSpr(k, Math.floor(n.t * ((MAP.npcFps[n.kind] || {})[n.anim] || 6)), n.x, n.y);
+  const k = n.look + '/' + n.anim;
+  if (ATLAS[k]) drawSpr(k, Math.floor(n.t * ((MAP.npcFps[n.look] || {})[n.anim] || 6)), n.x, n.y);
 }
 
 /* ------------------------------------------------------------------ personnages */
@@ -2979,8 +2983,8 @@ function nearNpc() {
 }
 // une seule bulle à la fois par personnage : la nouvelle remplace celle qui est encore affichée
 function npcShout(n, text) {
-  pops = pops.filter(o => !(o.word && o.who === n.kind));
-  addWordPop(text, n.x, n.y - markY(n) + 10, n.kind);
+  pops = pops.filter(o => !(o.word && o.who === n.look));
+  addWordPop(text, n.x, n.y - markY(n) + 10, n.look);
   if (n.woof) SFX.yip(n.pitch, n); else SFX.hey(n.pitch, n);
 }
 function talkTo(n) { P.dir = dirFrom(n.x - P.x, n.y - P.y, P.dir); P.setAnim('idle'); NPC_DO[n.kind].talk(); }
@@ -3054,12 +3058,20 @@ function talkPostman() {
    (MAP.pompon). Une fois que Tecky lui a parlé, Pompon le suit quand il le retrouve (sur ses traces, comme les copains
    en balade, terriers compris) ; trop loin, il s'assoit et attend. Arrivé près de Mamie Rose, il reste avec elle, et
    elle remercie Tecky quand il vient lui parler (une saucisse et des points). Un aboiement le fait feuler. Sauvegardé
-   (rose, cat). */
+   (rose, cat).
+   La même quête se rejoue ailleurs avec d'autres acteurs (MAP.roles) : sur la côte de l'été, Madame Hortense (look
+   « hortense ») a perdu Praline, son caniche (« poodle »), dans les jardins de la ville. nbTxt() et petTxt() donnent
+   les textes de celui qui tient le rôle (mêmes clés sous « neighbor » / « hortense », « chat » / « caniche »). */
+const nbTxt = k => neighbor.look === 'hortense' ? txt('hortense.' + k) : txt('neighbor.' + k);
+const poodle = () => pompon.kind === 'poodle';
+const petTxt = k => poodle() ? txt('caniche.' + k) : txt('chat.' + k);
+const petWho = () => poodle() ? 'poodle' : 'cat';
+const petCry = (p, c) => poodle() ? SFX.yip(p * 1.5, c) : SFX.meow(p, c);
 const CAT = { find: 130, gap: 70, walk: 150, run: 330, lost: 700, home: 280, meow: [2.5, 5] };
 let rose = { state: 'new' }, neighbor = null, pompon = null;
 function newPompon() {
   const [x, y] = MAP.pompon;
-  return { kind: 'cat_white', x, y, mode: 'lost', anim: 'idle', t: 0, dir: 'left', meowT: 1, hissT: 0 };
+  return { kind: MAP.roles.pompon || 'cat_white', x, y, mode: 'lost', anim: 'idle', t: 0, dir: 'left', meowT: 1, hissT: 0 };
 }
 function catAnim(c, a) { if (c.anim !== a) { c.anim = a; c.t = 0; } }
 function catMove(c, tx, ty, dt) {      // va vers (tx, ty), d'autant plus vite que c'est loin (il court pour rattraper Tecky)
@@ -3079,18 +3091,18 @@ function updatePompon(dt) {
       catAnim(c, 'idle');
       if (dP < 300) c.dir = P.x < c.x ? 'left' : 'right';
       if (dP < CAT.find && rose.state === 'asked') {
-        if (c.mode === 'lost') say([{ who: 'tecky', face: 2, text: txt('tecky.pompon') }]);
-        c.mode = 'follow'; addWordPop(txt('chat.miaou'), c.x, c.y - 58, 'cat'); SFX.meow(1.1, c);
-      } else if (dP < 260 && (c.meowT -= dt) <= 0) { c.meowT = rnd(CAT.meow); addWordPop(c.mode === 'lost' ? txt('chat.miaou_perdu') : txt('chat.miaou'), c.x, c.y - 58, 'cat'); SFX.meow(c.mode === 'lost' ? 0.9 : 1, c); }
+        if (c.mode === 'lost') say([{ who: 'tecky', face: 2, text: poodle() ? txt('tecky.praline') : txt('tecky.pompon') }]);
+        c.mode = 'follow'; addWordPop(petTxt('miaou'), c.x, c.y - 58, petWho()); petCry(1.1, c);
+      } else if (dP < 260 && (c.meowT -= dt) <= 0) { c.meowT = rnd(CAT.meow); addWordPop(c.mode === 'lost' ? petTxt('miaou_perdu') : petTxt('miaou'), c.x, c.y - 58, petWho()); petCry(c.mode === 'lost' ? 0.9 : 1, c); }
       return;
     case 'follow': {
       const [tx, ty] = crumbAt(CAT.gap);
       catMove(c, tx, ty, dt);
       if (dist(c.x, c.y, neighbor.x, neighbor.y) < CAT.home) {
         c.mode = 'home'; neighbor.cheerT = 3;
-        npcShout(neighbor, txt('neighbor.viens'));
+        npcShout(neighbor, nbTxt('viens'));
         saveGame();
-      } else if (dP > CAT.lost) { c.mode = 'wait'; addWordPop(txt('chat.miaou'), c.x, c.y - 58, 'cat'); SFX.meow(1, c); }
+      } else if (dP > CAT.lost) { c.mode = 'wait'; addWordPop(petTxt('miaou'), c.x, c.y - 58, petWho()); petCry(1, c); }
       return;
     }
     case 'home':                       // près de Mamie Rose, à côté de ses chaussons
@@ -3100,18 +3112,18 @@ function updatePompon(dt) {
   }
 }
 function drawPompon() {
-  const c = pompon, fps = (MAP.critterFps.cat_white || {})[c.anim] || 8;
-  drawSpr('cat_white/' + c.anim, Math.floor(c.t * fps), c.x, c.y, { flip: c.dir === 'left' });
+  const c = pompon, fps = (MAP.critterFps[c.kind] || {})[c.anim] || 8;
+  drawSpr(c.kind + '/' + c.anim, Math.floor(c.t * fps), c.x, c.y, { flip: c.dir === 'left' });
 }
 function neighborMark() { return rose.state === 'done' ? -1 : rose.state === 'asked' && pompon.mode !== 'home' ? 1 : 0; }
 function neighborGreet() {
-  if (rose.state === 'new') npcShout(neighbor, txt('neighbor.cherche'));
-  else if (rose.state === 'asked') { if (pompon.mode !== 'follow') npcShout(neighbor, pompon.mode === 'home' ? txt('neighbor.la') : txt('neighbor.vu')); }
-  else { npcShout(neighbor, txt('neighbor.bonjour')); neighbor.waveT = 1.5; }
+  if (rose.state === 'new') npcShout(neighbor, nbTxt('cherche'));
+  else if (rose.state === 'asked') { if (pompon.mode !== 'follow') npcShout(neighbor, pompon.mode === 'home' ? nbTxt('la') : nbTxt('vu')); }
+  else { npcShout(neighbor, nbTxt('bonjour')); neighbor.waveT = 1.5; }
 }
 const nbThanks = () => [
-  { who: 'neighbor', face: 2, text: txt('neighbor.merci.0') },
-  { who: 'neighbor', face: 0, text: txt('neighbor.merci.1') },
+  { who: neighbor.look, face: 2, text: nbTxt('merci.0') },
+  { who: neighbor.look, face: 0, text: nbTxt('merci.1') },
 ];
 function finishNeighbor() {
   rose.state = 'done'; score += POST.reward;
@@ -3123,21 +3135,21 @@ function finishNeighbor() {
 function talkNeighbor() {
   if (rose.state === 'done') {
     neighbor.waveT = 2;
-    say([{ who: 'neighbor', face: 2, text: txt('neighbor.apres') }]);
+    say([{ who: neighbor.look, face: 2, text: nbTxt('apres') }]);
     return;
   }
   if (pompon.mode === 'home') { say(nbThanks(), finishNeighbor); return; }
   if (rose.state === 'asked') {
-    say([{ who: 'neighbor', face: 3, text: pompon.mode === 'follow' || pompon.mode === 'wait'
-      ? txt('neighbor.rappel.suit')
-      : txt('neighbor.rappel.perdu') }]);
+    say([{ who: neighbor.look, face: 3, text: pompon.mode === 'follow' || pompon.mode === 'wait'
+      ? nbTxt('rappel.suit')
+      : nbTxt('rappel.perdu') }]);
     return;
   }
   rose.state = 'asked';
   say([
-    { who: 'neighbor', face: 3, text: txt('neighbor.demande.0') },
-    { who: 'neighbor', face: 0, text: txt('neighbor.demande.1') },
-    { who: 'tecky', face: FACE.fier, text: txt('neighbor.demande.2') },
+    { who: neighbor.look, face: 3, text: nbTxt('demande.0') },
+    { who: neighbor.look, face: 0, text: nbTxt('demande.1') },
+    { who: 'tecky', face: FACE.fier, text: nbTxt('demande.2') },
   ], saveGame);
 }
 
@@ -4662,7 +4674,7 @@ function checkBadges() {
   if (monde && treasures >= MAP.dig.length) unlockBadge('os_dores');
   if (farm.state === 'done') unlockBadge('poules');
   if (post.state === 'done') unlockBadge('facteur');
-  if (rose.state === 'done') unlockBadge('chat');
+  if (rose.state === 'done' && !MAP.roles.pompon) unlockBadge('chat');      // (Pompon : pas le caniche de la côte)
   if (fete.state === 'done') unlockBadge('ballons');
   if (jouets.state === 'done') unlockBadge('iris');
   if (train.scored) unlockBadge('train');
@@ -4677,10 +4689,13 @@ function checkBadges() {
    quête : l'ajouter à QUESTS_DONE. */
 const QUESTS_DONE = [() => farm.state === 'done', () => post.state === 'done', () => rose.state === 'done',
   () => fete.state === 'done', () => jouets.state === 'done', () => piq.state === 'done'];
+// (celui qui donne chaque quête : seules comptent celles de la carte où l'on joue)
+const QUEST_GIVER = ['farmer', 'postman', 'neighbor', 'leon', 'iris', 'piquette'];
+const questsHere = () => QUESTS_DONE.filter((q, i) => ici(QUEST_GIVER[i]));
 function completion() {
   const part = (n, of) => of ? Math.min(1, n / of) : 1, count = (a, f) => a.filter(f).length;
   const adults = ducks.filter(d => !d.lead);          // comme le badge : sans les canetons
-  const parts = [part(treasures, MAP.dig.length), part(count(QUESTS_DONE, q => q()), QUESTS_DONE.length),
+  const parts = [part(treasures, MAP.dig.length), part(count(questsHere(), q => q()), questsHere().length),
     part(count(critters, c => c.scored), critters.length), part(count(adults, d => d.scored), adults.length),
     part(seenCells.reduce((a, v) => a + v, 0), seenCells.length * 0.95)];
   if (balade()) parts.push(part(count(dogs, d => d.friend), dogs.length));
@@ -5991,7 +6006,7 @@ function hudCounters() {
   if (treasures > 0) c.push(['item/goldbone', 42, 28, 0.8, treasures, MAP.dig.length]);
   if (farm.state === 'asked') c.push(['icone/hen', 46, 58, 1, questHens().length - hensLeft(), questHens().length]);
   if (post.state === 'asked') c.push(['item/letter', 50, 36, 0.8, letters.length - lettersLeft(), letters.length]);
-  if (rose.state === 'asked') c.push(['icone/cat_white', 46, 58, 1, pompon.mode === 'lost' ? 0 : 1, 1]);
+  if (rose.state === 'asked') c.push(['icone/' + pompon.kind, 46, 58, 1, pompon.mode === 'lost' ? 0 : 1, 1]);
   if (fete.state === 'asked') c.push(['port/balloon', 42, 35, 0.8, balls.length - ballsLeft(), balls.length]);
   if (jouets.state === 'asked') c.push(['port/toy', 42, 35, 0.8, toys.length - toysLeft(), toys.length]);
   if (piq.state === 'asked') c.push(['icone/hedgehog', 44, 58, 1, babies.length - babiesLeft(), babies.length]);

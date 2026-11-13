@@ -22,7 +22,8 @@
     "leon": "Léon",
     "iris": "Iris",
     "piquette": "Maman Piquette",
-    "papa": "Papa"
+    "papa": "Papa",
+    "hortense": "Madame Hortense"
   },
   "intro": {
     "partie": "Ouaf ! Alice est partie jouer… et elle n'est pas rentrée !",
@@ -66,7 +67,8 @@
     "indices_manquent": "Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !",
     "os_de_plus": "Un os de plus !",
     "os_dore_bulle": "Os doré !",
-    "os_dore": "Wouf ! Un os doré était enterré ! ({n} / {total})"
+    "os_dore": "Wouf ! Un os doré était enterré ! ({n} / {total})",
+    "praline": "Te voilà, Praline ! Viens, on retourne voir ta maîtresse."
   },
   "doberman": {
     "peur": "Même pas peur !"
@@ -641,5 +643,31 @@
     "Ouaf ! Ouaf ouaf !",
     "Et tu as rapporté mon chapeau, ma pelle et ma tong ! Merci mon Tecky.",
     "Viens, on redescend au phare : le soleil se couche, il va s'allumer !"
-  ]
+  ],
+  "caniche": {
+    "feule": "Wif wif !",
+    "miaou": "Wif !",
+    "miaou_perdu": "Wif ?"
+  },
+  "hortense": {
+    "viens": "Praline ! Viens me voir, Tecky !",
+    "cherche": "Praline ? Praline, où es-tu ?",
+    "la": "Ma Praline est là !",
+    "vu": "Tu as vu Praline ?",
+    "bonjour": "Bonjour, Tecky !",
+    "merci": [
+      "Praline ! Te voilà enfin, ma poupette ! J'ai eu si peur…",
+      "Merci, Tecky ! Tiens, une bonne saucisse : tu l'as bien méritée."
+    ],
+    "apres": "Praline ne me quitte plus d'une patte, grâce à toi. Bonne chance pour retrouver ta petite Alice !",
+    "rappel": {
+      "suit": "Tu l'as trouvée ! Ramène-la-moi : elle te suivra si tu ne vas pas trop vite.",
+      "perdu": "Praline adore courir dans les jardins, derrière le casino. Regarde du côté du manège !"
+    },
+    "demande": [
+      "Bonjour, mon petit. Tu n'aurais pas vu Praline, mon caniche ? Elle est toute frisée, avec un nœud rose.",
+      "Elle a filé pendant que j'achetais une glace… Elle adore les jardins, derrière le casino.",
+      "Ouaf ! Je vous la ramène !"
+    ]
+  }
 }

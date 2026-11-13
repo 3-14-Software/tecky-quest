@@ -28,8 +28,13 @@ KINDS = {   # couleurs par espèce / variante
     "cat_white": dict(fur="#FBF8F3", dark="#D9D3CB", stripe=None, belly="#FFFFFF", eye="#6DB8EA",
                       ear="#F4A3A8", nose="#EE97A8", whisker="#ABA49B",
                       patch="#9D9BA8", patch_dk="#7D7B88", collar="#F2729E", bell="#F2C14E"),
+    # Praline, le caniche abricot de Madame Hortense (la côte de l'été) : les poses des chats, mais une tête de
+    # caniche (toutou : houppette à nœud rose, museau, oreilles tombantes), un collier rose, un pompon au bout de
+    # la queue (_poodle_head, _cat_tail)
+    "poodle": dict(fur="#EEC79A", dark="#D0A06A", stripe=None, belly="#F9E3C4", eye="#2A1E1A", ear="#D0A06A",
+                   nose="#2B2B33", whisker="#F9E3C4", collar="#F2729E", bow="#F2729E", toutou=True),
 }
-SPECIES = {"squirrel": "squirrel", "cat": "cat", "cat_black": "cat", "cat_white": "cat"}   # les chats partagent les poses
+SPECIES = {"squirrel": "squirrel", "cat": "cat", "cat_black": "cat", "cat_white": "cat", "poodle": "cat"}   # les chats partagent les poses (le caniche aussi)
 # Ils sont dessinés grands puis réduits autour de l'origine (16, 28) ; le contour garde la même épaisseur que les
 # autres sprites. Leur taille se juge à côté de Tecky (34 x 22 unités depuis la v2) : un chat est un peu plus petit
 # que lui, un écureuil bien plus petit qu'un chat. À 1 et 0,85, ils le dépassaient (Christophe : « étrange »).
@@ -344,6 +349,12 @@ def _spot(d, C, cid, shapes, spot):
 def _cat_tail(d, C, pts, r0, r1, puff=0.0):
     """Queue en boudin (rayures si chat tigré) ; puff > 0 : poils hérissés (feulement)."""
     n = len(pts)
+    if C.get("toutou"):                # le caniche : une queue fine, un pompon au bout
+        for sh in _tube(pts, r0 * 0.62, r1 * 0.55):
+            d.add(sh, C["fur"])
+        for dx, dy, r in ((0, -0.4, 3.0 + puff * 0.5), (-1.7, 1.0, 2.0), (1.7, 0.9, 2.0)):
+            d.add(circle(pts[-1][0] + dx, pts[-1][1] + dy, r), C["belly"])
+        return
     if puff:
         for i, (x, y) in enumerate(pts):
             r = r0 + (r1 - r0) * i / (n - 1) + puff * (0.7 + 0.5 * (i % 2))
@@ -368,6 +379,8 @@ def _cat_head(d, C, hx, hy, tr="", ears=0.0, eye="open", mouth=0.0):
     """Tête de profil vers la droite, centre (hx, hy). ears : 0 dressées -> 1 couchées en arrière ;
     eye : 'open', 'blink', 'angry' ; mouth : 0 fermée -> 1 grande ouverte (feulement)."""
     er = -ears * 62
+    if C.get("toutou"):
+        return _poodle_head(d, C, hx, hy, tr, ears, eye, mouth)
     if C.get("collar"):   # cou et collier (chat de la voisine) : bande en travers du cou, sous la tête
         neck = ellipse(hx - 1.7, hy + 4.4, 3.1, 3.4, tr)
         d.add(neck, C["fur"])
@@ -425,6 +438,50 @@ def _cat_head(d, C, hx, hy, tr="", ears=0.0, eye="open", mouth=0.0):
         d.add(circle(bx - 0.4, by - 0.4, 0.35, tr), "#FFF7D6", sil=False)
 
 
+def _poodle_head(d, C, hx, hy, tr="", ears=0.0, eye="open", mouth=0.0):
+    """Tête de caniche de profil vers la droite, centre (hx, hy) : crâne rond, museau, truffe noire, oreilles
+    tombantes en boucles, houppette à nœud rose, collier. Mêmes réglages que _cat_head (mouth : il jappe)."""
+    neck = ellipse(hx - 1.7, hy + 4.4, 3.1, 3.4, tr)
+    d.add(neck, C["fur"])
+    d.clip("toutou_cou", [neck])
+    d.raw(_clipped("toutou_cou", tr, rect(hx - 5.8, hy + 4.35, 8.8, 2.3, 0.6, f"rotate(24 {hx - 1.4:.2f} {hy + 5.5:.2f})")
+                   .replace('fill="%F%"', f'fill="{C["collar"]}" stroke="{OUTLINE}" stroke-width="0.7"')))
+    etr = f"{tr} rotate({-ears * 30:.1f} {hx - 2.4:.2f} {hy - 1.6:.2f})"
+    d.add(ellipse(hx - 4.4, hy + 1.4, 2.3, 4.0, etr), C["dark"])                              # l'oreille lointaine
+    d.add(circle(hx, hy, 4.7, tr), C["fur"])                                                 # le crâne
+    d.add(ellipse(hx + 4.0, hy + 1.7, 3.5, 2.4, tr), C["fur"])                               # le museau
+    d.add(ellipse(hx + 5.0, hy + 2.2, 2.1, 1.5, tr), C["belly"], sil=False)
+    for dx, dy, r in ((-0.4, -5.6, 3.5), (-3.2, -4.2, 2.5), (2.4, -4.6, 2.4)):               # la houppette, en boule
+        d.add(circle(hx + dx, hy + dy, r, tr), C["belly"])
+    for s in (-1, 1):                                                                        # son nœud rose
+        d.add(poly([(hx - 0.2, hy - 8.4), (hx - 0.2 + s * 3.0, hy - 10.1), (hx - 0.2 + s * 3.0, hy - 6.8)], tr), C["bow"])
+    d.add(circle(hx - 0.2, hy - 8.4, 1.0, tr), _dark(C["bow"]), sil=False)
+    # l'oreille proche : une grande boucle qui tombe, frisée du bout
+    for dx, dy, rx, ry in ((-2.6, 1.6, 2.6, 4.4), (-3.6, 5.0, 2.4, 2.2), (-1.4, 5.5, 2.3, 2.1)):
+        d.add(ellipse(hx + dx, hy + dy, rx, ry, etr), C["dark"])
+    d.raw(_g(etr, line(f"M{hx - 3.6:.2f},{hy + 0.2:.2f} Q{hx - 2.4:.2f},{hy + 1.6:.2f} {hx - 3.2:.2f},{hy + 3.2:.2f}", _dark(C["dark"]), 0.6)))
+    ex, ey = hx + 1.9, hy - 0.4                                                              # l'œil
+    if eye == "blink":
+        d.raw(_g(tr, line(f"M{ex - 1.3:.2f},{ey + 0.1:.2f} Q{ex:.2f},{ey + 1.0:.2f} {ex + 1.3:.2f},{ey + 0.1:.2f}", OUTLINE, 0.9)))
+    else:
+        d.add(circle(ex, ey, 1.3, tr), C["eye"], sil=False)
+        d.add(circle(ex - 0.4, ey - 0.5, 0.45, tr), "#FFFFFF", sil=False)
+        if eye == "angry":
+            d.raw(_g(tr, line(f"M{ex - 1.7:.2f},{ey - 2.2:.2f} L{ex + 1.6:.2f},{ey - 1.2:.2f}", OUTLINE, 1.0)))
+    nx, ny = hx + 7.0, hy + 0.9                                                              # la truffe, la gueule
+    if mouth > 0.05:
+        d.add(ellipse(nx - 2.2, ny + 2.6 + mouth * 0.4, 1.8, 0.7 + mouth * 1.0, tr), "#7A2A2A")
+        d.add(ellipse(nx - 2.5, ny + 3.0 + mouth * 1.0, 0.9, 0.45, tr), "#E8707A", sil=False)
+    else:
+        d.raw(_g(tr, line(f"M{nx - 0.6:.2f},{ny + 1.0:.2f} Q{nx - 1.6:.2f},{ny + 2.6:.2f} {nx - 3.2:.2f},{ny + 2.2:.2f}", OUTLINE, 0.6)))
+    d.add(ellipse(nx, ny, 1.15, 0.95, tr), C["nose"], sil=False)
+    d.add(circle(nx - 0.3, ny - 0.3, 0.3, tr), "#FFFFFF", sil=False, opacity=0.7)
+
+
+def _dark(col, k=0.78):
+    return "#" + "".join(f"{int(int(col[i:i + 2], 16) * k):02X}" for i in (1, 3, 5))
+
+
 def _cat_stripes(d, C, cid, tr, cx, top, ry, xs):
     """Rayures du dos (chat tigré), découpées à la forme du corps."""
     if not C["stripe"]:
@@ -467,7 +524,7 @@ def _cat_sit(C, sweep=0.0, blink=False):
 
 
 def _cat_stand(C, cx=14.6, cy=20.8, rx=7.4, ry=4.0, tilt=0.0, hop=0.0, legs=None, head=(0.0, 0.0, 0.0),
-               ears=0.0, tail=None, tail_wave=(0.0, 0.0), eye="open", shadow=None):
+               ears=0.0, tail=None, tail_wave=(0.0, 0.0), eye="open", shadow=None, mouth=0.0):
     """Chat debout de profil (marche, galop, saut).
     legs : 4 pieds (x, y) dans l'ordre avant-loin, arrière-loin, arrière-proche, avant-proche ;
     head : (dx, dy, rotation) de la tête ; tail : points de passage de la queue, relatifs à sa base."""
@@ -505,7 +562,7 @@ def _cat_stand(C, cx=14.6, cy=20.8, rx=7.4, ry=4.0, tilt=0.0, hop=0.0, legs=None
     hx_, hy_ = R(cx + rx + 0.2, cy - 5.0)
     hdx, hdy, hrot = head
     hx_, hy_ = hx_ + hdx, hy_ + hdy
-    _cat_head(d, C, hx_, hy_, f"rotate({hrot:.1f} {hx_ - 2:.2f} {hy_ + 3:.2f})" if hrot else "", ears=ears, eye=eye)
+    _cat_head(d, C, hx_, hy_, f"rotate({hrot:.1f} {hx_ - 2:.2f} {hy_ + 3:.2f})" if hrot else "", ears=ears, eye=eye, mouth=mouth)
     return d
 
 
@@ -549,7 +606,11 @@ def _cat_jump(C, k=0):
 
 
 def _cat_hiss(C, k=0):
-    """Dos rond en arche, poils hérissés, queue dressée et gonflée, bouche ouverte (« Pfff ! »)."""
+    """Dos rond en arche, poils hérissés, queue dressée et gonflée, bouche ouverte (« Pfff ! »).
+    Le caniche, lui, ne feule pas : il jappe (_poodle_yap) — Christophe : « pourquoi le caniche feule en dressant
+    ses poils comme un chat ? »."""
+    if C.get("toutou"):
+        return _poodle_yap(C, k)
     d = Drawing(W, H)
     up = 0.7 * k
     puff = 0.8 + 0.35 * k
@@ -597,6 +658,15 @@ def _cat_hiss(C, k=0):
     # tête basse en avant, oreilles en arrière, crocs
     _cat_head(d, C, 24.2, 18.6 - up * 0.3, "rotate(-4 22.2 21.6)", ears=0.8, eye="angry", mouth=0.75 + 0.25 * k)
     return d
+
+
+def _poodle_yap(C, k=0):
+    """Le caniche répond à un aboiement : debout, bien campé sur ses pattes, la queue en l'air, il jappe en
+    sautillant (k = 1 : en l'air, la gueule grande ouverte). Ni dos rond ni poils hérissés : c'est un chien."""
+    return _cat_stand(C, cx=14.6, cy=20.6, hop=1.8 * k, tilt=-4 - 3 * k,
+                      legs=[(22.2, G - 1.6 * k), (8.6, G), (10.4, G), (20.4, G - 1.6 * k)],
+                      head=(0.6, -0.8 - 0.8 * k, -10 - 4 * k), mouth=0.45 + 0.5 * k,
+                      tail=[(-1.6, -4.6), (-1.0, -8.8), (1.2 + k, -11.0)], shadow=(15.6, 8.6 - k))
 
 
 # ================================================================== animations

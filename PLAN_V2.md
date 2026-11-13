@@ -565,7 +565,12 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      phare ») ; les retrouvailles, puis la scène de fin (ils redescendent au pied du phare, la nuit tombe,
      la lanterne s'allume). **L'été se joue du départ à la victoire** (sans quêtes encore). Répliques à valider
      (`textes/fr.json` : `indices_ete`, `retrouvailles_ete`).
-   - *À dessiner* : les motos, Tecky qui nage, les six personnages
+   - *Première quête de la côte, faite le 13 novembre 2026* : le caniche de Madame Hortense. Elle attend
+     devant le casino, Praline s'est sauvée dans les jardins ; Tecky la retrouve, elle le suit jusqu'à sa
+     maîtresse (une saucisse, des points). C'est la quête de Pompon, rejouée avec d'autres acteurs : la carte
+     distribue les rôles (`roles`), le moteur ne change pas — la voie pour les cinq autres. Noms et
+     répliques à valider (`textes/fr.json` : `hortense`, `caniche`).
+   - *À dessiner* : les motos, Tecky qui nage, les cinq autres personnages
      des quêtes, le caniche, les moutons, les mouettes, les crabes ; les voitures garées ; les vagues de la
      mer ; les objets (chapeau, pelle, tong, coquillages, bouées, jouets de plage). (Faits le 13 novembre
      2026 : le phare, le casino, les cabines de plage, le manège, les bateaux de pêche, la poissonnerie.)

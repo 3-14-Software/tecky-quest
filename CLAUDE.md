@@ -302,7 +302,24 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   plateau (depuis la cachette) au pied du phare, la nuit tombe et la lanterne s'allume avec les fenêtres. Voix : les cas de l'été
   sont produits par `tools/export_voix.js` (`DYNAMIC_SITES` = 23). Tests : `voyage.js` joue l'été du départ à
   la victoire. Pas encore fait : la tenue d'été d'Alice (elle garde ses chaussures rouges), une tong à un
-  pied, les six quêtes. Premier jet posé par
+  pied, cinq des six quêtes.
+  **Quêtes rejouées avec d'autres acteurs : les rôles** (13 novembre 2026). Chaque quête de la côte reprend une
+  mécanique du printemps ; plutôt que de la recopier, la carte **distribue le rôle** à d'autres acteurs :
+  `"roles": { rôle: acteur }` dans la carte (`carte.ROLES` : les acteurs permis ; `MAP.roles`, vide ailleurs).
+  Un personnage a son rôle (`n.kind` : sa quête, `NPC_DO`, `npcList()`, sa place `MAP.<rôle>`) et celui qui le
+  tient (`n.look` : dessins, portrait `WHO`, voix `VOICE`, celui qui parle dans les dialogues et les bulles) ;
+  `newNpc(kind, place, pitch, look)`. Première quête : **le caniche de Madame Hortense** = la quête de Pompon
+  (`rose`, `pompon`, `CAT`, `talkNeighbor()`… inchangés) avec `"neighbor": "hortense"` et `"pompon": "poodle"` :
+  Madame Hortense (`npcs._neighbor(p, "hortense")` : le modèle de Mamie Rose en plus grande, capeline, veste
+  turquoise, collier ; portrait `hud/portrait_hortense`) attend devant le casino, en zone calme ; Praline
+  (`critters` « poodle » : les poses des chats, `_poodle_head()`, houppette à nœud rose, pompon au bout de la
+  queue ; icône `icone/poodle`) est dans les jardins. Textes : mêmes clés sous `hortense` que sous `neighbor`
+  (`nbTxt(k)`), sous `caniche` que sous `chat` (`petTxt(k)`), `tecky.praline` ; `petWho()`, `petCry()`. Le
+  badge « Ami des chats » reste celui de Pompon ; la complétion ne compte que les quêtes de la carte où l'on
+  joue (`questsHere()`, `QUEST_GIVER`). Sauvegarde : les champs de la quête de Pompon (`rose`, `cat`). Voix :
+  `tools/export_voix.js` joue les deux distributions (`DYNAMIC_SITES` = 24). Test : `hortense.js`. Pour la
+  quête suivante : ajouter ses acteurs à `carte.ROLES`, leurs dessins, leurs textes sous les mêmes clés, et
+  un `xxTxt()` comme `nbTxt()`. Premier jet posé par
   `v2/cote_carte.py`, **gelé depuis** : Christophe retouche la carte dans l'éditeur, c'est
   `cartes/cote.json` qui fait foi (le script refuse d'écraser une carte qui existe ; ses listes ne sont plus
   à jour ; `python3 v2/cote_carte.py --apercu` redessine l'aperçu à partir du fichier). Rien ne dépend de

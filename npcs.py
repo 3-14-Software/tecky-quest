@@ -42,7 +42,7 @@ from spritelib import Drawing, circle, ellipse, rect, path, poly, leg, line, OUT
 W, H = 48, 64
 G = 60.0                      # ligne des pieds
 HK = 1.08                     # agrandissement de la tête (style chibi), autour du menton — comme Gaston
-KINDS = ("postman", "neighbor", "leon", "iris", "piquette", "papa")
+KINDS = ("postman", "neighbor", "leon", "iris", "piquette", "papa", "hortense")
 FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-côté conseillé
     "postman": (24, 18.5, 15.5),      # casquette, visage, moustache et menton (comme Gaston)
     "neighbor": (24, 21.5, 15.5),     # chignon, lunettes, menton (elle est plus petite : tout est 3 unités plus bas)
@@ -50,9 +50,10 @@ FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-
     "iris": (24, 35.2, 12.6),         # le vieux Jack Russell : tête, oreilles, sourcils blancs
     "piquette": (24, 30.6, 14.0),     # la maman hérisson : piquants, fleur, museau
     "papa": (24, 19.6, 15.0),         # le papa d'Alice : cheveux ras, visage, bouc
+    "hortense": (24, 20.4, 15.8),     # Madame Hortense : capeline, visage, collier
 }
 PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6", "leon": "#FDE3C2", "iris": "#DDE9F6", "piquette": "#F6E3EC",
-               "papa": "#F7E6C8"}   # fond du médaillon (Gaston : "#CFE8B0")
+               "papa": "#F7E6C8", "hortense": "#D9F0F2"}   # fond du médaillon (Gaston : "#CFE8B0")
 
 PAL = {
     "postman": dict(skin="#F5C8A6", skin_dk="#E2A986", nose="#EA9C82", blush="#F28A8A",
@@ -72,6 +73,16 @@ PAL = {
                      skirt="#62729C", skirt_dk="#4A5880", skirt_lt="#7D8DB5",
                      slipper="#EE8FAE", slipper_dk="#D06C8E", pompom="#FFF4F7",
                      pearl="#FFFDF8", lens="#E3F4FB",
+                     eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#9ED8F5"),
+    # Madame Hortense, la dame au caniche du casino (la côte de l'été) : le modèle de Mamie Rose (_neighbor), en
+    # plus grande, veste turquoise, jupe crème, escarpins rouges, capeline à ruban, collier de perles
+    "hortense": dict(skin="#F7D2B8", skin_dk="#E3B093", nose="#EDA088", blush="#F28A8E",
+                     hair="#B5693C", hair_dk="#8A4A26", hair_lt="#D99466", scrunchie="#D7332B",
+                     cardigan="#3FA7B8", cardigan_dk="#2C7F8E", cardigan_lt="#7FD0DC",
+                     blouse="#FFFCF5", blouse_dk="#E1D9CB", button="#F6FDFF",
+                     skirt="#FFF1D6", skirt_dk="#D9C39A", skirt_lt="#FFFFFF",
+                     slipper="#D7332B", slipper_dk="#A82520", pompom="#D7332B",
+                     pearl="#FFFDF8", lens="#E3F4FB", hat="#FBF3DC", hat_dk="#D9C9A0", ribbon="#D7332B",
                      eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#9ED8F5"),
     "leon": dict(skin="#E9B892", skin_dk="#D39A72", nose="#DD8F74", blush="#F08A7E",
                  hair="#5A3A22", hair_dk="#3E2615",
@@ -804,11 +815,15 @@ def _piquette(p):
 DY = 3.0      # la mamie est plus petite : tout le haut du corps est 3 unités plus bas que chez Gaston
 
 
-def _neighbor(p):
-    c = dict(PAL["neighbor"], sleeve=PAL["neighbor"]["cardigan"], cuff=PAL["neighbor"]["cardigan_lt"])
+def _neighbor(p, qui="neighbor"):
+    """Mamie Rose ; qui="hortense" : Madame Hortense, sur le même modèle (plus grande, sans chignon ni lunettes :
+    une capeline, un collier de perles, des escarpins)."""
+    dame = qui == "hortense"
+    c = dict(PAL[qui], sleeve=PAL[qui]["cardigan"], cuff=PAL[qui]["cardigan_lt"])
     d = Drawing(W, H)
     L = p["lift"]
-    Y = lambda v: v + DY + p["bob"] - L
+    dy = 1.0 if dame else DY
+    Y = lambda v: v + dy + p["bob"] - L
     T = lambda v: v - L
     _shadow(d, L, 10.4)
 
@@ -817,8 +832,9 @@ def _neighbor(p):
         d.add(leg(x, T(55.5), x, T(G - 2.2), 2.6), c["skin"])
         d.add(ellipse(x + s * 0.5, T(G - 1.5), 3.4, 1.8), c["slipper"])
         d.add(ellipse(x + s * 0.5, T(G - 2.4), 2.2, 0.7), c["slipper_dk"], sil=False, opacity=0.7)
-        d.raw(f'<circle cx="{x + s * 0.2:.2f}" cy="{T(G - 2.6):.2f}" r="1.4" fill="{c["pompom"]}" '
-              f'stroke="{OUTLINE}" stroke-width="0.5"/>')                                      # pompon
+        if not dame:
+            d.raw(f'<circle cx="{x + s * 0.2:.2f}" cy="{T(G - 2.6):.2f}" r="1.4" fill="{c["pompom"]}" '
+                  f'stroke="{OUTLINE}" stroke-width="0.5"/>')                                  # pompon
 
     # jupe longue évasée, plis
     skirt = path(f"M17.0,{Y(37.0):.2f} L31.0,{Y(37.0):.2f} L34.8,{T(56.6):.2f} Q24,{T(58.2):.2f} 13.2,{T(56.6):.2f} Z")
@@ -843,6 +859,9 @@ def _neighbor(p):
     d.raw(line(f"M24,{Y(36.2):.2f} L24,{Y(44.6):.2f}", c["cardigan_dk"], 0.8))
     for y in (38.0, 41.0):
         d.add(circle(24.9, Y(y), 0.75), c["button"], sil=False, edge=True)
+    if dame:                                                                                  # collier de perles
+        for k in range(5):
+            d.add(circle(21.0 + k * 1.5, Y(30.6 + 1.5 * (1 - ((k - 2) / 2) ** 2)), 0.8), c["pearl"], sil=False, edge=True)
 
     # bras : au repos, mains jointes devant elle
     hy, X, V = _head_frame(Y, p)
@@ -855,9 +874,13 @@ def _neighbor(p):
 
     # tête : chignon, oreilles (perles), visage, cheveux gris-blanc
     k = HK
-    d.add(circle(24, V(-11.0), 3.9 * k), c["hair"])                                           # chignon
-    d.raw(line(f"M{X(21.6):.2f},{V(-12.2):.2f} Q24,{V(-14.0):.2f} {X(26.6):.2f},{V(-12.0):.2f} "
-               f"M{X(22.2):.2f},{V(-10.2):.2f} Q24,{V(-11.6):.2f} {X(25.6):.2f},{V(-10.4):.2f}", c["hair_dk"], 0.6))
+    if not dame:
+        d.add(circle(24, V(-11.0), 3.9 * k), c["hair"])                                       # chignon
+        d.raw(line(f"M{X(21.6):.2f},{V(-12.2):.2f} Q24,{V(-14.0):.2f} {X(26.6):.2f},{V(-12.0):.2f} "
+                   f"M{X(22.2):.2f},{V(-10.2):.2f} Q24,{V(-11.6):.2f} {X(25.6):.2f},{V(-10.4):.2f}", c["hair_dk"], 0.6))
+    else:                                                                                     # ses boucles, sur les épaules
+        for x in (14.2, 33.8):
+            d.add(ellipse(X(x), V(5.0), 2.6 * k, 4.6 * k), c["hair"])
     for x in (14.5, 33.5):
         d.add(circle(X(x), V(1.6), 2.0 * k), c["skin"])
         d.add(circle(X(x), V(1.6), 0.9 * k), c["skin_dk"], sil=False)
@@ -875,23 +898,34 @@ def _neighbor(p):
                f"M24,{V(-6.4):.2f} L24,{V(-9.6):.2f}", c["hair_dk"], 0.6))
     d.add(ellipse(X(19.2), V(-7.6), 2.4 * k, 1.0 * k, f"rotate(-24 {X(19.2):.2f} {V(-7.6):.2f})"), c["hair_lt"],
           sil=False, opacity=0.8)
-    d.add(ellipse(24, V(-10.3), 3.5 * k, 1.15 * k), c["scrunchie"], sil=False, edge=True)        # chouchou du chignon
-    d.raw(line(f"M{X(22.2):.2f},{V(-10.9):.2f} L{X(22.0):.2f},{V(-9.7):.2f} M{X(25.8):.2f},{V(-10.9):.2f} "
-               f"L{X(26.0):.2f},{V(-9.7):.2f}", c["cardigan_dk"], 0.5))
+    if not dame:
+        d.add(ellipse(24, V(-10.3), 3.5 * k, 1.15 * k), c["scrunchie"], sil=False, edge=True)    # chouchou du chignon
+        d.raw(line(f"M{X(22.2):.2f},{V(-10.9):.2f} L{X(22.0):.2f},{V(-9.7):.2f} M{X(25.8):.2f},{V(-10.9):.2f} "
+                   f"L{X(26.0):.2f},{V(-9.7):.2f}", c["cardigan_dk"], 0.5))
+    else:                                                                                     # la capeline : bord, calotte, ruban
+        d.add(ellipse(24, V(-6.4), 14.4 * k, 3.4 * k), c["hat"])
+        d.add(ellipse(24, V(-5.6), 12.8 * k, 1.9 * k), c["hat_dk"], sil=False, opacity=0.55)
+        calotte = path(f"M{X(16.6):.2f},{V(-6.9):.2f} Q{X(16.2):.2f},{V(-14.6):.2f} 24,{V(-14.8):.2f} "
+                       f"Q{X(31.8):.2f},{V(-14.6):.2f} {X(31.4):.2f},{V(-6.9):.2f} Q24,{V(-5.4):.2f} {X(16.6):.2f},{V(-6.9):.2f} Z")
+        d.clip("calotte", [calotte])
+        d.add(calotte, c["hat"])
+        d.raw('<g clip-path="url(#calotte)">' + rect(X(15), V(-9.4), X(33) - X(15), 3.4).replace('fill="%F%"', f'fill="{c["ribbon"]}"') + "</g>")
+        d.add(ellipse(X(20.4), V(-12.4), 2.6 * k, 1.0 * k, f"rotate(-20 {X(20.4):.2f} {V(-12.4):.2f})"), "#FFFFFF", sil=False, opacity=0.7)
 
     # visage : yeux, petites lunettes rondes, sourcils, joues, bouche, petit nez
     _eyes(d, c, p, X, V, 1.1, 1.4)
     _blush(d, c, X, V, 3.6)
     _mouth(d, c, p, X, V, 5.6, 0.85)
     _nez(d, c, X, V, 2.9, 1.15, 0.95, 0)
-    for x in (20.3, 27.7):
+    for x in (20.3, 27.7) if not dame else ():
         d.raw(f'<circle cx="{X(x):.2f}" cy="{V(0.6):.2f}" r="{2.55 * k:.2f}" fill="{c["lens"]}" fill-opacity="0.18" '
               f'stroke="{OUTLINE}" stroke-width="0.7"/>')
         d.raw(line(f"M{X(x - 1.6):.2f},{V(-0.4):.2f} Q{X(x - 1.2):.2f},{V(-1.3):.2f} {X(x - 0.3):.2f},{V(-1.6):.2f}",
                    "#FFFFFF", 0.5))
-    d.raw(line(f"M{X(22.85):.2f},{V(0.3):.2f} Q24,{V(-0.5):.2f} {X(25.15):.2f},{V(0.3):.2f} "
-               f"M{X(17.75):.2f},{V(0.2):.2f} L{X(14.9):.2f},{V(-0.2):.2f} M{X(30.25):.2f},{V(0.2):.2f} L{X(33.1):.2f},{V(-0.2):.2f}",
-               OUTLINE, 0.7))
+    if not dame:
+        d.raw(line(f"M{X(22.85):.2f},{V(0.3):.2f} Q24,{V(-0.5):.2f} {X(25.15):.2f},{V(0.3):.2f} "
+                   f"M{X(17.75):.2f},{V(0.2):.2f} L{X(14.9):.2f},{V(-0.2):.2f} M{X(30.25):.2f},{V(0.2):.2f} L{X(33.1):.2f},{V(-0.2):.2f}",
+                   OUTLINE, 0.7))
     _brows(d, p, X, V, c["hair_dk"], 1.1)
     if p["sweat"]:
         _sweat(d, c, X, V)
@@ -905,7 +939,8 @@ def _neighbor(p):
 
 
 # ================================================================== animations
-_DRAW = {"postman": _postman, "neighbor": _neighbor, "leon": _leon, "iris": _iris, "piquette": _piquette, "papa": _papa}
+_DRAW = {"postman": _postman, "neighbor": _neighbor, "leon": _leon, "iris": _iris, "piquette": _piquette, "papa": _papa,
+         "hortense": lambda p: _neighbor(p, "hortense")}
 
 _WAVE = [P(wave=1, wave_a=-28, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2),
          P(wave=1, wave_a=4, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2)]
@@ -968,6 +1003,9 @@ ANIMS = {   # PNJ : {nom : (poses, fps, boucle)}
 }
 
 
+ANIMS["hortense"] = ANIMS["neighbor"]        # (mêmes gestes que Mamie Rose : elle s'inquiète, les mains aux joues)
+
+
 def front(kind, p):
     """Dessin (Drawing) d'un PNJ vu de face dans la pose p (voir P)."""
     return _DRAW[kind](p)
@@ -975,7 +1013,7 @@ def front(kind, p):
 
 def portrait_states(kind):
     """Quatre poses pour le portrait de dialogue : normal, clignement, joyeux (grand sourire), inquiet."""
-    return [P(), P(blink=1), P(happy=True), P(worry=1, sweat=kind == "neighbor")]
+    return [P(), P(blink=1), P(happy=True), P(worry=1, sweat=kind in ("neighbor", "hortense"))]
 
 
 # Iris, un petit chien, et Maman Piquette, un hérisson (un peu plus haute que Tecky, bien plus petite qu'Alice : à la
