@@ -34,6 +34,18 @@ TERRAINS = {
     "water":    dict(fill="#5FB5E5", out="#2F7DAE", out_w=0.85, shore=True),      # berge et hauts-fonds : _shore()
     "field":    dict(fill="#B07A45", edge="#9A6638", out="#6E4628", edge_w=1.6, out_w=0.9),   # champ labouré
     "forest":   dict(fill="#5A9A4E", edge="#4F8C45", out="#3F7537", edge_w=1.2, out_w=0.7),   # sous-bois
+    # La côte (l'épisode de l'été ; teintes choisies par Christophe sur reference/v2/cote_terrains_options.png : le
+    # sable doré et les planches brunes ; la mer, turquoise, est l'eau aux couleurs de l'été : saisons.py). Ces
+    # bords naturels (sable / herbe, eau / sable, falaise) ont leur rangée dans le tileset : PAIRS.
+    "sand":     dict(fill="#F2DFA8", edge="#E3CB8C", out="#B79A5C", edge_w=1.6, out_w=0.8),   # le sable de la plage
+    "planks":   dict(fill="#B98A5C", edge="#9C7046", out="#5E4630", edge_w=1.4, out_w=0.9),   # les planches, la jetée
+    # La falaise, façon RPG Maker XP (demande de Christophe, d'après une carte de RPG Maker, validée sur
+    # reference/v2/falaise_rpg.png) : le plateau est un bloc surélevé aux bords arrondis. « heath », la lande du
+    # plateau (herbe jaunie, caillouteuse), cernée d'un liséré de pierres ; « chalk », la paroi de roche peinte sous
+    # ses bords du bas (hauteur : le nombre de rangées de coins) ; « stairs », l'escalier qui la franchit.
+    "chalk":    dict(fill="#EAE3CF", out="#6E6650", out_w=1.3, cliff=True),
+    "heath":    dict(fill="#C4C658", out="#7A725B", out_w=1.3, lisere=True),
+    "stairs":   dict(fill="#DCD3BC", edge="#B5AD96", out="#6E6650", edge_w=1.0, out_w=1.3),
 }
 
 # Paires disponibles (dessus, dessous), dans l'ordre des lignes de la planche.
@@ -41,7 +53,10 @@ TERRAINS = {
 PAIRS = [("dirt", "grass"), ("road", "grass"), ("paving", "grass"), ("concrete", "grass"),
          ("sidewalk", "grass"), ("road", "sidewalk"), ("water", "grass"), ("paving", "sidewalk"),
          ("road", "dirt"), ("road", "concrete"), ("concrete", "sidewalk"), ("field", "grass"),
-         ("forest", "grass"), ("dirt", "forest")]
+         ("forest", "grass"), ("dirt", "forest"),
+         # la côte : ses bords naturels ont une rangée (et donc leurs variantes froissées, ALTERNEES) ; les planches,
+         # la falaise et les autres mélanges restent des tuiles composées
+         ("sand", "grass"), ("water", "sand")]
 
 # Retouches de style pour certaines paires (sinon : style du terrain du dessus)
 PAIR_STYLE = {
@@ -49,8 +64,27 @@ PAIR_STYLE = {
     ("road", "concrete"): dict(edge="#74777F", edge_w=1.2),
 }
 
-# Priorité d'empilement (utile pour la génération automatique)
-PRIORITY = ["grass", "forest", "field", "dirt", "water", "sidewalk", "concrete", "paving", "road"]
+# Priorité d'empilement (utile pour la génération automatique) : l'eau recouvre le sable, la falaise a le pied dans
+# l'eau ou sur le sable, les planches (la jetée) passent sur l'eau
+PRIORITY = ["grass", "forest", "field", "dirt", "sand", "water", "chalk", "heath", "stairs", "sidewalk", "concrete",
+            "paving", "planks", "road"]
+# (l'ordre d'avant la côte, les nouveaux terrains à la suite : la graine des tuiles composées, qui ne doit pas
+# changer pour celles qui existaient — composite_seed())
+_GRAINES = ["grass", "forest", "field", "dirt", "water", "sidewalk", "concrete", "paving", "road", "sand", "chalk", "planks",
+            "heath", "stairs"]
+# Le bloc de la falaise : le plateau, sa paroi, son escalier. Il a les bords arrondis de tous les terrains, sans
+# froissement, et jette une ombre sur le sol d'en bas (_ombre_bloc).
+BLOC = ("chalk", "heath", "stairs")
+# Terrains dont la texture se suit d'une tuile à l'autre (de grandes masses de roche, des cailloux semés) : elle
+# est découpée dans une grande image qui se répète toutes les PHASES tuiles, d'après la place de la tuile dans la
+# carte. Une tuile qui en contient est donc toujours une tuile composée, propre à sa place (phase()).
+SUIVIES = ("chalk", "heath")
+PHASES = (6, 4)
+
+
+def phase(corners, tx, ty):
+    """La place d'une tuile dans les grandes textures (None si elle n'en a pas besoin)."""
+    return (tx % PHASES[0], ty % PHASES[1]) if any(c in SUIVIES for c in corners) else None
 
 
 # ------------------------------------------------------------------ textures (sur-échantillonnées)
@@ -201,13 +235,194 @@ def tex_forest(scale, seed=0):
     return _canvas(scale, TERRAINS["forest"]["fill"])
 
 
+def tex_sand(scale, seed=0):
+    """Sable : uni, à quelques grains près (les mêmes dans chaque tuile : il y en a peu). Coquillages, rides et
+    traces sont l'affaire du jeu, comme les brins de l'herbe."""
+    im = _canvas(scale, TERRAINS["sand"]["fill"])
+    d = ImageDraw.Draw(im)
+    k = scale * SS
+    rnd = random.Random(7000)
+    for i in range(5):
+        x, y, r = rnd.uniform(3, 29), rnd.uniform(3, 29), rnd.uniform(0.35, 0.6)
+        d.ellipse([(x - r) * k, (y - r) * k, (x + r) * k, (y + r) * k], fill=hexrgb(("#E6CE90", "#FBEFC8")[i % 2]))
+    return im
+
+
+def tex_planks(scale, seed=0):
+    """Planches : des lames de 4 px posées en travers de la promenade (leurs joints se raccordent d'une tuile à
+    l'autre), de trois tons, avec ici et là un about de lame."""
+    im = _canvas(scale, TERRAINS["planks"]["fill"])
+    d = ImageDraw.Draw(im)
+    k = scale * SS
+    a, b, joint = hexrgb("#C4966A"), hexrgb("#AC7E52"), hexrgb("#7E5A3A")
+    for i, x in enumerate(range(0, T, 4)):
+        if (i * 5 + seed) % 3 == 0:
+            d.rectangle([x * k, 0, (x + 4) * k, T * k], fill=a)
+        elif (i * 3 + seed) % 4 == 0:
+            d.rectangle([x * k, 0, (x + 4) * k, T * k], fill=b)
+        d.line([(x * k, 0), (x * k, T * k)], fill=joint, width=int(0.55 * k))
+        y = (i * 13 + 5 + seed * 7) % 28 + 2
+        d.line([(x * k, y * k), ((x + 4) * k, y * k)], fill=joint, width=int(0.5 * k))
+    return im
+
+
+def _cellules(W, H, pas, seed, etire=1.0):
+    """Des cellules irrégulières qui se répètent d'un bord à l'autre (W x H) : pour chaque pixel, la distance au
+    germe le plus proche d'une grille bousculée et au suivant, leurs numéros, et l'écart au plus proche (dx, dy)."""
+    rnd = np.random.RandomState(seed)
+    gx, gy = max(1, round(W / pas[0])), max(1, round(H / pas[1]))
+    px, py = W / gx, H / gy
+    sx = (np.arange(gx)[None, :] + rnd.uniform(0.05, 0.95, (gy, gx))) * px
+    sy = (np.arange(gy)[:, None] + rnd.uniform(0.05, 0.95, (gy, gx))) * py
+    yy, xx = np.mgrid[0:H, 0:W]
+    cj, ci = (yy // py).astype(int), (xx // px).astype(int)
+    d1, d2 = np.full((H, W), 1e9), np.full((H, W), 1e9)
+    n1, n2 = np.full((H, W), -1), np.full((H, W), -1)
+    ox, oy = np.zeros((H, W)), np.zeros((H, W))
+    for dj in range(-2, 3):
+        for di in range(-2, 3):
+            j, i = (cj + dj) % gy, (ci + di) % gx
+            dx = (xx - sx[j, i] + W / 2) % W - W / 2
+            dy = (yy - sy[j, i] + H / 2) % H - H / 2
+            d, n = np.hypot(dx, dy * etire), j * gx + i
+            pres = (d < d1) & (n != n1)
+            second = ~pres & (d < d2) & (n != n1)
+            d2, n2 = np.where(pres, d1, np.where(second, d, d2)), np.where(pres, n1, np.where(second, n, n2))
+            ox, oy = np.where(pres, dx, ox), np.where(pres, dy, oy)
+            d1, n1 = np.where(pres, d, d1), np.where(pres, n, n1)
+    return d1, d2, n1, n2, ox, oy
+
+
+_GRANDES = {}        # les grandes textures déjà dessinées : (nom, échelle, couleurs) -> image sur-échantillonnée
+
+
+def _grande(nom, scale, dessin, *cle):
+    """La grande texture `nom` (PHASES tuiles), dessinée une fois à demi-résolution du sur-échantillonnage (r pixels
+    par unité) puis agrandie : dessin(W, H, r) -> image."""
+    k = (nom, scale) + cle
+    if k not in _GRANDES:
+        r = scale * SS // 2
+        im = dessin(PHASES[0] * T * r, PHASES[1] * T * r, r)
+        _GRANDES[k] = im.resize((im.width * 2, im.height * 2), Image.BILINEAR).convert("RGBA")
+    return _GRANDES[k]
+
+
+def _decoupe(grande, scale, ph):
+    n = T * scale * SS
+    x, y = (ph or (0, 0))[0] * n, (ph or (0, 0))[1] * n
+    return grande.crop((x, y, x + n, y + n))
+
+
+def _dessin_roche(W, H, r):
+    """La paroi : de grandes masses de roche inégales (leurs tons, leur face éclairée, en haut à gauche), fendues de
+    failles ici et là seulement ; dedans, de petites facettes à peine marquées ; des coulures d'érosion debout ;
+    quelques corniches (un trait clair dessus, de l'ombre dessous). Teintes de craie."""
+    tons = np.array([hexrgb(t) for t in ("#F6F2E6", "#EAE3CF", "#DCD3BB", "#F0EBDB", "#CDC3A8", "#E3DCC6", "#D5CCB3")], dtype=float)
+    d1, d2, n1, n2, ox, oy = _cellules(W, H, (37 * r, 25 * r), 3, 0.8)            # les grandes masses, plutôt debout
+    a = tons[(n1 * 7 + 3) % len(tons)].copy()
+    a += np.clip((-ox * 0.7 - oy * 0.7) / (15 * r), -1, 1)[..., None] * 16
+    paire = (np.minimum(n1, n2) * 13 + np.maximum(n1, n2) * 7) % 10
+    bord = (d2 - d1) / r
+    a[(bord < 3.5) & (paire < 7)] *= 0.9                                        # le creux de la faille
+    a[(bord < 1.1 + paire * 0.17) & (paire < 6)] = hexrgb("#7A725B")           # la faille : pas partout, plus ou moins large
+    e1, e2, m1, m2, px, py = _cellules(W, H, (12 * r, 10 * r), 8)                 # les facettes
+    a += (((m1 * 5) % 7) - 3)[..., None] * 2.2
+    a += np.clip((-px * 0.6 - py * 0.8) / (6 * r), -1, 1)[..., None] * 5
+    f = (np.minimum(m1, m2) * 11 + np.maximum(m1, m2) * 5) % 10
+    a[((e2 - e1) / r < 0.8) & (f < 3)] *= 0.86
+    t = 2 * np.pi * np.arange(W)[None, :] / W                                   # (des coulures qui se referment)
+    coulure = np.sin(9 * t + 1.3) + 0.6 * np.sin(23 * t + 0.4) + 0.5 * np.sin(4 * t)
+    a *= (1 - np.clip(coulure - 1.0, 0, 1) * 0.1)[..., None]
+    im = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
+    d = ImageDraw.Draw(im)
+    rnd = random.Random(3)
+    for _ in range(PHASES[0] * PHASES[1] // 3 * 4):                             # corniches (loin des bords de l'image)
+        w = rnd.uniform(11, 30) * r
+        x, y = rnd.uniform(3 * r, W - w - 3 * r), rnd.uniform(3 * r, H - 5 * r)
+        pts = [(x + w * i / 4, y + rnd.uniform(-1.2, 1.2) * r) for i in range(5)]
+        d.line(pts, fill="#FFFFFF", width=max(1, round(1.5 * r)))
+        d.line([(px + r, py + 2 * r) for px, py in pts], fill="#857D66", width=max(1, round(1.5 * r)))
+    return im
+
+
+def tex_chalk(scale, seed=0, ph=None):
+    """La paroi de roche de la falaise : un morceau de la grande texture, d'après la place de la tuile."""
+    return _decoupe(_grande("roche", scale, _dessin_roche), scale, ph)
+
+
+LANDE = "#E2C24E"            # l'herbe du plateau : celle de la saison, jaunie de moitié par cette couleur
+
+
+def _teinte_lande():
+    g, j = hexrgb(GRASS["fill"]), hexrgb(LANDE)
+    return "#" + "".join(f"{round((a + b) / 2):02X}" for a, b in zip(g, j))
+
+
+def _dessin_lande(W, H, r):
+    """La lande du plateau : une herbe jaunie, semée de cailloux par petits groupes (ils se répètent d'un bord de
+    l'image à l'autre : un caillou à cheval sur le bord est dessiné des deux côtés)."""
+    im = Image.new("RGB", (W, H), _teinte_lande())
+    d = ImageDraw.Draw(im)
+    rnd = random.Random(5)
+    for _ in range(PHASES[0] * PHASES[1] // 2):
+        x0, y0 = rnd.uniform(0, W), rnd.uniform(0, H)
+        for _ in range(rnd.randint(1, 5)):
+            x, y = x0 + rnd.uniform(-11, 11) * r, y0 + rnd.uniform(-7, 7) * r
+            rx, ry = rnd.uniform(1.5, 4.5) * r, rnd.uniform(1.2, 3) * r
+            col = rnd.choice(("#F1ECDD", "#DDD5BF", "#CFC5AA"))
+            for ax in (-W, 0, W):
+                for ay in (-H, 0, H):
+                    d.ellipse([x + ax - rx, y + ay - ry, x + ax + rx, y + ay + ry], fill=col, outline="#857D66", width=max(1, round(0.9 * r)))
+    return im
+
+
+def tex_heath(scale, seed=0, ph=None):
+    """La lande du plateau : un morceau de la grande texture, d'après la place de la tuile."""
+    return _decoupe(_grande("lande", scale, _dessin_lande, _teinte_lande()), scale, ph)
+
+
+def tex_stairs(scale, seed=0):
+    """L'escalier : quatre marches de pierre par tuile (elles se raccordent), le nez de marche à l'ombre."""
+    im = _canvas(scale, TERRAINS["stairs"]["fill"])
+    d = ImageDraw.Draw(im)
+    k = scale * SS
+    for y in range(0, T, 8):
+        d.rectangle([0, y * k, T * k, (y + 1.6) * k], fill=hexrgb("#9C9480"))
+        d.rectangle([0, (y + 1.6) * k, T * k, (y + 3.2) * k], fill=hexrgb("#F2ECDC"))
+    return im
+
+
+def _pierres(scale):
+    """Les petites pierres du liséré : une texture de la taille d'une tuile, qui se répète."""
+    def dessin(W, H, r):
+        e1, e2, m1, _, px, py = _cellules(W, H, (7.5 * r, 6.5 * r), 11)
+        a = np.array([hexrgb(t) for t in ("#F4EFE1", "#E3DCC6", "#D5CCB3")], dtype=float)[m1 % 3]
+        a = a + np.clip((-px - py) / (4 * r), -1, 1)[..., None] * 10
+        a[(e2 - e1) / r < 1.1] = hexrgb("#7A725B")
+        return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
+    k = ("pierres", scale)
+    if k not in _GRANDES:
+        r = scale * SS // 2
+        im = dessin(T * r, T * r, r)
+        _GRANDES[k] = np.array(im.resize((im.width * 2, im.height * 2), Image.BILINEAR).convert("RGBA"))
+    return _GRANDES[k]
+
+
 def tex_lower_grass(scale, seed=0):
     return tex_grass(scale, seed % 4 if seed % 4 != 3 else 0, seed)
 
 
 TEX = {"dirt": tex_dirt, "road": tex_road, "paving": tex_paving, "concrete": tex_concrete,
        "sidewalk": tex_sidewalk, "water": tex_water, "grass": tex_lower_grass, "field": tex_field,
-       "forest": tex_forest}
+       "forest": tex_forest, "sand": tex_sand, "planks": tex_planks, "chalk": tex_chalk, "heath": tex_heath,
+       "stairs": tex_stairs}
+
+
+def _tex(terrain, scale, seed=0, marking=None, ph=None):
+    """La texture d'un terrain : celle de la route prend un marquage, celles qui se suivent une place (phase())."""
+    if terrain == "road":
+        return TEX[terrain](scale, seed, marking)
+    return TEX[terrain](scale, seed, ph) if terrain in SUIVIES else TEX[terrain](scale, seed)
 
 
 # ------------------------------------------------------------------ transitions
@@ -224,6 +439,14 @@ BANKS = ("grass", "forest", "field", "dirt")
 SHORE = dict(lip=("#93B35A", -4.4, -3.2), sand=("#EDDFAE", -3.6), wet=("#D9C68C", -1.2),
              shallow="#9FDFF0", mid="#78C9EC", mid_at=4.6, deep=9.5,
              shade=("#69B4D8", 0.85), foam=("#FFFFFF", 1.5, 2.5, 0.8))
+# Le bord de mer, là où l'eau recouvre le sable : pas de lèvre d'herbe ; du sable mouillé (deux bandes : couleur,
+# distance), des hauts-fonds, de l'écume tout le long du bord et une vague un peu plus loin (distances en px 1x).
+PLAGE = dict(wet=("#E2CC8E", -5.5), wet2=("#CDB273", -2.2), shallow="#9FE3E0", mid="#5FC3DA", mid_at=5.0, deep=10.5,
+             ecume=(-0.6, 1.4, -0.9, 0.95), vague=(5.2, 6.4, 0.35, 0.7))
+# La falaise (BLOC). ombre : celle du bloc sur le sol d'en bas, le long de ses bords du bas et de droite (couleur,
+# longueur en px 1x, opacité) ; pied : la paroi s'assombrit vers son pied ; lisere : la largeur du liséré de pierres
+# du plateau, et son trait du dedans, côté herbe.
+FALAISE = dict(ombre=("#22402E", 11, 0.36), pied=("#6E6650", 14, 0.5), lisere=6.5, dedans=("#8C8556", 1.0))
 
 
 def _ease(t):
@@ -235,7 +458,8 @@ def _ease(t):
 
 
 TREMBLE = 0.06               # bords naturels : de combien le champ est froissé (0 : des bords tirés à la règle)
-NATURELS = ("dirt", "water", "forest", "field")       # chemins de terre, rives, sous-bois, champ ; pas la voirie
+NATURELS = ("dirt", "water", "forest", "field", "sand")   # chemins de terre, rives, sous-bois, champ, plage ; pas la voirie ni la falaise
+RIVES = BANKS + ("sand",)    # là où le bord de l'eau est froissé (pas le long d'un quai)
 
 
 FROISSES = 3                 # nombre de froissements différents : la tuile de base et FROISSES - 1 variantes
@@ -254,9 +478,25 @@ def _froisse(n, variante=0):
     return np.sin(np.pi * X) ** 2 * np.sin(np.pi * Y) ** 2 * onde
 
 
-def _field(bits, n, light=False, tremble=0.0, variante=0):
+# Les bords debout de la falaise (les côtés du plateau et de sa paroi) ne sont pas tirés au cordeau (Christophe :
+# « rendre moins droite et rigide la bordure verticale ») : une ondulation du champ qui ne dépend que de la hauteur
+# dans la tuile. Elle est nulle et à plat en haut et en bas de la tuile (les contours se raccordent en douceur), et
+# nulle à mi-hauteur : un bord couché, qui passe là, ne bouge pas. Une paire d'amplitudes par variante.
+ONDES = ((0.14, 0.07), (-0.12, 0.09), (0.09, -0.10))
+ONDULES = ("chalk", "heath")
+
+
+def _ondule(n, variante=0):
+    y = (np.arange(n) + 0.5) / n
+    a, b = ONDES[variante % len(ONDES)]
+    f = np.sin(np.pi * y) ** 2 * (a * np.sin(2 * np.pi * y) + b * np.sin(4 * np.pi * y))
+    return np.repeat(f[:, None], n, axis=1)
+
+
+def _field(bits, n, light=False, tremble=0.0, variante=0, ondule=False):
     """Champ des 4 coins (interpolation adoucie : _ease) et distance signée approx. au contour 0.5 (en px
-    sur-échantillonnés). tremble : froissement du champ (_froisse), pour un bord naturel.
+    sur-échantillonnés). tremble : froissement du champ (_froisse), pour un bord naturel ; ondule : l'ondulation des
+    bords debout de la falaise (_ondule).
     light : rend aussi l'éclairage du bord (-1..1 : positif là où l'intérieur est à l'ombre du bord, c'est-à-dire
     le long des bords du haut et de gauche) et le champ lui-même (0..1, continu d'une tuile à sa voisine)."""
     nw, ne, sw, se = [(bits >> i) & 1 for i in range(4)]
@@ -265,6 +505,11 @@ def _field(bits, n, light=False, tremble=0.0, variante=0):
     v = nw * (1 - U) * (1 - V) + ne * U * (1 - V) + sw * (1 - U) * V + se * U * V
     if tremble and bits not in (0, 15):
         v = v + tremble * _froisse(n, variante)
+    if ondule and bits not in (0, 15):
+        # seulement près du contour (loin de lui, le champ reste à plat : sinon la distance approchée s'affole), et
+        # seulement là où le bord est debout (un bord couché ondulé se dédoublait)
+        gy0, gx0 = np.gradient(v)
+        v = v + _ondule(n, variante) * 4 * v * (1 - v) * gx0 ** 2 / (gx0 ** 2 + gy0 ** 2 + 1e-12)
     gy, gx = np.gradient(v)
     g = np.sqrt(gx ** 2 + gy ** 2)
     dist = (v - 0.5) / np.maximum(g, 1e-6)
@@ -286,6 +531,21 @@ def _shore(out, bits, below, scale, tremble=0.0, variante=0):
     dist, lum, v = _field(bits, n, light=True, tremble=tremble, variante=variante)
     d = dist / k                                      # en px 1x
     band = lambda a, b: (d >= a) & (d < b)
+    u = (np.arange(n) + 0.5) / n
+    U, V = np.meshgrid(u, u)
+    motif = (np.sin(2 * np.pi * (3 * U + V)) + 0.7 * np.sin(2 * np.pi * (2 * V - 5 * U) + 1.0)
+             + 0.5 * np.sin(2 * np.pi * (7 * U + 4 * V) + 2.0))
+    if below == "sand":                               # le bord de mer (PLAGE)
+        for key in ("wet", "wet2"):
+            col, a = PLAGE[key]
+            out[band(a, 0)] = hexrgb(col) + (255,)
+        v1, v2 = (float(_ease(0.5 + PLAGE[key] / T)) for key in ("mid_at", "deep"))
+        out[(v >= 0.5) & (v < v1)] = hexrgb(PLAGE["shallow"]) + (255,)
+        out[(v >= v1) & (v < v2)] = hexrgb(PLAGE["mid"]) + (255,)
+        for key in ("ecume", "vague"):
+            a, b, seuil, op = PLAGE[key]
+            _blend(out, "#FFFFFF", band(a, b) * (motif > seuil) * op)
+        return
     if below in BANKS:
         col, a, b = SHORE["lip"]
         out[band(a, b)] = hexrgb(col) + (255,)
@@ -299,27 +559,54 @@ def _shore(out, bits, below, scale, tremble=0.0, variante=0):
     col, a = SHORE["shade"]
     _blend(out, col, shallow * (d >= a) * (lum * 6 - 0.6))
     # écume : des tirets inégaux, tirés d'un motif qui se répète d'une tuile à l'autre (ils se raccordent)
-    u = (np.arange(n) + 0.5) / n
-    U, V = np.meshgrid(u, u)
-    motif = (np.sin(2 * np.pi * (3 * U + V)) + 0.7 * np.sin(2 * np.pi * (2 * V - 5 * U) + 1.0)
-             + 0.5 * np.sin(2 * np.pi * (7 * U + 4 * V) + 2.0))
     col, a, b, op = SHORE["foam"]
     _blend(out, col, band(a, b) * np.clip(-lum * 6 - 0.6, 0, 1) * (motif > 0.55) * op)
 
 
-def _layer(out, terrain, bits, below, scale, seed=0, marking=None, variante=0):
+def _ombre_bloc(out, bloc, scale, variante=0):
+    """L'ombre du bloc de la falaise (coins `bloc`) sur le sol d'en bas, le long de ses bords du bas et de droite."""
+    n, k = T * scale * SS, scale * SS
+    dist, lum, _ = _field(bloc, n, light=True, variante=variante, ondule=True)
+    d = dist / k
+    col, L, op = FALAISE["ombre"]
+    _blend(out, col, (d > -L) * (d < 0) * np.clip(-lum * 3, 0, 1) * np.clip((L + d) / 2.5, 0, 1) * op)
+
+
+def _layer(out, terrain, bits, below, scale, seed=0, marking=None, variante=0, propres=None, ph=None, bloc=None):
     """Pose `terrain` sur `out` (tableau sur-échantillonné) dans les coins `bits`, avec le style de la paire
-    (terrain, below) : liseré et contour ; pour l'eau, la rive et les hauts-fonds (_shore)."""
+    (terrain, below) : liseré et contour ; pour l'eau, la rive et les hauts-fonds (_shore). Dans une tuile composée :
+    propres, les seuls coins qui sont vraiment de ce terrain (`bits` compte aussi ceux des terrains posés par-dessus,
+    sous lesquels il passe) ; ph, la place de la tuile dans les grandes textures ; bloc, les coins du bloc de la
+    falaise, donnés à son premier terrain posé : il en dessine l'ombre et, pour la paroi, le pied."""
     n = T * scale * SS
     k = scale * SS
     spec = dict(TERRAINS[terrain])
     spec.update(PAIR_STYLE.get((terrain, below), {}))
-    ter = np.array(TEX[terrain](scale, seed, marking) if terrain == "road" else TEX[terrain](scale, seed))
-    tremble = TREMBLE if terrain in NATURELS and (terrain != "water" or below in BANKS) else 0     # (pas le long d'un quai)
-    dist = _field(bits, n, tremble=tremble, variante=variante)
+    ter = np.array(_tex(terrain, scale, seed, marking, ph))
+    tremble = TREMBLE if terrain in NATURELS and (terrain != "water" or below in RIVES) else 0     # (pas le long d'un quai)
+    onde = terrain in ONDULES
+    dist = _field(bits, n, tremble=tremble, variante=variante, ondule=onde)
+    if bloc is not None:
+        _ombre_bloc(out, bloc, scale, variante)
     inside = dist >= 0
     out[inside] = ter[inside]
-    if spec.get("shore"):
+    if spec.get("cliff"):                             # la paroi : plus sombre vers son pied (le bord du bas du bloc)
+        db, _, v = _field(bits if bloc is None else bloc, n, light=True, variante=variante, ondule=True)
+        gy, gx = np.gradient(v)
+        ny = gy / np.maximum(np.sqrt(gx ** 2 + gy ** 2), 1e-6)
+        col, L, op = FALAISE["pied"]
+        d = db / k
+        _blend(out, col, inside * (d >= 0) * (d < L) * np.clip((-ny - 0.35) * 2.5, 0, 1) * np.clip(1 - d / L, 0, 1) * op)
+    elif spec.get("lisere"):                          # le plateau : son liséré de pierres, le long de ses seuls bords
+        d = _field(bits if propres is None else propres, n, variante=variante, ondule=True) / k
+        L = FALAISE["lisere"]
+        bande = (d >= 0) & (d < L)
+        out[bande] = _pierres(scale)[bande]
+        col, w = FALAISE["dedans"]
+        out[(d >= L - w) & (d < L)] = hexrgb(col) + (255,)
+        out[(d >= 0) & (d < spec["out_w"])] = hexrgb(spec["out"]) + (255,)
+        return
+    elif spec.get("shore"):
         _shore(out, bits, below, scale, tremble, variante)
     else:
         edge = (dist >= spec["out_w"] * k) & (dist < (spec["out_w"] + spec["edge_w"]) * k)
@@ -335,33 +622,49 @@ def _finish(out, scale):
 def transition(terrain, bits, scale, seed=0, marking=None, lower="grass", variante=0):
     """Tuile de transition : `terrain` (dessus) dans les coins `bits`, `lower` ailleurs. variante : un autre
     froissement de son bord, s'il est naturel (_froisse)."""
-    out = np.array(TEX[lower](scale, seed))
+    out = np.array(_tex(lower, scale, seed))
     _layer(out, terrain, bits, lower, scale, seed, marking, variante)
     return _finish(out, scale)
 
 
 def needs_composite(corners):
     """Vrai si la tuile mêle trois terrains, ou deux qui n'ont pas de paire dans PAIRS : `resolve()` ne saurait pas
-    la dessiner sans remplacer un terrain par un autre (encoches carrées au bout des chemins, des trottoirs…)."""
+    la dessiner sans remplacer un terrain par un autre (encoches carrées au bout des chemins, des trottoirs…). Vrai
+    aussi pour la tuile pleine d'un terrain sans rangée dans le tileset (les planches, l'escalier), et pour toute
+    tuile dont la texture dépend de sa place (SUIVIES : la paroi, la lande)."""
     kinds = sorted(set(corners), key=PRIORITY.index)
-    return len(kinds) >= 3 or (len(kinds) == 2 and (kinds[1], kinds[0]) not in PAIRS)
+    if any(c in SUIVIES for c in kinds):
+        return True
+    if len(kinds) == 1:
+        return kinds[0] != "grass" and (kinds[0], "grass") not in PAIRS
+    return len(kinds) >= 3 or (kinds[1], kinds[0]) not in PAIRS
 
 
 def composite_seed(corners):
     """Graine de la texture d'une tuile composée : la même pour les mêmes coins, où que la tuile soit dans la carte
     (l'éditeur de carte la redessine à la demande, comme dans le jeu)."""
-    return sum(PRIORITY.index(c) * 9 ** i for i, c in enumerate(corners)) % 97
+    return sum(_GRAINES.index(c) * 9 ** i for i, c in enumerate(corners[:4])) % 97
 
 
-def composite(corners, scale, seed=0):
+def composite(corners, scale, seed=0, ph=None, variante=0):
     """Tuile composée (voir needs_composite) : le terrain le plus bas en fond, puis chaque terrain par-dessus le
     précédent, dans l'ordre de PRIORITY, sur les coins où il est ou bien un terrain plus haut (il passe ainsi sous les
-    suivants). Les contours viennent du même champ de coins que les tuiles voisines : ils s'y raccordent."""
+    suivants). Les contours viennent du même champ de coins que les tuiles voisines : ils s'y raccordent. corners :
+    les quatre coins, suivis de la place de la tuile (phase()) si sa texture en dépend ; ph : cette place."""
+    if len(corners) > 4:
+        corners, ph = corners[:4], tuple(corners[4:])
+    if ph:                                            # (une ondulation des bords debout par place : tuiles voisines différentes)
+        variante = (ph[0] * 3 + ph[1] * 5) % len(ONDES)
     kinds = sorted(set(corners), key=PRIORITY.index)
-    out = np.array(TEX[kinds[0]](scale, seed))
+    out = np.array(_tex(kinds[0], scale, seed, None, ph))
+    vu = kinds[0] in BLOC                             # le bloc de la falaise a-t-il déjà un terrain posé ?
     for below, t in zip(kinds, kinds[1:]):
         bits = sum(1 << i for i, c in enumerate(corners) if PRIORITY.index(c) >= PRIORITY.index(t))
-        _layer(out, t, bits, below, scale, seed)
+        bloc = None
+        if t in BLOC and not vu:
+            bloc, vu = sum(1 << i for i, c in enumerate(corners) if c in BLOC), True
+        _layer(out, t, bits, below, scale, seed, variante=variante, ph=ph, bloc=bloc,
+               propres=sum(1 << i for i, c in enumerate(corners) if c == t))
     return _finish(out, scale)
 
 
@@ -503,9 +806,12 @@ def overlay(scale, i):
 # ------------------------------------------------------------------ planche
 # La tuile 0 est toujours vide. Disposition, 16 colonnes :
 #   ligne 0      : [vide] herbe x4, marquages x4, variantes pleines x7
-#   lignes 1..14 : une paire (dessus/dessous) par ligne, colonne = bits de coins (0..15)
-#   ligne 15     : détails transparents à poser sur un 2e calque de tuiles
+#   lignes 1..   : une paire (dessus/dessous) par ligne (PAIRS), colonne = bits de coins (0..15)
+#   ligne suivante (OVERLAY_ROW) : détails transparents à poser sur un 2e calque de tuiles
 COLS = 16
+# L'image du tileset, elle, a deux fois plus de colonnes (la tuile n° i est en (i % LARGEUR, i // LARGEUR)) : deux
+# fois moins haute, elle reste sous les 4096 px en x4 quand les tuiles composées de la côte s'ajoutent.
+LARGEUR = 32
 ROW0 = ["(vide)", "herbe", "herbe + brins", "herbe + fleurs", "herbe + cailloux",
         "route ligne H", "route ligne V", "passage piéton (route H)", "passage piéton (route V)",
         "terre var. 1", "terre var. 2", "route var. 1", "route var. 2",
@@ -513,7 +819,7 @@ ROW0 = ["(vide)", "herbe", "herbe + brins", "herbe + fleurs", "herbe + cailloux"
 OVERLAY_ROW = 1 + len(PAIRS)
 # Variantes des transitions à bord naturel (un autre froissement, mêmes coins) : FROISSES - 1 rangées par paire,
 # après la ligne des détails. La carte ne les connaît pas : le jeu les choisit en peignant le sol (MAP.tileAlt).
-ALTERNEES = [p for p in PAIRS if p[0] in NATURELS and (p[0] != "water" or p[1] in BANKS)]
+ALTERNEES = [p for p in PAIRS if p[0] in NATURELS and (p[0] != "water" or p[1] in RIVES)]
 ALT_ROW = OVERLAY_ROW + 1
 COMPOSITE_BASE = (ALT_ROW + len(ALTERNEES) * (FROISSES - 1)) * COLS      # tuiles composées, après les variantes
 
@@ -526,28 +832,29 @@ def alternees():
 def tileset(scale, composites=()):
     """composites : coins (NO, NE, SO, SE) des tuiles composées, ajoutées à partir de l'index COMPOSITE_BASE."""
     ts = T * scale
-    rows = COMPOSITE_BASE // COLS + (len(composites) + COLS - 1) // COLS
-    sheet = Image.new("RGBA", (COLS * ts, rows * ts), (0, 0, 0, 0))
+    total = COMPOSITE_BASE + len(composites)
+    sheet = Image.new("RGBA", (LARGEUR * ts, -(-total // LARGEUR) * ts), (0, 0, 0, 0))
+    place = lambda i: ((i % LARGEUR) * ts, (i // LARGEUR) * ts)       # où va la tuile n° i
     row0 = [None] + [grass_tile(scale, v) for v in range(4)]
     row0 += [road_marking(scale, m) for m in ("dash_h", "dash_v", "zebra_h", "zebra_v")]
     row0 += [transition(t, 15, scale, seed=s_) for t, s_ in
              (("dirt", 1), ("dirt", 2), ("road", 1), ("road", 2), ("paving", 1), ("concrete", 1), ("concrete", 2))]
     for i, im in enumerate(row0):
         if im is not None:
-            sheet.paste(im, (i * ts, 0))
+            sheet.paste(im, place(i))
     for r, (up, lo) in enumerate(PAIRS):
         for bits in range(16):
-            sheet.paste(transition(up, bits, scale, seed=bits, lower=lo), (bits * ts, (1 + r) * ts))
+            sheet.paste(transition(up, bits, scale, seed=bits, lower=lo), place((1 + r) * COLS + bits))
     for i in range(len(OVERLAYS)):
-        sheet.paste(overlay(scale, i), (i * ts, OVERLAY_ROW * ts))
+        sheet.paste(overlay(scale, i), place(OVERLAY_ROW * COLS + i))
     for r, alts in alternees().items():
         up, lo = PAIRS[r - 1]
         for v, row in enumerate(alts):
             for bits in range(1, 15):
-                sheet.paste(transition(up, bits, scale, seed=bits, lower=lo, variante=v + 1), (bits * ts, row * ts))
+                sheet.paste(transition(up, bits, scale, seed=bits, lower=lo, variante=v + 1), place(row * COLS + bits))
     for i, cs in enumerate(composites):
         j = COMPOSITE_BASE + i
-        sheet.paste(composite(cs, scale, seed=composite_seed(cs)), ((j % COLS) * ts, (j // COLS) * ts))
+        sheet.paste(composite(cs, scale, seed=composite_seed(cs)), place(j))
     return sheet
 
 

@@ -139,7 +139,7 @@ eval(base + `setTimeout(() => {
   // bords naturels froissés : variantes tirées de la position, mêmes coins (tileLook) ; la voirie reste droite
   run('var vus = new Set(), memes = true, eau = MAP.shore; for (let tx = 0; tx < 40; tx++) { const v = tileLook(eau + 12, tx, 41); vus.add(v >> 4); memes = memes && (v & 15) === 12 && v === tileLook(eau + 12, tx, 41); }');
   ok(run('vus.size') === 3 && run('memes') && run('tileLook(MAP.shore + 15, 3, 3) === MAP.shore + 15') && run('tileLook(1, 3, 3) === 1')
-     && run('Object.keys(MAP.tileAlt).length') === 5 && run('!MAP.tileAlt[tileLookRoute >> 4]'.replace('tileLookRoute', '(2 * 16 + 3)')),
+     && run('Object.keys(MAP.tileAlt).length') === 7 && run('!MAP.tileAlt[tileLookRoute >> 4]'.replace('tileLookRoute', '(2 * 16 + 3)')),
      'rives et chemins : trois froissements du même bord, tirés de la position ; ni l\\'eau pleine, ni l\\'herbe, ni la route n\\'en ont');
   // ce qui vole : une ombre de la teinte des ombres portées, du côté opposé au soleil
   run('var ell = [], e0 = ctx.ellipse; ctx.ellipse = function (x, y) { ell.push([x, y]); }; flyShadow(100, 200, 80, 9, 3, 1); flyShadow(100, 200, 0, 9, 3, 1); ctx.ellipse = e0;');

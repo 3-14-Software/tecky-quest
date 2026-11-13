@@ -46,6 +46,13 @@ ok(any("farmer" in x for x in carte.valider_surcharge({"farmer": [1]}, base)), "
 ok(any("indice" in x for x in carte.valider(carte.appliquer(base, {"items": base["items"][:5]})))
    and not carte.valider(carte.appliquer(base, {"items": base["items"][:5]}), variante=True),
    "sans les indices : refusé pour une carte de base, permis pour la carte d'un épisode")
+# les planches (à plat) et la falaise (un mur) ne se touchent jamais
+t = [list(r) for r in base["terrain"]]
+t[5][5], t[5][6] = "l", "k"
+e = carte.valider(dict(base, terrain=["".join(r) for r in t]), avec_genres=False)
+ok(len(e) == 1 and "les planches et la falaise" in e[0] and "5, 4" in e[0], "refus : une tuile qui mêle planches et falaise")
+t[5][6], t[5][7] = ".", "k"
+ok(carte.valider(dict(base, terrain=["".join(r) for r in t]), avec_genres=False) == [], "un coin d'herbe entre les deux : permis")
 # 3. les surcharges du dépôt : d'un épisode qui a la carte, minimales, et la carte posée est correcte
 eps = {e["id"]: e for e in episodes.charger()}
 for ep, nom in carte.surcharges():

@@ -33,7 +33,14 @@ FIXES = ("format", "annexe", "w", "h", "legende")       # ce qu'une surcharge ne
 
 # une lettre par terrain dans les lignes de « terrain » (une ligne par rangée de coins)
 LEGENDE = {".": "grass", "t": "dirt", "r": "road", "p": "paving", "b": "concrete", "s": "sidewalk", "~": "water",
-           "c": "field", "f": "forest"}
+           "c": "field", "f": "forest", "a": "sand", "l": "planks", "k": "chalk",      # (sable, lames, craie : la paroi de la falaise)
+           "h": "heath", "e": "stairs"}                    # (la lande du plateau, l'escalier qui franchit la paroi)
+
+# Terrains qui ne se touchent jamais. Les planches sont à plat, la falaise est un mur de craie vu de face : une
+# promenade qui se fondrait dans la falaise n'a pas de sens (Christophe, 12 novembre 2026 : « il ne faut pas de
+# liaison possible entre les planches et les falaises »). valider() refuse la carte, donc l'éditeur aussi.
+INCOMPATIBLES = [("planks", "chalk"), ("planks", "heath")]
+_DITS = {"planks": "les planches", "chalk": "la falaise", "heath": "le plateau"}
 
 # ordre des clés dans le fichier (une clé inconnue est gardée, à la fin)
 ORDRE = ["format", "annexe", "w", "h", "legende", "terrain", "details", "decor",
@@ -247,6 +254,15 @@ def valider(c, avec_genres=True, variante=False):
         bad = sorted({ch for s in t for ch in s if ch not in LEGENDE})
         if bad:
             err.append("terrain : lettres inconnues " + " ".join(bad))
+        # terrains qui ne se touchent jamais (INCOMPATIBLES) : aucune tuile n'a un coin de l'un et un coin de l'autre
+        nom = {v: k for k, v in LEGENDE.items()}
+        for a, b in INCOMPATIBLES:
+            la, lb = nom[a], nom[b]
+            ou = [(x, y) for y in range(h) for x in range(w)
+                  if la in (q := t[y][x] + t[y][x + 1] + t[y + 1][x] + t[y + 1][x + 1]) and lb in q]
+            if ou:
+                err.append(f"terrain : {_DITS.get(a, a)} et {_DITS.get(b, b)} ne se touchent jamais ({len(ou)} tuile(s), la première en {ou[0][0]}, {ou[0][1]}) : "
+                           "laisser entre eux au moins un coin d'un autre terrain")
     g = genres() if avec_genres else None
     annexe = c.get("annexe") is True
     if "annexe" in c and not annexe:

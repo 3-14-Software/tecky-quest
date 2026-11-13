@@ -768,6 +768,7 @@ def all_sprites(scale):
         "spr_hud_portrait_leon": npc_portrait("leon", scale),
         "spr_hud_portrait_iris": npc_portrait("iris", scale),
         "spr_hud_portrait_piquette": npc_portrait("piquette", scale),
+        "spr_hud_portrait_papa": npc_portrait("papa", scale),
         "spr_hud_digits": digit_frames(scale),
         "spr_hud_key": key_frames(scale),
         "spr_hud_pad": pad_frames(scale),

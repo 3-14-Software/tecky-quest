@@ -112,6 +112,141 @@ def car(color, spin=0):
     return d
 
 
+# ------------------------------------------------------------------ la voiture du papa d'Alice
+# Une berline sportive rouge à hayon, relevée sur la photo que Christophe a donnée de la sienne (12 novembre 2026 :
+# long capot, pavillon en arc qui file jusqu'au petit becquet, grandes roues) ; sans marque ni logo. _PX, _PY
+# convertissent les pixels de la photo (nez à gauche, 366 x 220) en unités du dessin (nez à droite, sol en 38,6).
+SPORT = dict(body="#C9242E", dark="#8E161F", light="#E8606A", trim="#26262C", glass=GLASS, phare="#F4F7FA",
+             feu="#7A0F16", jante="#D5D9E0", jante_dk="#3A3D45", etrier="#E0413A")
+# la photo est étirée d'autant en hauteur : une berline basse, mais où l'on voit ses passagers (choix de Christophe
+# sur reference/v2/papa_voiture_options.png : « un peu rehaussée » plutôt que les proportions exactes)
+SPORT_K = 1.15
+
+
+def _PX(x):
+    return 6 + (334 - x) * 0.246
+
+
+def _PY(y, k=SPORT_K):
+    return 38.6 - (173 - y) * 0.246 * k
+
+
+def _lisse(pts):
+    """Un contour fermé et lisse qui passe entre les points : chaque point tire la courbe, les milieux sont dessus
+    (un point répété deux fois fait un angle)."""
+    m = lambda a, b: ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+    n = len(pts)
+    x0, y0 = m(pts[-1], pts[0])
+    out = f"M{x0:.2f},{y0:.2f} "
+    for i in range(n):
+        mx, my = m(pts[i], pts[(i + 1) % n])
+        out += f"Q{pts[i][0]:.2f},{pts[i][1]:.2f} {mx:.2f},{my:.2f} "
+    return out + "Z"
+
+
+def _roue_sport(d, cx, cy, r, spin):
+    """Grande roue à pneu fin : jante sombre à cinq branches doubles claires, étrier de frein rouge (qui ne tourne pas)."""
+    c = SPORT
+    d.add(circle(cx, cy, r), TYRE)
+    d.add(circle(cx, cy, r * 0.76), c["jante_dk"], sil=False, edge=True)
+    d.raw(f'<path d="M{cx + r * 0.2:.2f},{cy - r * 0.62:.2f} A{r * 0.65:.2f},{r * 0.65:.2f} 0 0 1 {cx + r * 0.64:.2f},{cy - r * 0.1:.2f}" '
+          f'fill="none" stroke="{c["etrier"]}" stroke-width="{r * 0.2:.2f}" stroke-linecap="round"/>')
+    for i in range(5):                                       # les branches : elles tournent
+        for da in (-9, 9):
+            a = math.radians(spin * 0.6 + i * 72 + da)
+            d.raw(line(f"M{cx + r * 0.16 * math.cos(a):.2f},{cy + r * 0.16 * math.sin(a):.2f} "
+                       f"L{cx + r * 0.72 * math.cos(a):.2f},{cy + r * 0.72 * math.sin(a):.2f}", c["jante"], 0.75))
+    d.add(circle(cx, cy, r * 0.17), c["jante"], sil=False)
+
+
+def _passager(d, qui, x, y, r, clip):
+    """Une tête derrière une vitre de la voiture, de profil vers la droite : le papa (cheveux ras, bouc, tee-shirt
+    rouge), Alice (carré châtain, tee-shirt jaune) ou Tecky (teckel roux, oreille tombante, harnais rouge)."""
+    if qui == "tecky":
+        d.add(rect(x - r * 1.0, y + r * 0.7, r * 2.0, r * 3, r * 0.7), "#D7332B", sil=False, clip=clip)              # harnais
+        d.add(ellipse(x, y, r * 1.05, r * 0.95), "#C56E2E", sil=False, clip=clip)                                   # crâne
+        d.add(ellipse(x + r * 1.15, y + r * 0.35, r * 0.9, r * 0.52), "#D98A45", sil=False, clip=clip)              # museau
+        d.add(circle(x + r * 1.95, y + r * 0.2, r * 0.26), "#3A1E12", sil=False, clip=clip)                         # truffe
+        d.add(ellipse(x - r * 0.55, y + r * 0.75, r * 0.55, r * 1.15, f"rotate(12 {x - r * 0.55:.2f} {y + r * 0.75:.2f})"),
+              "#8E4A1E", sil=False, clip=clip)                                                                      # oreille
+        d.add(circle(x + r * 0.45, y - r * 0.1, r * 0.2), "#3A1E12", sil=False, clip=clip)
+        return
+    peau, cheveux, habit = (("#E9B184", "#2B1A14", "#C9242E") if qui == "papa" else ("#FADFCB", "#B9976B", "#F6D360"))
+    d.add(rect(x - r * 1.1, y + r * 0.8, r * 2.2, r * 3, r * 0.8), habit, sil=False, clip=clip)
+    if qui == "alice":                                                                                              # le carré, derrière
+        d.add(rect(x - r * 1.15, y - r * 0.9, r * 1.5, r * 2.5, r * 0.6), cheveux, sil=False, clip=clip)
+    d.add(circle(x, y, r), peau, sil=False, clip=clip)
+    if qui == "papa":                                       # cheveux ras : une calotte fine ; un bouc le long de la mâchoire
+        d.add(path(f"M{x - r:.2f},{y + r * 0.1:.2f} A{r},{r} 0 0 1 {x + r * 0.86:.2f},{y - r * 0.5:.2f} "
+                   f"Q{x:.2f},{y - r * 0.62:.2f} {x - r * 0.62:.2f},{y - r * 0.05:.2f} Z"), cheveux, sil=False, clip=clip)
+        d.raw(f'<g clip-path="url(#{clip})">' + line(f"M{x - r * 0.1:.2f},{y + r * 0.92:.2f} Q{x + r * 0.62:.2f},{y + r * 0.95:.2f} "
+                                                     f"{x + r * 0.78:.2f},{y + r * 0.5:.2f}", cheveux, r * 0.26) + "</g>")
+    else:                                                   # la frange et le dessus du carré
+        d.add(path(f"M{x - r * 1.05:.2f},{y + r * 0.3:.2f} A{r * 1.05},{r * 1.05} 0 0 1 {x + r * 0.95:.2f},{y - r * 0.35:.2f} "
+                   f"Q{x + r * 0.2:.2f},{y - r * 0.3:.2f} {x - r * 0.25:.2f},{y + r * 0.35:.2f} Z"), cheveux, sil=False, clip=clip)
+    d.add(circle(x + r * 0.45, y + r * 0.08, r * 0.15), "#3A1E12", sil=False, clip=clip)
+
+
+def sport(spin=0, k=SPORT_K, passagers=("papa", "alice", "tecky")):
+    """La voiture de sport rouge du papa d'Alice, 88x40, de profil vers la droite. passagers : qui l'on voit
+    derrière les vitres (le conducteur, puis l'arrière) ; () : garée, vide."""
+    c = SPORT
+    X, Y = _PX, (lambda y: _PY(y, k))
+    r = 5.4 * (1 + (k - 1) * 0.75)
+    cy = 38.6 - r
+    d = Drawing(88, 40)
+    _shadow(d, 8, 82, 38.6)
+    haut = [(331, 156), (334, 142), (333, 126), (327, 106), (325, 104), (313, 103), (301, 99), (289, 95), (277, 90),
+            (265, 86), (253, 83), (241, 80), (225, 79), (205, 79), (190, 79), (175, 80), (163, 84), (151, 91),
+            (139, 98), (127, 105), (112, 108), (85, 110), (61, 113), (43, 118), (31, 124), (25, 130), (24, 142),
+            (26, 155), (26, 155), (32, 164)]
+    bas = [(60, 166), (140, 166), (220, 166), (300, 166), (322, 163), (331, 156)]
+    caisse = _lisse([(X(x), Y(y)) for x, y in haut + bas])
+    d.clip("sport", [path(caisse)])
+    d.add(path(caisse), c["light"])
+    # le dessus au soleil : un liseré clair (la même forme, 1,5 plus bas, dans la couleur de la caisse ; pas de
+    # « transform » : la découpe se déplacerait avec elle)
+    d.add(path(_lisse([(X(x), Y(y) + 1.5) for x, y in haut + bas])), c["body"], sil=False, clip="sport")
+    d.add(rect(0, Y(141), 88, 12), c["dark"], sil=False, clip="sport")               # le bas de caisse, à l'ombre
+    d.add(poly([(X(262), Y(139)), (X(118), Y(142)), (X(118), Y(144.5)), (X(262), Y(141.5))]), c["light"], sil=False,
+          clip="sport", opacity=0.55)                                                # le pli des portières, qui prend la lumière
+    d.add(rect(X(312), Y(159), X(42) - X(312), 10), c["trim"], sil=False, clip="sport")      # bas de caisse noir
+    d.add(poly([(X(334), Y(140)), (X(318), Y(143)), (X(316), Y(170)), (X(334), Y(170))]), c["trim"], sil=False, clip="sport")   # diffuseur
+    d.add(poly([(X(24), Y(143)), (X(40), Y(147)), (X(43), Y(170)), (X(24), Y(170))]), c["trim"], sil=False, clip="sport")       # entrée d'air
+    for x in (X(268), X(72)):
+        _passage(d, x, cy, r + 1.1, "sport")
+    d.add(poly([(X(108), Y(134)), (X(113), Y(134)), (X(120), Y(156)), (X(115), Y(156))]), c["trim"], sil=False, clip="sport")   # ouïe
+    # vitres : la portière avant, puis la longue vitre arrière qui s'effile ; entourage noir
+    v1 = poly([(X(149), Y(107)), (X(181), Y(86.5)), (X(197), Y(85.5)), (X(197), Y(107))])
+    v2 = path(f"M{X(202):.2f},{Y(85.5):.2f} L{X(244):.2f},{Y(86):.2f} Q{X(268):.2f},{Y(91):.2f} {X(283):.2f},{Y(100.5):.2f} "
+              f"L{X(276):.2f},{Y(105.5):.2f} L{X(202):.2f},{Y(107):.2f} Z")
+    for cle, v in (("s1", v1), ("s2", v2)):
+        _vitre(d, cle, v, None)
+    ry = (Y(107) - Y(86)) * 0.47
+    for qui, x, cle, m in zip(passagers, (X(183), X(216), X(249)), ("s1", "s2", "s2"), (1, 0.92, 0.8)):
+        _passager(d, qui, x, Y(107) - ry * m * 0.95, ry * m, cle)
+    d.raw('<g clip-path="url(#s1)">' + line(f"M{X(160):.2f},{Y(105):.2f} L{X(176):.2f},{Y(90):.2f}", "#FFFFFF", 0.8) + "</g>")
+    d.raw('<g clip-path="url(#s2)">' + line(f"M{X(262):.2f},{Y(103):.2f} L{X(252):.2f},{Y(90):.2f}", "#FFFFFF", 0.7) + "</g>")
+    for v in (v1, v2):
+        d.raw(v.replace('fill="%F%"', f'fill="none" stroke="{c["trim"]}" stroke-width="1.0" stroke-linejoin="round"'))
+    # portières, poignées affleurantes, rétroviseur, antenne
+    d.raw(line(f"M{X(199.5):.2f},{Y(109):.2f} L{X(199.5):.2f},{Y(158):.2f} M{X(263):.2f},{Y(108):.2f} Q{X(266):.2f},{Y(130):.2f} {X(244):.2f},{Y(146):.2f} "
+               f"M{X(136):.2f},{Y(110):.2f} L{X(133):.2f},{Y(158):.2f}", c["dark"], 0.6))
+    for x in (185, 250):
+        d.raw(line(f"M{X(x):.2f},{Y(119):.2f} L{X(x - 12):.2f},{Y(119):.2f}", c["dark"], 0.7))
+    d.add(poly([(X(147), Y(99)), (X(138), Y(100)), (X(137), Y(105.5)), (X(147), Y(106))]), c["trim"], sil=False, edge=True)   # rétroviseur
+    d.add(poly([(X(250), Y(80.5)), (X(240), Y(78)), (X(237), Y(80.5))]), c["trim"])                                          # antenne
+    # phare effilé, feu arrière
+    d.add(path(f"M{X(31):.2f},{Y(125):.2f} L{X(52):.2f},{Y(121):.2f} L{X(50):.2f},{Y(126.5):.2f} L{X(33):.2f},{Y(130):.2f} Z"),
+          c["phare"], sil=False, edge=True)
+    d.add(path(f"M{X(329):.2f},{Y(111):.2f} L{X(304):.2f},{Y(110):.2f} L{X(308):.2f},{Y(116):.2f} L{X(330):.2f},{Y(118):.2f} Z"),
+          c["feu"], sil=False, edge=True)
+    d.raw(line(f"M{X(326):.2f},{Y(113.5):.2f} L{X(309):.2f},{Y(112.8):.2f}", "#FF8A80", 0.6))
+    for x in (X(268), X(72)):
+        _roue_sport(d, x, cy, r, spin)
+    return d
+
+
 def van(spin=0):
     """Camionnette de boulangerie 80x48 : caisse crème peinte d'une baguette et d'un croissant, cabine à droite avec
     le boulanger au volant ; le dessus au soleil, le bas à l'ombre."""
@@ -262,6 +397,9 @@ def wagon(color, spin=0):
 SPINS = (0, 30, 60, 90)          # 3 rayons : un tour d'enjoliveur tous les 120°
 VEHICLES = {   # nom : (fonction(spin), (largeur, hauteur) 1x, origine 1x)
     **{f"car_{c}": ((lambda c: lambda s: car(c, s))(c), (64, 40), (32, 38.6)) for c in CAR_COLORS},
+    # la voiture de sport du papa d'Alice : avec lui, Alice et Tecky derrière les vitres ; garée, vide
+    "sport": (sport, (88, 40), (44, 38.6)),
+    "sport_vide": ((lambda s: sport(s, passagers=())), (88, 40), (44, 38.6)),
     "van": (van, (80, 48), (40, 44.4)),
     "bus": (bus, (128, 56), (64, 52.6)),
     "loco": (loco, (64, 48), (32, 44.4)),
@@ -271,7 +409,7 @@ VEHICLES = {   # nom : (fonction(spin), (largeur, hauteur) 1x, origine 1x)
 
 # Taille dans le jeu : les véhicules de la route sont agrandis (Christophe les trouvait trop petits, le 12 novembre
 # 2026) ; Titine reste un petit train. game.js : VEHICLE (longueurs).
-ECH = {"car": 1.5, "van": 1.5, "bus": 1.5}
+ECH = {"car": 1.5, "van": 1.5, "bus": 1.5, "sport": 1.5}
 
 
 def echelle(name):

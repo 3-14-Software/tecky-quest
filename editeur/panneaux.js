@@ -19,9 +19,11 @@
   };
 
   const TERRAINS = { grass: 'Herbe', dirt: 'Terre (chemin)', road: 'Route', paving: 'Pavés', concrete: 'Béton',
-    sidewalk: 'Trottoir', water: 'Eau', field: 'Champ labouré', forest: 'Sous-bois' };
+    sidewalk: 'Trottoir', water: 'Eau', field: 'Champ labouré', forest: 'Sous-bois',
+    sand: 'Sable (plage)', planks: 'Planches', heath: 'Plateau (lande)', chalk: 'Paroi de falaise', stairs: 'Escalier' };
   const COULEURS = { grass: '#7CC36B', dirt: '#D9B47A', road: '#5B5E68', paving: '#D4CBB8', concrete: '#A9ACB2',
-    sidewalk: '#CDD0D5', water: '#5DADE2', field: '#B07A45', forest: '#5A9A4E' };
+    sidewalk: '#CDD0D5', water: '#5DADE2', field: '#B07A45', forest: '#5A9A4E',
+    sand: '#F2DFA8', planks: '#B98A5C', heath: '#C4C658', chalk: '#EAE3CF', stairs: '#DCD3BC' };
   P.couleurTerrain = t => COULEURS[t] || '#FFFFFF';
   const OUTILS = [['select', 'Sélection', 'V'], ['pinceau', 'Pinceau', 'B'], ['rect', 'Rectangle', 'R'], ['remplir', 'Remplir', 'G'],
     ['pipette', 'Pipette', 'I'], ['details', 'Détails au sol', 'D'], ['poser', 'Poser', 'P']];
@@ -51,10 +53,21 @@
   function vignetteTuile(idx, taille = 34) {
     const c = h('canvas', { width: taille, height: taille, class: 'vig' }), g = c.getContext('2d');
     g.fillStyle = '#7CC36B'; g.fillRect(0, 0, taille, taille);
-    g.drawImage(P.tiles, (idx % 16) * 64, Math.floor(idx / 16) * 64, 64, 64, 0, 0, taille, taille);
+    const L = ED.I.largeur;
+    if (idx >= 0) g.drawImage(P.tiles, (idx % L) * 64, Math.floor(idx / L) * 64, 64, 64, 0, 0, taille, taille);
     return c;
   }
-  const tuilePleine = t => t === 'grass' ? 1 : (1 + ED.I.pairs.findIndex(([u, l]) => u === t && l === 'grass')) * ED.I.cols + 15;
+  // la tuile pleine d'un terrain ; -1 s'il n'a pas de rangée dans le tileset (les planches : une tuile composée)
+  const tuilePleine = t => {
+    if (t === 'grass') return 1;
+    const r = ED.I.pairs.findIndex(([u, l]) => u === t && l === 'grass');
+    return r < 0 ? -1 : (1 + r) * ED.I.cols + 15;
+  };
+  function vignetteTerrain(t) {
+    const idx = tuilePleine(t), c = vignetteTuile(idx), g = c.getContext('2d');
+    if (idx < 0) { const im = new Image(); im.onload = () => g.drawImage(im, 0, 0, c.width, c.height); im.src = 'tuile?c=' + [t, t, t, t].concat(ED.I.suivies.includes(t) ? [0, 0] : []).join(','); }
+    return c;
+  }
 
   /* ------------------------------------------------------------------ barre d'outils */
   function construireBarre() {
@@ -119,7 +132,7 @@
       const grid = h('div', { class: 'grille-pal' });
       for (const t of Object.keys(TERRAINS)) {
         grid.append(h('button', { class: 'pal' + (O.terrain === t ? ' actif' : ''), title: TERRAINS[t], on: { click: () => { O.terrain = t; if (out === 'pipette') O.choisir('pinceau'); else construirePalette(); } } },
-          vignetteTuile(tuilePleine(t)), h('span', {}, TERRAINS[t])));
+          vignetteTerrain(t), h('span', {}, TERRAINS[t])));
       }
       p.append(grid);
       if (out === 'pinceau') {

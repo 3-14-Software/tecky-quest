@@ -135,6 +135,20 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   gauche ou une vue de trois quarts ne le seraient pas. Du monde derrière les vitres (`_tete()` : conducteurs,
   boulanger en toque, passagers du bus). Planche : `reference/v2/vehicules_v2.png`.
   Titine et ses wagons : même lumière (chaudière, cabine, roues, conteneurs).
+  **Le papa d'Alice et sa voiture** (été ; 12 novembre 2026) : dessinés d'après ce que Christophe a donné, un
+  dessin de lui et une photo de sa voiture — à relever de près, pas à interpréter. Le papa (`npcs._papa()`,
+  genre `papa` de `npcs.KINDS` : sprites `papa/idle|talk|wave|cheer`, portrait `hud/portrait_papa`, `WHO.papa`,
+  texte `noms.papa`) : cheveux ras très bruns aux tempes plus claires, sourcils épais, bouc le long de la
+  mâchoire, tee-shirt rouge « 3.14 » à manches courtes, jean (son choix sur
+  `reference/v2/papa_voiture_options.png` ; `tenue="bermuda"` et `lunettes=True` existent pour la plage).
+  Manches courtes : une palette qui a la clé `bras` (la couleur du bras nu) fait s'arrêter la manche avant le
+  coude dans `npcs._arm()`. La voiture (`vehicles.sport()`, véhicules `sport` — le papa au volant, Alice et
+  Tecky à l'arrière, `_passager()` — et `sport_vide`, garée) : une berline sportive rouge à hayon, **sans marque
+  ni logo**, dont le profil est relevé sur la photo (`_PX`, `_PY` convertissent ses pixels ; `_lisse()` : un
+  contour lisse qui passe entre les points), étirée de `SPORT_K` (1,15) en hauteur — « un peu rehaussée », son
+  choix, pour qu'on voie les passagers ; grandes roues à étrier rouge (`_roue_sport()`), agrandie comme les
+  autres (`ECH`), `VEHICLE.sport` dans game.js. Ni l'un ni l'autre n'est encore placé sur une carte : ils
+  serviront à la cinématique du départ (essai dans le jeu : `reference/v2/lot6_papa_voiture.png`).
   **Ombres** : la ligne de contact (`Sprite.sol`) passe un peu au-dessus du bas des murs (`CONTACT`), pour que
   l'ombre parte de dessous le contour : posée juste sous le mur, elle laissait un liseré clair entre le bâtiment
   et son ombre. Christophe tient aux ombres détaillées (les jours entre les pieds du poulailler, sous le store
@@ -169,6 +183,58 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   hauts-fonds clairs, eau moyenne, puis le fond (la couleur des tuiles pleines) ; ombre de la berge du haut et de
   gauche, écume en tirets le long de celle du bas et de droite (motif périodique : il se raccorde d'une tuile à
   l'autre). Les limites des bandes larges suivent le champ (continu entre tuiles), pas la distance approchée.
+  **Côte** (été ; 12 novembre 2026) : cinq terrains de plus (lettres de `carte.LEGENDE`) : `sand` (sable, `a`),
+  `planks` (planches et jetée, `l`), et la falaise — `heath` (la lande du plateau, `h`), `chalk` (sa paroi de
+  roche, `k`), `stairs` (l'escalier, `e`). Teintes choisies par Christophe sur
+  `reference/v2/cote_terrains_options.png` : le sable doré et les planches brunes de A, la mer turquoise de B —
+  la mer est le terrain `water` aux couleurs de l'été (`saisons.py`). Sable uni (le jeu l'habillera, comme
+  l'herbe), lames de 4 px qui se raccordent. Là où l'eau recouvre le sable, `_shore()` dessine le bord de mer
+  (`PLAGE` : sable mouillé, hauts-fonds, écume tout le long, une vague plus loin) au lieu de la berge d'herbe ;
+  `RIVES` = où le bord de l'eau est froissé. Deux paires de plus (sable / herbe, eau / sable) ont leur rangée
+  et leurs variantes froissées ; les planches et la falaise n'en ont pas : leurs tuiles sont des tuiles
+  composées (`needs_composite()`). `_GRAINES` garde l'ordre d'avant pour la graine des tuiles composées (celles
+  du monde n'ont pas bougé). **Image du tileset** : `LARGEUR` (32) colonnes, la tuile n° i en (i % 32, i // 32)
+  — deux fois moins haute, pour rester sous 4096 px en x4 ; les index, eux, restent « rangée x 16 + coins »
+  (`COLS`). `MAP.sheet` dans game.js, `infos.largeur` dans l'éditeur. Étude : `python3 v2/cote_etude.py`
+  (`reference/v2/cote_terrains.png`).
+  **Falaise, façon RPG Maker XP** (12 novembre 2026). Il a fallu six planches pour y arriver : une bande de
+  craie peinte comme un terrain (staircases, lèvre d'herbe, ombre au pied) n'allait « pas du tout » ; Christophe
+  a fini par donner une carte de RPG Maker en modèle (« il faut s'inspirer des tilesets de RPG Maker XP »), puis
+  a réglé le détail : bords arrondis, paroi « plus naturelle et irrégulière » (les pans réguliers puis les blocs
+  façon pavage ont été refusés), pas de touffes d'herbe au bord (« moches ») mais un liséré de pierres, et
+  l'herbe du plateau « jaunie façon bruyère », caillouteuse. Maquette validée : `reference/v2/falaise_rpg.png` ;
+  le moteur : `reference/v2/falaise.png` (`python3 v2/falaise_etude.py`). Ne pas revenir à la bande de craie.
+  Le principe (`tiles.BLOC`) : **le plateau est un bloc surélevé**. On peint la lande (`heath`) là où est le
+  plateau, la paroi (`chalk`) sous ses bords du bas — sa hauteur est le nombre de rangées de coins, deux
+  d'ordinaire —, et l'escalier (`stairs`) en colonnes de coins du bord du plateau jusqu'au pied (deux colonnes :
+  avec une seule, ses bouts sont des demi-ronds ; il commence dans la dernière rangée de lande, pour entailler
+  le liséré). `PRIORITY` les empile paroi, lande, escalier : la paroi prend la forme du bloc entier, la lande
+  se pose dessus. `_layer()` : la paroi s'assombrit vers son pied (`FALAISE["pied"]`) ; la lande reçoit son
+  liséré de petites pierres (`_pierres()`, d'après ses seuls coins, `propres`) ; le premier terrain du bloc posé
+  dans la tuile en dessine l'ombre sur le sol d'en bas, le long des bords du bas et de droite (`_ombre_bloc()`,
+  `bloc`). Pas de froissement, mais les **bords debout ondulent** (Christophe : « rendre moins droite et rigide
+  la bordure verticale ») : `_ondule()`, `ONDES`, `ONDULES` — une ondulation du champ qui ne dépend que de la
+  hauteur dans la tuile, nulle et à plat en haut et en bas (les contours se raccordent), appliquée seulement
+  près du contour et là où le bord est debout (un bord couché ondulé se dédoublait ; loin du contour, la
+  distance approchée s'affolait : ombres en barbes) ; la variante se tire de la place de la tuile. Les collisions
+  ne la connaissent pas (quelques pixels). **Textures suivies** (`SUIVIES`, `PHASES`, `phase()`) : la paroi (de grandes
+  masses de roche fendues, `_dessin_roche()`, cellules de Voronoï `_cellules()`) et la lande (herbe de la
+  saison jaunie de moitié par `LANDE`, cailloux semés, `_dessin_lande()`) sont découpées dans une grande image
+  qui se répète toutes les 6 x 4 tuiles : une tuile qui en contient est toujours composée, et sa clé porte sa
+  place — `COMPOSITES` contient des tuples de 4 coins, ou de 4 coins et de la place (px, py) ; `composite()`
+  accepte les deux ; l'éditeur fait de même (`sol.js`, `/tuile?c=…,px,py`, `infos.suivies` / `phases`). Sans
+  cela, la même roche se répétait à chaque tuile.
+  **Collisions** (game.js) : `MAP.cliff` (coins de paroi) → `cliffAt()` : on ne marche pas sur la roche ;
+  `MAP.plateau` (coins de lande et d'escalier) et `MAP.stairs` → `rimAt()` (`RIM`) : le bord du plateau est une
+  bande infranchissable autour de la ligne où le champ passe à 0,5, ouverte là où il y a de l'escalier ;
+  `cornerVal()` = l'interpolation commune à l'eau, à la paroi et au plateau. Tous trois sont vides sur une
+  carte sans falaise. **Planches et falaise ne se touchent jamais** (Christophe : « il ne faut pas de liaison
+  possible entre les planches (horizontal) et les falaises (vertical) ») : `carte.INCOMPATIBLES` (planches /
+  paroi, planches / plateau), `valider()` refuse toute tuile qui a un coin de l'un et un coin de l'autre —
+  l'éditeur aussi, à l'enregistrement. La carte d'essai `cartes/pre.json` a un bout de plage (planches, sable,
+  jetée, mer) et un plateau avec sa paroi et son escalier, qui éprouvent tout cela (`tests/cartes.js` : Tecky
+  monte l'escalier, le bord du plateau l'arrête). Pas encore fait : l'habillage du sable par le jeu, la nage,
+  les vagues animées ; les cailloux de la lande se répètent toutes les six tuiles.
 - `music.py` : **source unique** de la musique (v2 : **un morceau par zone**, dans son ton, à son tempo, avec ses
   instruments). `songs()` → `SONGS` du jeu ; `python3 music.py` contrôle les partitions (notes des temps hors de
   l'accord, hors de la gamme, étendue). Niche et écran titre : « Promenade de Tecky », le thème (do, 140 ; 32

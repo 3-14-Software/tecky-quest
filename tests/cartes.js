@@ -36,6 +36,29 @@ function main() {
   ok(run('ZONES.length') === 1 && run('ZONES[0].name') === 'Au-delà du tunnel' && run('EDGE_DECOR.filter(d => d.n === "tunnel").length') === 2
      && run('EDGE_DECOR.filter(d => d.n !== "tunnel").every(d => offMap(d.x, d.y - 12, d.x, d.y))'),
      'ses zones et sa lisière sont les siennes (' + run('EDGE_DECOR.length') + ' fourrés et arbres autour, deux tunnels)');
+  // les terrains de la côte, essayés sur cette carte : sable, planches, mer, et la falaise (plateau, paroi, escalier)
+  ok(run('CARTES.monde.cliff.length') === 0 && run('CARTES.monde.plateau.length') === 0 && run('MAP.cliff.length') === run('(MAP.w + 1) * (MAP.h + 1)')
+     && run('cliffAt(37 * TS, 17.5 * TS)') && run('blockedFeet(37 * TS, 17.5 * TS, 16)') && !run('cliffAt(37 * TS, 20 * TS)') && !run('blockedFeet(37 * TS, 20 * TS, 16)'),
+     'la paroi de la falaise : on ne marche pas sur la roche ; à son pied, sur le sable, si');
+  ok(!run('blockedFeet(37 * TS, 15.8 * TS, 16)') && run('rimAt(37 * TS, 14.5 * TS)') && run('blockedFeet(37 * TS, 14.5 * TS, 16)')
+     && run('rimAt(31.5 * TS, 15.6 * TS)') && !run('rimAt(37 * TS, 13.8 * TS)'),
+     'le plateau : on y marche, mais son bord (le liséré de pierres) ne se franchit pas');
+  ok(!run('blockedFeet(35 * TS, 17.5 * TS, 16)') && !run('blockedFeet(35 * TS, 18.5 * TS, 16)') && !run('blockedFeet(35 * TS, 15.5 * TS, 16)')
+     && !run('blockedFeet(36 * TS, 17.5 * TS, 16)') && run('blockedFeet(37 * TS, 17.5 * TS, 16)') && run('blockedFeet(34 * TS, 17.5 * TS, 16)'),
+     'l\'escalier franchit la paroi : libre du pied jusqu\'au plateau, la roche de chaque côté');
+  run('var px0 = P.x, py0 = P.y; P.x = 35 * TS; P.y = 19.6 * TS; P.mode = "free"; cars = [];');
+  step(150, 'held.up = true; cars = [];'); run('held.up = false;');
+  ok(run('P.y') < run('16.2 * TS') && run('Math.abs(P.x - 35 * TS) < 40') && run('cornerVal(MAP.plateau, P.x, P.y)') > 0.9,
+     'Tecky monte l\'escalier depuis la plage et arrive sur le plateau (y = ' + (run('P.y') / 64).toFixed(1) + ')');
+  step(120, 'held.right = true; cars = [];'); run('held.right = false;');
+  step(150, 'held.down = true; cars = [];'); run('held.down = false;');
+  ok(run('P.y') < run('16.6 * TS') && run('P.x') > run('37 * TS'), 'du plateau, il ne saute pas dans le vide : le bord l\'arrête');
+  run('P.x = px0; P.y = py0;');
+  ok(!run('blockedFeet(10 * TS, 20 * TS, 16)') && !run('blockedFeet(10 * TS, 17.6 * TS, 16)') && run('waterAt(10 * TS, 23 * TS)')
+     && !run('blockedFeet(19.5 * TS, 22.6 * TS, 16)') && run('blockedFeet(17.5 * TS, 22.6 * TS, 16)'),
+     'on marche sur le sable, sur les planches et sur la jetée, pas dans la mer');
+  ok(run('MAP.sheet') === 32 && run('MAP.ground.every(i => i >= 0)') && run('MAP.ground[20 * MAP.w + 10] >> 4') === 15 && run('!!MAP.tileAlt[16]'),
+     'le sable plein a sa rangée dans le tileset, le bord de mer ses variantes froissées');
   // il y marche, le jeu se dessine, rien ne casse
   run('var x0 = P.x, y0 = P.y; cars = [];');
   step(90, 'held.right = true;'); run('held.right = false;');

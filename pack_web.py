@@ -188,10 +188,11 @@ def build_map():
 
     def pick(cs, tx, ty):                             # tuile (tx, ty) d'après ses quatre coins (NO, NE, SO, SE)
         up, lo, bits = tiles.resolve(cs)
-        if tiles.needs_composite(cs):
-            if tuple(cs) not in COMPOSITES:
-                COMPOSITES.append(tuple(cs))
-            return tiles.COMPOSITE_BASE + COMPOSITES.index(tuple(cs))
+        if tiles.needs_composite(cs):               # (suivie de sa place si sa texture en dépend : tiles.phase())
+            cle = tuple(cs) + (tiles.phase(cs, tx, ty) or ())
+            if cle not in COMPOSITES:
+                COMPOSITES.append(cle)
+            return tiles.COMPOSITE_BASE + COMPOSITES.index(cle)
         if up == "grass":
             return GRASS_VARIANTS[int(hash3(tx, ty, 1) * len(GRASS_VARIANTS))]
         idx = tiles.tile_index(up, bits, "grass" if bits == 15 else lo)
@@ -233,10 +234,16 @@ def build_map():
             for x in range(x0, x1 + 1):
                 g[y][x] = "bridge"           # n'est plus de l'eau pour les collisions (le sol a déjà été choisi)
     water = [1 if g[y][x] == "water" else 0 for y in range(MH + 1) for x in range(MW + 1)]
+    # la falaise : les coins de craie, où l'on ne marche pas (game.js : cliffAt()) ; rien si la carte n'en a pas
+    cliff = [1 if g[y][x] == "chalk" else 0 for y in range(MH + 1) for x in range(MW + 1)]
+    # le plateau (la lande et l'escalier qui y monte) : on ne franchit son bord que par l'escalier (rimAt())
+    plateau = [1 if g[y][x] in ("heath", "stairs") else 0 for y in range(MH + 1) for x in range(MW + 1)]
+    stairs = [1 if g[y][x] == "stairs" else 0 for y in range(MH + 1) for x in range(MW + 1)]
     px = lambda v: round(v * TS, 1)
     hors = px(carte.HORS)
     m = {
-        "w": MW, "h": MH, "ground": ground, "over": over, "water": water,
+        "w": MW, "h": MH, "ground": ground, "over": over, "water": water, "cliff": cliff if any(cliff) else [],
+        "plateau": plateau if any(plateau) else [], "stairs": stairs if any(stairs) else [],
         "decor": [[n, px(x), px(y)] for n, x, y in DECOR],
         # lisière (lisiere.py) : sol de la marge autour de la carte (tx, ty, tuile) et ses décors (nom, x, y, miroir)
         "edge": {"r": R, "ring": ring, "decor": [[n, px(x), px(y), f] for n, x, y, f in EDGE]},
@@ -293,6 +300,7 @@ def build_jeu():
         "ts": TS,
         "hole": ovrow + OV["trou creusé (trésor)"],
         "shore": tiles.tile_index("water", 0),        # la rangée des tuiles eau / herbe (la 16e : l'eau pleine)
+        "sheet": tiles.LARGEUR,                       # colonnes de l'image du tileset
         "tileAlt": tiles.alternees(),                 # bords naturels : rangée du tileset -> rangées de ses variantes
         "wood": tiles.tile_index("forest", 15),       # le sous-bois plein (game.js : woodDetails())
         "fieldRow": tiles.tile_index("field", 0),     # la rangée des tuiles champ / herbe (fieldDetails())
@@ -621,7 +629,8 @@ def preview(m, atlas, meta, tileset):
     e = m["edge"]
     o = e["r"] * TS                       # la marge de la lisière, autour de la carte
     img = Image.new("RGBA", (MW * TS + 2 * o, MH * TS + 2 * o))
-    tile = lambda idx: tileset.crop(((idx % 16) * TS, (idx // 16) * TS, (idx % 16 + 1) * TS, (idx // 16 + 1) * TS))
+    L = tiles.LARGEUR                     # (colonnes de l'image du tileset)
+    tile = lambda idx: tileset.crop(((idx % L) * TS, (idx // L) * TS, (idx % L + 1) * TS, (idx // L + 1) * TS))
     alt = tiles.alternees()
 
     def look(idx, tx, ty):                # comme tileLook() de game.js : une variante du bord, tirée de la position

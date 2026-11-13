@@ -515,10 +515,20 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      le moteur des quêtes est à rendre réutilisable plutôt qu'à recopier six fois.
    - *Les adversaires* (mode aventure) : **les chiens en ville et au port**, comme au printemps ; **des crabes
      sur la plage**, qui pincent si on leur marche dessus et s'enterrent quand Tecky aboie.
-   - *À dessiner* : la voiture de sport rouge, les motos, Tecky qui nage, le papa d'Alice, les six personnages
+   - *Dessinés le 12 novembre 2026* : le papa d'Alice (d'après un dessin de Christophe : cheveux ras, bouc,
+     tee-shirt rouge « 3.14 », jean) et sa voiture de sport rouge (d'après une photo de la sienne, sans marque
+     ni logo, un peu rehaussée ; avec ses passagers, ou garée) : `reference/v2/papa_voiture_options.png`.
+   - *Terrains de la côte, faits le 12 novembre 2026* : sable, planches (et jetée), bord de mer, et la falaise.
+     Teintes choisies par Christophe : sable doré, planches brunes, mer turquoise (`reference/v2/cote_terrains.png`).
+     La falaise est faite façon RPG Maker XP, sur son modèle (maquette validée : `reference/v2/falaise_rpg.png`) :
+     un plateau de lande jaunie et caillouteuse cerné d'un liséré de pierres, une paroi de roche sous ses bords
+     du bas, un escalier pour monter, l'ombre du bloc sur le sol d'en bas ; on ne franchit le bord du plateau que
+     par l'escalier ; les planches ne touchent jamais la falaise. Tout est dans le moteur de tuiles et dans
+     l'éditeur, essayé sur la carte d'essai (`reference/v2/lot6_plage_jeu.png`). Restent : la carte de la côte
+     elle-même, l'habillage du sable (coquillages, traces), la nage, les vagues.
+   - *À dessiner* : les motos, Tecky qui nage, les six personnages
      des quêtes, le caniche, les moutons, les mouettes, les crabes ; le phare, le casino, les cabines de plage,
-     le manège, les bateaux de pêche, l'étal de poissons, le porche du parking ; le sable, la mer et ses vagues,
-     les planches, la falaise ; les objets (chapeau, pelle, tong, coquillages, bouées, jouets de plage).
+     le manège, les bateaux de pêche, l'étal de poissons, le porche du parking ; les vagues de la mer ; les objets (chapeau, pelle, tong, coquillages, bouées, jouets de plage).
 5. Les autres saisons (automne, hiver), puis les intérieurs.
 6. Rejouer : cachettes tirées au sort, album d'autocollants.
 

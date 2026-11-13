@@ -1223,7 +1223,8 @@ function buildChunk(cx, cy, n, img, k, len, mask) {
   const c = document.createElement('canvas'), s = TS * k;
   c.width = c.height = (n * TS + 2 * CM) * k;
   const g = c.getContext('2d');
-  const put = (idx, tx, ty) => g.drawImage(img, (idx % 16) * s, Math.floor(idx / 16) * s, s, s,
+  const L = MAP.sheet;                 // (colonnes de l'image du tileset : la tuile n° i est en (i % L, i / L))
+  const put = (idx, tx, ty) => g.drawImage(img, (idx % L) * s, Math.floor(idx / L) * s, s, s,
     ((tx - cx) * TS + CM) * k, ((ty - cy) * TS + CM) * k, s, s);
   for (let ty = cy - 1; ty < cy + n + 1; ty++) for (let tx = cx - 1; tx < cx + n + 1; tx++) {
     const t = groundTile(tx, ty);
@@ -1592,7 +1593,7 @@ function drawWater(vx, vy, time) {
 
 function drawHole(x, y) {
   const idx = MAP.hole, k = HD.k, s = TS * k;
-  ctx.drawImage(groundTiles(), (idx % 16) * s, Math.floor(idx / 16) * s, s, s, x - TS / 2, y - TS / 2 - 6, TS, TS);
+  ctx.drawImage(groundTiles(), (idx % MAP.sheet) * s, Math.floor(idx / MAP.sheet) * s, s, s, x - TS / 2, y - TS / 2 - 6, TS, TS);
 }
 
 /* ------------------------------------------------------------------ collisions */
@@ -1637,18 +1638,31 @@ const offMap = (x0, y0, x1, y1) =>
    adoucie, pour des rives sans cassure aux angles) : la rive dessinée passe à 0,5. Au-delà du bord de la carte,
    l'eau continue tout droit, comme le sol de la lisière. */
 const soften = t => t * t * (3 - 2 * t);
-function waterVal(x, y) {
+function cornerVal(coins, x, y) {       // un champ de coins (0 / 1 par coin de tuile), interpolé en (x, y)
   const fx = x / TS, fy = y / TS;
   const i = Math.floor(fx), j = Math.floor(fy);
-  const W1 = MAP.w + 1, c = (a, b) => MAP.water[clamp(b, 0, MAP.h) * W1 + clamp(a, 0, MAP.w)];
+  const W1 = MAP.w + 1, c = (a, b) => coins[clamp(b, 0, MAP.h) * W1 + clamp(a, 0, MAP.w)];
   const u = soften(fx - i), v = soften(fy - j);
   return c(i, j) * (1 - u) * (1 - v) + c(i + 1, j) * u * (1 - v) + c(i, j + 1) * (1 - u) * v + c(i + 1, j + 1) * u * v;
+}
+const waterVal = (x, y) => cornerVal(MAP.water, x, y);
+/* La falaise : sa paroi (terrain « chalk », MAP.cliff : ses coins ; vide sur une carte qui n'en a pas). On ne marche
+   pas sur la roche : les pieds s'arrêtent à son bord dessiné (0,5), en haut comme en bas. */
+const cliffAt = (x, y) => MAP.cliff.length > 0 && cornerVal(MAP.cliff, x, y) > 0.5;
+/* Le plateau de la falaise (MAP.plateau : les coins de lande et d'escalier) : son bord ne se franchit pas, sauf par
+   l'escalier (MAP.stairs). Le bord est une bande autour de la ligne où le champ passe à 0,5 ; elle s'ouvre là où
+   il y a de l'escalier (son pied : en haut, le champ ne change pas). */
+const RIM = { lo: 0.3, hi: 0.7, stairs: 0.25 };
+function rimAt(x, y) {
+  if (!MAP.plateau.length) return false;
+  const v = cornerVal(MAP.plateau, x, y);
+  return v > RIM.lo && v < RIM.hi && !(MAP.stairs.length && cornerVal(MAP.stairs, x, y) > RIM.stairs);
 }
 const WATER_EDGE = soften(0.42);     // les pieds s'arrêtent un peu avant la rive dessinée : à 0,42 tuile d'un coin de terre, en ligne droite
 function waterAt(x, y) { return waterVal(x, y) > WATER_EDGE; }
 function blockedPoint(x, y) {
   if (offMap(x, y - 12, x, y)) return true;
-  if (waterAt(x, y)) return true;
+  if (waterAt(x, y) || cliffAt(x, y) || rimAt(x, y)) return true;
   for (const s of solids) if (x > s[0] && x < s[2] && y > s[1] && y < s[3]) return true;
   return false;
 }
@@ -1661,7 +1675,7 @@ function blockedFeet(x, y, hw) {
   for (const s of solids) if (x1 > s[0] && x0 < s[2] && y1 > s[1] && y0 < s[3]) return true;
   if (train && trainHit(x0, y0, x1, y1)) return true;      // Titine, le petit train du port (obstacle qui bouge)
   for (const [px, py] of [[x0, y1], [x1, y1], [x0, y0], [x1, y0], [x, y0], [x, y1], [x0, y - 6], [x1, y - 6]])
-    if (waterAt(px, py)) return true;
+    if (waterAt(px, py) || cliffAt(px, py) || rimAt(px, py)) return true;
   return false;
 }
 function moveActor(a, dx, dy, hw, noSlide) {
@@ -2013,6 +2027,7 @@ const WHO = {
   leon: { get name() { return txt('noms.leon'); }, portrait: 'hud/portrait_leon' },
   iris: { get name() { return txt('noms.iris'); }, portrait: 'hud/portrait_iris' },
   piquette: { get name() { return txt('noms.piquette'); }, portrait: 'hud/portrait_piquette' },
+  papa: { get name() { return txt('noms.papa'); }, portrait: 'hud/portrait_papa' },       // le papa d'Alice (l'été)
   info:  { name: '', portrait: null },
 };
 // une réplique demandée pendant un dialogue passe à la suite (ex. : le fermier parle, et Tecky ramasse la barrette)
@@ -2024,7 +2039,7 @@ function say(lines, onEnd) {
 }
 /* Le babil d'une réplique : chaque personnage a sa voix (hauteur) ; Tecky et Iris, des chiens, font de petits
    « wouf » ; un texte d'information fait « tic ». Rien sur un espace ni un signe de ponctuation. */
-const VOICE = { tecky: 1.15, alice: 1.7, farmer: 0.8, postman: 1.05, neighbor: 1.35, leon: 0.95, iris: 0.8, piquette: 1.5 };
+const VOICE = { tecky: 1.15, alice: 1.7, farmer: 0.8, postman: 1.05, neighbor: 1.35, leon: 0.95, iris: 0.8, piquette: 1.5, papa: 0.9 };
 function talkSound(L, i) {
   const k = VOICE[L.who];
   if (!k) SFX.blip();
@@ -2192,7 +2207,8 @@ function doBark() {
    le projette sur le bas-côté, sans dégâts (« Ouf ! »). Aux passages piétons, ils s'arrêtent toujours pour Tecky.
    Les chiens sont aussi écartés de la route. */
 const VEHICLE = { car: { len: 116, spd: 215, pitch: 1.15 }, van: { len: 146, spd: 185, pitch: 1 },
-                  bus: { len: 240, spd: 140, pitch: 0.75 } };
+                  bus: { len: 240, spd: 140, pitch: 0.75 },
+                  sport: { len: 158, spd: 250, pitch: 1.3 } };      // la voiture du papa d'Alice (vehicles.sport())
 for (const n in VEHICLE) VEHICLE[n].len = Math.round(VEHICLE[n].len * (MAP.vehicleScale[n] || 1));   // (longueurs du dessin d'origine ; vehicles.py : ECH)
 const TRAFFIC = { gap: 60, accel: 260, brake: 900, honk: 300, knock: 950, look: 230 };
 function newVehicle([name, lane, x]) {

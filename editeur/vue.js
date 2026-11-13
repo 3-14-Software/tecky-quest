@@ -69,7 +69,7 @@
       const im = tuileImg(idx);
       if (im && im.ok) g.drawImage(im, 0, 0, TS, TS, dx, dy, s, s);
       else { g.fillStyle = '#7CC36B'; g.fillRect(dx, dy, s, s); }
-    } else if (idx > 0) g.drawImage(tileset, (idx % 16) * TS, Math.floor(idx / 16) * TS, TS, TS, dx, dy, s, s);
+    } else if (idx > 0) g.drawImage(tileset, (idx % ED.I.largeur) * TS, Math.floor(idx / ED.I.largeur) * TS, TS, TS, dx, dy, s, s);
   }
   // l'index de la tuile (tx, ty), lisière comprise (-1 : rien)
   let ringIdx = null;

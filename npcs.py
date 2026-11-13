@@ -42,15 +42,17 @@ from spritelib import Drawing, circle, ellipse, rect, path, poly, leg, line, OUT
 W, H = 48, 64
 G = 60.0                      # ligne des pieds
 HK = 1.08                     # agrandissement de la tête (style chibi), autour du menton — comme Gaston
-KINDS = ("postman", "neighbor", "leon", "iris", "piquette")
+KINDS = ("postman", "neighbor", "leon", "iris", "piquette", "papa")
 FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-côté conseillé
     "postman": (24, 18.5, 15.5),      # casquette, visage, moustache et menton (comme Gaston)
     "neighbor": (24, 21.5, 15.5),     # chignon, lunettes, menton (elle est plus petite : tout est 3 unités plus bas)
     "leon": (24, 18.0, 15.5),         # casque, visage, barbe
     "iris": (24, 35.2, 12.6),         # le vieux Jack Russell : tête, oreilles, sourcils blancs
     "piquette": (24, 30.6, 14.0),     # la maman hérisson : piquants, fleur, museau
+    "papa": (24, 19.6, 15.0),         # le papa d'Alice : cheveux ras, visage, bouc
 }
-PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6", "leon": "#FDE3C2", "iris": "#DDE9F6", "piquette": "#F6E3EC"}   # fond du médaillon (Gaston : "#CFE8B0")
+PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6", "leon": "#FDE3C2", "iris": "#DDE9F6", "piquette": "#F6E3EC",
+               "papa": "#F7E6C8"}   # fond du médaillon (Gaston : "#CFE8B0")
 
 PAL = {
     "postman": dict(skin="#F5C8A6", skin_dk="#E2A986", nose="#EA9C82", blush="#F28A8A",
@@ -83,6 +85,11 @@ PAL = {
                      apron="#F28CB8", apron_dk="#D86A9A", dot="#FFFFFF", flower="#F7D154", petal="#FFFFFF",
                      nose="#2A1611", eye="#3E1B0F", blush="#F2A0A0", mouth="#B8505A", tongue="#E9858B",
                      sweat="#9ED8F5"),
+    # le papa d'Alice, d'après le dessin que Christophe a donné de lui (12 novembre 2026)
+    "papa": dict(skin="#EFBB8E", skin_dk="#D79D6E", nose="#E0967A", blush="#EE8E7A", hair="#2B1A14", hair_dk="#1C100C",
+                 fade="#6A4A38", shirt="#C9242E", shirt_dk="#9E1620", logo="#FFFFFF", jean="#4F6FA8", jean_dk="#3A548A",
+                 short="#E3D2AE", short_dk="#C4B088", shoe="#F3F0E8", shoe_dk="#C9C4B8", sole="#3A3A44", lens="#2B2B33",
+                 eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#8FD0F5"),
     "iris": dict(white="#FFFDF7", white_dk="#D9CFC0", tan="#D99A52", tan_dk="#B47838", gray="#E3DED5", brow="#FBF8F2",
                  nose="#2A1E1A", eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B"),
 }
@@ -187,9 +194,16 @@ def _arm(d, c, s, sx, sy, ex, ey, hx, hy, hand="fist", front=False, band=None):
     ux, uy = _unit(hx - ex, hy - ey)
     wx, wy = hx - ux * 1.9, hy - uy * 1.9                     # poignet
     rot = math.degrees(math.atan2(uy, ux)) - 90
-    upper = [(_seg(sx, sy + EP, ex, ey, 4.6), c["sleeve"]), (circle(sx, sy + EP, 2.3), c["sleeve"]),
-             (_epaule(sx, sy, s), c["sleeve"])]                                               # manche, épaule
-    fore = [(circle(ex, ey, 2.1), c["sleeve"]), (_seg(ex, ey, wx, wy, 4.0), c["sleeve"])]
+    nu = c.get("bras")              # manches courtes : la couleur du bras nu, sous une manche qui s'arrête avant le coude
+    if nu:
+        mx, my = sx + (ex - sx) * 0.62, sy + EP + (ey - sy - EP) * 0.62               # l'ourlet de la manche
+        upper = [(_seg(sx, sy + EP, ex, ey, 4.0), nu), (_seg(sx, sy + EP, mx, my, 5.0), c["sleeve"]),
+                 (circle(sx, sy + EP, 2.5), c["sleeve"]), (_epaule(sx, sy, s), c["sleeve"])]
+        fore = [(circle(ex, ey, 2.0), nu), (_seg(ex, ey, hx, hy, 3.8), nu)]
+    else:
+        upper = [(_seg(sx, sy + EP, ex, ey, 4.6), c["sleeve"]), (circle(sx, sy + EP, 2.3), c["sleeve"]),
+                 (_epaule(sx, sy, s), c["sleeve"])]                                           # manche, épaule
+        fore = [(circle(ex, ey, 2.1), c["sleeve"]), (_seg(ex, ey, wx, wy, 4.0), c["sleeve"])]
     details = []
     for sh, col in upper:
         d.add(sh, col)
@@ -213,8 +227,12 @@ def _arm(d, c, s, sx, sy, ex, ey, hx, hy, hand="fist", front=False, band=None):
     if band:   # bande jaune autour de l'avant-bras
         mx, my = (ex + wx) / 2, (ey + wy) / 2
         d.add(rect(mx - 2.0, my - 0.6, 4.0, 1.2, 0, f"rotate({rot:.1f} {mx:.2f} {my:.2f})"), band, sil=False)
-    d.add(rect(wx - 2.4, wy - 0.85, 4.8, 1.7, 0.8, f"rotate({rot:.1f} {wx:.2f} {wy:.2f})"), c["cuff"],
-          sil=False, edge=True)                                # poignet de la manche
+    if nu:                                                     # l'ourlet de la manche courte
+        r2 = math.degrees(math.atan2(ey - sy - EP, ex - sx)) - 90
+        d.add(rect(mx - 2.7, my - 0.7, 5.4, 1.4, 0.7, f"rotate({r2:.1f} {mx:.2f} {my:.2f})"), c["cuff"], sil=False, edge=True)
+    else:
+        d.add(rect(wx - 2.4, wy - 0.85, 4.8, 1.7, 0.8, f"rotate({rot:.1f} {wx:.2f} {wy:.2f})"), c["cuff"],
+              sil=False, edge=True)                            # poignet de la manche
     for x in details:
         d.raw(x)
 
@@ -320,6 +338,84 @@ def _head_frame(Y, p):
     """Centre de la tête et fonctions de placement (HK agrandit le visage autour du menton, comme Gaston)."""
     hy = Y(21) - 9.1 * (HK - 1) + p["nod"]
     return hy, (lambda x: 24 + (x - 24) * HK), (lambda dy: hy + dy * HK)
+
+
+# ================================================================== LE PAPA D'ALICE
+def _papa(p, tenue="jean", lunettes=False):
+    """Le papa d'Alice, qui emmène tout le monde à la mer : cheveux ras très bruns, plus clairs sur les tempes,
+    sourcils épais, bouc fin le long de la mâchoire, tee-shirt rouge « 3.14 » à manches courtes (d'après le dessin
+    que Christophe a donné de lui). tenue : "jean" (son choix sur reference/v2/papa_voiture_options.png) ou
+    "bermuda" (beige, pour la plage) ; lunettes : des lunettes de soleil relevées sur le front."""
+    c = dict(PAL["papa"], sleeve=PAL["papa"]["shirt"], cuff=PAL["papa"]["shirt_dk"], bras=PAL["papa"]["skin"])
+    d = Drawing(W, H)
+    L = p["lift"]
+    Y = lambda v: v + p["bob"] - L
+    T = lambda v: v - L
+    _shadow(d, L, 10.2)
+    # baskets blanches, jambes (nues sous le bermuda, ou en jean)
+    for x, s in ((20.4, -1), (27.6, 1)):
+        d.add(ellipse(x + s * 0.6, T(G - 1.7), 3.6, 1.9), c["shoe"])
+        d.add(rect(x + s * 0.6 - 3.3, T(G - 1.0), 6.6, 1.0, 0.5), c["sole"], sil=False)
+    for x in (20.4, 27.6):
+        if tenue == "jean":
+            d.add(leg(x, Y(44), x, T(57.0), 5.2), c["jean"])
+            d.raw(line(f"M{x:.2f},{Y(47.6):.2f} L{x:.2f},{T(56.2):.2f}", c["jean_dk"], 0.6))
+        else:
+            d.add(leg(x, Y(49), x, T(57.2), 4.2), c["skin"])
+            d.add(leg(x, Y(44), x, Y(51.2), 5.8), c["short"])
+            d.raw(line(f"M{x - 2.7:.2f},{Y(51.6):.2f} L{x + 2.7:.2f},{Y(51.6):.2f}", c["short_dk"], 0.7))
+    # tee-shirt rouge : buste aux épaules larges, taille plus fine que celle de Léon ; encolure ronde ; « 3.14 »
+    torso = rect(14.2, Y(28.6), 19.6, 16.6, 4.8)
+    belly = ellipse(24, Y(39.6), 8.5 + p["breath"], 6.0)
+    d.add(torso, c["shirt"])
+    d.add(belly, c["shirt"])
+    d.clip("papa", [torso, belly])
+    d.add(rect(8, Y(44.2), 32, 3), c["shirt_dk"], sil=False, clip="papa")                 # l'ourlet, à l'ombre
+    d.add(ellipse(24, Y(28.9), 3.6, 2.3), c["skin"], sil=False, edge=True)                # le cou dans l'encolure
+    x0, y0, w = 20.5, Y(34.0), 0.62
+    d.raw(line(f"M{x0:.2f},{y0:.2f} L{x0 + 1.5:.2f},{y0:.2f} L{x0 + 0.7:.2f},{y0 + 1.15:.2f} Q{x0 + 1.75:.2f},{y0 + 1.3:.2f} {x0 + 1.5:.2f},{y0 + 2.2:.2f} "
+               f"Q{x0 + 1.0:.2f},{y0 + 3.0:.2f} {x0:.2f},{y0 + 2.55:.2f} "                                         # 3
+               f"M{x0 + 3.2:.2f},{y0 + 0.75:.2f} L{x0 + 3.95:.2f},{y0:.2f} L{x0 + 3.95:.2f},{y0 + 2.8:.2f} "       # 1
+               f"M{x0 + 6.6:.2f},{y0 + 2.8:.2f} L{x0 + 6.6:.2f},{y0:.2f} L{x0 + 5.1:.2f},{y0 + 1.95:.2f} L{x0 + 7.1:.2f},{y0 + 1.95:.2f}",   # 4
+               c["logo"], w))
+    d.add(circle(x0 + 2.35, y0 + 2.6, 0.36), c["logo"], sil=False)                         # le point
+
+    def rest(s, sx):
+        return (sx + s * 2.2, Y(31.2) + 5.8), (sx + s * 2.8, Y(31.2) + 11.6), False
+    hy, X, V = _head_frame(Y, p)
+    _arms(d, c, p, 15.0, 33.0, Y(31.2), rest)
+    # tête : oreilles, visage
+    k = HK
+    for x in (14.5, 33.5):
+        d.add(circle(X(x), V(1.4), 2.0 * k), c["skin"])
+        d.add(circle(X(x), V(1.4), 0.9 * k), c["skin_dk"], sil=False)
+    d.add(ellipse(24, hy, 9.7 * k, 9.1 * k), c["skin"])
+    # cheveux ras : une calotte près du crâne, la ligne du front droite, les tempes plus claires (tondues)
+    calotte = (f"M{X(14.6):.2f},{V(-0.8):.2f} Q{X(14.0):.2f},{V(-9.7):.2f} 24,{V(-9.7):.2f} Q{X(34.0):.2f},{V(-9.7):.2f} {X(33.4):.2f},{V(-0.8):.2f} "
+               f"L{X(32.5):.2f},{V(-1.6):.2f} L{X(31.6):.2f},{V(-5.9):.2f} Q24,{V(-6.9):.2f} {X(16.4):.2f},{V(-5.9):.2f} L{X(15.5):.2f},{V(-1.6):.2f} Z")
+    d.add(path(calotte), c["hair"])
+    d.clip("ras", [path(calotte)])
+    for s in (-1, 1):
+        d.add(rect(X(24 + s * 9.9) - 1.9, V(-6.4), 3.8, 7), c["fade"], sil=False, clip="ras")
+    # bouc : un trait de barbe le long de la mâchoire, la touffe du menton, la mouche sous la lèvre
+    d.add(path(f"M{X(15.3):.2f},{V(3.2):.2f} Q{X(16.0):.2f},{V(8.9):.2f} 24,{V(10.3):.2f} Q{X(32.0):.2f},{V(8.9):.2f} {X(32.7):.2f},{V(3.2):.2f} "
+               f"Q{X(31.2):.2f},{V(7.6):.2f} {X(26.6):.2f},{V(8.5):.2f} Q24,{V(8.0):.2f} {X(21.4):.2f},{V(8.5):.2f} "
+               f"Q{X(16.8):.2f},{V(7.6):.2f} {X(15.3):.2f},{V(3.2):.2f} Z"), c["hair"], sil=False)
+    d.add(ellipse(24, V(7.9), 1.0 * k, 0.55 * k), c["hair"], sil=False)
+    # visage : sourcils épais
+    _eyes(d, c, p, X, V)
+    _brows(d, p, X, V, c["hair"], 1.7)
+    _blush(d, c, X, V)
+    _mouth(d, c, p, X, V, 5.0)
+    _nez(d, c, X, V, 2.5, 1.5, 1.2)
+    if lunettes:                                                                          # lunettes de soleil sur le front
+        for x in (20.0, 28.0):
+            d.add(rect(X(x) - 2.9 * k, V(-9.6), 5.8 * k, 3.5 * k, 1.5), c["lens"], sil=False, edge=True)
+            d.raw(line(f"M{X(x) - 1.6:.2f},{V(-6.9):.2f} L{X(x) - 0.2:.2f},{V(-8.9):.2f}", "#8FA6C4", 0.6))
+        d.raw(line(f"M{X(22.9):.2f},{V(-8.2):.2f} L{X(25.1):.2f},{V(-8.2):.2f}", c["lens"], 0.9))
+    if p["sweat"]:
+        _sweat(d, c, X, V)
+    return d
 
 
 # ================================================================== LE FACTEUR
@@ -809,7 +905,7 @@ def _neighbor(p):
 
 
 # ================================================================== animations
-_DRAW = {"postman": _postman, "neighbor": _neighbor, "leon": _leon, "iris": _iris, "piquette": _piquette}
+_DRAW = {"postman": _postman, "neighbor": _neighbor, "leon": _leon, "iris": _iris, "piquette": _piquette, "papa": _papa}
 
 _WAVE = [P(wave=1, wave_a=-28, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2),
          P(wave=1, wave_a=4, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2)]
@@ -843,6 +939,13 @@ ANIMS = {   # PNJ : {nom : (poses, fps, boucle)}
         "worry": ([P(worry=1, cheeks=True, look=-1, sweat=True), P(worry=1, cheeks=True, look=-1, bob=0.25, sweat=True),
                    P(worry=1, cheeks=True, look=1, sweat=True), P(worry=1, cheeks=True, look=1, bob=0.25, blink=1, sweat=True)],
                   5, True),
+    },
+    "papa": {
+        "idle": (_IDLE, 5, True),
+        "talk": (_TALK, 8, True),
+        "wave": (_WAVE, 8, True),
+        "cheer": ([P(cheer=0.6, happy=True, bob=0.4), P(cheer=1, happy=True, lift=1.8),
+                   P(cheer=1, happy=True, lift=2.6), P(cheer=0.85, happy=True, lift=1.0)], 8, True),
     },
     "iris": {       # wave : il remue la queue ; cheer : il saute de joie (il n'est jamais inquiet : c'est le sage)
         "idle": ([P(), P(bob=0.3, wag=8), P(bob=0.5), P(bob=0.3, blink=1, wag=-6)], 4, True),

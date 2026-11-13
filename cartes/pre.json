@@ -12,7 +12,12 @@
     "s": "sidewalk",
     "~": "water",
     "c": "field",
-    "f": "forest"
+    "f": "forest",
+    "a": "sand",
+    "l": "planks",
+    "k": "chalk",
+    "h": "heath",
+    "e": "stairs"
   },
   "terrain": [
     ".........................................",
@@ -30,47 +35,47 @@
     "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
     "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
     "...................tt....................",
-    "...................tt....................",
-    "...................tt....................",
-    "...................tt....................",
-    "...................tt....................",
-    "...................tt....................",
-    "...................tttttttttttt..........",
-    "...................tttttttttttt..........",
-    "...................tt....................",
-    ".........................................",
-    "........................................."
+    "...................tt...........hhhhhhhhh",
+    "...................tt...........hhheehhhh",
+    "..lllllllllllllllllllllllllll...kkkeekkkk",
+    "..lllllllllllllllllllllllllll...kkkeekkkk",
+    "aaaaaaaaaaaaaaaaaaallaaaaaaaaaaaaaaaaaaaa",
+    "aaaaaaaaaaaaaaaaaaallaaaaaaaaaaaaaaaaaaaa",
+    "aaaaaaaaaaaaaaaaaaallaaaaaaaaaaaaaaaaaaaa",
+    "~~~~~~~~~~~~~~~~~~~ll~~~~~~~~~~~~~~~~~~~~",
+    "~~~~~~~~~~~~~~~~~~~ll~~~~~~~~~~~~~~~~~~~~",
+    "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
   ],
   "details": [
     ["fleurs", 6, 4],
-    ["fleurs", 12, 17],
-    ["fleurs", 33, 16],
+    ["fleurs", 12, 15],
+    ["fleurs", 27, 15],
     ["fleurs", 24, 6]
   ],
   "decor": [
     ["tree", 5.5, 5.2],
     ["tree", 14.4, 3.6],
     ["tree", 35.6, 7.4],
-    ["tree", 8.6, 19.4],
-    ["tree", 34.2, 21.2],
+    ["tree", 8.6, 16.2],
+    ["tree", 5, 15.8],
     ["bush", 10.6, 7.6],
     ["bush", 22.6, 8.2],
-    ["bush", 15.4, 16.6],
-    ["bush", 30.4, 17.2],
+    ["bush", 15.4, 15.8],
+    ["bush", 29.4, 15.6],
     ["reeds", 27.2, 7.2],
     ["reeds", 32.6, 4.4],
     ["rock", 25.6, 4.6],
-    ["bench", 23.4, 19.6],
-    ["apple_tree", 28.6, 22.6],
+    ["bench", 23.4, 18.2],
+    ["apple_tree", 26.6, 15.9],
     ["road_sign", 3.2, 9.35],
-    ["flower_pot", 24.9, 19.4]
+    ["flower_pot", 24.9, 18]
   ],
   "signs": [
     [21.6, 15.2, "Par le tunnel, à l'ouest : le village et la ferme des Tilleuls."]
   ],
   "butterflies": [
     ["yellow", 7, 4.6],
-    ["blue", 33.4, 16.4]
+    ["blue", 27.4, 15.4]
   ],
   "roadTunnels": [
     [0, 14, false],

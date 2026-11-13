@@ -9,7 +9,8 @@ Le serveur n'écoute que sur cette machine (127.0.0.1). Au démarrage, il dessin
 (une dizaine de secondes), puis il sert :
   /                     la page de l'éditeur (dossier editeur/)
   /atlas.png, .json     les sprites du jeu ; /tiles.png : le tileset, sans les tuiles composées
-  /tuile?c=NO,NE,SO,SE  une tuile composée (trois terrains ou plus), dessinée à la demande
+  /tuile?c=NO,NE,SO,SE  une tuile composée (trois terrains ou plus), dessinée à la demande ; suivie de « ,x,y » : la
+                        place de la tuile, pour les textures qui en dépendent (tiles.phase() : paroi, lande)
   /infos.json           ce que la page doit savoir du jeu (terrains, genres, sprites, collisions…)
   /carte.json           lecture (GET) et enregistrement (PUT, avec If-Match : refusé si le fichier a changé entre-temps) ;
                         ?carte=nom : une carte annexe ; &episode=id : la carte telle que cet épisode la joue (lue sous
@@ -88,7 +89,7 @@ class Donnees:
                 pass
 
     def tuile(self, cs):
-        k = ",".join(cs)
+        k = ",".join(str(c) for c in cs)
         if k not in self.tuiles:
             self.tuiles[k] = png(tiles.composite(list(cs), S, seed=tiles.composite_seed(cs)))
         return self.tuiles[k]
@@ -100,6 +101,8 @@ def infos():
     import pack_web
     return {
         "legende": carte.LEGENDE, "priority": tiles.PRIORITY, "pairs": tiles.PAIRS, "cols": tiles.COLS,
+        "largeur": tiles.LARGEUR,
+        "suivies": list(tiles.SUIVIES), "phases": list(tiles.PHASES),       # textures qui dépendent de la place de la tuile                     # colonnes de l'image du tileset (la tuile n° i : i % largeur, i // largeur)
         "overlays": [n for n, _ in tiles.OVERLAYS], "overlayRow": tiles.OVERLAY_ROW,
         "compositeBase": tiles.COMPOSITE_BASE, "fullVariants": pack_web.FULL_VARIANTS,
         "grassVariants": pack_web.GRASS_VARIANTS, "ts": pack_web.TS, "lisiere": pack_web.lisiere.RING,
@@ -286,8 +289,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.envoyer(200, dict(d.infos, jeu=d.jeu))
         if p == "/tuile":
             cs = (parse_qs(u.query).get("c") or [""])[0].split(",")
-            if len(cs) != 4 or any(c not in tiles.PRIORITY for c in cs):
-                return self.envoyer(400, {"erreur": "c=NO,NE,SO,SE (noms de terrains)"})
+            if len(cs) == 6 and cs[4].isdigit() and cs[5].isdigit():      # (suivis de la place de la tuile : tiles.phase())
+                cs = cs[:4] + [int(cs[4]), int(cs[5])]
+            if len(cs) not in (4, 6) or any(c not in tiles.PRIORITY for c in cs[:4]):
+                return self.envoyer(400, {"erreur": "c=NO,NE,SO,SE (noms de terrains), suivis au besoin de la place x,y"})
             return self.envoyer(200, d.tuile(cs), "image/png", {"Cache-Control": "max-age=3600"})
         if p == "/carte.json":
             q = parse_qs(u.query)

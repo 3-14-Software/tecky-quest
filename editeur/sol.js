@@ -37,7 +37,9 @@
   // tiles.needs_composite
   function needsComposite(cs, I) {
     const k = kindsOf(cs, I);
-    return k.length >= 3 || (k.length === 2 && !I._pairs.has(k[1] + '/' + k[0]));
+    if (k.some(t => I.suivies.includes(t))) return true;                                // (la paroi, la lande : une texture par place)
+    if (k.length === 1) return k[0] !== 'grass' && !I._pairs.has(k[0] + '/grass');      // (un terrain sans rangée : les planches)
+    return k.length >= 3 || !I._pairs.has(k[1] + '/' + k[0]);
   }
   const tileIndex = (up, bits, lo, I) => (1 + I._pairs.get(up + '/' + lo)) * I.cols + bits;
 
@@ -55,8 +57,10 @@
     const pick = (cs, tx, ty) => {
       const [up, lo, bits] = resolve(cs, I);
       if (needsComposite(cs, I)) {
-        const k = cs.join(',');
-        if (!compIdx.has(k)) { compIdx.set(k, comp.length); comp.push(cs); }
+        // (comme tiles.phase() : la place de la tuile, si sa texture en dépend ; modulo toujours positif, lisière comprise)
+        const ph = cs.some(t => I.suivies.includes(t)) ? [((tx % I.phases[0]) + I.phases[0]) % I.phases[0], ((ty % I.phases[1]) + I.phases[1]) % I.phases[1]] : [];
+        const cle = cs.concat(ph), k = cle.join(',');
+        if (!compIdx.has(k)) { compIdx.set(k, comp.length); comp.push(cle); }
         return I.compositeBase + compIdx.get(k);
       }
       if (up === 'grass') return I.grassVariants[Math.floor(hash3(tx, ty, 1) * I.grassVariants.length)];
