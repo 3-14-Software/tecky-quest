@@ -642,6 +642,24 @@ const SOUNDS = {
     }
   },
   squeak(k) { tone([1900 * k, 2700 * k, 2200 * k], 0.09, 'sine', 0.05, { a: 0.008 }); tone([3800 * k, 5200 * k], 0.06, 'sine', 0.01); },   // hérisson : « couic »
+  clack() {                            // le crabe menace : ses pinces claquent, deux coups secs
+    for (let i = 0; i < 2; i++) { tone([1500, 900], 0.035, 'square', 0.03, { at: i * 0.11, lp: 3800 }); noise(0.03, 0.035, 2800, { at: i * 0.11, q: 2.5 }); }
+  },
+  pinch() {                            // il pince : un claquement plus fort, puis le petit « couic » de la pince qui serre
+    tone([1100, 500], 0.06, 'square', 0.06, { lp: 3200 }); noise(0.05, 0.06, 2200, { q: 1.8 });
+    tone([700, 1300], 0.07, 'triangle', 0.035, { at: 0.07, a: 0.006 });
+  },
+  burrow() {                           // il s'enterre : le sable qui crisse, de plus en plus sourd
+    noise(0.34, 0.05, [2600, 700], { a: 0.03, q: 0.8 }); noise(0.2, 0.025, [900, 380], { at: 0.14, a: 0.03, q: 1.1 });
+  },
+  keow(k) {                            // le goéland a repéré Tecky : un grand cri qui descend, puis deux « kyow » rauques
+    cry([1050 * k, 1250 * k, 720 * k], 0.5, 0.045, [[[1500, 1900, 1300], 3, 1], [2900, 5, 0.6]], { a: 0.03, h: 0.5, vib: [9, 34] });
+    for (let i = 0; i < 2; i++)
+      cry([980 * k, 1120 * k, 700 * k], 0.2, 0.036, [[1500, 3, 1], [2900, 5, 0.6]], { at: 0.56 + i * 0.25, a: 0.02, h: 0.4 });
+  },
+  swoop() {                            // il pique : l'air qui siffle sur ses ailes, de plus en plus grave et fort
+    noise(0.5, 0.06, [3200, 600], { a: 0.3, q: 1.4 }); tone([900, 260], 0.5, 'sine', 0.018, { a: 0.3 });
+  },
   laugh(k) {                           // la mouette rieuse nargue Tecky : « kia-ha-ha-ha », des éclats brefs qui descendent
     for (let i = 0; i < 5; i++)
       cry([1250 * k, 1500 * k, (1150 - i * 45) * k], 0.1, 0.03 * (1 - i * 0.1), [[2100, 4, 1], [3400, 5, 0.5]], { at: i * 0.13, a: 0.012, h: 0.35 });
@@ -2170,7 +2188,7 @@ function reset() {
   jouets = { state: 'new' }; piq = { state: 'new' };
   bitten = false; newBadges = []; toasts = []; napped = false;
   resetWeather(); graceT = 0; tunnelSeen = false; elsewhere = {}; iris = null;
-  score = 0; timePlayed = 0; fled = 0; treasures = 0; shake = 0; barkImmuneSeen = false; pendingSay = null;
+  score = 0; timePlayed = 0; fled = 0; treasures = 0; shake = 0; barkImmuneSeen = false; pendingSay = null; crabSeen = seagullSeen = false;
   clues = [false, false, false]; aliceSniffed = false; arrowT = 0; stuckT = 0; sun = 0; hug = 0; saveT = 0;
   resetWorld();
   camX = camClampX(P.x - VW / 2);
@@ -2197,6 +2215,7 @@ function resetWorld() {
     return d;
   });
   if (facile()) dogs = dogs.filter(d => d.id % 3 !== 2);
+  crabs = MAP.crabs.map(newCrab); seagulls = MAP.seagulls.map(newSeagull);
   hens = MAP.hens.map(newHen);
   cows = MAP.cows.map(newCow);
   farmer = newFarmer();
@@ -2437,6 +2456,14 @@ function doBark() {
   for (const c of critters) {
     const dx = c.x - P.x, dy = c.y - P.y, l = Math.hypot(dx, dy);
     if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) scareCritter(c);
+  }
+  for (const c of crabs) {             // un crabe s'enterre dans le sable
+    const dx = c.x - P.x, dy = c.y - P.y, l = Math.hypot(dx, dy);
+    if (l > 1 && l < BARK.range && (dx * vx + dy * vy) / l > BARK.cos) buryCrab(c, true);
+  }
+  for (const g of seagulls) {          // un goéland repart (on vise son ombre : l'endroit du sol qu'il survole)
+    const dx = g.x - P.x, dy = g.y - P.y, l = Math.hypot(dx, dy);
+    if (l < SEAGULL.bark && (l < 40 || (dx * vx + dy * vy) / l > BARK.cos)) scareSeagull(g);
   }
   for (const b of babies) {            // les bébés hérissons se roulent en boule ; une mouette lâche son poisson
     const q = gulls() ? b.g : b, dx = q.x - P.x, dy = q.y - P.y, l = Math.hypot(dx, dy);
@@ -2764,6 +2791,7 @@ function doBite() {
       hit = true;
     }
   }
+  for (const c of crabs) if (dist(hx, hy, c.x, c.y - 10) < 60) buryCrab(c, true);     // (un crabe mordu se cache aussi)
   if (hit) rumble('bite');
 }
 
@@ -4011,6 +4039,190 @@ function gullList(list, vis) {
   }
 }
 
+/* ------------------------------------------------------------------ les crabes et les goélands */
+/* Les adversaires de la côte, avec les chiens (MAP.crabs, MAP.seagulls : leurs places ; vides sur une carte qui n'en
+   a pas). Comme pour les chiens : rien ne fait mal en balade, en zone calme, ni pendant le répit qui suit un dialogue
+   (hurtPlayer), et ce ne sont pas des morsures (le badge « sans une morsure » ne les compte pas).
+   LES CRABES (crabes.py), sur le sable : ils vont et viennent en crabe autour de leur place. Tecky approche
+   (CRAB.near) : ils lèvent leurs pinces et les font claquer (« Clac clac ! ») ; s'il leur marche dessus (CRAB.pinch),
+   ils pincent. Un aboiement dans le cône (ou une morsure) : ils s'enterrent dans le sable (une butte d'où dépassent
+   leurs yeux), ne pincent plus, et ressortent quand Tecky s'est éloigné ; des points la première fois (scored,
+   sauvegardé). En balade, ils saluent d'une pince.
+   LES GOÉLANDS (goelands.py), partout sur la carte : ils tournent dans le ciel au-dessus de leur place ; leur ombre,
+   à l'aplomb, dit où ils sont. Tecky entre dans leur domaine (SEAGULL.see) : ils crient (« Kiaaak ! »), viennent
+   au-dessus de lui (warn), puis piquent sur l'endroit où il était (dive : une cible au sol) — il suffit de bouger
+   pour l'éviter. Un aboiement vers leur ombre les fait repartir pour un bon moment ; des points la première fois
+   qu'on en repousse un qui attaquait. En balade, ils sont posés, s'envolent si Tecky approche et reviennent. */
+const CRAB = { near: 130, pinch: 30, dmg: 1, walk: 52, range: 96, pause: [0.8, 2.4], clack: 0.7, hidden: [4, 6], peek: 150,
+  again: 1.4, pts: 10 };
+const SEAGULL = { alt: 150, orbit: 150, turn: 0.55, see: 340, warn: 1.1, warnEasy: 1.7, over: 300, dive: 0.55, diveEasy: 0.8, hit: 38,
+  dmg: 1, climb: 1.3, cd: [4, 7], gone: [12, 16], bark: 360, pts: 15, shy: 130, aloft: 8, land: 1.2 };
+let crabs = [], seagulls = [], crabSeen = false, seagullSeen = false;
+function newCrab([x, y], i) {
+  return { i, x, y, hx: x, hy: y, mode: 'roam', anim: 'idle', t: Math.random() * 2, timer: rnd(CRAB.pause), tx: x, clackT: 0, cd: 0, scored: false };
+}
+function crabAnim(c, a) { if (c.anim !== a) { c.anim = a; c.t = 0; } }
+const crabDone = c => c.t * MAP.crabAnims[c.anim][0] >= MAP.crabAnims[c.anim][2];       // (une animation jouée une fois : finie)
+const crabHidden = c => c.mode === 'bury' || c.mode === 'buried';
+function buryCrab(c, pts) {
+  if (crabHidden(c)) { if (c.mode === 'buried') c.timer = rnd(CRAB.hidden); return; }
+  c.mode = 'bury'; crabAnim(c, 'bury'); c.timer = rnd(CRAB.hidden);
+  SFX.burrow(1, c); addFx('fx/sand', c.x, c.y - 6, { fps: 16 });
+  if (pts && !c.scored && !balade()) { c.scored = true; score += CRAB.pts; addPop('+' + CRAB.pts, c.x - 16, c.y - 50); }
+}
+function updateCrab(c, dt) {
+  const dP = dist(c.x, c.y, P.x, P.y), there = P.mode !== 'ko' && P.alpha !== 0 && !P.swim;
+  c.t += dt; c.cd = Math.max(0, c.cd - dt);
+  switch (c.mode) {
+    case 'roam':
+      if (there && dP < CRAB.near) {
+        c.mode = 'menace'; c.clackT = 0;
+        if (!balade() && !crabSeen) {
+          crabSeen = true;
+          pendingSay = { t: 0.5, lines: [{ who: 'tecky', face: FACE.inquiet, text: txt('tecky.crabe') }] };
+        }
+        break;
+      }
+      if (Math.abs(c.tx - c.x) > 2) {                   // il marche en crabe : de côté
+        const nx = c.x + Math.sign(c.tx - c.x) * CRAB.walk * dt;
+        if (sandAt(nx, c.y) && !blockedFeet(nx, c.y, 10)) { c.x = nx; crabAnim(c, 'walk'); } else c.tx = c.x;
+      } else {
+        crabAnim(c, 'idle');
+        if ((c.timer -= dt) <= 0) { c.timer = rnd(CRAB.pause); c.tx = c.hx + (Math.random() * 2 - 1) * CRAB.range; }
+      }
+      break;
+    case 'menace':                                      // Tecky est tout près : pinces levées (en balade : il salue)
+      crabAnim(c, balade() ? 'wave' : 'menace');
+      if (!balade() && (c.clackT -= dt) <= 0) {
+        c.clackT = CRAB.clack; SFX.clack(1, c);
+        if (!pops.some(p => p.word && p.crab === c)) { addWordPop(txt('crabe.clac'), c.x, c.y - 50, 'crab'); pops[pops.length - 1].crab = c; }
+      }
+      if (!there || dP > CRAB.near + 30) { c.mode = 'roam'; c.timer = rnd(CRAB.pause); c.tx = c.x; }
+      else if (!balade() && dP < CRAB.pinch && c.cd <= 0) {
+        const hp = P.hp;
+        c.mode = 'pinch'; crabAnim(c, 'pinch'); c.cd = CRAB.again; SFX.pinch(1, c);
+        hurtPlayer(CRAB.dmg, c.x, c.y, false);
+        if (P.hp < hp && P.mode !== 'ko') addWordPop(txt('tecky.pince'), P.x, P.y - 120, 'tecky');
+      }
+      break;
+    case 'pinch': if (crabDone(c)) c.mode = 'menace'; break;
+    case 'bury': if (crabDone(c)) { c.mode = 'buried'; crabAnim(c, 'buried'); } break;
+    case 'buried':                                      // il ressort quand Tecky s'est éloigné
+      if ((c.timer -= dt) <= 0 && (!there || dP > CRAB.peek)) { c.mode = 'unbury'; crabAnim(c, 'unbury'); }
+      break;
+    case 'unbury': if (crabDone(c)) { c.mode = 'roam'; c.timer = rnd(CRAB.pause); c.tx = c.x; crabAnim(c, 'idle'); } break;
+  }
+}
+function drawCrab(c) {
+  const [fps, loop, n] = MAP.crabAnims[c.anim], f = Math.floor(c.t * fps);
+  drawSpr('crab/' + c.anim, loop ? f % n : Math.min(n - 1, f), c.x, c.y, { cast: !crabHidden(c) && c.mode !== 'unbury' });
+}
+
+function newSeagull([x, y], i) {
+  const a = Math.random() * Math.PI * 2, g = { i, hx: x, hy: y, a, x, y, h: 0, mode: 'perch', anim: 'idle', t: Math.random() * 2, timer: 0,
+    cd: 1 + Math.random() * 2, tx: x, ty: y, sx: x, sy: y, sh: 0, k: 0, dir: i % 2 ? 'left' : 'right', scored: false, aloft: 0 };
+  if (!balade()) Object.assign(g, { mode: 'soar', h: SEAGULL.alt, x: x + Math.cos(a) * SEAGULL.orbit, y: y + Math.sin(a) * SEAGULL.orbit * 0.6, anim: 'glide' });
+  return g;
+}
+function seagullAnim(g, a) { if (g.anim !== a) { g.anim = a; g.t = 0; } }
+const seagullOrbit = g => [g.hx + Math.cos(g.a) * SEAGULL.orbit, g.hy + Math.sin(g.a) * SEAGULL.orbit * 0.6];
+// il reprend de la hauteur et rejoint sa ronde (cd : le temps qu'il laisse Tecky tranquille)
+function seagullClimb(g, cd) {
+  Object.assign(g, { mode: 'climb', sx: g.x, sy: g.y, sh: g.h, k: 0, cd });
+  seagullAnim(g, 'flap');
+}
+// un aboiement : il repart pour un bon moment (des points la première fois qu'on en repousse un qui attaquait)
+function scareSeagull(g) {
+  if (g.mode === 'perch') { g.mode = 'soar'; g.aloft = SEAGULL.aloft; g.sx = g.x; g.sy = g.y; seagullClimb(g, 0); SFX.flap(0.8, g); return; }
+  if (g.mode === 'land') { seagullClimb(g, 0); g.aloft = SEAGULL.aloft; return; }
+  const attack = g.mode === 'warn' || g.mode === 'dive';
+  if (g.mode === 'climb' && g.cd > SEAGULL.cd[1]) return;          // (il s'en va déjà)
+  if (attack && !g.scored) { g.scored = true; score += SEAGULL.pts; addPop('+' + SEAGULL.pts, g.x - 16, g.y - g.h - 60); }
+  if (attack || !balade()) { addWordPop(txt('goeland.fuite'), g.x, g.y - g.h - 60, 'seagull'); SFX.keow(1.25, g); SFX.flap(0.8, g); }
+  seagullClimb(g, rnd(SEAGULL.gone));
+}
+function updateSeagull(g, dt) {
+  const there = P.mode !== 'ko' && P.alpha !== 0, easy = facile();
+  g.t += dt; g.cd = Math.max(0, g.cd - dt);
+  switch (g.mode) {
+    case 'soar': {                                      // sa ronde dans le ciel
+      g.a += SEAGULL.turn * dt;
+      const [ox, oy] = seagullOrbit(g);
+      g.dir = ox < g.x ? 'left' : 'right'; g.x = ox; g.y = oy; g.h = SEAGULL.alt;
+      seagullAnim(g, 'glide');
+      if (balade()) {                                   // en balade : il finit par se reposer
+        if ((g.aloft -= dt) <= 0 && dist(P.x, P.y, g.hx, g.hy) > SEAGULL.shy * 2) { Object.assign(g, { mode: 'land', sx: g.x, sy: g.y, sh: g.h, k: 0 }); seagullAnim(g, 'flap'); }
+        break;
+      }
+      if (there && !P.swim && g.cd <= 0 && state === 'play' && graceT <= 0 && !calmAt(P.x, P.y) && dist(P.x, P.y, g.hx, g.hy) < SEAGULL.see) {
+        g.mode = 'warn'; g.timer = easy ? SEAGULL.warnEasy : SEAGULL.warn; seagullAnim(g, 'cry');
+        addWordPop(txt('goeland.cri'), g.x, g.y - g.h - 60, 'seagull'); SFX.keow(0.95 + Math.random() * 0.15, g);
+        if (!seagullSeen) {
+          seagullSeen = true;
+          pendingSay = { t: 0.4, lines: [{ who: 'tecky', face: FACE.inquiet, text: txt('tecky.goeland') }] };
+        }
+      }
+      break;
+    }
+    case 'warn': {                                      // il vient au-dessus de Tecky en criant
+      if (!there || P.swim || calmAt(P.x, P.y) || state !== 'play') { seagullClimb(g, rnd(SEAGULL.cd)); break; }
+      const l = dist(g.x, g.y, P.x, P.y), st = SEAGULL.over * dt;
+      if (l > st) { g.dir = P.x < g.x ? 'left' : 'right'; g.x += (P.x - g.x) / l * st; g.y += (P.y - g.y) / l * st; } else { g.x = P.x; g.y = P.y; }
+      if ((g.timer -= dt) <= 0) {                       // il pique sur l'endroit où est Tecky à cet instant
+        Object.assign(g, { mode: 'dive', sx: g.x, sy: g.y, sh: g.h, tx: P.x, ty: P.y, k: 0 });
+        g.dir = g.tx < g.x ? 'left' : 'right'; seagullAnim(g, 'dive'); SFX.swoop(1, g);
+      }
+      break;
+    }
+    case 'dive': {
+      g.k = Math.min(1, g.k + dt / (easy ? SEAGULL.diveEasy : SEAGULL.dive));
+      g.x = g.sx + (g.tx - g.sx) * g.k; g.y = g.sy + (g.ty - g.sy) * g.k; g.h = g.sh * (1 - g.k * g.k) + 14 * g.k;
+      if (g.k >= 1) {
+        if (there && dist(P.x, P.y, g.tx, g.ty) < SEAGULL.hit) hurtPlayer(SEAGULL.dmg, g.x - (g.dir === 'left' ? -20 : 20), g.y, false);
+        seagullClimb(g, rnd(SEAGULL.cd));
+      }
+      break;
+    }
+    case 'climb': {                                     // il remonte rejoindre sa ronde
+      g.a += SEAGULL.turn * dt; g.k = Math.min(1, g.k + dt / SEAGULL.climb);
+      const [ox, oy] = seagullOrbit(g), e = g.k * g.k * (3 - 2 * g.k), nx = g.sx + (ox - g.sx) * e;
+      if (Math.abs(nx - g.x) > 0.5) g.dir = nx < g.x ? 'left' : 'right';
+      g.x = nx; g.y = g.sy + (oy - g.sy) * e; g.h = g.sh + (SEAGULL.alt - g.sh) * e;
+      if (g.k >= 1) g.mode = 'soar';
+      break;
+    }
+    case 'perch':                                       // (balade) posé : il s'envole si Tecky approche
+      g.h = 0; seagullAnim(g, 'idle');
+      if (dist(P.x, P.y, g.x, g.y) < 300) g.dir = P.x < g.x ? 'left' : 'right';
+      if (there && dist(P.x, P.y, g.x, g.y) < SEAGULL.shy) scareSeagull(g);
+      break;
+    case 'land': {                                      // (balade) il revient se poser à sa place
+      g.k = Math.min(1, g.k + dt / SEAGULL.land);
+      const e = g.k * g.k * (3 - 2 * g.k), nx = g.sx + (g.hx - g.sx) * e;
+      if (Math.abs(nx - g.x) > 0.5) g.dir = nx < g.x ? 'left' : 'right';
+      g.x = nx; g.y = g.sy + (g.hy - g.sy) * e; g.h = g.sh * (1 - e);
+      if (g.k >= 1) { g.mode = 'perch'; g.h = 0; }
+      break;
+    }
+  }
+}
+// son ombre, à l'aplomb (pas couchée par le soleil : elle dit où il est, et où il va piquer) ; pendant le piqué, une cible
+function drawSeagullShadow(g) {
+  const k = 1 - Math.min(0.7, g.h / 260);
+  ctx.save();
+  ctx.fillStyle = SHADOW.color; ctx.globalAlpha = SHADOW.alpha * (0.55 + 0.45 * k);
+  ctx.beginPath(); ctx.ellipse(g.x, g.y, 14 + 12 * k, 4 + 4 * k, 0, 0, Math.PI * 2); ctx.fill();
+  if (g.mode === 'dive' || (g.mode === 'warn' && g.timer < 0.45)) {
+    const [x, y] = g.mode === 'dive' ? [g.tx, g.ty] : [P.x, P.y];
+    ctx.globalAlpha = 0.75; ctx.strokeStyle = '#E2483C'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.ellipse(x, y, SEAGULL.hit, SEAGULL.hit * 0.42, 0, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawSeagull(g) {
+  drawSpr('seagull/' + g.anim, Math.floor(g.t * MAP.seagullFps[g.anim]), g.x, g.y - g.h, { flip: g.dir === 'left', cast: g.h === 0 });
+}
+
 /* ------------------------------------------------------------------ Titine, le petit train du port */
 /* Une locomotive à vapeur (vehicle/loco) et trois wagons font l'aller-retour sur la voie du quai (MAP.track : x des
    heurtoirs ouest et est, y des rails), avec une pause à chaque bout. La locomotive est à l'est : elle tire vers l'est,
@@ -4889,6 +5101,7 @@ function mapState() {
     hens: questHens().map(h => [r1(h.hx), r1(h.hy), h.penned ? 1 : 0]),
     seen: Array.from(seenCells).join(''),
     critters: critters.map(c => c.scored ? 1 : 0).join(''),
+    crabs: crabs.map(c => c.scored ? 1 : 0).join(''), seagulls: seagulls.map(g => g.scored ? 1 : 0).join(''),
     ducks: ducks.map(d => d.scored ? 1 : 0).join(''),
     letters: letters.map(l => l.got ? 1 : l.shell && l.dug ? 2 : 0).join(''),      // (2 : un coquillage sorti du sable, pas encore ramassé)
     cat: [r1(pompon.x), r1(pompon.y), pompon.mode],
@@ -4905,6 +5118,7 @@ function applyMapState(s) {
   for (const d of dogs) d.friend = (s.friends || []).includes(d.id);
   if (s.seen) for (let i = 0; i < seenCells.length; i++) seenCells[i] = s.seen[i] === '1' ? 1 : 0;
   critters.forEach((c, i) => { c.scored = (s.critters || '')[i] === '1'; });
+  crabs.forEach((c, i) => { c.scored = (s.crabs || '')[i] === '1'; }); seagulls.forEach((g, i) => { g.scored = (s.seagulls || '')[i] === '1'; });
   ducks.forEach((d, i) => { d.scored = (s.ducks || '')[i] === '1'; });
   letters.forEach((l, i) => { const v = (s.letters || '')[i]; l.got = v === '1'; l.dug = !l.shell || v === '1' || v === '2'; });
   (s.balls || []).forEach((q, i) => { const b = balls[i]; if (b && q) { b.x = q[0]; b.y = q[1]; b.inNet = !!q[2]; } });
@@ -4920,7 +5134,7 @@ function saveGame() {
   STORE.set(SAVE_KEY, Object.assign({
     v: SAVE_V, ep: episode, carte: MAP.id, ailleurs: Object.assign({}, elsewhere),
     mode: gameMode, diff: gameDiff, at: Date.now(), x: r1(P.x), y: r1(P.y), dir: P.dir, hp: P.hp, hpMax: P.hpMax,
-    score, time: r1(timePlayed), fled, treasures, clues: clues.slice(), sniffed: aliceSniffed, immune: barkImmuneSeen,
+    score, time: r1(timePlayed), fled, treasures, clues: clues.slice(), sniffed: aliceSniffed, immune: barkImmuneSeen, crabSeen, seagullSeen,
     farm: farm.state, post: post.state, rose: rose.state, fete: fete.state, jouets: jouets.state, piq: piq.state, bitten,
     swum: P.swum ? 1 : 0,
   }, mapState()));
@@ -4953,7 +5167,7 @@ function loadGame(s, rested) {
   gameMode = s.mode === 'balade' ? 'balade' : 'aventure';
   Object.assign(P, { x: s.x, y: s.y, dir: s.dir || 'down', hpMax: s.hpMax, hp: rested ? s.hpMax : Math.max(1, s.hp) });
   score = s.score; timePlayed = s.time; fled = s.fled; treasures = s.treasures;
-  clues = [0, 1, 2].map(i => !!s.clues[i]); aliceSniffed = !!s.sniffed; barkImmuneSeen = !!s.immune;
+  clues = [0, 1, 2].map(i => !!s.clues[i]); aliceSniffed = !!s.sniffed; barkImmuneSeen = !!s.immune; crabSeen = !!s.crabSeen; seagullSeen = !!s.seagullSeen;
   farm.state = s.farm || 'new'; post.state = s.post || 'new'; rose.state = s.rose || 'new';
   dressCastle();
   fete.state = s.fete || 'new'; jouets.state = s.jouets || 'new'; piq.state = s.piq || 'new';
@@ -6249,6 +6463,8 @@ function update(dt) {
       updateToys(dt);
       updateTrain(dt);
       for (const b of babies) if (gulls()) updateGull(b, dt); else updateBaby(b, dt);
+      for (const c of crabs) updateCrab(c, dt);
+      for (const g of seagulls) updateSeagull(g, dt);
       if (piquette.callT > 0 && (piquette.callT -= dt) <= 0) piquetteCall();
       for (const c of critters) updateCritter(c, dt);
       for (const d of ducks) updateDuck(d, dt);
@@ -6303,6 +6519,7 @@ function drawWorld() {
   drawRings();   // ondes d'aboiement, au sol sous les personnages
   for (const d of ducks) if (d.h > 0 && vis(d.x, d.y, 60))             // ombres des canards en vol
     flyShadow(d.x, d.y, d.h, 18, 5, 0.8 * (1 - Math.min(0.6, d.h / 200)));
+  for (const g of seagulls) if (g.h > 0 && vis(g.x, g.y, 80)) drawSeagullShadow(g);     // l'ombre d'un goéland : à l'aplomb, là où il piquera
   for (const b of butterflies) if (vis(b.x, b.y, 60))               // ombres des papillons, plus pâles en altitude
     flyShadow(b.x, b.y, b.alt, Math.max(4, 9 - b.alt * 0.05), 3, 0.75 * (1 - Math.min(0.7, b.alt / 110)));
 
@@ -6331,6 +6548,8 @@ function drawWorld() {
     ? { y: l.y + POSED.ground, draw: () => drawPosed('item/shell', l.i, l.x, l.y + POSED.ground, MAP.shellBase[l.i], l.wait > 0 ? -1 : l.t, l.up) }
     : { y: l.y + POSED.ground, draw: () => drawPosed('item/letter', Math.floor(l.t * 6), l.x, l.y + POSED.ground, MAP.itemBase.letter, l.t + l.x * 0.013) });
   if (vis(pompon.x, pompon.y, 60)) list.push({ y: pompon.y, draw: drawPompon });
+  for (const c of crabs) if (vis(c.x, c.y, 60)) list.push({ y: c.y, draw: () => drawCrab(c) });
+  for (const g of seagulls) if (vis(g.x, g.y - g.h, 120)) list.push({ y: g.h > 0 ? g.y + 400 : g.y, draw: () => drawSeagull(g) });
   if (gulls()) gullList(list, vis);
   else for (const b of babies) if (vis(b.x, b.y, 60)) list.push({ y: b.y, draw: () => drawBaby(b) });
   for (const b of balls) if (vis(b.x, b.y, 80)) list.push({ y: b.y, draw: () => drawBall(b) });

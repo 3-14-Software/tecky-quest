@@ -116,6 +116,14 @@
       "nom": "Suzanne",
       "voix": "la poissonnière du village de pêcheurs : voix forte et gaie, gouailleuse, le cœur sur la main"
     },
+    "crab": {
+      "nom": "Les crabes",
+      "voix": "le claquement de leurs pinces (« Clac clac ! »)"
+    },
+    "seagull": {
+      "nom": "Les goélands",
+      "voix": "grands cris rauques : menaçants (« Kiaaak ! »), puis vexés quand ils repartent"
+    },
     "gull": {
       "nom": "Les mouettes",
       "voix": "mouettes rieuses : cris moqueurs (« Kia-ha-ha ! »), cri d’effroi (« Kiaaa ! »)"
@@ -685,6 +693,28 @@
     },
     {
       "voix": "tecky",
+      "fichier": "tecky-e76fd5f2",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Un crabe ! Si je lui marche dessus, il pince. Mais un bon aboiement, et il s'enterre dans le sable !",
+      "affiche": "Un crabe ! Si je lui marche dessus, il pince. Mais un bon aboiement, et il s'enterre dans le sable !",
+      "contexte": "Premier crabe"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-66eca2a2",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Un goéland ! Il va piquer sur moi… Je ne reste pas sous son ombre, et j'aboie pour le faire repartir !",
+      "affiche": "Un goéland ! Il va piquer sur moi… Je ne reste pas sous son ombre, et j'aboie pour le faire repartir !",
+      "contexte": "Premier goéland"
+    },
+    {
+      "voix": "tecky",
       "fichier": "tecky-72e5a7c8",
       "personnage": "Tecky",
       "type": "dialogue",
@@ -1012,6 +1042,17 @@
       "texte": "Ouf !",
       "affiche": "Ouf !",
       "contexte": "Une voiture bouscule Tecky"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-ca20a121",
+      "personnage": "Tecky",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Aïe ! Ça pince !",
+      "affiche": "Aïe ! Ça pince !",
+      "contexte": "Un crabe (il menace, il pince)"
     },
     {
       "voix": "tecky",
@@ -4422,6 +4463,39 @@
       "texte": "Mes poissons !",
       "affiche": "Mes poissons !",
       "contexte": "Tecky rapporte un poisson à Suzanne"
+    },
+    {
+      "voix": "crab",
+      "fichier": "crab-2518d1ea",
+      "personnage": "Les crabes",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Clac clac !",
+      "affiche": "Clac clac !",
+      "contexte": "Un crabe (il menace, il pince)"
+    },
+    {
+      "voix": "seagull",
+      "fichier": "seagull-76271fe5",
+      "personnage": "Les goélands",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Kiak ! Kiak !",
+      "affiche": "Kiak ! Kiak !",
+      "contexte": "Tecky repousse un goéland"
+    },
+    {
+      "voix": "seagull",
+      "fichier": "seagull-3763ed14",
+      "personnage": "Les goélands",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Kiaaak !",
+      "affiche": "Kiaaak !",
+      "contexte": "Un goéland a repéré Tecky"
     },
     {
       "voix": "gull",

@@ -46,7 +46,7 @@ _DITS = {"planks": "les planches", "chalk": "la falaise", "heath": "le plateau"}
 # ordre des clés dans le fichier (une clé inconnue est gardée, à la fin)
 ORDRE = ["format", "annexe", "w", "h", "legende", "terrain", "details", "decor",
          "items", "dig", "enemies", "signs", "tunnels",
-         "hens", "ducks", "cows", "critters", "butterflies", "villagers",
+         "hens", "ducks", "cows", "critters", "butterflies", "villagers", "crabs", "seagulls",
          "start", "alice", "title", "ending",
          "farmer", "postman", "neighbor", "pompon", "leon", "iris", "piquette", "papa",
          "letters", "balls", "toys", "babies", "goal", "ballBox", "pen", "penGate", "track",
@@ -75,7 +75,7 @@ ACTEURS = {
 TAILLES = {"letters": 5, "balls": 5, "toys": 3, "babies": 3}
 # listes dont la sauvegarde retient les éléments par leur rang : en ajouter à la fin, et ne pas en retirer au milieu
 # sans changer SAVE_V dans game.js (sinon une partie en cours retrouve ses chiens, trésors… mélangés)
-INDEXEES = ["enemies", "dig", "critters", "ducks", "letters", "hens", "balls", "toys", "babies"]
+INDEXEES = ["enemies", "dig", "critters", "ducks", "letters", "hens", "balls", "toys", "babies", "crabs", "seagulls"]
 # les indices d'Alice (CLUES dans game.js) : exactement un de chaque, parmi les objets
 INDICES = ("hairclip", "shoe", "plush")
 # morceau (music.py : MORCEAUX) et ambiance d'une zone
@@ -93,8 +93,10 @@ POINTS = ["start", "alice", "title", "farmer", "postman", "neighbor", "pompon", 
 POINTS_LIBRES = ["papa"]
 # listes [genre, x, y] (genres() dit lesquels existent)
 NOMMEES = ["decor", "items", "enemies", "cows", "critters", "butterflies", "villagers"]
+# listes qu'une carte peut ne pas avoir, même la carte du monde (le printemps n'a ni crabes ni goélands)
+LISTES_LIBRES = ("passages", "crabs", "seagulls")
 # listes de points [x, y]
-POSITIONS = ["dig", "letters", "balls", "toys", "babies"]
+POSITIONS = ["dig", "letters", "balls", "toys", "babies", "crabs", "seagulls"]     # (crabes et goélands : les adversaires de la côte)
 
 # image de l'atlas qui représente un élément dans l'éditeur ({} : son genre ; [clé, n° d'image] pour les listes dont
 # chaque élément a son image)
@@ -103,6 +105,7 @@ SPRITES = {
     "cows": "{}/graze", "critters": "{}/idle", "butterflies": "butterfly/{}", "villagers": "{}/idle",
     "vehicles": "vehicle/{}", "dig": "item/goldbone", "signs": "decor/signpost", "tunnels": "decor/burrow",
     "letters": "item/letter", "balls": ["port/balloon"], "toys": ["port/toy"], "babies": "hedgehog/idle",
+    "crabs": "crab/idle", "seagulls": "seagull/idle",
     "start": "tecky/idle/down", "alice": "alice/idle/down", "farmer": "farmer/idle", "postman": "postman/idle",
     "neighbor": "neighbor/idle", "pompon": "cat_white/idle", "leon": "leon/idle", "iris": "iris/idle",
     "piquette": "piquette/idle", "papa": "papa/idle", "goal": "decor/goal_net", "roadTunnels": "decor/tunnel",
@@ -211,7 +214,7 @@ def charger_episode(nom, episode=None, verifier=True):
 
 # ce qu'une carte annexe peut ne pas avoir, et ce qui en tient lieu (hors de la carte, ou rien)
 _LISTES = ["details", "decor", "items", "dig", "enemies", "signs", "tunnels", "hens", "ducks", "cows", "critters",
-           "butterflies", "villagers", "letters", "balls", "toys", "babies", "roadTunnels", "passages", "calm", "landmarks"]
+           "butterflies", "villagers", "crabs", "seagulls", "letters", "balls", "toys", "babies", "roadTunnels", "passages", "calm", "landmarks"]
 _RECT = [HORS, HORS, HORS + 1, HORS + 1]
 
 
@@ -294,7 +297,7 @@ def valider(c, avec_genres=True, variante=False):
     la = lambda cle: not (annexe or variante) or cle in c     # (une carte annexe n'a que ce qu'elle déclare)
 
     def liste(cle, forme, nom):
-        if not la(cle) or (cle == "passages" and cle not in c):
+        if not la(cle) or (cle in LISTES_LIBRES and cle not in c):
             return []
         v = c.get(cle)
         if not isinstance(v, list):

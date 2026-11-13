@@ -76,7 +76,10 @@
     "os_dore_bulle": "Os doré !",
     "os_dore": "Wouf ! Un os doré était enterré ! ({n} / {total})",
     "praline": "Te voilà, Praline ! Viens, on retourne voir ta maîtresse.",
-    "poisson": "Un poisson ?"
+    "poisson": "Un poisson ?",
+    "pince": "Aïe ! Ça pince !",
+    "crabe": "Un crabe ! Si je lui marche dessus, il pince. Mais un bon aboiement, et il s'enterre dans le sable !",
+    "goeland": "Un goéland ! Il va piquer sur moi… Je ne reste pas sous son ombre, et j'aboie pour le faire repartir !"
   },
   "doberman": {
     "peur": "Même pas peur !"
@@ -865,5 +868,12 @@
   "mouette": {
     "rire": "Kia-ha-ha !",
     "cri": "Kiaaa !"
+  },
+  "crabe": {
+    "clac": "Clac clac !"
+  },
+  "goeland": {
+    "cri": "Kiaaak !",
+    "fuite": "Kiak ! Kiak !"
   }
 }

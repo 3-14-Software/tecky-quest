@@ -417,7 +417,32 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   elles laissaient dans la liste des lignes parasites : « tous », « salut »… et « But ! » n'y était pas).
   **Éditeur de carte** : `carte.ACTEURS` (acteur → image et nom de ce qu'il tient ; `infos.acteurs`,
   `ED.acteur()`, `ED.nom()`) : sur la côte, l'éditeur montre Anatole, Zoé, les coquillages, les mouettes… et
-  plus Gaston, Marcel, les lettres, les hérissons. Un nouvel acteur : l'y ajouter. Premier jet posé par
+  plus Gaston, Marcel, les lettres, les hérissons. Un nouvel acteur : l'y ajouter.
+  **Les adversaires de la côte : crabes et goélands** (13 novembre 2026 ; `game.js`, section « les crabes et les
+  goélands »), en plus des chiens. Deux listes de points de la carte, facultatives (`carte.LISTES_LIBRES` : le
+  monde n'en a pas), retenues par leur rang dans la sauvegarde : `crabs`, `seagulls` (`MAP.crabs`,
+  `MAP.seagulls`). Comme pour les chiens, rien ne fait mal en balade, en zone calme ni pendant le répit d'un
+  dialogue (`hurtPlayer(…, false)` : ce ne sont pas des morsures). **Crabes** (`crabes.py` : de face, cadre
+  32 x 32, pattes en (16, 26), réduits de `SCALE` ; animations idle, walk, menace, pinch, wave, bury, unbury,
+  buried ; sprites `crab/<anim>`, `MAP.crabAnims` = [cadence, en boucle, images]) : sur le sable, ils vont et
+  viennent de côté autour de leur place (`CRAB.range`) ; Tecky à moins de `CRAB.near` : pinces levées, « Clac
+  clac ! » (`SFX.clack`) ; il leur marche dessus (`CRAB.pinch`) : ils pincent (`SFX.pinch`, un demi-os) ; un
+  aboiement dans le cône, ou une morsure : `buryCrab()`, ils s'enterrent (`SFX.burrow` ; une butte d'où
+  dépassent leurs yeux), ne pincent plus, et ressortent quand Tecky s'est éloigné (`CRAB.peek`) ; des points la
+  première fois (`scored`). En balade, ils saluent d'une pince. **Goélands** (`goelands.py` : de profil, cadre
+  48 x 40, pattes en (24, 36) ; animations glide, flap, cry, dive, idle ; sprites `seagull/<anim>`,
+  `MAP.seagullFps` ; il reprend les outils de `mouettes.py`, pas ses poses) : ils tournent dans le ciel autour
+  de leur place (`soar`, `SEAGULL.orbit`, `alt`) ; leur ombre est **à l'aplomb** (`drawSeagullShadow()`, pas
+  couchée par le soleil : elle dit où ils sont). Tecky entre dans leur domaine (`SEAGULL.see`, hors zone calme,
+  pas à la nage) : « Kiaaak ! » (`SFX.keow`), ils viennent au-dessus de lui (`warn`), puis piquent sur
+  l'endroit où il était (`dive`, `SFX.swoop`, une cible rouge au sol) : il suffit de bouger. Un aboiement vers
+  leur ombre (`scareSeagull()`, portée `SEAGULL.bark`) les fait repartir pour `SEAGULL.gone` s ; des points la
+  première fois qu'on en repousse un qui attaquait. En mode facile, ils préviennent et piquent plus lentement
+  (`warnEasy`, `diveEasy`). En balade, ils sont posés (`perch`), s'envolent si Tecky approche et reviennent
+  (`land`). La première rencontre de chacun : Tecky explique (`crabSeen`, `seagullSeen`, sauvegardés ; textes
+  `tecky.crabe`, `tecky.goeland`). `check_placement.js` : un crabe sur le sable, ni crabe ni goéland en zone
+  calme. Éditeur : « Crabe », « Goéland » (calque des chiens, outil Poser). Test : `adversaires.js`. Planches :
+  `reference/v2/crabes.png`, `goelands.png` ; dans le jeu : `reference/v2/lot6_adversaires.png`. Premier jet posé par
   `v2/cote_carte.py`, **gelé depuis** : Christophe retouche la carte dans l'éditeur, c'est
   `cartes/cote.json` qui fait foi (le script refuse d'écraser une carte qui existe ; ses listes ne sont plus
   à jour ; `python3 v2/cote_carte.py --apercu` redessine l'aperçu à partir du fichier). Rien ne dépend de

@@ -11,7 +11,7 @@
   const LISTES = {
     decor: c => c.decor, items: c => c.items, dig: c => c.dig, enemies: c => c.enemies, signs: c => c.signs,
     tunnels: c => c.tunnels, hens: c => c.hens, ducks: c => c.ducks, cows: c => c.cows, critters: c => c.critters,
-    butterflies: c => c.butterflies, villagers: c => c.villagers, roadTunnels: c => c.roadTunnels,
+    butterflies: c => c.butterflies, villagers: c => c.villagers, crabs: c => c.crabs, seagulls: c => c.seagulls, roadTunnels: c => c.roadTunnels,
     vehicles: c => (c.traffic || {}).vehicles, crossings: c => (c.traffic || {}).crossings, calm: c => c.calm, landmarks: c => c.landmarks,
   };
   O.LISTES = LISTES;
@@ -263,6 +263,7 @@
     ED.modifier(c => {
       const L = LISTES[type] && LISTES[type](c), n = L ? L.length : 0;
       if (type === 'dig') L.push([Math.floor(x) + 0.5, Math.floor(y) + 0.5]);
+      else if (type === 'crabs' || type === 'seagulls') L.push([x, y]);
       else if (type === 'signs') L.push([x, y, 'Nouveau panneau.']);
       else if (type === 'tunnels') L.push([x, y, x, ED.r4(y + 1.25)]);
       else if (type === 'hens' || type === 'ducks') L.push([genre, x, y, 0]);

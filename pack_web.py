@@ -43,6 +43,8 @@ import items
 import lisiere
 import moutons
 import mouettes
+import crabes
+import goelands
 import tecky2
 import vehicles
 import music
@@ -275,6 +277,8 @@ def build_map():
         "papa": [px(PAPA[0]), px(PAPA[1])],
         "roles": CARTE["roles"],                      # les rôles tenus par d'autres acteurs sur cette carte (game.js : newNpc)
         "critters": [[n, px(x), px(y)] for n, x, y in CRITTERS],
+        "crabs": [[px(x), px(y)] for x, y in CARTE["crabs"]],             # les adversaires de la côte (game.js : newCrab, newSeagull)
+        "seagulls": [[px(x), px(y)] for x, y in CARTE["seagulls"]],
         "ducks": [[n, px(x), px(y), f] for n, x, y, f in DUCKS],
         "cows": [[n, px(x), px(y)] for n, x, y in COWS],
         "villagers": [[n, px(x), px(y)] for n, x, y in VILLAGERS],
@@ -329,6 +333,8 @@ def build_jeu():
         "crops": len(nature.CULTURES),
         "babyFps": {a: fps for a, (_, fps, _) in herissons.ANIMS.items()},
         # les mouettes voleuses (mouettes.py) : cadences, et le bout du bec à chaque image, en px à partir des pattes
+        "crabAnims": {a: [fps, loop, len(poses)] for a, (poses, fps, loop) in crabes.ANIMS.items()},     # cadence, en boucle, images
+        "seagullFps": {a: fps for a, (_, fps, _) in goelands.ANIMS.items()},
         "gullFps": {a: fps for a, (_, fps, _) in mouettes.ANIMS.items()},
         "gullBeak": {a: [[round(x * S, 1), round(y * S, 1)] for x, y in mouettes.bec(a)] for a in mouettes.ANIMS},
         "npcFps": dict({"farmer": {a: v[1] for a, v in farmer.ANIMS.items()}},
@@ -370,7 +376,7 @@ def sans_ovale(svg):
 def portees():
     """Familles de sprites qui ont une ombre portée dans le jeu (le début de leur clé dans l'atlas)."""
     return (["tecky", "alice", "alice1", "farmer", "hedgehog", "vehicle", "item", "port", "plage"] + list(chiens2.CHIENS) + list(npcs.KINDS)
-            + list(villageois.KINDS) + list(critters.KINDS) + list(cows.KINDS) + list(hens.COLORS) + ["sheep", "gull"])
+            + list(villageois.KINDS) + list(critters.KINDS) + list(cows.KINDS) + list(hens.COLORS) + ["sheep", "gull", "crab", "seagull"])
 
 
 def beach_toy_bases():
@@ -505,6 +511,11 @@ def collect(r=1):
         for anim in hens.ANIMS:
             out.append((f"{kind}/{anim}/right", [render_svg(sans_ovale(s), 32, 32, R, PAD) for s in hens.frames(kind, anim)],
                         (16 * S + M, 28 * S + M), True))
+    for anim in crabes.ANIMS:                           # les crabes de la plage : de face, pattes en (16, 26)
+        out.append((f"crab/{anim}", [render_svg(sans_ovale(sv), 32, 32, R, PAD) for sv in crabes.frames(anim)], (16 * S + M, crabes.G * S + M), True))
+    for anim in goelands.ANIMS:                         # les goélands : de profil vers la droite, pattes en (24, 36)
+        out.append((f"seagull/{anim}", [render_svg(sans_ovale(sv), goelands.W, goelands.H, R, PAD) for sv in goelands.frames(anim)],
+                    (24 * S + M, goelands.G * S + M), True))
     for anim in mouettes.ANIMS:                         # les mouettes voleuses : de profil vers la droite, pattes en (16, 28)
         out.append((f"gull/{anim}", [render_svg(sans_ovale(sv), 32, 32, R, PAD) for sv in mouettes.frames(anim)], (16 * S + M, mouettes.G * S + M), True))
     out.append(("plage/poisson", [render_svg(sv, 32, 32, R, PAD) for sv in mouettes.poisson_frames()], (16 * S + M, 16 * S + M), True))

@@ -45,6 +45,8 @@ const VOICES = {
   theo: ['Théo', 'le maître-nageur de la plage : jeune, sportif, voix claire et enjouée'],
   yvon: ['Yvon', 'le pêcheur : vieux loup de mer, voix grave et bourrue, bon cœur'],
   suzanne: ['Suzanne', 'la poissonnière du village de pêcheurs : voix forte et gaie, gouailleuse, le cœur sur la main'],
+  crab: ['Les crabes', 'le claquement de leurs pinces (« Clac clac ! »)'],
+  seagull: ['Les goélands', 'grands cris rauques : menaçants (« Kiaaak ! »), puis vexés quand ils repartent'],
   gull: ['Les mouettes', 'mouettes rieuses : cris moqueurs (« Kia-ha-ha ! »), cri d’effroi (« Kiaaa ! »)'],
 };
 // répliques dont le texte est calculé (pas une chaîne écrite en dur) : chacune doit être produite ci-dessous ; si ce
@@ -54,12 +56,12 @@ const DYNAMIC_POPS = 31;         // de même pour les bulles (texte calculé : c
 const NPC_VARS = { farmer: 'farmer', postman: 'postman', neighbor: 'neighbor', leon: 'leon', iris: 'iris', piquette: 'piquette' };
 // répliques relevées dans le code (écrites en dur, dites en cours de route) : contexte selon la fonction qui les dit
 const WHERE = { doBark: 'Premier aboiement sur le doberman', updatePompon: 'Tecky retrouve Pompon',
-  updateTunnel: 'Premier terrier', updatePlayer: 'Devant la cachette d’Alice, avant les trois indices' };
+  updateTunnel: 'Premier terrier', updateCrab: 'Premier crabe', updateSeagull: 'Premier goéland', updatePlayer: 'Devant la cachette d’Alice, avant les trois indices' };
 // bulles relevées dans le code : contexte selon la fonction qui les affiche
 const WHERE_POP = { doBark: 'Tecky aboie', updatePompon: 'Pompon', updateDog: 'Les chiens du coin',
   updateCritter: 'Écureuils et chats', scareDuck: 'Les canards s’envolent', updateTrain: 'Titine s’arrête devant Tecky',
   barkAtTrain: 'Tecky aboie vers Titine', updateVehicle: 'Une voiture bouscule Tecky', startSniff: 'Tecky flaire la piste',
-  layTrail: 'Tecky flaire (pas de piste par ici)', gullLaugh: 'Une mouette nargue Tecky', scareGull: 'Une mouette lâche son poisson', updateItems: 'Tecky ramasse un objet', checkGoal: 'Un ballon entre dans le filet',
+  layTrail: 'Tecky flaire (pas de piste par ici)', updateCrab: 'Un crabe (il menace, il pince)', updateSeagull: 'Un goéland a repéré Tecky', scareSeagull: 'Tecky repousse un goéland', gullLaugh: 'Une mouette nargue Tecky', scareGull: 'Une mouette lâche son poisson', updateItems: 'Tecky ramasse un objet', checkGoal: 'Un ballon entre dans le filet',
   cowMoo: 'Une vache meugle (Tecky est dans le pré)', scareCow: 'Tecky aboie vers une vache',
   edgeBump: 'Tecky pousse contre le bord de la carte' };
 // expression du portrait (face) : le ton à donner. 4 à 6 : les visages de Tecky (FACE dans game.js)

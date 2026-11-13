@@ -94,6 +94,9 @@ setTimeout(() => {
     if (seaToys()) { for (const t of toys) if (!swimAt(t.x, t.y) || deepAt(t.x, t.y)) out.push('jouet hors de la zone de baignade ' + tile(t.x, t.y)); }
     else for (const t of toys) if (waterAt(t.x, t.y) || !reachable(t.x, t.y, IRIS.pick)) out.push('jouet ' + tile(t.x, t.y));
     if (ici('piquette') && !reachable(piquette.x, piquette.y, 150)) out.push('Maman Piquette ' + tile(piquette.x, piquette.y));
+    // les adversaires de la côte : un crabe sur le sable, hors de l'eau ; ni crabe ni goéland en zone calme (comme les chiens)
+    for (const c of crabs) if (!sandAt(c.x, c.y) || !standable(c.x, c.y) || !reachable(c.x, c.y, 40) || calmAt(c.x, c.y)) out.push('crabe ' + tile(c.x, c.y));
+    for (const g of seagulls) if (calmAt(g.hx, g.hy) || !standable(g.hx, g.hy) || !reachable(g.hx, g.hy, 60)) out.push('goéland ' + tile(g.hx, g.hy));
     // (sur la côte : les mouettes de Suzanne — leur poisson tombe là où elles se tiennent)
     for (const b of babies) if (!standable(b.x, b.y) || !reachable(b.x, b.y, gulls() ? GULL.pick : BABY.find)) out.push((gulls() ? 'mouette ' : 'bébé hérisson ') + tile(b.x, b.y));
     for (const l of letters) if (waterAt(l.x, l.y + 20) || !reachable(l.x, l.y + 20, 52)) out.push('lettre ' + tile(l.x, l.y));

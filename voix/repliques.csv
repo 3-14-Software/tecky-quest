@@ -50,6 +50,8 @@ tecky-75b457ab;Tecky;dialogue;;;(La mer ? Je ne l'ai jamais vue… Wouf ! J'arri
 tecky-3e444da6;Tecky;dialogue;;;(Un, deux, trois… dix ! Prête ou pas, me voilà !);L’arrivée au parking (été)
 tecky-9232cc10;Tecky;dialogue;;joyeux;Ouaf ! Ouaf ouaf !;"Retrouvailles avec Alice ; Retrouvailles avec Alice (été)"
 tecky-e08772a9;Tecky;dialogue;;inquiet;Grr… Ce doberman n'a pas peur de mes aboiements. Il va falloir le mordre !;Premier aboiement sur le doberman
+tecky-e76fd5f2;Tecky;dialogue;;inquiet;Un crabe ! Si je lui marche dessus, il pince. Mais un bon aboiement, et il s'enterre dans le sable !;Premier crabe
+tecky-66eca2a2;Tecky;dialogue;;inquiet;Un goéland ! Il va piquer sur moi… Je ne reste pas sous son ombre, et j'aboie pour le faire repartir !;Premier goéland
 tecky-72e5a7c8;Tecky;dialogue;;fier;Un teckel, ça creuse des terriers : hop, sous le grillage ! Les autres chiens, eux, doivent faire le tour.;Premier terrier
 tecky-5dfd1ea4;Tecky;dialogue;;inquiet;Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !;Devant la cachette d’Alice, avant les trois indices
 tecky-83fbe1c5;Tecky;bulle;;;Un coquillage ?;Tecky ramasse un coquillage
@@ -80,6 +82,7 @@ tecky-35f2c78d;Tecky;bulle;;;Plouf ! Elle est bonne !;dans syncSwim()
 tecky-8ef8d480;Tecky;bulle;;;Le tunnel, c’est pour les voitures !;Tecky pousse contre le bord de la carte
 tecky-439ced13;Tecky;bulle;;;Alice n’a pas pu aller si loin !;Tecky pousse contre le bord de la carte
 tecky-8afd030a;Tecky;bulle;;;Ouf !;Une voiture bouscule Tecky
+tecky-ca20a121;Tecky;bulle;;;Aïe ! Ça pince !;Un crabe (il menace, il pince)
 tecky-ea351913;Tecky;bulle;;;Snif snif…;Tecky flaire la piste
 tecky-eb42144d;Tecky;bulle;;;Hmm…;Tecky flaire (pas de piste par ici)
 tecky-8ebed277;Tecky;bulle;;;Pas plus loin que les bouées : c'est trop profond !;dans swimStroke()
@@ -390,5 +393,8 @@ suzanne-2cdd7c97;Suzanne;bulle;;;Bonjour, Tecky !;Suzanne : Tecky arrive
 suzanne-ccd9916a;Suzanne;bulle;;;Mon poisson ! Encore 2 !;Tecky rapporte un poisson à Suzanne
 suzanne-12257aaf;Suzanne;bulle;;;Mon poisson ! Encore 1 !;Tecky rapporte un poisson à Suzanne
 suzanne-a01d1b3f;Suzanne;bulle;;;Mes poissons !;Tecky rapporte un poisson à Suzanne
+crab-2518d1ea;Les crabes;bulle;;;Clac clac !;Un crabe (il menace, il pince)
+seagull-76271fe5;Les goélands;bulle;;;Kiak ! Kiak !;Tecky repousse un goéland
+seagull-3763ed14;Les goélands;bulle;;;Kiaaak !;Un goéland a repéré Tecky
 gull-ceaf8e63;Les mouettes;bulle;;;Kia-ha-ha !;Une mouette nargue Tecky
 gull-47212b81;Les mouettes;bulle;;;Kiaaa !;Une mouette lâche son poisson

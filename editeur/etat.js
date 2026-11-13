@@ -64,7 +64,7 @@
   ED.episode = new URLSearchParams(location.search).get('episode') || '';
   ED.fichier = () => 'carte.json?carte=' + encodeURIComponent(ED.nom) + (ED.episode ? '&episode=' + encodeURIComponent(ED.episode) : '');
   const LISTES_VIDES = ['details', 'decor', 'items', 'dig', 'enemies', 'signs', 'tunnels', 'hens', 'ducks', 'cows', 'critters',
-    'butterflies', 'villagers', 'letters', 'balls', 'toys', 'babies', 'roadTunnels', 'calm', 'landmarks'];
+    'butterflies', 'villagers', 'crabs', 'seagulls', 'letters', 'balls', 'toys', 'babies', 'roadTunnels', 'calm', 'landmarks'];
   let ouvertes = [];
   const aEcrire = c => { const d = Object.assign({}, c); for (const k of ouvertes) if (!d[k].length) delete d[k]; return d; };
   ED.charger = async () => {
@@ -112,6 +112,7 @@
     endingAlice: 'Fin : Alice devant la niche', endingTecky: 'Fin : Tecky à ses pieds',
     farmer: 'Gaston, le fermier', postman: 'Marcel, le facteur', neighbor: 'Mamie Rose, la voisine', pompon: 'Pompon, son chat',
     leon: 'Léon, le cariste', iris: 'Iris, le vieux chien', piquette: 'Maman Piquette', goal: 'Filet de Léon',
+    crabs: 'Crabe', seagulls: 'Goéland',
     letters: 'Lettre du facteur', balls: 'Ballon de Léon', toys: 'Jouet d’Iris', babies: 'Petit hérisson',
     roadTunnels: 'Tunnel de la route', vehicles: 'Véhicule', crossings: 'Passage piéton', calm: 'Zone calme',
     zones: 'Zone', zoneRect: 'Rectangle de zone', landmarks: 'Étiquette de la carte', pen: 'Enclos des poules',
@@ -156,6 +157,8 @@
     liste('items', 'objets', e => ({ indice: I.indices.includes(e[0]) }));
     liste('dig', 'tresors', { contrainte: 'centre', alpha: 0.9 });
     liste('enemies', 'chiens', { num: true });
+    liste('crabs', 'chiens', { num: true });
+    liste('seagulls', 'chiens', { num: true });
     liste('signs', 'panneaux');
     (c.tunnels || []).forEach((t, i) => ['a', 'b'].forEach((b, k) => out.push({
       id: 'tunnels/' + i + '/' + b, type: 'tunnels', i, bout: k, calque: 'terriers', x: t[2 * k], y: t[2 * k + 1],
