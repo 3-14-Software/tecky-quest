@@ -53,6 +53,8 @@ ATTENDU = {
     # repos : (vues, en boucle)
     "repos": {"sit": (DEUX, True), "yawn": (DEUX, False), "scratch": (PROFIL, True), "sleep": (DEUX, True),
               "shake": (DEUX, False)},
+    # nage : les animations de la terre ferme que Tecky joue aussi dans l'eau, leurs vues
+    "nage": {"idle": TROIS, "walk": TROIS, "bark": TROIS, "bite": TROIS, "hurt": TROIS, "ko": PROFIL},
     "alice": {"idle", "walk", "happy"},
     "chiens": ["roquet", "bouledogue", "molosse", "berger"],
     # chiens : (nombre d'images, vues)
@@ -63,6 +65,17 @@ ok({n: v[2] for n, v in tecky2.ANIMS.items()} == ATTENDU["tecky"],
    "Tecky : les animations et les vues que le moteur appelle (" + ", ".join(tecky2.ANIMS) + ")")
 ok({n: tuple(v[2:]) for n, v in tecky2.REST_ANIMS.items()} == ATTENDU["repos"],
    "Tecky : les poses de repos, leurs vues, leurs boucles (" + ", ".join(tecky2.REST_ANIMS) + ")")
+ok({n: v[1] for n, v in tecky2.NAGE.items()} == ATTENDU["nage"]
+   and all(len(tecky2.nage_frames(n, v)) == len(tecky2.frames(n, v)) for n, w in tecky2.NAGE.items() for v in w[1]),
+   "Tecky qui nage : les mêmes animations, les mêmes nombres d'images que sur la terre ferme (" + ", ".join(tecky2.NAGE) + ")")
+for nom, (_, vues, _) in tecky2.NAGE.items():
+    for v in vues:
+        w, h, ox, oy = tecky2.CADRE[v]
+        for s in tecky2.nage_frames(nom, v):
+            a = alpha(s, w, h)
+            if not dans_le_cadre(a) or pieds(a) > oy - tecky2.LIGNE + 4:
+                ok(False, f"nage/{nom}/{v} : hors du cadre, ou quelque chose dépasse sous la ligne d'eau")
+ok(True, "Tecky qui nage : rien sous la ligne d'eau, rien hors du cadre")
 ok(set(alice2.ANIMS) == ATTENDU["alice"], "Alice : les animations que le moteur appelle (" + ", ".join(alice2.ANIMS) + ")")
 ok(len(tecky2.frames("walk", "right")) == 8 and len(alice2.frames("walk", "down")) == 8, "la marche a 8 images")
 

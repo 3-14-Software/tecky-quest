@@ -6,7 +6,7 @@ function main() {
   run('EPISODES[1].chantier = false; audioOn(); STORE.mem = {}; loadBadges(); episode = "ete"; newGame("balade", true);'); advanceDialog();
   run('cars = []; dogs = []; P.inv = 99;');
   ok(run('MAP.roles.postman') === 'zoe' && run('postman.kind') === 'postman' && run('postman.look') === 'zoe' && run('shells()') && run('letters.length') === 5
-     && run('letters.every(l => l.shell && !l.dug && !l.got && sandAt(l.x, l.y))') && run('npcList().length') === 3,
+     && run('letters.every(l => l.shell && !l.dug && !l.got && sandAt(l.x, l.y))') && run('npcList().length') === 5,
      'sur la côte, le rôle de Marcel est tenu par Zoé, celui des lettres par cinq coquillages enfouis dans le sable');
   ok(['zoe/idle', 'zoe/talk', 'zoe/wave', 'zoe/cheer', 'hud/portrait_zoe', 'item/shell', 'butte/coquillage', 'butte/os_sable', 'butte/os_terre', 'fx/sand', 'decor/chateau_de_sable', 'decor/chateau_de_sable_fini']
        .every(k => run(`!!ATLAS[${JSON.stringify(k)}]`)) && run('ATLAS["item/shell"].f.length') === 5 && run('MAP.shellBase.length') === 5
@@ -42,7 +42,7 @@ function main() {
   advanceDialog(); run('checkBadges();');
   ok(run('post.state') === 'done' && run('score') === run('sc0 + POST.reward') && run('items.length') === run('n0 + 1')
      && run('!!badges.coquillages && !badges.facteur') && run('decor.some(d => d.n === "sandcastle" && d.key === "decor/chateau_de_sable_fini")')
-     && run('questsHere().length') === 3,
+     && run('questsHere().length') === 5,
      'quête finie : des points, un os, le badge « Chercheur de coquillages », et le château est paré de coquillages');
   run('saveGame(); var S2 = loadSave(); loadGame(S2);'); advanceDialog();
   ok(run('post.state') === 'done' && run('decor.some(d => d.key === "decor/chateau_de_sable_fini")'), 'partie reprise : le château garde sa parure');

@@ -366,7 +366,28 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   tiré de la position). Textes : mêmes clés sous `zoe` que sous `postman` (`pmTxt()`), sous `coquillages` que
   sous `lettres` (`lostTxt()`). Badge « Chercheur de coquillages » (`coquillages`). Sauvegarde : la chaîne
   `letters` (0 enfoui, 2 sorti du sable, 1 ramassé). `check_placement.js` : un coquillage enfoui a la portée
-  d'un grattage. Voix : `DYNAMIC_SITES` = 23, `DYNAMIC_POPS` = 7. Test : `zoe.js`. Premier jet posé par
+  d'un grattage. Test : `zoe.js`.
+  Quatrième quête : **les jouets de plage de Théo** = la quête d'Iris (`jouets`, `toys`, `talkIris()`… inchangés)
+  avec `"iris": "theo"`. Théo, le maître-nageur (`npcs._theo()` : bronzé, mèches blondes, lunettes de soleil
+  relevées, débardeur à croix rouge, short de bain, sifflet ; il parle, il ne jappe pas : pas de `woof`), est sur
+  la plage de l'est, en zone calme. Trois jouets (`plage.beach_toy_frames()` : ballon, bouée, voilier) flottent
+  dans la zone de baignade (`seaToys()` ; sprite `mer/jouet` à flot, `plage/jouet` posé sur le sable — la famille
+  « plage » a une ombre portée ; `MAP.beachToyBase`) : Tecky nage dessus, les rapporte un par un ; lâché en
+  nageant (il aboie), le jouet flotte là. Ensuite Théo donne un conseil de plage à chaque visite (`THEO_TIPS`).
+  Textes : mêmes clés sous `theo` que sous `iris` (`irTxt()`). Badge « Chien sauveteur » (`nageur`). Test :
+  `theo.js`.
+  Cinquième quête : **les bouées d'Yvon** = la quête de Léon (`fete`, `balls`, `goal`, `talkLeon()`… inchangés)
+  avec `"leon": "yvon"`. Yvon, le pêcheur (`npcs._yvon()` : bonnet rouge, barbe grise, pull marin, cotte de ciré
+  jaune), est sur la plage de l'ouest, en zone calme. Ses cinq bouées de casier (`plage.casier_frames()`, sprite
+  `mer/casier`) flottent dans la zone de baignade (`floats()`) : Tecky les pousse à la nage ou en aboyant
+  jusqu'au **parc à bouées** planté dans l'eau (`decor.buoy_pen()`, décor `buoy_pen` déduit de `goal` à la place
+  du filet quand la carte a ce rôle ; mêmes mesures : `RAILS.buoy_pen`, `GOAL_IN`). Sur l'eau une bouée ne saute
+  pas, glisse moins loin (`FLOAT`), penche quand elle file et ne quitte jamais la zone de baignade
+  (`ballBlocked()` : `swimAt()`). Textes : mêmes clés sous `yvon` que sous `leon` (`lnTxt()`), sous `bouees` que
+  sous `ballons` (`ballTxt()`). Badge « Mousse » (`bouees`). `check_placement.js` : jouets, bouées et parc
+  dans la zone de baignade. Test : `yvon.js`. Voix : `DYNAMIC_SITES` = 23, `DYNAMIC_POPS` = 4 (les bulles d'un
+  rôle sont jouées dans leurs deux distributions par `tools/export_voix.js`). Captures :
+  `reference/v2/lot6_quete_theo.png`, `lot6_quete_yvon.png` ; planche : `cote_theo_yvon.png`. Premier jet posé par
   `v2/cote_carte.py`, **gelé depuis** : Christophe retouche la carte dans l'éditeur, c'est
   `cartes/cote.json` qui fait foi (le script refuse d'écraser une carte qui existe ; ses listes ne sont plus
   à jour ; `python3 v2/cote_carte.py --apercu` redessine l'aperçu à partir du fichier). Rien ne dépend de
@@ -949,6 +970,23 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
 - Flair (R, Y à la manette, bouton à truffe au toucher ; `SNIFF`) : piste des empreintes d'Alice (`fx/footprint` : une chaussure, un pied nu) vers
   `arrowTarget()`, le long d'un vrai chemin à pied (`buildWalkGrid()` : grille de 16 px rasterisée une fois,
   `fieldTo()` : distances par parcours en largeur, `scentPath()`). Les trésors proches scintillent. Test : `tunnel.js`.
+- **La nage** (été ; 13 novembre 2026) : Tecky nage dans la mer, près du bord. `swimCoins()` calcule une fois par
+  carte la **zone de baignade** — les coins de mer à moins de `SWIM.far` (4) coins d'un coin de sable —, l'eau
+  où l'on ne nage pas (`deep` : le large et l'eau douce ; `deepAt()`) et la **ligne de bouées** qui marque la
+  limite (`swimBuoys()`, sprite `mer/bouee` de `plage.bouee()`, elles dansent). Tout est vide sur une carte sans
+  mer : le printemps n'a pas changé. Seul Tecky nage : `moveTecky()` lève `swimmer` le temps de son pas, et
+  `blockedFeet()` demande alors `swimBlock()` au lieu de `waterAt()` — on n'entre dans l'eau et on n'en sort que
+  par le sable (un nageur ne monte ni sur un quai ni sur la jetée, on ne saute pas d'un quai). `syncSwim()` :
+  `P.swim`, et la famille du dessin, `P.kind` = `nage` au lieu de `tecky` (`tecky2.NAGE`, `nage_frames()`,
+  `image_nage()` : ses poses de nageur, enfoncées de `ENFONCE`, coupées à la ligne d'eau `LIGNE`, cerclées d'écume
+  `_eau()` ; mêmes noms d'animations et mêmes nombres d'images que sur la terre ferme — idle, walk, bark, bite,
+  hurt, ko ; pas dans `MAP.cast` : pas d'ombre portée). Gerbe et `SFX.splash` en entrant et en sortant, il
+  s'ébroue en sortant (`shakePending`), « Plouf ! » la première fois (`P.swum`, sauvegardé `swum`). Dans l'eau :
+  plus lent (`SWIM.spd`), un coup de patte `SFX.paddle` et un rond `fx/ripple` (`swimStroke()`), il aboie et mord
+  mais ne flaire pas, ne gratte pas, ne s'assoit pas ; s'il pousse vers le large, il le dit (`tecky.large`). Les
+  autres (chiens, suiveurs) s'arrêtent au bord. Un panneau sur les planches l'annonce. Test : `nage.js` ;
+  `tests/heros.py` (`ATTENDU["nage"]`). Planche : `reference/v2/tecky_v2_nage.png` ; dans le jeu :
+  `reference/v2/lot6_nage.png`. Deux quêtes s'en servent : Théo et Yvon (voir les rôles).
 - Os dorés : le trésor enterré (`item/goldbone`, `treasures` = os dorés trouvés, HUD et victoire). **Buttes et
   creux** (13 novembre 2026 ; Christophe : « uniformiser les trous », sur le modèle de ceux des coquillages de
   Zoé) : un trésor enfoui est signalé par une butte d'où dépasse un bout de ce qui est caché, et laisse un creux

@@ -437,10 +437,10 @@ def arrow_icons(scale):
 # ------------------------------------------------------------------ badges (succès)
 BADGES = ["aventure", "copains", "os_dores", "intact", "rapide", "poules",
           "facteur", "chat", "betes", "canards", "explorateur", "sieste", "ballons", "iris", "train", "herissons",
-          "caniche", "moutons", "coquillages"]
+          "caniche", "moutons", "coquillages", "nageur", "bouees"]
 # Les badges d'un épisode (les autres sont ceux du jeu, rangés avec le premier) : l'écran des badges a une page par
 # épisode ouvert (game.js : badgePages()).
-BADGE_EP = {"caniche": "ete", "moutons": "ete", "coquillages": "ete"}
+BADGE_EP = {"caniche": "ete", "moutons": "ete", "coquillages": "ete", "nageur": "ete", "bouees": "ete"}
 BADGE_C = (24, 20.5)      # centre de la médaille dans le cadre 48x48
 _HEART = ("M16,23.5 C9,18.6 7,15.2 7,12.6 C7,9.9 9.1,8 11.6,8 C13.6,8 15.1,9.2 16,10.9 "
           "C16.9,9.2 18.4,8 20.4,8 C22.9,8 25,9.9 25,12.6 C25,15.2 23,18.6 16,23.5 Z")   # même cœur que fx/heart
@@ -746,6 +746,22 @@ def _ic_coquillages(d):
     plage.saint_jacques(d)
 
 
+def _ic_nageur(d):
+    """La bouée à rayures de Théo (plage.py)."""
+    import plage
+    plage._bouee(d, 16.4)
+
+
+def _ic_bouees(d):
+    """Une bouée de casier d'Yvon, son fanion au vent."""
+    d.add(rect(15.4, 4.4, 1.3, 9.6, 0.5), "#8A6A46")
+    d.add('<path d="M16.7,4.6 L23.0,6.5 L16.7,8.5 Z" fill="%F%"/>', "#2E4470")
+    d.add('<path d="M8.6,22.0 Q7.8,12.6 16,12.0 Q24.2,12.6 23.4,22.0 Q16,26.2 8.6,22.0 Z" fill="%F%"/>', "#F28C28")
+    d.add('<path d="M9.0,15.6 Q16,18.2 23.0,15.6 L23.2,18.0 Q16,20.8 8.8,18.0 Z" fill="%F%"/>', "#FFFFFF", sil=False)
+    d.add('<path d="M8.7,19.6 Q16,22.6 23.3,19.6 L23.4,22.0 Q16,26.2 8.6,22.0 Z" fill="%F%"/>', "#C96A14", sil=False)
+    d.raw(line("M10.8,15.8 Q11.2,13.6 13.6,13.0", "#FFFFFF", 1.0))
+
+
 BADGE_ICONS = {   # nom : (dessin, échelle, point de l'icône posé au centre du disque)
     "aventure": (_ic_aventure, 0.95, 16, 16), "copains": (_ic_copains, 0.92, 16, 16),
     "os_dores": (_ic_os_dores, 0.95, 16, 16), "intact": (_ic_intact, 0.92, 16, 16),
@@ -757,6 +773,7 @@ BADGE_ICONS = {   # nom : (dessin, échelle, point de l'icône posé au centre d
     "herissons": (_ic_herissons, 1.15, 18.5, 21.5),
     "caniche": (_ic_caniche, 0.82, 16, 14.6), "moutons": (_ic_moutons, 0.8, 16, 17),
     "coquillages": (_ic_coquillages, 0.92, 16, 16),
+    "nageur": (_ic_nageur, 0.95, 16, 16.4), "bouees": (_ic_bouees, 0.9, 16, 15.4),
 }
 
 
@@ -828,6 +845,8 @@ def all_sprites(scale):
         "spr_hud_portrait_hortense": npc_portrait("hortense", scale),
         "spr_hud_portrait_anatole": npc_portrait("anatole", scale),
         "spr_hud_portrait_zoe": npc_portrait("zoe", scale),
+        "spr_hud_portrait_theo": npc_portrait("theo", scale),
+        "spr_hud_portrait_yvon": npc_portrait("yvon", scale),
         "spr_hud_digits": digit_frames(scale),
         "spr_hud_key": key_frames(scale),
         "spr_hud_pad": pad_frames(scale),

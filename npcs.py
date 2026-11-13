@@ -42,7 +42,7 @@ from spritelib import Drawing, circle, ellipse, rect, path, poly, leg, line, OUT
 W, H = 48, 64
 G = 60.0                      # ligne des pieds
 HK = 1.08                     # agrandissement de la tête (style chibi), autour du menton — comme Gaston
-KINDS = ("postman", "neighbor", "leon", "iris", "piquette", "papa", "hortense", "anatole", "zoe")
+KINDS = ("postman", "neighbor", "leon", "iris", "piquette", "papa", "hortense", "anatole", "zoe", "theo", "yvon")
 FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-côté conseillé
     "postman": (24, 18.5, 15.5),      # casquette, visage, moustache et menton (comme Gaston)
     "neighbor": (24, 21.5, 15.5),     # chignon, lunettes, menton (elle est plus petite : tout est 3 unités plus bas)
@@ -53,9 +53,12 @@ FACES = {                     # portrait : centre du recadrage (cx, cy) et demi-
     "hortense": (24, 20.4, 15.8),     # Madame Hortense : capeline, visage, collier
     "anatole": (24, 18.5, 15.5),      # Anatole, le gardien du phare : casquette de marin, moustache blanche
     "zoe": (24, 26.6, 15.2),          # Zoé, la petite fille au château de sable : couettes, frange, sourire
+    "theo": (24, 18.8, 15.2),         # Théo, le maître-nageur : mèches blondes, lunettes de soleil relevées, sifflet
+    "yvon": (24, 18.2, 15.6),         # Yvon, le pêcheur : bonnet rouge, barbe grise
 }
 PORTRAIT_BG = {"postman": "#CFE0F5", "neighbor": "#E9DDF6", "leon": "#FDE3C2", "iris": "#DDE9F6", "piquette": "#F6E3EC",
-               "papa": "#F7E6C8", "hortense": "#D9F0F2", "anatole": "#FBEFC4", "zoe": "#FCE6B8"}   # fond du médaillon (Gaston : "#CFE8B0")
+               "papa": "#F7E6C8", "hortense": "#D9F0F2", "anatole": "#FBEFC4", "zoe": "#FCE6B8",
+               "theo": "#CFEFF2", "yvon": "#DCE6F2"}   # fond du médaillon (Gaston : "#CFE8B0")
 
 PAL = {
     "postman": dict(skin="#F5C8A6", skin_dk="#E2A986", nose="#EA9C82", blush="#F28A8A",
@@ -105,6 +108,23 @@ PAL = {
                 suit="#F26D5B", suit_dk="#CF4E3E", suit_lt="#FF9A86", dot="#FFFFFF",
                 spade="#D7332B", spade_dk="#A82520", handle="#F2C14E",
                 eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#9ED8F5", sans_manche=True),
+    # Théo, le maître-nageur de la plage (la côte de l'été) : bronzé, mèches blondes décolorées par le soleil,
+    # débardeur blanc à croix rouge, short de bain rouge, sifflet au cou, lunettes de soleil relevées, pieds nus
+    "theo": dict(skin="#E3A877", skin_dk="#C98A5A", nose="#D98B66", blush="#EE8E7A",
+                 hair="#F0D27A", hair_dk="#C9A245", hair_lt="#FBEBB0",
+                 top="#FFFFFF", top_dk="#D6DEE6", cross="#E2483C",
+                 short="#E2483C", short_dk="#B5342C", short_lt="#FFFFFF",
+                 whistle="#F2C14E", whistle_dk="#B58A1E", cord="#3A4A6E", lens="#22304A", lens_lt="#8FA6C4",
+                 eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#9ED8F5", sans_manche=True),
+    # Yvon, le pêcheur (la côte de l'été) : bonnet rouge, barbe et sourcils gris, pull marin, cotte de ciré jaune à
+    # bretelles, bottes
+    "yvon": dict(skin="#EDBE98", skin_dk="#D59E78", nose="#E08E72", blush="#EE8678",
+                 hair="#C9CCD2", hair_dk="#8E939C", hair_lt="#F1F2F4",
+                 cap="#D7392F", cap_dk="#A82820", cap_lt="#F06A5A",
+                 pull="#2E4470", pull_dk="#1F3054", pull_lt="#4A6498",
+                 bib="#F2C230", bib_dk="#C9981C", bib_lt="#FBE07A", buckle="#E6EBF0",
+                 boot="#3F4A3A", boot_lt="#6A785F",
+                 eye="#2A1E1A", mouth="#B8505A", tongue="#E9858B", sweat="#9ED8F5"),
     "leon": dict(skin="#E9B892", skin_dk="#D39A72", nose="#DD8F74", blush="#F08A7E",
                  hair="#5A3A22", hair_dk="#3E2615",
                  helmet="#F6C83E", helmet_dk="#D9A520", helmet_lt="#FFE07A",
@@ -451,6 +471,140 @@ def _papa(p, tenue="jean", lunettes=False):
             d.add(rect(X(x) - 2.9 * k, V(-9.6), 5.8 * k, 3.5 * k, 1.5), c["lens"], sil=False, edge=True)
             d.raw(line(f"M{X(x) - 1.6:.2f},{V(-6.9):.2f} L{X(x) - 0.2:.2f},{V(-8.9):.2f}", "#8FA6C4", 0.6))
         d.raw(line(f"M{X(22.9):.2f},{V(-8.2):.2f} L{X(25.1):.2f},{V(-8.2):.2f}", c["lens"], 0.9))
+    if p["sweat"]:
+        _sweat(d, c, X, V)
+    return d
+
+
+# ================================================================== LE MAÎTRE-NAGEUR ET LE PÊCHEUR (la côte de l'été)
+def _theo(p):
+    """Théo, le maître-nageur : un grand jeune homme bronzé, mèches blondes en bataille, lunettes de soleil relevées
+    sur le front, débardeur blanc à croix rouge, short de bain rouge à liseré blanc, sifflet au cou, pieds nus."""
+    c = dict(PAL["theo"])
+    d = Drawing(W, H)
+    L = p["lift"]
+    Y = lambda v: v + p["bob"] - L
+    T = lambda v: v - L
+    _shadow(d, L, 10.0)
+    # pieds nus, jambes, short de bain
+    for x, s in ((20.4, -1), (27.6, 1)):
+        d.add(ellipse(x + s * 0.7, T(G - 1.5), 3.3, 1.7), c["skin"])
+        d.raw(line(f"M{x + s * 1.6:.2f},{T(G - 1.0):.2f} L{x + s * 1.6:.2f},{T(G - 0.2):.2f} M{x + s * 2.6:.2f},{T(G - 1.1):.2f} L{x + s * 2.6:.2f},{T(G - 0.4):.2f}",
+                   c["skin_dk"], 0.5))
+    for x in (20.4, 27.6):
+        d.add(leg(x, Y(49), x, T(57.4), 4.2), c["skin"])
+        d.add(leg(x, Y(43.6), x, Y(51.0), 6.0), c["short"])
+        d.raw(line(f"M{x - 2.8:.2f},{Y(51.2):.2f} L{x + 2.8:.2f},{Y(51.2):.2f}", c["short_lt"], 0.9))
+    d.raw(line(f"M24,{Y(45.4):.2f} L24,{Y(49.6):.2f}", c["short_dk"], 0.7))
+    # débardeur : épaules larges, taille fine ; bretelles sur les épaules nues, croix rouge
+    torso = rect(14.4, Y(28.6), 19.2, 16.4, 4.8)
+    belly = ellipse(24, Y(39.4), 8.2 + p["breath"], 5.8)
+    d.add(torso, c["skin"])
+    d.add(belly, c["top"])
+    d.clip("theo", [torso, belly])
+    d.add(path(f"M17.6,{Y(27):.2f} L30.4,{Y(27):.2f} L33,{Y(36):.2f} L34,{Y(48):.2f} L14,{Y(48):.2f} L15,{Y(36):.2f} Z"), c["top"], sil=False, clip="theo")
+    d.add(ellipse(24, Y(28.4), 4.4, 3.4), c["skin"], sil=False, clip="theo")                 # l'encolure, large
+    d.raw(f'<g clip-path="url(#theo)">' + line(f"M19.8,{Y(29.6):.2f} Q24,{Y(32.6):.2f} 28.2,{Y(29.6):.2f}", c["top_dk"], 0.6) + "</g>")
+    d.add(rect(8, Y(43.6), 32, 3), c["top_dk"], sil=False, clip="theo")
+    d.add(rect(22.9, Y(34.6), 2.2, 6.2, 0.3), c["cross"], sil=False)
+    d.add(rect(20.9, Y(36.6), 6.2, 2.2, 0.3), c["cross"], sil=False)
+    # le sifflet, au bout de son cordon
+    d.raw(line(f"M20.6,{Y(29.2):.2f} Q21.4,{Y(32.6):.2f} 27.6,{Y(33.4):.2f}", c["cord"], 0.6))
+    d.raw(line(f"M27.4,{Y(29.2):.2f} L27.9,{Y(33.0):.2f}", c["cord"], 0.6))
+    d.add(rect(26.6, Y(33.0), 3.2, 1.9, 0.8), c["whistle"], sil=False, edge=True)
+    d.add(circle(29.3, Y(34.4), 1.2), c["whistle"], sil=False, edge=True)
+    d.add(circle(29.3, Y(34.4), 0.45), c["whistle_dk"], sil=False)
+
+    def rest(s, sx):
+        return (sx + s * 2.2, Y(31.2) + 5.8), (sx + s * 2.8, Y(31.2) + 11.6), False
+    hy, X, V = _head_frame(Y, p)
+    _arms(d, c, p, 15.0, 33.0, Y(31.2), rest)
+    # tête : oreilles, visage
+    k = HK
+    for x in (14.5, 33.5):
+        d.add(circle(X(x), V(1.4), 2.0 * k), c["skin"])
+        d.add(circle(X(x), V(1.4), 0.9 * k), c["skin_dk"], sil=False)
+    d.add(ellipse(24, hy, 9.7 * k, 9.1 * k), c["skin"])
+    # cheveux blonds en bataille : une masse qui déborde, trois mèches sur le front
+    d.add(path(f"M{X(14.2):.2f},{V(-1.6):.2f} Q{X(12.6):.2f},{V(-9.6):.2f} {X(18.0):.2f},{V(-11.6):.2f} Q{X(20.0):.2f},{V(-13.8):.2f} {X(23.0):.2f},{V(-12.2):.2f} "
+               f"Q{X(26.6):.2f},{V(-14.4):.2f} {X(29.4):.2f},{V(-11.8):.2f} Q{X(35.6):.2f},{V(-10.0):.2f} {X(33.8):.2f},{V(-1.6):.2f} "
+               f"Q{X(33.0):.2f},{V(-4.6):.2f} {X(31.4):.2f},{V(-6.0):.2f} Q{X(29.0):.2f},{V(-3.6):.2f} {X(26.4):.2f},{V(-6.6):.2f} "
+               f"Q{X(24.0):.2f},{V(-3.4):.2f} {X(21.0):.2f},{V(-6.6):.2f} Q{X(19.0):.2f},{V(-4.2):.2f} {X(16.6):.2f},{V(-6.0):.2f} "
+               f"Q{X(15.0):.2f},{V(-4.6):.2f} {X(14.2):.2f},{V(-1.6):.2f} Z"), c["hair"])
+    d.raw(line(f"M{X(18.6):.2f},{V(-10.4):.2f} Q{X(21.0):.2f},{V(-11.8):.2f} {X(23.4):.2f},{V(-10.6):.2f} M{X(25.6):.2f},{V(-11.0):.2f} Q{X(28.0):.2f},{V(-12.2):.2f} {X(30.2):.2f},{V(-10.2):.2f}",
+               c["hair_lt"], 0.9))
+    # lunettes de soleil relevées dans les cheveux
+    for x in (20.0, 28.0):
+        d.add(rect(X(x) - 2.9 * k, V(-10.2), 5.8 * k, 3.3 * k, 1.5), c["lens"], sil=False, edge=True)
+        d.raw(line(f"M{X(x) - 1.6:.2f},{V(-7.7):.2f} L{X(x) - 0.2:.2f},{V(-9.6):.2f}", c["lens_lt"], 0.6))
+    d.raw(line(f"M{X(22.9):.2f},{V(-8.8):.2f} L{X(25.1):.2f},{V(-8.8):.2f}", c["lens"], 0.9))
+    _eyes(d, c, p, X, V)
+    _brows(d, p, X, V, c["hair_dk"], 1.2)
+    _blush(d, c, X, V)
+    _mouth(d, c, p, X, V, 5.2)
+    _nez(d, c, X, V, 2.5, 1.5, 1.2)
+    d.add(rect(X(24) - 1.7, V(1.5), 3.4, 1.1, 0.5), "#FFFFFF", sil=False, opacity=0.85)    # la crème sur le nez
+    if p["sweat"]:
+        _sweat(d, c, X, V)
+    return d
+
+
+def _yvon(p):
+    """Yvon, le pêcheur : trapu, bonnet rouge roulé, barbe grise fournie, sourcils broussailleux, pull marin, cotte de
+    ciré jaune à bretelles, bottes."""
+    c = dict(PAL["yvon"], sleeve=PAL["yvon"]["pull"], cuff=PAL["yvon"]["pull_dk"])
+    d = Drawing(W, H)
+    L = p["lift"]
+    Y = lambda v: v + p["bob"] - L
+    T = lambda v: v - L
+    _shadow(d, L, 11.0)
+    # bottes, jambes de la cotte
+    for x, s in ((20.2, -1), (27.8, 1)):
+        d.add(ellipse(x + s * 0.7, T(G - 1.8), 3.9, 2.1), c["boot"])
+        d.add(ellipse(x + s * 0.7 - 1.2, T(G - 2.7), 1.2, 0.55), c["boot_lt"], sil=False, opacity=0.9)
+    for x in (20.2, 27.8):
+        d.add(leg(x, Y(44), x, T(56.8), 6.0), c["bib"])
+    d.raw(line(f"M24,{Y(46.6):.2f} L24,{T(55.6):.2f}", c["bib_dk"], 0.7))
+    # pull marin, puis la cotte : une bavette jaune sur le ventre, deux bretelles à boucle
+    torso = rect(13.8, Y(28.6), 20.4, 17.4, 4.8)
+    belly = ellipse(24, Y(39.8), 10.6 + p["breath"], 6.8)
+    d.add(torso, c["pull"])
+    d.add(belly, c["bib"])
+    d.clip("yvon", [torso, belly])
+    d.add(rect(15.6, Y(33.6), 16.8, 16, 1.6), c["bib"], sil=False, clip="yvon", edge=True)
+    d.add(rect(8, Y(44.0), 32, 3.4), c["bib_dk"], sil=False, clip="yvon")
+    d.add(rect(19.6, Y(36.4), 8.8, 4.6, 0.8), c["bib_lt"], sil=False, edge=True)             # la poche de la bavette
+    for x in (17.4, 30.6):
+        d.add(rect(x - 1.3, Y(28.2), 2.6, 6.6, 0.6), c["bib"], sil=False, clip="yvon", edge=True)
+        d.add(rect(x - 1.5, Y(33.2), 3.0, 1.9, 0.5), c["buckle"], sil=False, edge=True)
+    d.add(ellipse(24, Y(29.0), 4.2, 1.9), c["pull_dk"], sil=False, clip="yvon")              # le col roulé
+
+    def rest(s, sx):
+        return (sx + s * 2.4, Y(31.2) + 5.8), (sx + s * 3.0, Y(31.2) + 11.4), False
+    hy, X, V = _head_frame(Y, p)
+    _arms(d, c, p, 14.6, 33.4, Y(31.2), rest)
+    k = HK
+    for x in (14.5, 33.5):
+        d.add(circle(X(x), V(1.4), 2.0 * k), c["skin"])
+        d.add(circle(X(x), V(1.4), 0.9 * k), c["skin_dk"], sil=False)
+    d.add(ellipse(24, hy, 9.7 * k, 9.1 * k), c["skin"])
+    # barbe grise : des favoris au menton, frangée en bas
+    d.add(path(f"M{X(14.6):.2f},{V(0.6):.2f} Q{X(13.8):.2f},{V(8.6):.2f} {X(18.0):.2f},{V(11.0):.2f} Q{X(19.6):.2f},{V(12.8):.2f} {X(21.6):.2f},{V(11.6):.2f} "
+               f"Q24,{V(13.6):.2f} {X(26.4):.2f},{V(11.6):.2f} Q{X(28.4):.2f},{V(12.8):.2f} {X(30.0):.2f},{V(11.0):.2f} "
+               f"Q{X(34.2):.2f},{V(8.6):.2f} {X(33.4):.2f},{V(0.6):.2f} Q{X(31.8):.2f},{V(4.6):.2f} {X(28.6):.2f},{V(4.4):.2f} "
+               f"Q24,{V(2.6):.2f} {X(19.4):.2f},{V(4.4):.2f} Q{X(16.2):.2f},{V(4.6):.2f} {X(14.6):.2f},{V(0.6):.2f} Z"), c["hair"])
+    d.raw(line(f"M{X(18.6):.2f},{V(7.6):.2f} Q{X(19.4):.2f},{V(9.4):.2f} {X(20.6):.2f},{V(10.0):.2f} M{X(29.4):.2f},{V(7.6):.2f} Q{X(28.6):.2f},{V(9.4):.2f} {X(27.4):.2f},{V(10.0):.2f}",
+               c["hair_dk"], 0.6))
+    # bonnet rouge : une calotte ronde, le bord roulé, côtelé
+    d.add(path(f"M{X(14.4):.2f},{V(-4.6):.2f} Q{X(13.6):.2f},{V(-13.6):.2f} 24,{V(-13.8):.2f} Q{X(34.4):.2f},{V(-13.6):.2f} {X(33.6):.2f},{V(-4.6):.2f} Z"), c["cap"])
+    d.add(ellipse(X(20.6), V(-11.2), 3.4 * k, 1.5 * k), c["cap_lt"], sil=False, opacity=0.7)
+    d.add(rect(X(13.6), V(-7.4), 20.8 * k, 3.6 * k, 1.6), c["cap_dk"], edge=True)
+    d.raw(line(" ".join(f"M{X(x):.2f},{V(-6.9):.2f} L{X(x):.2f},{V(-4.4):.2f}" for x in (16.4, 19.0, 21.6, 24.2, 26.8, 29.4, 32.0)), c["cap"], 0.6))
+    _eyes(d, c, p, X, V)
+    _brows(d, p, X, V, c["hair_dk"], 1.9)
+    _blush(d, c, X, V)
+    _mouth(d, c, p, X, V, 6.4)
+    _nez(d, c, X, V, 2.7, 1.8, 1.4)
     if p["sweat"]:
         _sweat(d, c, X, V)
     return d
@@ -1067,7 +1221,8 @@ def _zoe(p):
 
 # ================================================================== animations
 _DRAW = {"postman": _postman, "neighbor": _neighbor, "leon": _leon, "iris": _iris, "piquette": _piquette, "papa": _papa,
-         "hortense": lambda p: _neighbor(p, "hortense"), "anatole": lambda p: _postman(p, "anatole"), "zoe": _zoe}
+         "hortense": lambda p: _neighbor(p, "hortense"), "anatole": lambda p: _postman(p, "anatole"), "zoe": _zoe,
+         "theo": _theo, "yvon": _yvon}
 
 _WAVE = [P(wave=1, wave_a=-28, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2),
          P(wave=1, wave_a=4, happy=True), P(wave=1, wave_a=-12, happy=True, bob=0.2)]
@@ -1132,6 +1287,8 @@ ANIMS = {   # PNJ : {nom : (poses, fps, boucle)}
 
 ANIMS["anatole"] = ANIMS["postman"]          # (mêmes gestes que Marcel)
 ANIMS["hortense"] = ANIMS["neighbor"]        # (mêmes gestes que Mamie Rose : elle s'inquiète, les mains aux joues)
+ANIMS["theo"] = ANIMS["leon"]                # (Théo s'inquiète pour ses jouets partis au large, Yvon pour ses bouées)
+ANIMS["yvon"] = ANIMS["leon"]
 ANIMS["zoe"] = {                             # Zoé : une enfant, elle sautille plus haut quand elle est contente
     "idle": (_IDLE, 5, True), "talk": (_TALK, 8, True), "wave": (_WAVE, 8, True),
     "cheer": ([P(cheer=0.6, happy=True, bob=0.4), P(cheer=1, happy=True, lift=2.6),

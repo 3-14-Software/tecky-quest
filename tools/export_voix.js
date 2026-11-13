@@ -42,11 +42,13 @@ const VOICES = {
   poodle: ['Praline', 'le caniche de Madame Hortense : petits jappements aigus'],
   anatole: ['Anatole', 'le gardien du phare, vieux marin : voix grave et rocailleuse, bonhomme'],
   zoe: ['Zoé', 'la petite fille au château de sable, six ans : voix d’enfant, vive et rieuse'],
+  theo: ['Théo', 'le maître-nageur de la plage : jeune, sportif, voix claire et enjouée'],
+  yvon: ['Yvon', 'le pêcheur : vieux loup de mer, voix grave et bourrue, bon cœur'],
 };
 // répliques dont le texte est calculé (pas une chaîne écrite en dur) : chacune doit être produite ci-dessous ; si ce
 // nombre change, une réplique calculée a été ajoutée ou retirée dans game.js : adapter ce fichier
 const DYNAMIC_SITES = 23;
-const DYNAMIC_POPS = 7;          // de même pour les bulles (texte calculé : comptes, noms des jouets, mot passé à dropToy)
+const DYNAMIC_POPS = 4;          // de même pour les bulles (texte calculé : comptes, noms des jouets, mot passé à dropToy ; celles d'un rôle, irTxt(), lnTxt()…, sont jouées plus bas dans leurs deux distributions)
 const NPC_VARS = { farmer: 'farmer', postman: 'postman', neighbor: 'neighbor', leon: 'leon', iris: 'iris', piquette: 'piquette' };
 // répliques relevées dans le code (écrites en dur, dites en cours de route) : contexte selon la fonction qui les dit
 const WHERE = { doBark: 'Premier aboiement sur le doberman', updatePompon: 'Tecky retrouve Pompon',
@@ -158,6 +160,33 @@ function main() {
   for (const touch of [false, true])
     for (let i = 0; i < 5; i++) ask(`Iris : conseil après la quête${touch ? ' (au toucher)' : ''}`, `jouets.state = "done"; touchMode = ${touch}; iris.tip = ${i}; talkIris();`);
   run('touchMode = false;');
+  // (les mêmes quêtes sur la côte de l'été : Yvon et ses bouées, Théo et ses jouets de plage)
+  run('leon.look = "yvon"; iris.look = "theo"; iris.woof = false; MAP.roles = { leon: "yvon", iris: "theo" };');
+  ask('Yvon : demande', 'fete.state = "new"; balls.forEach(b => b.inNet = false); talkLeon();');
+  for (let n = 5; n >= 1; n--)
+    ask('Yvon : rappel', `fete.state = "asked"; balls.forEach((b, i) => b.inNet = i >= ${n}); talkLeon();`);
+  ask('Yvon : merci', 'balls.forEach(b => b.inNet = true); talkLeon();');
+  ask('Yvon : après la quête', 'fete.state = "done"; talkLeon();');
+  ask('Yvon : Tecky arrive', 'fete.state = "new"; leonGreet();');
+  for (let n = 5; n >= 0; n--) ask('Yvon : Tecky arrive', `fete.state = "asked"; balls.forEach((b, i) => b.inNet = i >= ${n}); leonGreet();`);
+  ask('Yvon : Tecky arrive', 'fete.state = "done"; leonGreet();');
+  for (const st of ['new', 'asked'])
+    ask('Une bouée entre dans le parc', `fete.state = "${st}"; balls.forEach(b => { b.inNet = false; b.x = MAP.goal[0]; b.y = MAP.goal[1] - 20; checkGoal(b); });`);
+  ask('Théo : demande', 'jouets.state = "new"; toys.forEach(t => t.home = false); talkIris();');
+  for (let n = 3; n >= 1; n--)
+    ask('Théo : rappel', `jouets.state = "asked"; toys.forEach((t, i) => t.home = i >= ${n}); talkIris();`);
+  ask('Théo : merci', 'toys.forEach(t => t.home = true); talkIris();');
+  for (let i = 0; i < 3; i++) ask('Théo : conseil après la quête', `jouets.state = "done"; iris.tip = ${i}; talkIris();`);
+  ask('Théo : Tecky arrive', 'jouets.state = "new"; irisGreet();');
+  for (let n = 3; n >= 0; n--) ask('Théo : Tecky arrive', `jouets.state = "asked"; toys.forEach((t, i) => t.home = i >= ${n}); irisGreet();`);
+  ask('Théo : Tecky arrive', 'jouets.state = "done"; irisGreet();');
+  for (const st of ['new', 'asked']) {
+    ask('Tecky prend un jouet de plage', `jouets.state = "${st}"; toys.forEach(t => { t.home = t.carried = false; t.cd = 0; });` +
+        ' toys.forEach(t => { P.x = t.x; P.y = t.y; updateToys(0); const c = carried(); if (c) c.carried = false; t.cd = 9; });');
+    ask('Tecky rapporte un jouet à Théo', `jouets.state = "${st}"; toys.forEach(t => { t.home = t.carried = false; }); toys.forEach(t => giveToy(t));`);
+  }
+  run('leon.look = "leon"; iris.look = "iris"; iris.woof = true; MAP.roles = {}; fete.state = "new"; jouets.state = "new"; iris.tip = 0;' +
+      ' balls.forEach(b => b.inNet = false); toys.forEach(t => { t.home = t.carried = false; t.cd = 0; });');
   // bulles calculées : saluts des personnages (selon l'état de leur quête), comptes, jouets d'Iris
   const greet = (who, ctx, setup) => ask(`${VOICES[who][0]} : ${ctx}`, setup + ` NPC_DO[${JSON.stringify(NPC_VARS[who])}].greet();`);
   greet('farmer', 'Tecky arrive', 'farm.state = "new";');

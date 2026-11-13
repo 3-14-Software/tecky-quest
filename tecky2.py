@@ -981,6 +981,134 @@ def rest_frames(anim, view):
     return [image(view, p, tr) for p, tr in REST_ANIMS[anim][0](view)]
 
 
+# ---------------------------------------------------------------------- la nage
+# Dans la mer, Tecky nage : le corps sous l'eau, la tête dressée, le haut du dos et la queue qui dépassent. Ce sont
+# ses poses à lui (il pagaie, la truffe en l'air), dessinées enfoncées de ENFONCE et coupées à la ligne d'eau
+# (LIGNE, en unités du cadre, au-dessus de l'origine), puis cerclées d'écume. Mêmes noms et mêmes nombres d'images
+# que les animations de la terre ferme : le jeu ne change que la famille du sprite (« nage/… », sans ombre portée).
+LIGNE = 5.0              # la ligne d'eau, au-dessus de l'origine du cadre
+ENFONCE = {"right": 4.6, "down": 5.2, "up": 6.2}      # de combien le dessin descend sous l'eau
+ECUME = ("#FFFFFF", "#DDF6F4")
+ANNEAUX = {"right": (25.5, 15.0, 2.6), "down": (24.0, 9.6, 2.3), "up": (24.0, 9.6, 2.3)}     # écume : centre x, rayons
+
+
+def _eau(view, i, n, fort=1.0):
+    """L'écume autour du nageur, image i sur n : un rond qui s'élargit et s'efface derrière lui, le liseré contre
+    son corps, et les éclaboussures de ses pattes avant, l'une après l'autre."""
+    w, h, ox, oy = CADRE[view]
+    y = oy - LIGNE
+    cx, rx, ry = ANNEAUX[view]
+    u = (i / n) % 1.0
+    out = []
+    for k in (0.0, 0.5):                    # deux ronds, décalés d'un demi-cycle
+        v = (u + k) % 1.0
+        out.append(f'<ellipse cx="{cx:.2f}" cy="{y + 0.6:.2f}" rx="{rx * (0.86 + 0.42 * v):.2f}" ry="{ry * (0.86 + 0.5 * v):.2f}" '
+                   f'fill="none" stroke="{ECUME[1]}" stroke-width="{0.9 - 0.4 * v:.2f}" opacity="{0.75 * (1 - v) * fort:.2f}"/>')
+    devant = (f'<path d="M{cx - rx * 0.8:.2f},{y + 0.5:.2f} Q{cx:.2f},{y + ry * 0.95:.2f} {cx + rx * 0.8:.2f},{y + 0.5:.2f}" fill="none" '
+              f'stroke="{ECUME[0]}" stroke-width="1.1" stroke-linecap="round" opacity="0.9"/>')
+    gouttes = ""
+    if fort >= 1.0:                         # il pagaie : une gerbe à chaque coup de patte
+        a = 2 * math.pi * u
+        for sens, ph in ((1, 0.0), (-1, math.pi)):
+            f = max(0.0, math.sin(a + ph))
+            if f < 0.25:
+                continue
+            if view == "right":
+                bx, by = cx + rx * (0.62 + 0.1 * sens), y + 0.6
+            else:
+                bx, by = cx + sens * rx * 0.78, y + (1.0 if view == "down" else -0.4)
+            gouttes += "".join(f'<circle cx="{bx + dx:.2f}" cy="{by - dy * f:.2f}" r="{r:.2f}" fill="{ECUME[0]}" opacity="{0.9 * f:.2f}"/>'
+                               for dx, dy, r in ((-1.2, 1.6, 0.55), (0.4, 2.6, 0.7), (1.7, 1.2, 0.5)))
+    return "".join(out), devant + gouttes
+
+
+def image_nage(view, p, tr="", i=0, n=8, fort=1.0):
+    """SVG d'une image de nage : la pose p enfoncée dans l'eau et coupée à la ligne d'eau, l'écume autour."""
+    w, h, ox, oy = CADRE[view]
+    d = VUES[view](p)
+    d.w, d.h = w, h
+    svg = d.svg(f"{base(view)} {tr}".strip(), outline_w=TRAIT)
+    dedans = svg[svg.index(">") + 1:svg.rindex("</svg>")]
+    derriere, devant = _eau(view, i, n, fort)
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" width="{w}" height="{h}">'
+            f'<defs><clipPath id="hors_eau"><rect x="-20" y="-20" width="{w + 40}" height="{oy - LIGNE + 20:.2f}"/></clipPath></defs>'
+            f'{derriere}<g clip-path="url(#hors_eau)"><g transform="translate(0 {ENFONCE[view]})">{dedans}</g></g>{devant}</svg>')
+
+
+def n_walk(view):
+    """Il nage : il pagaie, le corps roule un peu, la truffe en l'air, les oreilles qui flottent, la queue en gouvernail."""
+    out = []
+    for i in range(8):
+        a = i / 8 * 2 * math.pi
+        q = dict(pas=i / 8, rebond=0.5 * math.sin(a), gueule=0.0 if i % 4 else 0.3)
+        if view == "right":
+            q.update(releve=13 + 2 * math.sin(a), tangage=-3 + 1.2 * math.sin(a + 0.6), tete=(0.6, -1.4 + 0.4 * math.sin(a)),
+                     oreille=16 + 6 * math.sin(a - 1.2), queue=-34 + 10 * math.sin(2 * a))
+        else:
+            k = -1 if view == "down" else 1
+            q.update(balance=0.7 * k * math.sin(a), incline=3 * k * math.sin(a - 0.6), tete=(0, -1.0 + 0.4 * math.sin(a)),
+                     oreille=20 + 5 * math.sin(a - 1.2), penche=4 * k * math.sin(a - 1.0), queue=14 * k * math.sin(a - 0.5))
+        out.append((pose(**q), ""))
+    return out
+
+
+def n_idle(view):
+    """Il fait du surplace : il monte et descend avec l'eau, cligne des yeux."""
+    out = []
+    for i in range(4):
+        a = i / 4 * 2 * math.pi
+        q = dict(rebond=0.7 * math.sin(a), yeux="fermes" if i == 3 else None, gueule=0.0)
+        if view == "right":
+            q.update(releve=10, tangage=-2, tete=(0.4, -1.0), oreille=14, queue=-30 + 6 * math.sin(a))
+        else:
+            q.update(tete=(0, -0.8), oreille=18, queue=10 * math.sin(a))
+        out.append((pose(**q), ""))
+    return out
+
+
+def n_bark(view):
+    """Ouaf, dans l'eau : la tête sort d'un coup, la gueule grande ouverte."""
+    out = []
+    for (p, tr), haut in zip(a_bark(view), (0.0, 1.2, 1.8, 0.6)):
+        p["rebond"] = p["rebond"] + haut
+        out.append((p, tr))
+    return out
+
+
+def n_hurt(view):
+    """Aïe : il boit la tasse, les yeux plissés."""
+    return [(pose(yeux="plisses", gueule=0.5, rebond=-0.8 + 0.6 * i, releve=6 if view == "right" else 0, oreille=30), "")
+            for i in range(2)]
+
+
+def n_ko(view):
+    """KO dans l'eau : il flotte, les yeux en croix."""
+    return [(pose(yeux="croix", gueule=0.35, rebond=0.4 * math.sin(i / 4 * 2 * math.pi), oreille=34, queue=-40), "")
+            for i in range(4)]
+
+
+def n_bite(view):
+    """Il mord, dans l'eau : le coup de gueule de la terre ferme, sans l'élan des pattes."""
+    return [(dict(p, elan=p["elan"] * 0.5), tr) for p, tr in a_bite(view)]
+
+
+NAGE = {    # nom (celui de l'animation de la terre ferme) : (fonction, vues, force de l'écume)
+    "idle": (n_idle, ("down", "up", "right"), 0.6),
+    "walk": (n_walk, ("down", "up", "right"), 1.0),
+    "bark": (n_bark, ("down", "up", "right"), 0.8),
+    "bite": (n_bite, ("down", "up", "right"), 0.9),
+    "hurt": (n_hurt, ("down", "up", "right"), 0.8),
+    "ko":   (n_ko, ("right",), 0.5),
+}
+
+
+def nage_frames(anim, view):
+    """Liste de SVG d'une animation de nage."""
+    fn, _, fort = NAGE[anim]
+    poses = fn(view)
+    return [image_nage(view, p, tr, i, len(poses), fort) for i, (p, tr) in enumerate(poses)]
+
+
 if __name__ == "__main__":
     from spritelib import render_svg, PAD
     from PIL import Image, ImageDraw, ImageFont

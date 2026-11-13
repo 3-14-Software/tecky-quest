@@ -607,6 +607,9 @@ const SOUNDS = {
     noise(0.22, 0.06, [2600, 900], { a: 0.01, q: 0.6 }); tone([240, 620], 0.07, 'sine', 0.05);
     tone([420, 980], 0.05, 'sine', 0.03, { at: 0.07 });
   },
+  paddle() {                           // Tecky nage : un coup de patte dans l'eau
+    noise(0.11, 0.035, [1500, 700], { a: 0.02, q: 0.7 }); tone([300, 520], 0.06, 'sine', 0.03, { a: 0.01 });
+  },
   plop() { tone([330 + Math.random() * 120, 900], 0.07, 'sine', 0.06, { a: 0.005 }); noise(0.07, 0.04, [2400, 1200], { q: 0.8 }); },
   cluck() {                            // « cot cot codec »
     for (const [at, d, f0, f1] of [[0, 0.05, 620, 780], [0.08, 0.05, 680, 840], [0.17, 0.14, 920, 520]])
@@ -1766,7 +1769,8 @@ const FLAT = new Set(['bridge', 'bridge_h', 'sandbox', 'burrow', 'rail', 'dog_be
 const RAILS = { bridge: [[-80, -320, -62, 0], [62, -320, 80, 0]],
   bridge_h: [[-224, -176, 224, -158], [-224, -34, 224, -16]],                // (le pont en travers : garde-corps du nord et du sud)
   crane: [[-197, -24, -135, 0], [135, -24, 197, 0]],
-  goal_net: [[-90, -58, -72, 0], [72, -58, 90, 0], [-80, -64, 80, -52]] };   // filet de Léon : côtés et fond
+  goal_net: [[-90, -58, -72, 0], [72, -58, 90, 0], [-80, -64, 80, -52]] };
+RAILS.buoy_pen = RAILS.goal_net;          // le parc à bouées d'Yvon : les mêmes côtés, le même fond, dans l'eau   // filet de Léon : côtés et fond
 for (const n in MAP.grow) if (RAILS[n]) RAILS[n] = RAILS[n].map(r => r.map(v => Math.round(v * MAP.grow[n])));
 let solids = [];
 // limites des pieds (rectangle [x0, y0] -> [x1, y1]) au bord de la carte ; au-delà, la lisière (voir « bord de la carte »)
@@ -1801,6 +1805,75 @@ function rimAt(x, y) {
 }
 const WATER_EDGE = soften(0.42);     // les pieds s'arrêtent un peu avant la rive dessinée : à 0,42 tuile d'un coin de terre, en ligne droite
 function waterAt(x, y) { return waterVal(x, y) > WATER_EDGE; }
+/* La nage (été). Tecky nage dans la mer, près du bord : la zone de baignade est la mer à moins de SWIM.far coins
+   d'un coin de sable (swimCoins(), calculée une fois par carte ; vide sur une carte sans mer). Le reste de l'eau —
+   le large, l'eau douce — reste infranchissable (deepAt()). On n'entre dans l'eau et on n'en sort que par le
+   sable : un nageur ne grimpe ni sur un quai ni sur la jetée, et l'on ne saute pas d'un quai (swimBlock()). La
+   limite est marquée par une ligne de bouées (swimBuoys()). Les autres ne nagent pas : `swimmer` n'est vrai que le
+   temps d'un pas de Tecky (moveTecky()). */
+const SWIM = { far: 4, spd: 0.6, stroke: 0.42, push: 0.5, again: 8, bob: 2.2, buoyDy: 6 };
+let swimData = null, swimmer = false;
+function swimCoins() {
+  if (swimData && swimData.map === MAP) return swimData;
+  const W1 = MAP.w + 1, H1 = MAP.h + 1, n = W1 * H1, sea = MAP.sea, sand = MAP.sand;
+  const d = new Int16Array(n).fill(-1), swim = new Uint8Array(n), deep = MAP.water.slice(), buoys = [];
+  if (sea.length && sand.length) {
+    let q = [];
+    for (let i = 0; i < n; i++) if (sand[i] && !sea[i]) { d[i] = 0; q.push(i); }
+    for (let k = 1; k <= SWIM.far && q.length; k++) {     // de proche en proche, à travers la mer
+      const nq = [];
+      for (const i of q) {
+        const x = i % W1, y = (i - x) / W1;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const a = x + dx, b = y + dy, j = b * W1 + a;
+          if (a < 0 || b < 0 || a >= W1 || b >= H1 || d[j] >= 0 || !sea[j]) continue;
+          d[j] = k; swim[j] = 1; deep[j] = 0; nq.push(j);
+        }
+      }
+      q = nq;
+    }
+    // les bouées : au milieu de chaque arête entre un coin de baignade et un coin du large, une sur deux
+    for (let y = 0; y < H1; y++) for (let x = 0; x < W1; x++) {
+      const i = y * W1 + x;
+      if (!swim[i]) continue;
+      for (const [dx, dy] of [[1, 0], [0, 1], [-1, 0], [0, -1]]) {
+        const a = x + dx, b = y + dy, j = b * W1 + a;
+        if (a < 0 || b < 0 || a >= W1 || b >= H1 || !sea[j] || swim[j] || (x + y + (dx ? 0 : 1)) % 2) continue;
+        buoys.push({ x: (x + dx * 0.5) * TS, y: (y + dy * 0.5) * TS, ph: hash3(x, y, 31) * 6.28 });
+      }
+    }
+  }
+  return swimData = { map: MAP, swim, deep, buoys, any: buoys.length > 0 || swim.some(v => v) };
+}
+const deepAt = (x, y) => cornerVal(swimCoins().deep, x, y) > WATER_EDGE;      // l'eau où l'on ne nage pas
+const swimBuoys = () => swimCoins().buoys;
+// un point des pieds de Tecky est-il interdit par l'eau ? (à la place de waterAt(), le temps de son pas)
+function swimBlock(x, y) {
+  if (!swimCoins().any) return waterAt(x, y);
+  if (deepAt(x, y)) return true;
+  const w = waterAt(x, y);
+  if (P.swim) return !w && !sandAt(x, y);            // il nage : de l'eau, ou le sable de la plage
+  return w && !sandAt(P.x, P.y - 6);                 // il marche : il n'entre dans l'eau que depuis le sable
+}
+function moveTecky(dx, dy) { swimmer = true; try { moveActor(P, dx, dy); } finally { swimmer = false; } }
+/* Tecky est-il dans l'eau ? Son dessin change de famille (« nage/… » : mêmes animations, sans ombre portée) ; il y
+   entre et en sort dans une gerbe, et s'ébroue en sortant. `quiet` : sans bruit ni gerbe (partie reprise). */
+function syncSwim(quiet) {
+  const w = swimCoins().any && waterAt(P.x, P.y - 6);
+  if (w === !!P.swim) return;
+  P.swim = w; P.kind = w ? 'nage' : 'tecky';
+  if (!ATLAS[P.key()]) P.setAnim('idle');
+  P.restT = 0; P.strokeT = 0;
+  if (quiet) return;
+  SFX.splash(0.8);
+  addFx('fx/splash', P.x, P.y - 4, { fps: 12 });
+  for (let k = 0; k < 8; k++) {
+    const a = k / 8 * Math.PI * 2;
+    addFx('fx/drop', P.x + Math.cos(a) * 10, P.y - 10, { fps: 0, frame: 0, life: 0.4, vx: Math.cos(a) * 120, vy: Math.sin(a) * 60 - 90 });
+  }
+  if (w) { if (!P.swum) { P.swum = true; addWordPop(txt('tecky.plouf'), P.x, P.y - 90, 'tecky'); } }
+  else shakePending = true;
+}
 function blockedPoint(x, y) {
   if (offMap(x, y - 12, x, y)) return true;
   if (waterAt(x, y) || cliffAt(x, y) || rimAt(x, y)) return true;
@@ -1816,7 +1889,7 @@ function blockedFeet(x, y, hw) {
   for (const s of solids) if (x1 > s[0] && x0 < s[2] && y1 > s[1] && y0 < s[3]) return true;
   if (train && trainHit(x0, y0, x1, y1)) return true;      // Titine, le petit train du port (obstacle qui bouge)
   for (const [px, py] of [[x0, y1], [x1, y1], [x0, y0], [x1, y0], [x, y0], [x, y1], [x0, y - 6], [x1, y - 6]])
-    if (waterAt(px, py) || cliffAt(px, py) || rimAt(px, py)) return true;
+    if ((swimmer ? swimBlock(px, py) : waterAt(px, py)) || cliffAt(px, py) || rimAt(px, py)) return true;
   return false;
 }
 function moveActor(a, dx, dy, hw, noSlide) {
@@ -2120,8 +2193,9 @@ function resetWorld() {
   letters = MAP.letters.map(([x, y], i) => ({ x, y, i, t: Math.random() * 2, got: false, dug: !shells(), shell: shells(), wait: 0, up: 0 }));
   dressCastle();
   neighbor = newNpc('neighbor', MAP.neighbor, MAP.roles.neighbor ? 1.2 : 1.35, MAP.roles.neighbor); pompon = newPompon();
-  leon = newNpc('leon', MAP.leon, 0.95); balls = MAP.balls.map(newBall);
-  iris = Object.assign(newNpc('iris', MAP.iris, 0.8), { markY: IRIS.markY, woof: true, tip: iris ? iris.tip : 0 });
+  leon = newNpc('leon', MAP.leon, MAP.roles.leon ? 0.8 : 0.95, MAP.roles.leon); balls = MAP.balls.map(newBall);
+  iris = Object.assign(newNpc('iris', MAP.iris, MAP.roles.iris ? 1.0 : 0.8, MAP.roles.iris),
+    MAP.roles.iris ? { tip: iris ? iris.tip : 0 } : { markY: IRIS.markY, woof: true, tip: iris ? iris.tip : 0 });
   toys = MAP.toys.map(newToy);
   villagers = MAP.villagers.map(newVillager);
   if (ici('papa')) villagers.push(newVillager(['papa', MAP.papa[0], MAP.papa[1]]));     // (le papa d'Alice, au parking de la côte)
@@ -2192,7 +2266,10 @@ const WHO = {
   papa: { get name() { return txt('noms.papa'); }, portrait: 'hud/portrait_papa' },       // le papa d'Alice (l'été)
   hortense: { get name() { return txt('noms.hortense'); }, portrait: 'hud/portrait_hortense' },   // la dame au caniche (l'été)
   anatole: { get name() { return txt('noms.anatole'); }, portrait: 'hud/portrait_anatole' },      // le gardien du phare (l'été)
-  zoe: { get name() { return txt('noms.zoe'); }, portrait: 'hud/portrait_zoe' },                  // la petite fille au château de sable (l'été)
+  zoe: { get name() { return txt('noms.zoe'); }, portrait: 'hud/portrait_zoe' },
+  theo: { get name() { return txt('noms.theo'); }, portrait: 'hud/portrait_theo' },                // le maître-nageur de la plage (l'été)
+  yvon: { get name() { return txt('noms.yvon'); }, portrait: 'hud/portrait_yvon' },                // le pêcheur (l'été)
+                   // la petite fille au château de sable (l'été)
   info:  { name: '', portrait: null },
 };
 // une réplique demandée pendant un dialogue passe à la suite (ex. : le fermier parle, et Tecky ramasse la barrette)
@@ -2204,7 +2281,7 @@ function say(lines, onEnd) {
 }
 /* Le babil d'une réplique : chaque personnage a sa voix (hauteur) ; Tecky et Iris, des chiens, font de petits
    « wouf » ; un texte d'information fait « tic ». Rien sur un espace ni un signe de ponctuation. */
-const VOICE = { tecky: 1.15, alice: 1.7, farmer: 0.8, postman: 1.05, neighbor: 1.35, leon: 0.95, iris: 0.8, piquette: 1.5, papa: 0.9, hortense: 1.25, anatole: 0.75, zoe: 1.75 };
+const VOICE = { tecky: 1.15, alice: 1.7, farmer: 0.8, postman: 1.05, neighbor: 1.35, leon: 0.95, iris: 0.8, piquette: 1.5, papa: 0.9, hortense: 1.25, anatole: 0.75, zoe: 1.75, theo: 1.0, yvon: 0.8 };
 function talkSound(L, i) {
   const k = VOICE[L.who];
   if (!k) SFX.blip();
@@ -3337,6 +3414,16 @@ const BALL = { r: 26, touch: 44, kick: 330, bark: 470, fric: 1.6, bounce: 0.55, 
 const GOAL_IN = [50, -46, -8];                 // intérieur du filet (pied du ballon) : |dx| < 50, -46 < dy < -8
 const LEON = { reward: 150, perBall: 20 };
 let fete = { state: 'new' }, leon = null, balls = [];
+/* La même quête se rejoue sur la côte de l'été avec d'autres acteurs (MAP.roles.leon) : Yvon, le pêcheur (look
+   « yvon »), a vu dériver les cinq bouées de ses casiers. Elles flottent dans la zone de baignade (floats()) : Tecky
+   les pousse à la nage, ou en aboyant, jusqu'au parc à bouées planté dans l'eau devant la plage (décor buoy_pen, à
+   la place du filet : mêmes mesures). Sur l'eau, une bouée ne saute pas, glisse moins loin (FLOAT) et ne quitte
+   jamais la zone de baignade. Textes : mêmes clés sous « yvon » que sous « leon », « bouees » que « ballons ». */
+const FLOAT = { fric: 2.3, kick: 300, bark: 420, bob: 2.4, tilt: 0.0009 };
+const floats = () => !!MAP.roles.leon;
+const lnTxt = (k, p) => leon.look === 'yvon' ? txt('yvon.' + k, p) : txt('leon.' + k, p);
+const ballTxt = k => floats() ? txt('bouees.' + k) : txt('ballons.' + k);
+const swimAt = (x, y) => cornerVal(swimCoins().swim, x, y) > 0.5;
 const ballsLeft = () => balls.filter(b => !b.inNet).length;
 function newBall([x, y], i) { return { i, x, y, vx: 0, vy: 0, z: 0, vz: 0, rot: 0, cd: 0, inNet: false }; }
 // pousse le ballon loin de (fx, fy) ; ahead : direction où va Tecky, qui oriente un peu le tir (on dribble)
@@ -3348,9 +3435,10 @@ function kickBall(b, fx, fy, speed, ahead) {
     const [ax, ay] = DIRV[ahead];
     if (dx * ax + dy * ay > 0) { dx = dx * 0.5 + ax * 0.5; dy = dy * 0.5 + ay * 0.5; l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l; }
   }
-  b.vx = dx * speed; b.vy = dy * speed; b.vz = BALL.hop; b.cd = BALL.cd;
+  if (floats()) speed *= FLOAT.kick / BALL.kick;
+  b.vx = dx * speed; b.vy = dy * speed; b.vz = floats() ? 0 : BALL.hop; b.cd = BALL.cd;
   funnelBall(b);
-  SFX.boing(1, b);
+  if (floats()) { SFX.plop(1, b); addFx('fx/ripple', b.x, b.y, { fps: 10 }); } else SFX.boing(1, b);
 }
 // devant l'ouverture du filet, un ballon qui monte vers lui est guidé vers le milieu (comme les poules et la barrière) :
 // au tir, puis à chaque image tant qu'il roule
@@ -3365,6 +3453,11 @@ function ballBlocked(b, x, y) {
   const B = BALL.box, [gx, gy] = MAP.goal;
   if (x < B[0] * TS || x > B[2] * TS || y < B[1] * TS || y > B[3] * TS) return true;
   if (b.inNet && (Math.abs(x - gx) > GOAL_IN[0] + 8 || y < gy + GOAL_IN[1] || y > gy + GOAL_IN[2])) return true;
+  if (floats()) {                              // une bouée : dans la zone de baignade, hors des pieux du parc
+    if (!swimAt(x, y)) return true;
+    for (const q of solids) if (x + 12 > q[0] && x - 12 < q[2] && y > q[1] && y - 12 < q[3]) return true;
+    return false;
+  }
   return blockedFeet(x, y, 12);
 }
 function moveBall(b, dx, dy) {           // un obstacle le renvoie (moins vite)
@@ -3377,9 +3470,9 @@ function checkGoal(b) {
   b.inNet = true; b.vx *= 0.4; b.vy *= 0.4;
   score += LEON.perBall;
   addPop('+' + LEON.perBall, b.x - 20, b.y - 80);
-  addWordPop(ballsLeft() ? txt('ballons.but') : txt('ballons.tous'), b.x, b.y - 110, 'info');
+  addWordPop(ballsLeft() ? ballTxt('but') : ballTxt('tous'), b.x, b.y - 110, 'info');
   SFX.goal(1, b);
-  if (!ballsLeft()) { leon.cheerT = 3; npcShout(leon, fete.state === 'asked' ? txt('leon.bravo') : txt('leon.ballons')); }
+  if (!ballsLeft()) { leon.cheerT = 3; npcShout(leon, fete.state === 'asked' ? lnTxt('bravo') : lnTxt('ballons')); }
 }
 function updateBall(b, dt) {
   b.cd = Math.max(0, b.cd - dt);
@@ -3389,7 +3482,7 @@ function updateBall(b, dt) {
   }
   if (!b.inNet && b.cd <= 0 && P.mode !== 'ko' && P.alpha !== 0 && dist(b.x, b.y, P.x, P.y) < BALL.touch)
     kickBall(b, P.x, P.y, BALL.kick, P.anim === 'walk' ? P.dir : null);
-  const k = Math.exp(-BALL.fric * dt);
+  const k = Math.exp(-(floats() ? FLOAT.fric : BALL.fric) * dt);
   b.vx *= k; b.vy *= k;
   const sp = Math.hypot(b.vx, b.vy);
   if (sp < 8) { b.vx = b.vy = 0; return; }
@@ -3399,6 +3492,11 @@ function updateBall(b, dt) {
   if (!b.inNet) checkGoal(b);
 }
 function drawBall(b) {
+  if (floats()) {                              // une bouée de casier : elle danse sur l'eau et penche quand elle file
+    const t = performance.now() / 1000 * 2.3 + b.i * 1.7;
+    drawSpr('mer/casier', b.i, b.x, b.y - 6 + Math.sin(t) * FLOAT.bob, { angle: clamp(b.vx * FLOAT.tilt, -0.3, 0.3) + Math.sin(t * 0.7) * 0.06 });
+    return;
+  }
   ctx.save();
   ctx.globalAlpha = 0.22 * Math.max(0.4, 1 - b.z / 120); ctx.fillStyle = '#000';
   ctx.beginPath(); ctx.ellipse(b.x, b.y - 2, 22, 7, 0, 0, Math.PI * 2); ctx.fill();
@@ -3410,15 +3508,15 @@ function drawBall(b) {
 }
 function leonMark() { return fete.state === 'done' ? -1 : fete.state === 'asked' && ballsLeft() ? 1 : 0; }
 function leonGreet() {
-  if (fete.state === 'new') npcShout(leon, txt('leon.oh'));
+  if (fete.state === 'new') npcShout(leon, lnTxt('oh'));
   else if (fete.state === 'asked') {
     const n = ballsLeft();
-    npcShout(leon, !n ? txt('leon.bravo') : txt('leon.encore', { n }));
-  } else { npcShout(leon, txt('leon.salut')); leon.waveT = 1.5; }
+    npcShout(leon, !n ? lnTxt('bravo') : lnTxt('encore', { n }));
+  } else { npcShout(leon, lnTxt('salut')); leon.waveT = 1.5; }
 }
 const leonThanks = () => [
-  { who: 'leon', face: 2, text: txt('leon.merci.0') },
-  { who: 'leon', face: 0, text: txt('leon.merci.1') },
+  { who: leon.look, face: 2, text: lnTxt('merci.0') },
+  { who: leon.look, face: 0, text: lnTxt('merci.1') },
 ];
 function finishLeon() {
   fete.state = 'done'; score += LEON.reward;
@@ -3430,20 +3528,20 @@ function finishLeon() {
 function talkLeon() {
   if (fete.state === 'done') {
     leon.waveT = 2;
-    say([{ who: 'leon', face: 2, text: txt('leon.apres') }]);
+    say([{ who: leon.look, face: 2, text: lnTxt('apres') }]);
     return;
   }
   if (!ballsLeft()) { fete.state = 'asked'; say(leonThanks(), finishLeon); return; }
   if (fete.state === 'asked') {
     const n = ballsLeft();
-    say([{ who: 'leon', face: 0, text: txt('leon.rappel', { n }) }]);
+    say([{ who: leon.look, face: 0, text: lnTxt('rappel', { n }) }]);
     return;
   }
   fete.state = 'asked';
   say([
-    { who: 'leon', face: 3, text: txt('leon.demande.0') },
-    { who: 'leon', face: 0, text: txt('leon.demande.1') },
-    { who: 'tecky', face: 2, text: txt('leon.demande.2') },
+    { who: leon.look, face: 3, text: lnTxt('demande.0') },
+    { who: leon.look, face: 0, text: lnTxt('demande.1') },
+    { who: 'tecky', face: 2, text: lnTxt('demande.2') },
   ], saveGame);
 }
 
@@ -3459,9 +3557,18 @@ function talkLeon() {
 const IRIS_TIPS = [0, 1, 2].map(i => () => txtDev('iris.conseil.' + i)).concat([3, 4].map(i => () => txt('iris.conseil.' + i)));
 const IRIS = { reward: 150, perToy: 20, pick: 54, give: 110, markY: 90, home: [[-46, 10], [46, 12], [-22, 28]],
   regrab: 1.2 };     // regrab : un jouet lâché ne se reprend pas tout de suite (Tecky est juste à côté)
-const toyName = i => txt('iris.jouet.' + i);
+const toyName = i => irTxt('jouet.' + i);
 const MOUTH = { right: [30, -22], left: [-30, -22], up: [0, -34], down: [0, -21] };   // gueule de Tecky (jouet porté)
 let jouets = { state: 'new' }, iris = null, toys = [];
+/* La même quête se rejoue sur la côte de l'été avec d'autres acteurs (MAP.roles.iris) : Théo, le maître-nageur
+   (look « theo »), a vu trois jouets de plage partir au large (plage.py : ballon, bouée, voilier). Ils flottent dans
+   la zone de baignade (seaToys() ; sprites « mer/jouet » à flot, « plage/jouet » posés sur le sable) : Tecky nage
+   les chercher et les rapporte un par un. Textes : mêmes clés sous « theo » que sous « iris ». */
+const seaToys = () => !!MAP.roles.iris;
+const irTxt = (k, p) => iris.look === 'theo' ? txt('theo.' + k, p) : txt('iris.' + k, p);
+const THEO_TIPS = [0, 1, 2].map(i => () => txt('theo.conseil.' + i));
+const toyKey = () => seaToys() ? 'plage/jouet' : 'port/toy';
+const toyBase = i => (seaToys() ? MAP.beachToyBase : MAP.toyBase)[i];
 const toysLeft = () => toys.filter(t => !t.home).length;
 const carried = () => toys.find(t => t.carried);
 function newToy([x, y], i) { return { i, x, y, home: false, carried: false, t: Math.random() * 2, cd: 0 }; }
@@ -3470,7 +3577,7 @@ function dropToy(word) {
   if (!t) return;
   t.carried = false; t.cd = IRIS.regrab;
   t.x = P.x + MOUTH[P.dir][0] * 0.8; t.y = P.y + (P.dir === 'up' ? -28 : P.dir === 'down' ? 26 : 6);
-  if (blockedFeet(t.x, t.y, 8)) { t.x = P.x; t.y = P.y; }     // jamais dans l'eau ni dans un obstacle
+  if (blockedFeet(t.x, t.y, 8)) { t.x = P.x; t.y = P.y; }     // jamais dans l'eau ni dans un obstacle (lâché en nageant : il flotte là où est Tecky)
   if (word) addWordPop(word, P.x, P.y - 120, 'tecky');
 }
 function giveToy(t) {
@@ -3480,8 +3587,8 @@ function giveToy(t) {
   addPop('+' + IRIS.perToy, iris.x - 20, iris.y - 120);
   iris.cheerT = 2.2;
   const left = toysLeft();
-  npcShout(iris, left ? (jouets.state === 'asked' ? txt('iris.bravo_encore', { n: left }) : txt('iris.tiens'))
-    : jouets.state === 'asked' ? txt('iris.tous') : txt('iris.bravo'));
+  npcShout(iris, left ? (jouets.state === 'asked' ? irTxt('bravo_encore', { n: left }) : irTxt('tiens'))
+    : jouets.state === 'asked' ? irTxt('tous') : irTxt('bravo'));
 }
 function updateToys(dt) {
   for (const t of toys) { t.t += dt; t.cd = Math.max(0, t.cd - dt); }
@@ -3496,7 +3603,7 @@ function updateToys(dt) {
     if (t.home || t.cd > 0 || dist(P.x, P.y, t.x, t.y) > IRIS.pick) continue;
     t.carried = true;
     addWordPop(jouets.state === 'new' ? txt('tecky.jouet') : toyName(t.i), P.x, P.y - 120, 'tecky');
-    if (t.i === 0) SFX.pouic(); else SFX.pick();
+    if (t.i === 0 && !seaToys()) SFX.pouic(); else SFX.pick();
     break;
   }
 }
@@ -3517,23 +3624,27 @@ function drawToy(t) {
   if (t.carried) {
     if (P.alpha === 0) return;
     const [mx, my] = MOUTH[P.dir];
-    drawSpr('port/toy', t.i, P.x + mx, P.y + my, { sc: POSED.sc, flip: P.dir === 'right', lift: -my });
+    drawSpr(toyKey(), t.i, P.x + mx, P.y + my + (P.swim ? 4 : 0), { sc: POSED.sc, flip: P.dir === 'right', lift: -my, cast: !P.swim });
     return;
   }
-  drawPosed('port/toy', t.i, t.x, t.y, MAP.toyBase[t.i], t.home ? -1 : t.t);     // (rendu à Iris : il ne scintille plus)
+  if (seaToys() && waterAt(t.x, t.y)) {         // à flot : il danse sur l'eau
+    drawSpr('mer/jouet', t.i, t.x, t.y + Math.sin(performance.now() / 1000 * 2.2 + t.i * 2.1) * 2, { sc: 0.75 });
+    return;
+  }
+  drawPosed(toyKey(), t.i, t.x, t.y, toyBase(t.i), t.home ? -1 : t.t);     // (rendu à Iris : il ne scintille plus)
 }
 function irisMark() { return jouets.state === 'done' ? -1 : jouets.state === 'asked' && toysLeft() ? 1 : 0; }
 function irisGreet() {
   if (carried()) return;                 // il lui rapporte un jouet : giveToy() parle
-  if (jouets.state === 'new') npcShout(iris, txt('iris.salut'));
+  if (jouets.state === 'new') npcShout(iris, irTxt('salut'));
   else if (jouets.state === 'asked') {
     const n = toysLeft();
-    npcShout(iris, !n ? txt('iris.tous') : txt('iris.encore', { n }));
-  } else { npcShout(iris, txt('iris.chasse')); iris.waveT = 1.5; }
+    npcShout(iris, !n ? irTxt('tous') : irTxt('encore', { n }));
+  } else { npcShout(iris, irTxt('chasse')); iris.waveT = 1.5; }
 }
 const irisThanks = () => [
-  { who: 'iris', face: 2, text: txt('iris.merci.0') },
-  { who: 'iris', face: 0, text: txt('iris.merci.1') },
+  { who: iris.look, face: 2, text: irTxt('merci.0') },
+  { who: iris.look, face: 0, text: irTxt('merci.1') },
 ];
 function finishIris() {
   jouets.state = 'done'; score += IRIS.reward;
@@ -3545,22 +3656,22 @@ function finishIris() {
 function talkIris() {
   if (jouets.state === 'done') {            // un conseil de vieux chien à chaque visite, à tour de rôle
     iris.waveT = 2;
-    say([{ who: 'iris', face: 0, text: IRIS_TIPS[iris.tip++ % IRIS_TIPS.length]() }]);
+    say([{ who: iris.look, face: 0, text: (seaToys() ? THEO_TIPS : IRIS_TIPS)[iris.tip++ % (seaToys() ? THEO_TIPS : IRIS_TIPS).length]() }]);
     return;
   }
   if (!toysLeft()) { jouets.state = 'asked'; say(irisThanks(), finishIris); return; }
   if (jouets.state === 'asked') {
     const n = toysLeft();
-    say([{ who: 'iris', face: 0, text: txt('iris.rappel', { n }) }]);
+    say([{ who: iris.look, face: 0, text: irTxt('rappel', { n }) }]);
     return;
   }
   jouets.state = 'asked';
   say([
-    { who: 'iris', face: 2, text: txt('iris.demande.0') },
-    { who: 'tecky', face: FACE.inquiet, text: txt('iris.demande.1') },
-    { who: 'iris', face: 0, text: txt('iris.demande.2') },
-    { who: 'iris', face: 0, text: txt('iris.demande.3') },
-    { who: 'tecky', face: 2, text: txt('iris.demande.4') },
+    { who: iris.look, face: 2, text: irTxt('demande.0') },
+    { who: 'tecky', face: FACE.inquiet, text: irTxt('demande.1') },
+    { who: iris.look, face: 0, text: irTxt('demande.2') },
+    { who: iris.look, face: 0, text: irTxt('demande.3') },
+    { who: 'tecky', face: 2, text: irTxt('demande.4') },
   ], saveGame);
 }
 
@@ -3984,6 +4095,7 @@ function biteAction() {
   if (threatened()) return 'bite';
   if (balade() && playTarget(false)) return 'play';
   if (nearNpc()) return 'talk';
+  if (P.swim) return nearSign() ? 'read' : 'bite';     // dans l'eau : ni gratter, ni terrier, ni jouer
   if (nearDig()) return 'dig';
   if (nearTunnel()) return 'tunnel';
   if (nearSign()) return 'read';
@@ -4532,7 +4644,7 @@ function drawPauseMap() {
   });
   if (!alice.hidden && ici('alice')) drawSpr('hud/arrow_icon', 3, mx(alice.x), my(alice.y) - 10, { sc: 1.2 });
   if (farm.state === 'asked' && ici('pen')) drawSpr(flockKey() + '/idle/right', 0, mx((MAP.pen[0] + MAP.pen[2]) / 2), my(MAP.pen[3]) + 6, { sc: flockKey() === 'sheep' ? 0.45 : 0.7 });
-  if (fete.state === 'asked' && ici('goal')) drawSpr('port/balloon', 0, mx(MAP.goal[0]), my(MAP.goal[1]) - 10, { sc: 0.55 });
+  if (fete.state === 'asked' && ici('goal')) drawSpr(floats() ? 'mer/casier' : 'port/balloon', 0, mx(MAP.goal[0]), my(MAP.goal[1]) - 10, { sc: 0.55 });
   // personnages déjà vus qui ont quelque chose à dire : leur « ! » (demande, remerciements) ou « ? » (quête en cours)
   const bob = Math.sin(performance.now() / 260) * 3;
   for (const n of npcList()) {
@@ -4612,6 +4724,7 @@ function saveGame() {
     mode: gameMode, diff: gameDiff, at: Date.now(), x: r1(P.x), y: r1(P.y), dir: P.dir, hp: P.hp, hpMax: P.hpMax,
     score, time: r1(timePlayed), fled, treasures, clues: clues.slice(), sniffed: aliceSniffed, immune: barkImmuneSeen,
     farm: farm.state, post: post.state, rose: rose.state, fete: fete.state, jouets: jouets.state, piq: piq.state, bitten,
+    swum: P.swum ? 1 : 0,
   }, mapState()));
 }
 // pas de sauvegarde automatique en plein combat : on reprendrait au milieu des crocs
@@ -4647,7 +4760,9 @@ function loadGame(s, rested) {
   dressCastle();
   fete.state = s.fete || 'new'; jouets.state = s.jouets || 'new'; piq.state = s.piq || 'new';
   bitten = !!s.bitten || rested;
+  P.swum = !!s.swum;
   applyMapState(s);
+  syncSwim(true);                       // (enregistré dans l'eau : il y nage encore)
   if (ici('alice') && nextClue() === 3) revealAlice();
   sun = sunGoal();
   camX = camClampX(P.x - VW / 2);
@@ -4857,8 +4972,8 @@ function checkBadges() {
   if (farm.state === 'done') unlockBadge(MAP.roles.farmer ? 'moutons' : 'poules');     // (les poules de Gaston, ou les moutons d'Anatole)
   if (post.state === 'done') unlockBadge(MAP.roles.postman ? 'coquillages' : 'facteur');    // (les lettres de Marcel, ou les coquillages de Zoé)
   if (rose.state === 'done') unlockBadge(MAP.roles.pompon ? 'caniche' : 'chat');       // (Pompon, ou Praline sur la côte)
-  if (fete.state === 'done') unlockBadge('ballons');
-  if (jouets.state === 'done') unlockBadge('iris');
+  if (fete.state === 'done') unlockBadge(MAP.roles.leon ? 'bouees' : 'ballons');         // (les ballons de Léon, ou les bouées d'Yvon)
+  if (jouets.state === 'done') unlockBadge(MAP.roles.iris ? 'nageur' : 'iris');          // (les jouets d'Iris, ou ceux de Théo)
   if (train.scored) unlockBadge('train');
   if (piq.state === 'done') unlockBadge('herissons');
   if (monde && critters.every(c => c.scored)) unlockBadge('betes');
@@ -5151,6 +5266,20 @@ function restPose(dt) {
     else { if (P.dir === 'down') P.dir = Math.random() < 0.5 ? 'left' : 'right'; P.setAnim('scratch'); }
   }
 }
+/* Il nage : un clapotis et un rond dans l'eau à chaque coup de patte ; s'il pousse vers le large sans avancer, il le
+   dit (comme au bord de la carte). */
+function swimStroke(dt, ix, iy, ox, oy, spd) {
+  if ((P.strokeT = (P.strokeT || 0) - dt) <= 0) {
+    P.strokeT = SWIM.stroke;
+    SFX.paddle();
+    addFx('fx/ripple', P.x - ix * 18, P.y - 6 - iy * 14, { fps: 10 });
+  }
+  const stuck = Math.hypot(P.x - ox, P.y - oy) < spd * dt * 0.3 && deepAt(P.x + ix * 40, P.y - 6 + iy * 40);
+  P.farT = stuck ? (P.farT || 0) + dt : 0;
+  if (P.farT < SWIM.push || timePlayed - (P.farAt === undefined ? -99 : P.farAt) < SWIM.again) return;
+  P.farT = 0; P.farAt = timePlayed;
+  addWordPop(txt('tecky.large'), P.x, P.y - 90, 'tecky');
+}
 function updatePlayer(dt) {
   P.t += dt;
   hintText = null;
@@ -5164,9 +5293,10 @@ function updatePlayer(dt) {
   P.cdBite = Math.max(0, P.cdBite - dt);
   P.cdSniff = Math.max(0, P.cdSniff - dt);
   P.boneFx = Math.max(0, P.boneFx - dt * 1.5);
+  syncSwim();
   // recul
   if (Math.abs(P.kx) + Math.abs(P.ky) > 5) {
-    moveActor(P, P.kx * dt, P.ky * dt);
+    moveTecky(P.kx * dt, P.ky * dt);
     const damp = Math.pow(0.004, dt);
     P.kx *= damp; P.ky *= damp;
   }
@@ -5186,7 +5316,7 @@ function updatePlayer(dt) {
     if (P.done()) P.mode = 'free';
     return;
   }
-  if (shakePending && P.mode === 'free') { shakePending = false; startShake(); return; }
+  if (shakePending && P.mode === 'free' && !P.swim) { shakePending = false; startShake(); return; }
   if (P.mode === 'tunnel') { updateTunnel(dt); return; }
   if (P.mode === 'sniff') {
     P.timer -= dt;
@@ -5212,24 +5342,26 @@ function updatePlayer(dt) {
   }
   recordCrumb();
   const [ix, iy] = inputVector();
-  const spd = 250;
+  const spd = P.swim ? 250 * SWIM.spd : 250;
   if (pressed.sniff || pressed.bark || pressed.bite || pressed.act) P.restT = 0;
   if (ix || iy) {
     P.restT = 0;
     const ox = P.x, oy = P.y;
-    moveActor(P, ix * spd * dt, iy * spd * dt);
+    moveTecky(ix * spd * dt, iy * spd * dt);
     edgeBump(dt, ix, iy, ox, oy);
     P.dir = dirFrom(ix, iy, P.dir);
     P.setAnim('walk');
-    puddleSplash(dt);
+    syncSwim();
+    if (P.swim) swimStroke(dt, ix, iy, ox, oy, spd);
+    else puddleSplash(dt);
     // petits nuages de poussière derrière les pattes
-    if ((P.dustT = (P.dustT || 0) - dt) <= 0 && Math.hypot(P.x - ox, P.y - oy) > spd * dt * 0.5) {
+    if (!P.swim && (P.dustT = (P.dustT || 0) - dt) <= 0 && Math.hypot(P.x - ox, P.y - oy) > spd * dt * 0.5) {
       P.dustT = DUST.every;
       addDust(P.x - ix * 14 + (Math.random() - 0.5) * 10, P.y - 2, -ix * 30, -iy * 30 - 6, 5 + Math.random() * 3);
     }
-  } else { P.edgeT = 0; restPose(dt); }
+  } else { P.edgeT = 0; P.farT = 0; if (P.swim) { P.restT = 0; P.setAnim('idle'); } else restPose(dt); }
 
-  if (pressed.sniff && P.cdSniff <= 0 && !alice.found) startSniff();
+  if (pressed.sniff && P.cdSniff <= 0 && !alice.found && !P.swim) startSniff();
   else if (pressed.bark && P.cdBark <= 0) {
     P.mode = 'bark'; P.setAnim('bark'); P.cdBark = 1.0; P.cdBarkMax = 1.0; doBark();
   } else if (pressed.bite) {
@@ -6012,6 +6144,8 @@ function drawWorld() {
   for (const d of ducks) if (d.h === 0 && vis(d.x, d.y, 60)) list.push({ y: d.y, draw: () => drawDuck(d) });
   for (const c of critters) if (critterVisible(c) && vis(c.x, c.y - c.h, 60))
     list.push({ y: c.h > 0 && c.ref ? c.ref.y + 2 : c.y, draw: () => drawCritter(c) });
+  for (const b of swimBuoys()) if (vis(b.x, b.y, 40))       // la ligne de bouées de la baignade : elles dansent sur l'eau
+    list.push({ y: b.y, draw: () => drawSpr('mer/bouee', 0, b.x, b.y + SWIM.buoyDy + Math.sin(performance.now() / 1000 * 2.1 + b.ph) * SWIM.bob) });
   const blink = P.inv > 0 && P.mode !== 'ko' && Math.floor(P.inv * 12) % 2 === 0;
   if (!(trip && trip.aboard)) list.push({ y: P.y, draw: () => P.draw((blink ? 0.35 : 1) * P.alpha) });   // P.alpha : 0 sous le grillage
   if (trip) {                                          // le voyage en voiture : la voiture du papa, et lui à côté
@@ -6228,8 +6362,8 @@ function hudCounters() {
     : ['icone/hen', 46, 58, 1, questHens().length - hensLeft(), questHens().length]);
   if (post.state === 'asked') c.push([shells() ? 'item/shell' : 'item/letter', 50, 36, 0.8, letters.length - lettersLeft(), letters.length]);
   if (rose.state === 'asked') c.push(['icone/' + pompon.kind, 46, 58, 1, pompon.mode === 'lost' ? 0 : 1, 1]);
-  if (fete.state === 'asked') c.push(['port/balloon', 42, 35, 0.8, balls.length - ballsLeft(), balls.length]);
-  if (jouets.state === 'asked') c.push(['port/toy', 42, 35, 0.8, toys.length - toysLeft(), toys.length]);
+  if (fete.state === 'asked') c.push([floats() ? 'mer/casier' : 'port/balloon', 42, 35, 0.8, balls.length - ballsLeft(), balls.length]);
+  if (jouets.state === 'asked') c.push([toyKey(), 42, 35, 0.8, toys.length - toysLeft(), toys.length]);
   if (piq.state === 'asked') c.push(['icone/hedgehog', 44, 58, 1, babies.length - babiesLeft(), babies.length]);
   return c;
 }

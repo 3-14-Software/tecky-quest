@@ -103,6 +103,14 @@
     "zoe": {
       "nom": "Zoé",
       "voix": "la petite fille au château de sable, six ans : voix d’enfant, vive et rieuse"
+    },
+    "theo": {
+      "nom": "Théo",
+      "voix": "le maître-nageur de la plage : jeune, sportif, voix claire et enjouée"
+    },
+    "yvon": {
+      "nom": "Yvon",
+      "voix": "le pêcheur : vieux loup de mer, voix grave et bourrue, bon cœur"
     }
   },
   "repliques": [
@@ -570,6 +578,39 @@
     },
     {
       "voix": "tecky",
+      "fichier": "tecky-9d3a7c0c",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Ouaf ! À l'abordage !",
+      "affiche": "Ouaf ! À l'abordage !",
+      "contexte": "Yvon : demande"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-e90979af",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Ouaf ! Comme un poisson ! Enfin… comme un teckel.",
+      "affiche": "Ouaf ! Comme un poisson ! Enfin… comme un teckel.",
+      "contexte": "Théo : demande"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-8f6d9274",
+      "personnage": "Tecky",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Ouaf ! Tecky, chien sauveteur, à la rescousse !",
+      "affiche": "Ouaf ! Tecky, chien sauveteur, à la rescousse !",
+      "contexte": "Théo : demande"
+    },
+    {
+      "voix": "tecky",
       "fichier": "tecky-348e99e9",
       "personnage": "Tecky",
       "type": "dialogue",
@@ -713,6 +754,50 @@
     },
     {
       "voix": "tecky",
+      "fichier": "tecky-122c4680",
+      "personnage": "Tecky",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Un jouet ?",
+      "affiche": "Un jouet ?",
+      "contexte": "Tecky prend un jouet de plage ; Tecky prend un jouet d’Iris"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-cc3fc8c9",
+      "personnage": "Tecky",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Le ballon de plage !",
+      "affiche": "Le ballon de plage !",
+      "contexte": "Tecky prend un jouet de plage"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-cc4e7afd",
+      "personnage": "Tecky",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "La bouée !",
+      "affiche": "La bouée !",
+      "contexte": "Tecky prend un jouet de plage"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-e070d9bf",
+      "personnage": "Tecky",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Le petit voilier !",
+      "affiche": "Le petit voilier !",
+      "contexte": "Tecky prend un jouet de plage"
+    },
+    {
+      "voix": "tecky",
       "fichier": "tecky-779c33b0",
       "personnage": "Tecky",
       "type": "bulle",
@@ -721,17 +806,6 @@
       "texte": "Une lettre ?",
       "affiche": "Une lettre ?",
       "contexte": "Tecky ramasse une lettre"
-    },
-    {
-      "voix": "tecky",
-      "fichier": "tecky-122c4680",
-      "personnage": "Tecky",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "Un jouet ?",
-      "affiche": "Un jouet ?",
-      "contexte": "Tecky prend un jouet d’Iris"
     },
     {
       "voix": "tecky",
@@ -834,6 +908,17 @@
     },
     {
       "voix": "tecky",
+      "fichier": "tecky-35f2c78d",
+      "personnage": "Tecky",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Plouf ! Elle est bonne !",
+      "affiche": "Plouf ! Elle est bonne !",
+      "contexte": "dans syncSwim()"
+    },
+    {
+      "voix": "tecky",
       "fichier": "tecky-8ef8d480",
       "personnage": "Tecky",
       "type": "bulle",
@@ -908,6 +993,17 @@
       "texte": "Hmm…",
       "affiche": "Hmm…",
       "contexte": "Tecky flaire (pas de piste par ici)"
+    },
+    {
+      "voix": "tecky",
+      "fichier": "tecky-8ebed277",
+      "personnage": "Tecky",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Pas plus loin que les bouées : c'est trop profond !",
+      "affiche": "Pas plus loin que les bouées : c'est trop profond !",
+      "contexte": "dans swimStroke()"
     },
     {
       "voix": "tecky",
@@ -1296,6 +1392,17 @@
     },
     {
       "voix": "info",
+      "fichier": "info-b9d1bdb6",
+      "personnage": "Narrateur",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Baignade surveillée. Les chiens bons nageurs sont les bienvenus : ne dépassez pas les bouées !",
+      "affiche": "Baignade surveillée. Les chiens bons nageurs sont les bienvenus : ne dépassez pas les bouées !",
+      "contexte": "Panneau"
+    },
+    {
+      "voix": "info",
       "fichier": "info-f84c40f8",
       "personnage": "Narrateur",
       "type": "bulle",
@@ -1315,6 +1422,17 @@
       "texte": "Tous rentrés !",
       "affiche": "Tous rentrés !",
       "contexte": "Un mouton rentre dans l’enclos"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-ec71aefc",
+      "personnage": "Narrateur",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Toutes au parc !",
+      "affiche": "Toutes au parc !",
+      "contexte": "Une bouée entre dans le parc"
     },
     {
       "voix": "info",
@@ -1373,13 +1491,24 @@
     },
     {
       "voix": "info",
-      "fichier": "info-c9157c1f",
+      "fichier": "info-60d56f8c",
       "personnage": "Narrateur",
       "type": "bulle",
       "appareil": "",
       "ton": "",
-      "texte": "But !",
-      "affiche": "But !",
+      "texte": "but",
+      "affiche": "but",
+      "contexte": "Un ballon entre dans le filet"
+    },
+    {
+      "voix": "info",
+      "fichier": "info-3683eed0",
+      "personnage": "Narrateur",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "tous",
+      "affiche": "tous",
       "contexte": "Un ballon entre dans le filet"
     },
     {
@@ -2351,6 +2480,61 @@
       "contexte": "Un ballon entre dans le filet"
     },
     {
+      "voix": "leon",
+      "fichier": "leon-a20cec43",
+      "personnage": "Léon",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "bravo",
+      "affiche": "bravo",
+      "contexte": "Un ballon entre dans le filet"
+    },
+    {
+      "voix": "leon",
+      "fichier": "leon-baf0f6fa",
+      "personnage": "Léon",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "ballons",
+      "affiche": "ballons",
+      "contexte": "Un ballon entre dans le filet"
+    },
+    {
+      "voix": "leon",
+      "fichier": "leon-67343942",
+      "personnage": "Léon",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "oh",
+      "affiche": "oh",
+      "contexte": "dans leonGreet()"
+    },
+    {
+      "voix": "leon",
+      "fichier": "leon-a237244d",
+      "personnage": "Léon",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "encore",
+      "affiche": "encore",
+      "contexte": "dans leonGreet()"
+    },
+    {
+      "voix": "leon",
+      "fichier": "leon-83c3216e",
+      "personnage": "Léon",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "salut",
+      "affiche": "salut",
+      "contexte": "dans leonGreet()"
+    },
+    {
       "voix": "iris",
       "fichier": "iris-3c9a6f0f",
       "personnage": "Iris",
@@ -2668,6 +2852,83 @@
       "texte": "Bravo ! Encore 1 !",
       "affiche": "Bravo ! Encore 1 !",
       "contexte": "Tecky rapporte un jouet à Iris"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-8c5debec",
+      "personnage": "Iris",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "bravo_encore",
+      "affiche": "bravo_encore",
+      "contexte": "dans giveToy()"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-d6962e4a",
+      "personnage": "Iris",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "tiens",
+      "affiche": "tiens",
+      "contexte": "dans giveToy()"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-3683eed0",
+      "personnage": "Iris",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "tous",
+      "affiche": "tous",
+      "contexte": "dans giveToy()"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-a20cec43",
+      "personnage": "Iris",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "bravo",
+      "affiche": "bravo",
+      "contexte": "dans giveToy()"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-83c3216e",
+      "personnage": "Iris",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "salut",
+      "affiche": "salut",
+      "contexte": "dans irisGreet()"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-a237244d",
+      "personnage": "Iris",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "encore",
+      "affiche": "encore",
+      "contexte": "dans irisGreet()"
+    },
+    {
+      "voix": "iris",
+      "fichier": "iris-740ee6ba",
+      "personnage": "Iris",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "chasse",
+      "affiche": "chasse",
+      "contexte": "dans irisGreet()"
     },
     {
       "voix": "piquette",
@@ -3801,6 +4062,446 @@
       "texte": "Mes coquillages ! Viens vite !",
       "affiche": "Mes coquillages ! Viens vite !",
       "contexte": "Tecky ramasse un coquillage"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-03c8821d",
+      "personnage": "Théo",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Salut, petit chien ! Moi, c'est Théo, le maître-nageur. Dis donc, tu sais nager, toi ?",
+      "affiche": "Salut, petit chien ! Moi, c'est Théo, le maître-nageur. Dis donc, tu sais nager, toi ?",
+      "contexte": "Théo : demande"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-50f23790",
+      "personnage": "Théo",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Ça tombe bien : le vent a emporté trois jouets au large. Un ballon, une bouée et un petit voilier. Et moi, je ne peux pas quitter mon poste !",
+      "affiche": "Ça tombe bien : le vent a emporté trois jouets au large. Un ballon, une bouée et un petit voilier. Et moi, je ne peux pas quitter mon poste !",
+      "contexte": "Théo : demande"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-d036f80d",
+      "personnage": "Théo",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Va les chercher à la nage et rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches ! Et ne dépasse pas les bouées.",
+      "affiche": "Va les chercher à la nage et rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches ! Et ne dépasse pas les bouées.",
+      "contexte": "Théo : demande"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-cb727efe",
+      "personnage": "Théo",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 3 à repêcher. Ils flottent au large, avant les bouées. Et n'oublie pas : si tu aboies, tu les lâches !",
+      "affiche": "Encore 3 à repêcher. Ils flottent au large, avant les bouées. Et n'oublie pas : si tu aboies, tu les lâches !",
+      "contexte": "Théo : rappel"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-451b2cff",
+      "personnage": "Théo",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 2 à repêcher. Ils flottent au large, avant les bouées. Et n'oublie pas : si tu aboies, tu les lâches !",
+      "affiche": "Encore 2 à repêcher. Ils flottent au large, avant les bouées. Et n'oublie pas : si tu aboies, tu les lâches !",
+      "contexte": "Théo : rappel"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-ac725aab",
+      "personnage": "Théo",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Plus qu'un ! Il flotte au large, avant les bouées. Et n'oublie pas : si tu aboies, tu le lâches !",
+      "affiche": "Plus qu'un ! Il flotte au large, avant les bouées. Et n'oublie pas : si tu aboies, tu le lâches !",
+      "contexte": "Théo : rappel"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-591f9964",
+      "personnage": "Théo",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Le ballon, la bouée et le voilier ! Tu nages comme un vrai chien sauveteur, Tecky.",
+      "affiche": "Le ballon, la bouée et le voilier ! Tu nages comme un vrai chien sauveteur, Tecky.",
+      "contexte": "Théo : merci"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-1e24f7fd",
+      "personnage": "Théo",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tiens, une bonne saucisse : ça creuse, la natation ! Reviens me voir quand tu veux, j'ai toujours un conseil de plage.",
+      "affiche": "Tiens, une bonne saucisse : ça creuse, la natation ! Reviens me voir quand tu veux, j'ai toujours un conseil de plage.",
+      "contexte": "Théo : merci"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-f40b4fee",
+      "personnage": "Théo",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Conseil de maître-nageur : on se baigne entre le sable et les bouées, jamais plus loin. Même les teckels !",
+      "affiche": "Conseil de maître-nageur : on se baigne entre le sable et les bouées, jamais plus loin. Même les teckels !",
+      "contexte": "Théo : conseil après la quête"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-52b09f5a",
+      "personnage": "Théo",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "En sortant de l'eau, un bon chien s'ébroue. Mais pas à côté des serviettes, hein !",
+      "affiche": "En sortant de l'eau, un bon chien s'ébroue. Mais pas à côté des serviettes, hein !",
+      "contexte": "Théo : conseil après la quête"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-bb5b309a",
+      "personnage": "Théo",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Sur la plage, ouvre l'œil : les petites bosses dans le sable cachent souvent des trésors.",
+      "affiche": "Sur la plage, ouvre l'œil : les petites bosses dans le sable cachent souvent des trésors.",
+      "contexte": "Théo : conseil après la quête"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-4e66a55f",
+      "personnage": "Théo",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Salut, moussaillon !",
+      "affiche": "Salut, moussaillon !",
+      "contexte": "Théo : Tecky arrive"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-6938fde7",
+      "personnage": "Théo",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 3 jouets !",
+      "affiche": "Encore 3 jouets !",
+      "contexte": "Théo : Tecky arrive"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-192c1946",
+      "personnage": "Théo",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 2 jouets !",
+      "affiche": "Encore 2 jouets !",
+      "contexte": "Théo : Tecky arrive"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-6ee71f12",
+      "personnage": "Théo",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 1 jouet !",
+      "affiche": "Encore 1 jouet !",
+      "contexte": "Théo : Tecky arrive"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-88da2ebd",
+      "personnage": "Théo",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tous les jouets ! Viens me voir !",
+      "affiche": "Tous les jouets ! Viens me voir !",
+      "contexte": "Théo : Tecky arrive ; Tecky rapporte un jouet à Théo"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-e252c8db",
+      "personnage": "Théo",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Bonne baignade, Tecky !",
+      "affiche": "Bonne baignade, Tecky !",
+      "contexte": "Théo : Tecky arrive"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-01ce27dd",
+      "personnage": "Théo",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Bien joué, sauveteur !",
+      "affiche": "Bien joué, sauveteur !",
+      "contexte": "Tecky rapporte un jouet à Théo"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-3a36a579",
+      "personnage": "Théo",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Les jouets ! Bravo !",
+      "affiche": "Les jouets ! Bravo !",
+      "contexte": "Tecky rapporte un jouet à Théo"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-a68dff79",
+      "personnage": "Théo",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Bravo ! Encore 2 !",
+      "affiche": "Bravo ! Encore 2 !",
+      "contexte": "Tecky rapporte un jouet à Théo"
+    },
+    {
+      "voix": "theo",
+      "fichier": "theo-65a74908",
+      "personnage": "Théo",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Bravo ! Encore 1 !",
+      "affiche": "Bravo ! Encore 1 !",
+      "contexte": "Tecky rapporte un jouet à Théo"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-327cd3f7",
+      "personnage": "Yvon",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "inquiet",
+      "texte": "Ah, un chien de mer ! Je suis Yvon, le pêcheur. La marée a décroché les bouées de mes casiers : elles dérivent dans toute la baie !",
+      "affiche": "Ah, un chien de mer ! Je suis Yvon, le pêcheur. La marée a décroché les bouées de mes casiers : elles dérivent dans toute la baie !",
+      "contexte": "Yvon : demande"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-d1da3636",
+      "personnage": "Yvon",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tu veux bien les pousser jusqu'au parc, entre les pieux, juste devant moi ? Nage droit dessus, ou aboie derrière elles.",
+      "affiche": "Tu veux bien les pousser jusqu'au parc, entre les pieux, juste devant moi ? Nage droit dessus, ou aboie derrière elles.",
+      "contexte": "Yvon : demande"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-97a382a4",
+      "personnage": "Yvon",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il en reste 5 ! Pousse-les jusqu'au parc, entre les pieux : nage droit dessus, ou aboie derrière elles.",
+      "affiche": "Il en reste 5 ! Pousse-les jusqu'au parc, entre les pieux : nage droit dessus, ou aboie derrière elles.",
+      "contexte": "Yvon : rappel"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-d37e6ccb",
+      "personnage": "Yvon",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il en reste 4 ! Pousse-les jusqu'au parc, entre les pieux : nage droit dessus, ou aboie derrière elles.",
+      "affiche": "Il en reste 4 ! Pousse-les jusqu'au parc, entre les pieux : nage droit dessus, ou aboie derrière elles.",
+      "contexte": "Yvon : rappel"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-83b2414a",
+      "personnage": "Yvon",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il en reste 3 ! Pousse-les jusqu'au parc, entre les pieux : nage droit dessus, ou aboie derrière elles.",
+      "affiche": "Il en reste 3 ! Pousse-les jusqu'au parc, entre les pieux : nage droit dessus, ou aboie derrière elles.",
+      "contexte": "Yvon : rappel"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-2ed8ced9",
+      "personnage": "Yvon",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Il en reste 2 ! Pousse-les jusqu'au parc, entre les pieux : nage droit dessus, ou aboie derrière elles.",
+      "affiche": "Il en reste 2 ! Pousse-les jusqu'au parc, entre les pieux : nage droit dessus, ou aboie derrière elles.",
+      "contexte": "Yvon : rappel"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-eaa514ab",
+      "personnage": "Yvon",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Plus qu'une ! Pousse-la jusqu'au parc, entre les pieux : nage droit dessus, ou aboie derrière elle.",
+      "affiche": "Plus qu'une ! Pousse-la jusqu'au parc, entre les pieux : nage droit dessus, ou aboie derrière elle.",
+      "contexte": "Yvon : rappel"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-4fc37dcf",
+      "personnage": "Yvon",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Cinq bouées au parc ! Je vais pouvoir relever mes casiers. Bravo, matelot !",
+      "affiche": "Cinq bouées au parc ! Je vais pouvoir relever mes casiers. Bravo, matelot !",
+      "contexte": "Yvon : merci"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-39cfcd42",
+      "personnage": "Yvon",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "",
+      "texte": "Tiens, un bon os pour toi. Et si tu cherches une petite fille, monte donc voir du côté du phare : de là-haut, on voit tout.",
+      "affiche": "Tiens, un bon os pour toi. Et si tu cherches une petite fille, monte donc voir du côté du phare : de là-haut, on voit tout.",
+      "contexte": "Yvon : merci"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-b13b32d9",
+      "personnage": "Yvon",
+      "type": "dialogue",
+      "appareil": "",
+      "ton": "joyeux",
+      "texte": "Merci encore, matelot ! Grâce à toi, il y aura du crabe et du homard au marché.",
+      "affiche": "Merci encore, matelot ! Grâce à toi, il y aura du crabe et du homard au marché.",
+      "contexte": "Yvon : après la quête"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-fb81f7cb",
+      "personnage": "Yvon",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Mille sabords, mes bouées !",
+      "affiche": "Mille sabords, mes bouées !",
+      "contexte": "Yvon : Tecky arrive"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-03b364c8",
+      "personnage": "Yvon",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 5 bouées !",
+      "affiche": "Encore 5 bouées !",
+      "contexte": "Yvon : Tecky arrive"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-56467d01",
+      "personnage": "Yvon",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 4 bouées !",
+      "affiche": "Encore 4 bouées !",
+      "contexte": "Yvon : Tecky arrive"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-8d043526",
+      "personnage": "Yvon",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 3 bouées !",
+      "affiche": "Encore 3 bouées !",
+      "contexte": "Yvon : Tecky arrive"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-0429e267",
+      "personnage": "Yvon",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 2 bouées !",
+      "affiche": "Encore 2 bouées !",
+      "contexte": "Yvon : Tecky arrive"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-ad580da9",
+      "personnage": "Yvon",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Encore 1 bouée !",
+      "affiche": "Encore 1 bouée !",
+      "contexte": "Yvon : Tecky arrive"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-65770384",
+      "personnage": "Yvon",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Bravo, matelot ! Viens me voir !",
+      "affiche": "Bravo, matelot ! Viens me voir !",
+      "contexte": "Yvon : Tecky arrive ; Une bouée entre dans le parc"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-02a52325",
+      "personnage": "Yvon",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Salut, matelot !",
+      "affiche": "Salut, matelot !",
+      "contexte": "Yvon : Tecky arrive"
+    },
+    {
+      "voix": "yvon",
+      "fichier": "yvon-fd347b56",
+      "personnage": "Yvon",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Mes bouées !",
+      "affiche": "Mes bouées !",
+      "contexte": "Une bouée entre dans le parc"
     }
   ]
 }

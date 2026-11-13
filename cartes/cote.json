@@ -341,7 +341,7 @@
     ["bone", 79.4, 30.4],
     ["bone", 90, 12.4],
     ["bone", 25, 46.4],
-    ["bone", 70.5, 45.2],
+    ["bone", 73.6, 44.4],
     ["bone", 66, 20.6],
     ["sausage", 2.35, 31.35],
     ["sausage", 93.6, 26.2],
@@ -382,7 +382,8 @@
     [32.6, 14.8, "Le village de pêcheurs est juste en bas. Pour la plage, suivez le quai jusqu'aux planches."],
     [37.6, 29.6, "Le pont de la rivière. En face : la ville, son casino et ses jardins."],
     [75.4, 27.6, "Sentier des falaises. Le phare est tout au bout. Attention au bord !"],
-    [61.4, 42.6, "Les Planches : la promenade du bord de mer. La jetée est à l'embouchure de la rivière."]
+    [61.4, 42.6, "Les Planches : la promenade du bord de mer. La jetée est à l'embouchure de la rivière."],
+    [55.5, 46.2, "Baignade surveillée. Les chiens bons nageurs sont les bienvenus : ne dépassez pas les bouées !"]
   ],
   "hens": [
     ["sheep", 84.4, 19.6, 1],
@@ -429,6 +430,8 @@
   "postman": [36.5, 47.2],
   "neighbor": [61.9, 19.7],
   "pompon": [65.2, 31.3],
+  "leon": [25.4, 50.4],
+  "iris": [68.8, 46.2],
   "papa": [33.3, 11.7],
   "letters": [
     [20.5, 48.6],
@@ -437,6 +440,20 @@
     [63.4, 46.6],
     [86.5, 45]
   ],
+  "balls": [
+    [14.5, 51.6],
+    [19.5, 54.2],
+    [27.5, 54.5],
+    [33.5, 55.6],
+    [38.6, 57.4]
+  ],
+  "toys": [
+    [76.5, 50.5],
+    [83.5, 49.5],
+    [70.5, 53.5]
+  ],
+  "goal": [24.5, 53.3],
+  "ballBox": [9, 47, 42, 62],
   "pen": [80, 11, 86, 15],
   "penGate": [82, 84],
   "roadTunnels": [
@@ -455,14 +472,23 @@
       ["car_green", 1, 24]
     ]
   },
-  "roles": {"neighbor": "hortense", "pompon": "poodle", "farmer": "anatole", "postman": "zoe"},
+  "roles": {
+    "neighbor": "hortense",
+    "pompon": "poodle",
+    "farmer": "anatole",
+    "postman": "zoe",
+    "iris": "theo",
+    "leon": "yvon"
+  },
   "calm": [
     [23.5, 3.5, 36.5, 14.5],
     [15.5, 15.5, 37.5, 38.5],
     [52, 14, 67, 36.6],
     [86, 30, 96, 41.5],
     [78, 9.5, 90, 17.5],
-    [33.5, 45.2, 39, 49.6]
+    [33.5, 45.2, 39, 49.6],
+    [66.4, 44.4, 71.2, 47.6],
+    [23.4, 48.8, 27.4, 51.2]
   ],
   "zones": [
     {"id": "port", "name": "Le port", "label": "Port", "at": [7.5, 25.2], "rects": [[0, 22.5, 14.5, 64]]},

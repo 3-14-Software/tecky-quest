@@ -81,11 +81,18 @@ setTimeout(() => {
     if (ici('neighbor') && !reachable(neighbor.x, neighbor.y, 150)) out.push('voisine ' + tile(neighbor.x, neighbor.y));
     if (ici('leon') && !reachable(leon.x, leon.y, 150)) out.push('Léon ' + tile(leon.x, leon.y));
     // ballons de Léon : posés sur un sol praticable, atteignables, hors du filet ; l'ouverture du filet est atteignable
-    for (const b of balls) if (!standable(b.x, b.y) || !reachable(b.x, b.y, 80) || ballBlocked(b, b.x, b.y)) out.push('ballon ' + tile(b.x, b.y));
+    // (sur la côte, ce sont des bouées à flot : dans la zone de baignade, que Tecky gagne à la nage depuis le sable)
+    if (floats()) { for (const b of balls) if (!swimAt(b.x, b.y) || ballBlocked(b, b.x, b.y)) out.push('bouée hors de la zone de baignade ' + tile(b.x, b.y)); }
+    else for (const b of balls) if (!standable(b.x, b.y) || !reachable(b.x, b.y, 80) || ballBlocked(b, b.x, b.y)) out.push('ballon ' + tile(b.x, b.y));
     for (const b of balls) { checkGoal(b); if (b.inNet) out.push('ballon déjà dans le filet ' + tile(b.x, b.y)); }
-    if (ici('goal') && !reachable(MAP.goal[0], MAP.goal[1] + 60, 60)) out.push('ouverture du filet ' + tile(MAP.goal[0], MAP.goal[1]));
+    if (floats()) {                    // le parc à bouées : tout entier dans l'eau où l'on nage, son ouverture aussi
+      const [gx, gy] = MAP.goal;
+      for (const [dx, dy] of [[-90, -64], [90, -64], [-90, 0], [90, 0], [0, 60], [-60, 60], [60, 60]])
+        if (!swimAt(gx + dx, gy + dy)) { out.push('parc à bouées hors de la zone de baignade ' + tile(gx, gy)); break; }
+    } else if (ici('goal') && !reachable(MAP.goal[0], MAP.goal[1] + 60, 60)) out.push('ouverture du filet ' + tile(MAP.goal[0], MAP.goal[1]));
     if (ici('iris') && !reachable(iris.x, iris.y, 150)) out.push('Iris ' + tile(iris.x, iris.y));
-    for (const t of toys) if (waterAt(t.x, t.y) || !reachable(t.x, t.y, IRIS.pick)) out.push('jouet ' + tile(t.x, t.y));
+    if (seaToys()) { for (const t of toys) if (!swimAt(t.x, t.y) || deepAt(t.x, t.y)) out.push('jouet hors de la zone de baignade ' + tile(t.x, t.y)); }
+    else for (const t of toys) if (waterAt(t.x, t.y) || !reachable(t.x, t.y, IRIS.pick)) out.push('jouet ' + tile(t.x, t.y));
     if (ici('piquette') && !reachable(piquette.x, piquette.y, 150)) out.push('Maman Piquette ' + tile(piquette.x, piquette.y));
     for (const b of babies) if (!standable(b.x, b.y) || !reachable(b.x, b.y, BABY.find)) out.push('bébé hérisson ' + tile(b.x, b.y));
     for (const l of letters) if (waterAt(l.x, l.y + 20) || !reachable(l.x, l.y + 20, 52)) out.push('lettre ' + tile(l.x, l.y));

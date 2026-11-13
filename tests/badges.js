@@ -5,7 +5,7 @@ function main() {
   run('audioOn(); STORE.mem = {}; loadBadges(); toTitle();');
   // (les badges de l'été ne sont ni montrés ni comptés tant que l'épisode n'est pas ouvert)
   const N = run('shownBadges().length'), T = run('MAP.badges.length');
-  ok(N === 16 && T === 19 && run('ATLAS["hud/badge"].f.length') === T + 1 && run('badgePages().join()') === 'printemps',
+  ok(N === 16 && T === 21 && run('ATLAS["hud/badge"].f.length') === T + 1 && run('badgePages().join()') === 'printemps',
      N + ' badges montrés sur ' + T + ' (et l’image « verrouillé ») : une seule page');
   ok(run('MAP.badges.every(id => txtAt("badges." + id + ".nom") && txtAt("badges." + id + ".but"))'), 'chacun a un nom et un objectif');
   ok(ids().endsWith('options,badges') && run('menu.items[menu.items.length - 1].sub').includes('0 sur ' + N), 'menu principal : « Badges », 0 sur ' + N);
@@ -68,7 +68,7 @@ function main() {
   run('menu.sel = menu.items.length - 1; pressed.ok = true'); step(1);
   run('pressed.right = true'); step(1);
   run('used = []; drawSpr = function (k) { used.push(k); return ds0.apply(this, arguments); }; render(); drawSpr = ds0;');
-  ok(run('badgePage') === 1 && run('used.filter(k => k === "hud/badge").length') === 3, 'flèche droite : la page de l’été, ses trois médailles');
+  ok(run('badgePage') === 1 && run('used.filter(k => k === "hud/badge").length') === 5, 'flèche droite : la page de l’été, ses cinq médailles');
   run('badgesTap(GW / 2 - 200, BADGE_PICK.y - 14)');
   ok(run('badgePage') === 0 && run('state') === 'badges', 'au toucher, la flèche de gauche revient à la première page');
   run('badgesTap(GW / 2, 700)');

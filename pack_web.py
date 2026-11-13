@@ -81,7 +81,7 @@ def derived_decor():
     """Décors qui se déduisent de la carte : poteau de chaque panneau, filet de Léon, heurtoirs et rails de la voie de
     Titine, clôture de l'enclos (barrière ouverte en bas), les deux bouts de chaque terrier."""
     la = lambda cle: cle not in CARTE["absents"]              # (une carte annexe n'a pas forcément filet, voie, enclos)
-    out = [("signpost", x, y) for x, y, _ in SIGNS] + ([("goal_net", *GOAL)] if la("goal") else [])
+    out = [("signpost", x, y) for x, y, _ in SIGNS] + ([("buoy_pen" if CARTE["roles"].get("leon") else "goal_net", *GOAL)] if la("goal") else [])
     if TRACK:
         x0, x1, y = TRACK
         out += [("buffer_stop", x0, y + 0.1), ("buffer_stop", x1, y + 0.1)]
@@ -347,7 +347,7 @@ def build_jeu():
         "variants": {n: [noms, tirage] for n, (noms, tirage) in nature.VARIANTES.items()},
         # ombres portées : le décalage d'un point par unité de hauteur, et la ligne de contact de chaque sprite
         "shadow": list(nature.OMBRE), "sols": sols(),
-        "itemBase": bases()[0], "toyBase": bases()[1], "shellBase": shell_bases(),   # objets posés au sol : le bas de leur dessin
+        "itemBase": bases()[0], "toyBase": bases()[1], "shellBase": shell_bases(), "beachToyBase": beach_toy_bases(),   # objets posés au sol : le bas de leur dessin
         "cast": portees(),                            # familles de sprites à ombre portée (personnages, bêtes, véhicules)
         "perches": {**batiments.perchoirs(S), **mobilier.perchoirs(S)},   # où un chat se réfugie : toits, conteneurs
         # décors agrandis (bâtiments, camion, tracteur, chariot) : leur obstacle (FOOT) grandit d'autant
@@ -365,8 +365,15 @@ def sans_ovale(svg):
 
 def portees():
     """Familles de sprites qui ont une ombre portée dans le jeu (le début de leur clé dans l'atlas)."""
-    return (["tecky", "alice", "alice1", "farmer", "hedgehog", "vehicle", "item", "port"] + list(chiens2.CHIENS) + list(npcs.KINDS)
+    return (["tecky", "alice", "alice1", "farmer", "hedgehog", "vehicle", "item", "port", "plage"] + list(chiens2.CHIENS) + list(npcs.KINDS)
             + list(villageois.KINDS) + list(critters.KINDS) + list(cows.KINDS) + list(hens.COLORS) + ["sheep"])
+
+
+def beach_toy_bases():
+    """Les jouets de plage de Théo, posés sur le sable comme les objets : le bas de chaque dessin (voir bases())."""
+    import numpy as np
+    m = PAD * S
+    return [nature.assise(np.asarray(render_svg(sv, 32, 32, S, PAD).getchannel("A")) > 128) - (16 * S + m) for sv in plage.beach_toy_frames()]
 
 
 def icone(svg, ancien, nouveau):
@@ -443,6 +450,20 @@ def collect(r=1):
     out.append(("item/shell", [render_svg(sv, 32, 32, R, PAD) for sv in plage.shell_frames()], (32 + M, 32 + M), True))
     for nom, sol, pointe in (("coquillage", "sable", "coquillage"), ("os_sable", "sable", "os"), ("os_terre", "terre", "os")):     # buttes des trésors enfouis
         out.append((f"butte/{nom}", [render_svg(sv, 32, 32, R, PAD) for sv in plage.mound_frames(sol, pointe)], (32 + M, 32 + M), True))
+    # les jouets de plage de Théo (posés sur le sable : famille « plage », à ombre portée ; à flot : « mer ») et les
+    # bouées de casier d'Yvon
+    out.append(("plage/jouet", [render_svg(sv, 32, 32, R, PAD) for sv in plage.beach_toy_frames()], (16 * S + M, 16 * S + M), True))
+    out.append(("mer/jouet", [render_svg(sv, 32, 32, R, PAD) for sv in plage.beach_toy_frames(True)], (16 * S + M, 16 * S + M), True))
+    out.append(("mer/casier", [render_svg(sv, 32, 32, R, PAD) for sv in plage.casier_frames()], (16 * S + M, 16 * S + M), True))
+    out.append(("mer/bouee", [render_svg(plage.bouee(), 32, 32, R, PAD)], (32 + M, 32 + M), True))
+    # Tecky qui nage (tecky2.NAGE) : les mêmes animations sous la famille « nage », qui n'a pas d'ombre portée
+    for a, (_, vues, _) in tecky2.NAGE.items():
+        for v in vues:
+            w, h, ox, oy = tecky2.CADRE[v]
+            ims = [render_svg(sv, w, h, R, PAD) for sv in tecky2.nage_frames(a, v)]
+            if a == "hurt":
+                ims[0] = flash(ims[0])
+            out.append((f"nage/{a}/{v}", ims, (ox * S + M, oy * S + M), True))
     out.append(("fx/sand", [render_svg(sv, 32, 32, R, PAD) for sv in plage.fx_sand()], (32 + M, 32 + M), True))
     out.append(("port/balloon", [render_svg(sv, 32, 32, R, PAD) for sv in port.balloon_frames()], (16 * S + M, 16 * S + M), True))
     out.append(("port/toy", [render_svg(sv, 32, 32, R, PAD) for sv in port.toy_frames()], (16 * S + M, 16 * S + M), True))

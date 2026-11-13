@@ -25,7 +25,9 @@
     "papa": "Papa",
     "hortense": "Madame Hortense",
     "anatole": "Anatole",
-    "zoe": "Zoé"
+    "zoe": "Zoé",
+    "theo": "Théo",
+    "yvon": "Yvon"
   },
   "intro": {
     "partie": "Ouaf ! Alice est partie jouer… et elle n'est pas rentrée !",
@@ -68,6 +70,8 @@
     "reparti": "C'est reparti ! Je vais retrouver les affaires d'Alice, et Alice avec.",
     "indices_manquent": "Hmm… ça sent Alice par ici, mais je ne la vois nulle part. Il me manque des indices !",
     "os_de_plus": "Un os de plus !",
+    "plouf": "Plouf ! Elle est bonne !",
+    "large": "Pas plus loin que les bouées : c'est trop profond !",
     "os_dore_bulle": "Os doré !",
     "os_dore": "Wouf ! Un os doré était enterré ! ({n} / {total})",
     "praline": "Te voilà, Praline ! Viens, on retourne voir ta maîtresse."
@@ -126,6 +130,71 @@
   "coquillages": {
     "premiere": "Un coquillage ?",
     "trouvee": "Un coquillage ! ({n}/{total})"
+  },
+  "theo": {
+    "tiens": "Bien joué, sauveteur !",
+    "tous": "Tous les jouets ! Viens me voir !",
+    "bravo": "Les jouets ! Bravo !",
+    "salut": "Salut, moussaillon !",
+    "chasse": "Bonne baignade, Tecky !",
+    "merci": [
+      "Le ballon, la bouée et le voilier ! Tu nages comme un vrai chien sauveteur, Tecky.",
+      "Tiens, une bonne saucisse : ça creuse, la natation ! Reviens me voir quand tu veux, j'ai toujours un conseil de plage."
+    ],
+    "demande": [
+      "Salut, petit chien ! Moi, c'est Théo, le maître-nageur. Dis donc, tu sais nager, toi ?",
+      "Ouaf ! Comme un poisson ! Enfin… comme un teckel.",
+      "Ça tombe bien : le vent a emporté trois jouets au large. Un ballon, une bouée et un petit voilier. Et moi, je ne peux pas quitter mon poste !",
+      "Va les chercher à la nage et rapporte-les-moi un par un, dans ta gueule. Attention : si tu aboies, tu les lâches ! Et ne dépasse pas les bouées.",
+      "Ouaf ! Tecky, chien sauveteur, à la rescousse !"
+    ],
+    "jouet": [
+      "Le ballon de plage !",
+      "La bouée !",
+      "Le petit voilier !"
+    ],
+    "conseil": [
+      "Conseil de maître-nageur : on se baigne entre le sable et les bouées, jamais plus loin. Même les teckels !",
+      "En sortant de l'eau, un bon chien s'ébroue. Mais pas à côté des serviettes, hein !",
+      "Sur la plage, ouvre l'œil : les petites bosses dans le sable cachent souvent des trésors."
+    ],
+    "encore": {
+      "one": "Encore {n} jouet !",
+      "other": "Encore {n} jouets !"
+    },
+    "bravo_encore": "Bravo ! Encore {n} !",
+    "rappel": {
+      "one": "Plus qu'un ! Il flotte au large, avant les bouées. Et n'oublie pas : si tu aboies, tu le lâches !",
+      "other": "Encore {n} à repêcher. Ils flottent au large, avant les bouées. Et n'oublie pas : si tu aboies, tu les lâches !"
+    }
+  },
+  "yvon": {
+    "bravo": "Bravo, matelot ! Viens me voir !",
+    "ballons": "Mes bouées !",
+    "oh": "Mille sabords, mes bouées !",
+    "salut": "Salut, matelot !",
+    "merci": [
+      "Cinq bouées au parc ! Je vais pouvoir relever mes casiers. Bravo, matelot !",
+      "Tiens, un bon os pour toi. Et si tu cherches une petite fille, monte donc voir du côté du phare : de là-haut, on voit tout."
+    ],
+    "apres": "Merci encore, matelot ! Grâce à toi, il y aura du crabe et du homard au marché.",
+    "demande": [
+      "Ah, un chien de mer ! Je suis Yvon, le pêcheur. La marée a décroché les bouées de mes casiers : elles dérivent dans toute la baie !",
+      "Tu veux bien les pousser jusqu'au parc, entre les pieux, juste devant moi ? Nage droit dessus, ou aboie derrière elles.",
+      "Ouaf ! À l'abordage !"
+    ],
+    "encore": {
+      "one": "Encore {n} bouée !",
+      "other": "Encore {n} bouées !"
+    },
+    "rappel": {
+      "one": "Plus qu'une ! Pousse-la jusqu'au parc, entre les pieux : nage droit dessus, ou aboie derrière elle.",
+      "other": "Il en reste {n} ! Pousse-les jusqu'au parc, entre les pieux : nage droit dessus, ou aboie derrière elles."
+    }
+  },
+  "bouees": {
+    "but": "Au parc !",
+    "tous": "Toutes au parc !"
   },
   "zoe": {
     "vite": "Mes coquillages ! Viens vite !",
@@ -418,6 +487,14 @@
     "coquillages": {
       "nom": "Chercheur de coquillages",
       "but": "Rapporter ses cinq coquillages à Zoé."
+    },
+    "nageur": {
+      "nom": "Chien sauveteur",
+      "but": "Repêcher les trois jouets de plage pour Théo."
+    },
+    "bouees": {
+      "nom": "Mousse",
+      "but": "Pousser les cinq bouées d’Yvon jusqu’au parc."
     },
     "retour_pages": {
       "tactile": "Touche les flèches pour changer d’épisode, ailleurs pour revenir",

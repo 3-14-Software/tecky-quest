@@ -10,7 +10,7 @@ La plage (la côte de l'été) : ce qui sert à la quête de Zoé, la petite fil
 """
 import math
 
-from spritelib import Drawing, circle, ellipse, path, line, OUTLINE
+from spritelib import Drawing, circle, ellipse, rect, path, line, OUTLINE
 
 COQUILLAGES = ["saint_jacques", "bulot", "coque", "moule", "bigorneau"]
 
@@ -142,6 +142,124 @@ def mound_frames(sol="sable", pointe="coquillage"):
              + "".join(f'<circle cx="{x}" cy="{y}" r="{r}" fill="{tas}" stroke="{bord}" stroke-width="0.4"/>' for x, y, r in
                        ((5.4, 23.4, 1.3), (26.6, 22.6, 1.2), (24.0, 25.0, 0.9), (8.6, 25.2, 0.9))))
     return [svg(butte(POINTES[pointe])), svg(creux), svg(butte(nue))]
+
+
+def bouee():
+    """Une bouée de la ligne de baignade (32 x 32, origine au centre : la ligne d'eau) : un flotteur rouge à bande
+    blanche, son reflet clair, le rond d'écume où il trempe. Contour brun : on bute dessus."""
+    d = Drawing(32, 32)
+    d.raw('<ellipse cx="16" cy="17.2" rx="6.4" ry="2.2" fill="none" stroke="#DDF6F4" stroke-width="0.9" opacity="0.8"/>')
+    d.add('<path d="M11.6,16.6 Q11.4,10.6 16,10.4 Q20.6,10.6 20.4,16.6 Q16,18.6 11.6,16.6 Z" fill="%F%"/>', "#E2483C")
+    d.add('<path d="M11.5,14.6 Q16,16.2 20.5,14.6 L20.4,16.6 Q16,18.6 11.6,16.6 Z" fill="%F%"/>', "#B5342C", sil=False)
+    d.add('<path d="M11.7,12.6 Q16,14.0 20.3,12.6 L20.5,14.6 Q16,16.2 11.5,14.6 Z" fill="%F%"/>', "#FBF4E6", sil=False)
+    d.add('<path d="M12.9,12.0 Q13.4,11.2 14.8,10.9" fill="none" stroke="#FFB8A8" stroke-width="0.9" stroke-linecap="round"/>', None)
+    d.add('<path d="M12.2,17.0 Q16,18.9 19.8,17.0" fill="none" stroke="#FFFFFF" stroke-width="0.9" stroke-linecap="round"/>', None)
+    return d.svg()
+
+
+# ---------------------------------------------------------------------- les jouets de plage de Théo
+# Trois jouets que le vent a emportés au large (la quête du maître-nageur : ceux d'Iris, sur l'eau) : un ballon de
+# plage, une bouée à rayures, un petit voilier. Deux dessins de chacun : posé sur le sable (comme les objets : du
+# relief, pas d'ovale), et à flot (enfoncé dans l'eau, son rond d'écume). 32 x 32, origine au centre.
+BRUN = OUTLINE
+JOUETS = ("ballon", "bouee", "voilier")
+
+
+def _ecume(d, cx, y, rx, ry=None):
+    ry = ry or rx * 0.3
+    d.raw(f'<ellipse cx="{cx}" cy="{y}" rx="{rx}" ry="{ry}" fill="none" stroke="#DDF6F4" stroke-width="0.9" opacity="0.8"/>')
+
+
+def _trait_eau(d, cx, y, rx):
+    d.add(f'<path d="M{cx - rx},{y - 0.4} Q{cx},{y + rx * 0.34} {cx + rx},{y - 0.4}" fill="none" stroke="#FFFFFF" stroke-width="0.9" '
+          f'stroke-linecap="round"/>', None)
+
+
+def _ballon(d, cy):
+    d.add(circle(16, cy, 7.4), "#FFFFFF")
+    d.clip("ballon", [circle(16, cy, 7.4)])
+    for a, coul in ((0, "#E2483C"), (120, "#3FA7D6"), (240, "#F2C230")):            # trois quartiers de couleur
+        d.add(f'<path d="M16,{cy} L16,{cy - 9} A9,9 0 0 1 {16 + 7.8:.2f},{cy + 4.5:.2f} Z" transform="rotate({a + 18} 16 {cy})" fill="%F%"/>',
+              coul, sil=False, clip="ballon")
+    d.raw('<g clip-path="url(#ballon)">' + "".join(
+        f'<path d="M16,{cy} L16,{cy - 9}" transform="rotate({a} 16 {cy})" fill="none" stroke="#FFFFFF" stroke-width="0.9"/>'
+        for a in (18, 138, 258)) + "</g>")
+    d.add(circle(16, cy, 1.5), "#FFFFFF", sil=False)
+    d.add(f'<path d="M10.4,{cy - 2.4} Q11.6,{cy - 5.6} 14.6,{cy - 6.2}" fill="none" stroke="#FFFFFF" stroke-width="1.1" stroke-linecap="round" opacity="0.9"/>', None)
+    d.add(f'<path d="M22.6,{cy + 1.6} Q21.6,{cy + 5.4} 17.6,{cy + 6.6} Q21.4,{cy + 6.2} 23.2,{cy + 2.4} Z" fill="%F%"/>', "#5A3A2A", sil=False, opacity=0.25)
+
+
+def _bouee(d, cy):
+    d.add(f'<path d="M6.6,{cy} A9.4,5.6 0 1 0 25.4,{cy} A9.4,5.6 0 1 0 6.6,{cy} Z M12.2,{cy - 0.6} A3.8,1.9 0 1 1 19.8,{cy - 0.6} A3.8,1.9 0 1 1 12.2,{cy - 0.6} Z" '
+          f'fill-rule="evenodd" fill="%F%"/>', "#FFFFFF")
+    d.clip("bouee", [f'<path d="M6.6,{cy} A9.4,5.6 0 1 0 25.4,{cy} A9.4,5.6 0 1 0 6.6,{cy} Z M12.2,{cy - 0.6} A3.8,1.9 0 1 1 19.8,{cy - 0.6} '
+                     f'A3.8,1.9 0 1 1 12.2,{cy - 0.6} Z" clip-rule="evenodd"/>'])
+    for a in (20, 110, 200, 290):                                                   # quatre bandes rouges
+        d.add(f'<path d="M16,{cy} L{16 - 3.2},{cy - 12} L{16 + 3.2},{cy - 12} Z" transform="rotate({a} 16 {cy})" fill="%F%"/>', "#E2483C",
+              sil=False, clip="bouee")
+    d.add(f'<path d="M9.4,{cy - 2.6} Q12.4,{cy - 4.8} 16.4,{cy - 4.9}" fill="none" stroke="#FFFFFF" stroke-width="1.0" stroke-linecap="round" opacity="0.9"/>', None)
+    d.add(f'<path d="M8.2,{cy + 2.4} Q16,{cy + 6.6} 23.8,{cy + 2.4} Q16,{cy + 4.8} 8.2,{cy + 2.4} Z" fill="%F%"/>', "#5A3A2A", sil=False, opacity=0.22)
+
+
+def _voilier(d, cy):
+    d.add(f'<path d="M7.4,{cy} L24.6,{cy} Q23.6,{cy + 4.6} 19.6,{cy + 4.8} L11.6,{cy + 4.8} Q8.4,{cy + 4.4} 7.4,{cy} Z" fill="%F%"/>', "#3F8FD0")
+    d.add(f'<path d="M7.4,{cy} L24.6,{cy} L24.2,{cy + 1.5} L7.9,{cy + 1.5} Z" fill="%F%"/>', "#F2C230", sil=False)
+    d.add(f'<path d="M10.6,{cy + 3.2} Q16,{cy + 4.4} 21.6,{cy + 3.2} L19.6,{cy + 4.8} L11.6,{cy + 4.8} Z" fill="%F%"/>', "#2B6AA3", sil=False)
+    d.add(rect(15.3, cy - 13.4, 1.2, 13.6, 0.5), "#A8683A")
+    d.add(f'<path d="M17.2,{cy - 12.8} L23.6,{cy - 1.6} L17.2,{cy - 1.6} Z" fill="%F%"/>', "#FFFFFF")
+    d.add(f'<path d="M14.6,{cy - 10.6} L14.6,{cy - 1.6} L9.4,{cy - 1.6} Z" fill="%F%"/>', "#E2483C")
+    d.add(f'<path d="M20.2,{cy - 7.4} L22.0,{cy - 4.4} L17.2,{cy - 4.4} L17.2,{cy - 7.4} Z" fill="%F%"/>', "#D6E8F4", sil=False)
+    d.add(f'<path d="M16.5,{cy - 13.4} L19.6,{cy - 14.4} L16.5,{cy - 15.4} Z" fill="%F%"/>', "#F2C230")
+
+
+_JOUETS = {"ballon": (_ballon, 16.6, 19.6, 6.6), "bouee": (_bouee, 18.2, 19.6, 9.0), "voilier": (_voilier, 20.0, 20.6, 8.6)}
+
+
+def beach_toy_frames(flotte=False):
+    """Les jouets de plage (JOUETS, une image chacun) : posés sur le sable, ou à flot (flotte) — un peu enfoncés,
+    cerclés d'écume."""
+    out = []
+    for nom in JOUETS:
+        dessin, pose, eau, rx = _JOUETS[nom]
+        d = Drawing(32, 32)
+        if flotte:
+            _ecume(d, 16, eau + 1.2, rx + 1.6)
+            n0 = len(d.parts)
+            dessin(d, pose + 1.0)
+            if nom == "ballon":                         # (le ballon trempe : le bas de la boule est sous l'eau)
+                d.clip("hors_eau", [rect(0, 0, 32, eau + 1.8)])
+                for i in range(n0, len(d.parts)):
+                    xml, fill, sil, extra = d.parts[i]
+                    d.parts[i] = (f'<g clip-path="url(#hors_eau)">{xml}</g>', fill, sil, extra)
+            _trait_eau(d, 16, eau + 1.4, rx * 0.8)
+        else:
+            dessin(d, pose)
+        out.append(d.svg())
+    return out
+
+
+# ---------------------------------------------------------------------- les bouées de casier d'Yvon
+BOUEES = ("#F28C28", "#E2483C", "#F2C230", "#3FA7D6", "#57B45A")       # une couleur par bouée (cinq, comme les ballons de Léon)
+
+
+def casier_frames():
+    """Les bouées des casiers d'Yvon, à flot (32 x 32, origine au centre : la ligne d'eau), une image par couleur :
+    un gros flotteur en poire, sa hampe et son fanion, le bout de cordage qui traîne, le rond d'écume."""
+    out = []
+    for i, coul in enumerate(BOUEES):
+        d = Drawing(32, 32)
+        _ecume(d, 16, 18.6, 9.2)
+        d.raw(f'<path d="M21.6,19.0 Q25.4,20.6 27.6,18.6" fill="none" stroke="#C9B48A" stroke-width="0.9" stroke-linecap="round"/>')
+        d.add(rect(15.4, 2.4, 1.2, 9.6, 0.5), "#8A6A46")
+        fan = "#FFFFFF" if i % 2 else "#2E4470"
+        d.add('<path d="M16.6,2.6 L22.4,4.3 L16.6,6.2 Z" fill="%F%"/>', fan)
+        d.add('<path d="M9.4,17.6 Q8.8,10.4 16,9.8 Q23.2,10.4 22.6,17.6 Q16,20.4 9.4,17.6 Z" fill="%F%"/>', coul)
+        d.add('<path d="M9.6,15.0 Q16,17.2 22.4,15.0 L22.6,17.6 Q16,20.4 9.4,17.6 Z" fill="%F%"/>', "#5A3A2A", sil=False, opacity=0.28)
+        d.add('<path d="M9.9,12.6 Q16,14.6 22.1,12.6 L22.3,14.2 Q16,16.2 9.7,14.2 Z" fill="%F%"/>', "#FFFFFF", sil=False, opacity=0.9)
+        d.add('<path d="M11.4,13.0 Q11.6,11.2 13.6,10.6" fill="none" stroke="#FFFFFF" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>', None)
+        _trait_eau(d, 16, 18.2, 6.0)
+        out.append(d.svg())
+    return out
 
 
 def fx_sand():

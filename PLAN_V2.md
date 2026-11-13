@@ -517,7 +517,8 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
    - *Les adversaires* (mode aventure) : **les chiens en ville et au port**, comme au printemps ; **des crabes
      sur la plage**, qui pincent si on leur marche dessus et s'enterrent quand Tecky aboie. **Des goélands** aussi
      (rappel de Christophe, 13 novembre 2026 : « ennemis crabes et/ou goélands, il ne faut pas les oublier ») :
-     ils piquent du ciel sur Tecky au port et sur la jetée, un aboiement les fait repartir.
+     ils piquent du ciel sur Tecky, un aboiement les fait repartir ; **partout sur la carte, pas seulement à la plage**
+     (Christophe : « ça permettra de varier des chiens »).
    - *Dessinés le 12 novembre 2026* : le papa d'Alice (d'après un dessin de Christophe : cheveux ras, bouc,
      tee-shirt rouge « 3.14 », jean) et sa voiture de sport rouge (d'après une photo de la sienne, sans marque
      ni logo, un peu rehaussée ; avec ses passagers, ou garée) : `reference/v2/papa_voiture_options.png`.
@@ -585,7 +586,7 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
    - **Ce qui reste à reprendre sur l'été** (liste tenue à jour : tout ce que j'ai signalé comme limite en
      livrant un morceau doit finir ici, ou être fait — Christophe, 13 novembre 2026 : « à chaque fois tu me
      listes des limites : vas-tu revenir dessus ensuite ? »). *Raccourcis à corriger* : aucun de connu (les quatre derniers
-     sont corrigés, voir plus bas). *À vérifier avec Christophe, faute de pouvoir
+     sont corrigés, voir plus bas). *Test instable à durcir* : `tests/cows.js`, « le veau reste près de sa mère » (limite 220 px ; 274 px vu une fois le 13 novembre 2026, jusqu'à 201 px sur trente passes ; rien à voir avec la côte). *À vérifier avec Christophe, faute de pouvoir
      écouter ou voir* : le bêlement des moutons (`SFX.baa`), le jappement de Praline, le phare, le casino et
      le manège allumés la nuit en dehors de la scène de fin ; les cinq morceaux de la côte (`web/musique.html` :
      « Été — … »), les mouettes, les drisses du port, les rafales de la falaise et le ressac (« Les sons
@@ -597,12 +598,11 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      sans écran titre) ; les quêtes de la côte ont leurs badges (« Ami des caniches », « Berger des falaises »),
      sur la page de l'été de l'écran des badges ; la côte a ses cinq morceaux (Côte Fleurie, port, ville,
      falaises, plage) et son ambiance (mouettes, drisses, rafales, ressac ; plus de grenouilles ni de clapotis
-     de mare au bord de la mer), et la musique de la côte commence quand la voiture sort du tunnel. *Reports assumés* : la tenue d'été d'Alice et sa
-     tong perdue ; les trois autres quêtes (le maître-nageur et les bouées
-     du pêcheur attendent la nage ; les mouettes voleuses) ; le manège qui tourne en musique ; la nage ; l'habillage du
+     de mare au bord de la mer), et la musique de la côte commence quand la voiture sort du tunnel. *Fait le 13 novembre 2026* : **la nage** (zone de baignade le long du sable, ligne de bouées, poses de nageur de Tecky, il s'ébroue en sortant ; à écouter : « Tecky nage » dans la salle d'écoute). **Les quêtes de Théo et d'Yvon** (même jour) : le maître-nageur et ses trois jouets de plage partis au large, le pêcheur et ses cinq bouées de casier à pousser jusqu'au parc — Yvon est sur la plage de l'ouest, pas au bassin (fermé, on n'y nage pas) ; leurs badges ; à valider : leurs répliques, leurs noms, le bruit des bouées poussées (« Flaque » dans la salle d'écoute). *Reports assumés* : la tenue d'été d'Alice et sa
+     tong perdue ; la dernière quête (les mouettes voleuses) ; la chaise haute du maître-nageur ; le manège qui tourne en musique ; l'habillage du
      sable et les vagues ; les crabes et les goélands (adversaires de l'aventure) ; les motos ; les voitures garées ; le bassin du village, petit et fermé ;
      le casino qui déborde de sa place ; noms des zones et répliques à valider.
-   - *À dessiner* : les motos, Tecky qui nage, les quatre autres personnages
+   - *À dessiner* : les motos, les quatre autres personnages
      des quêtes, le caniche, les moutons, les mouettes, les crabes ; les voitures garées ; les vagues de la
      mer ; les objets (chapeau, pelle, tong, coquillages, bouées, jouets de plage). (Faits le 13 novembre
      2026 : le phare, le casino, les cabines de plage, le manège, les bateaux de pêche, la poissonnerie.)

@@ -752,6 +752,37 @@ def goal_net():
     return d
 
 
+def buoy_pen():
+    """Le parc à bouées d'Yvon (la côte de l'été), planté dans l'eau devant la plage : des pieux de bois et un filet
+    tendu, ouvert vers le bas de l'écran comme le filet de Léon, dont il a le cadre et les mesures (pieux avant en
+    x 4..8 et 88..92, pieds en y 60 ; pieux arrière en x 12 et 84). Collisions : RAILS (game.js). Pas d'ombre : il
+    est dans l'eau ; un liseré d'écume au pied de chaque pieu."""
+    d = Drawing(96, 64)
+    bois, bois_dk, bois_lt, corde = "#A8743F", "#7E5429", "#C99A62", "#E9DCC0"
+    # le filet : le fond, puis les deux côtés, des mailles en losange qui trempent
+    mesh = "".join(f"M{x},0 L{x + 34},64 M{x + 34},0 L{x},64 " for x in range(-30, 100, 6))
+    for k, pts in enumerate(([(12, 12), (84, 12), (84, 34), (12, 34)],
+                             [(6, 38), (12, 12), (12, 34), (6, 58)], [(90, 38), (84, 12), (84, 34), (90, 58)])):
+        poly_d = "M" + " L".join(f"{x},{y}" for x, y in pts) + " Z"
+        d.raw(f'<clipPath id="parc{k}"><path d="{poly_d}"/></clipPath>'
+              f'<path d="{poly_d}" fill="#FFFFFF" opacity="0.16"/>'
+              f'<g clip-path="url(#parc{k})">{line(mesh, corde, 0.55)}</g>')
+    d.raw(line("M12,12 L84,12 M6,38 L12,12 M90,38 L84,12", corde, 1.1))                 # la ralingue du haut
+    for x in range(18, 84, 11):                                                         # ses flotteurs de liège
+        d.add(ellipse(x, 12, 2.2, 1.4), "#F28C28")
+    for (x, y0, y1) in ((12, 4, 34), (84, 4, 34)):                                      # pieux du fond
+        d.add(rect(x - 1.8, y0, 3.6, y1 - y0, 1.2), bois)
+        d.add(rect(x + 0.4, y0 + 0.6, 1.2, y1 - y0 - 1.2, 0.6), bois_dk, sil=False)
+        d.raw(f'<ellipse cx="{x}" cy="{y1}" rx="4.2" ry="1.4" fill="none" stroke="#DDF6F4" stroke-width="0.8" opacity="0.8"/>')
+    for x in (6, 90):                                                                   # pieux de l'entrée, plus gros
+        d.add(rect(x - 2.4, 26, 4.8, 33, 1.6), bois)
+        d.add(rect(x - 1.6, 27, 1.3, 30, 0.6), bois_lt, sil=False)
+        d.add(rect(x + 0.6, 26.8, 1.6, 31.4, 0.7), bois_dk, sil=False)
+        d.add(rect(x - 2.4, 31, 4.8, 3.2, 0), "#E24B4B", sil=False)                     # un repère rouge
+        d.raw(f'<ellipse cx="{x}" cy="59" rx="5.2" ry="1.7" fill="none" stroke="#DDF6F4" stroke-width="0.9" opacity="0.85"/>')
+    return d
+
+
 def leaf_nest():
     """Le nid de Maman Piquette : un tas de feuilles mortes (orange, jaune, brun) avec une petite entrée sombre."""
     d = Drawing(48, 32)
@@ -1669,7 +1700,7 @@ ECH = {"truck": 1.5, "tractor": 1.5, "forklift": 1.4}
 # posés à plat ou sur l'eau et le filet. Ils touchent le sol par tout le bas de leur silhouette (« contour ») ou,
 # pour ce qui tient sur un pied, des pieds ou des roues, à la hauteur de leur origine (« pied »). Leur ancien ovale
 # n'est plus dessiné (svgs()).
-SANS_OMBRE = {"bridge", "bridge_h", "sandbox", "burrow", "rail", "dog_bed", "fallen_apples", "boat", "barge", "goal_net", "cargo", "fishing_boat"}
+SANS_OMBRE = {"bridge", "bridge_h", "sandbox", "burrow", "rail", "dog_bed", "fallen_apples", "boat", "barge", "goal_net", "buoy_pen", "cargo", "fishing_boat"}
 SUR_PIED = {"lamppost", "signpost", "road_sign", "scarecrow", "mailbox", "cafe_table", "bicycle", "swing", "slide",
             "tractor", "truck", "forklift", "crane", "ladder", "bench", "buffer_stop"}
 
@@ -1767,6 +1798,7 @@ DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x)
     "bollard": (bollard, (32, 32), (16, 28)),
     "barge": (barge, (176, 48), (88, 42)),
     "goal_net": (goal_net, (96, 64), (48, 60)),
+    "buoy_pen": (buoy_pen, (96, 64), (48, 60)),             # le parc à bouées d'Yvon (la côte : le filet de Léon, dans l'eau)
     "leaf_nest": (leaf_nest, (48, 32), (24, 28)),
     "sandcastle": (leaf_nest, (64, 52), (30, 45)),          # le château de sable de Zoé (dessin : mobilier.chateau_de_sable)
     "dog_bed": (dog_bed, (48, 32), (24, 22)),
