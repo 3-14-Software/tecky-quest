@@ -248,13 +248,23 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   falaises (musique de la forêt), la plage (musique de la campagne), la campagne normande (`ferme`), et « La
   Côte Fleurie » pour le reste — les ids repris du monde donnent leur ambiance sonore (`AMB_EVENTS`) ; la plage
   et la ville n'en ont pas encore. Elle n'a pour l'instant que des décors déjà dessinés, des objets, des os
-  dorés, sept chiens, des canards, des vaches, des petites bêtes et des papillons : **pas encore** de porche
-  au parking ni de voitures garées, aucun personnage, ni indices ni Alice, et rien ne roule sur la route
-  (`traffic.vehicles` vide). Premier jet posé par
+  dorés, sept chiens, des canards, des vaches, des petites bêtes et des papillons : **pas encore** de voitures
+  garées, aucun personnage, ni indices ni Alice.
+  **Route sans issue** (13 novembre 2026) : `traffic.fin` (un x entier, 30 sur la côte) dit où la route
+  s'arrête. `pack_web.py` en déduit le décor `porche` (`lisiere.porche()` : un parking couvert vu d'en haut,
+  son « P », et la bouche du tunnel en miroir, tournée vers la route ; `lisiere.PORCHE` ; sprite
+  `decor/porche` ; obstacle `FOOT.porche` ; l'éditeur le montre, `ED.deduits`) et `MAP.traffic.end` (null
+  quand la route traverse la carte). `game.js` : `turnBack(v, dt)` — un véhicule qui s'enfonce sous le porche
+  (`TRAFFIC.porch`), ou qui sort par le tunnel, fait demi-tour hors de vue : il change de voie, attend
+  (`v.hidden`, `TRAFFIC.park` / `away`), puis repart dès que la voie est libre devant sa sortie ; les autres
+  ne gardent pas leurs distances avec un véhicule caché. Le porche couvre 4,7 tuiles : pas de bus sur une
+  route sans issue (il dépasserait). Sur la côte : trois voitures, un passage piéton devant le chemin du
+  port. Test : `cartes.js`. Premier jet posé par
   `v2/cote_carte.py`, **gelé depuis** : Christophe retouche la carte dans l'éditeur, c'est
   `cartes/cote.json` qui fait foi (le script refuse d'écraser une carte qui existe ; ses listes ne sont plus
   à jour ; `python3 v2/cote_carte.py --apercu` redessine l'aperçu à partir du fichier). Rien ne dépend de
-  la place exacte du casino ni du phare, sauf la zone calme autour du phare, les étiquettes « Casino » et
+  la place exacte du casino ni du phare (il les a déplacés : le casino en haut de sa place, le phare à la
+  pointe du plateau), sauf la zone calme autour du phare, les étiquettes « Casino » et
   « Phare » de la carte de la pause (`landmarks`) et `tests/cartes.js`, qui marche en (87 ; 30) sur le
   plateau, monte les escaliers et longe le bord : à suivre si la carte change. Ce que la côte a demandé au moteur : les marquages de la
   route ne sont posés que sur les tuiles de pleine chaussée (`chaussee()` dans `pack_web.build_map()` et

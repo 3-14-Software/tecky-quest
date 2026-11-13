@@ -81,9 +81,67 @@ def _portail(p):
         p.raw(line(f"M59.5,{y0 + haut / 2} L66,{y0 + haut / 2}", "#7E766B", 0.8))
 
 
+PORCHE = (20, 95)             # le porche : u de sa bouche, u de son pied (le milieu du bâtiment), dans son cadre
+
+
+def porche():
+    """Le porche du parking, sur la côte de l'été : là où la route s'arrête, les voitures entrent sous un parking
+    couvert et en ressortent, comme elles le font au tunnel (« rien de neuf à dessiner pour elles »). Un bâtiment de
+    béton vu d'en haut, son toit plat, son mur du sud, un grand « P » ; à gauche, la bouche, tournée vers la route :
+    le même arc que celui du tunnel, et la même ombre en dégradé où la voiture s'enfonce. La route passe entre v 64
+    et v 192, comme au tunnel ; pied (95, 208) : sous le mur du sud, au milieu du bâtiment."""
+    w, h = 176, 220
+    cx, x1 = PORCHE[0], 170
+    b = Drawing(w, h)
+    b.under.append(f'<path d="M{cx + 4},213 L{x1 + 3},213 L{x1 + 3},40 L{x1},40 L{x1},210 L{cx + 4},210 Z" fill="{OMBRE}" opacity="0.3"/>')
+    # (le toit est entaillé à la place de la bouche : la route, et la voiture qui entre, se voient au travers de l'ombre)
+    toit = f"M{cx},26 L{x1},26 L{x1},200 L{cx},200 A20,72 0 0 0 {cx},56 Z"
+    b.add(path(f"M{cx},200 L{x1},200 L{x1},212 L{cx},212 Z"), "#959BA6")                    # le mur du sud
+    for x in range(cx + 18, x1 - 6, 24):                                                   # ses jours
+        b.add(rect(x, 203.5, 13, 5, 1), "#5E636D", sil=False)
+    b.clip("porche_toit", [path(toit)])
+    b.add(path(toit), "#C9CED6")
+    b.add(rect(cx, 26, x1 - cx, 7), "#E2E6EC", sil=False, clip="porche_toit")              # l'acrotère, au soleil
+    b.add(rect(x1 - 7, 26, 7, 172), "#AEB4BE", sil=False, clip="porche_toit")              # celui de droite, à l'ombre
+    b.add(rect(cx, 193, x1 - cx, 7), "#B4BAC4", sil=False, clip="porche_toit")
+    for x in (cx + 50, cx + 100):                                                          # joints des dalles
+        b.raw(line(f"M{x},34 L{x},188", "#B4BAC4", 0.9))
+    b.raw(line(f"M{cx + 22},111 L{x1 - 8},111", "#B4BAC4", 0.9))
+    # le « P » du parking, peint sur le toit
+    px0, py0, c = 78, 60, 44
+    b.add(rect(px0, py0, c, c, 5), "#2F6FD1", sil=False, edge=True)
+    b.add(path(f"M{px0 + 13},{py0 + 8} L{px0 + 24},{py0 + 8} Q{px0 + 34},{py0 + 8} {px0 + 34},{py0 + 17} Q{px0 + 34},{py0 + 26} {px0 + 24},{py0 + 26} "
+               f"L{px0 + 19.5},{py0 + 26} L{px0 + 19.5},{py0 + 36} L{px0 + 13},{py0 + 36} Z "
+               f"M{px0 + 19.5},{py0 + 13.5} L{px0 + 19.5},{py0 + 20.5} L{px0 + 24},{py0 + 20.5} Q{px0 + 27.6},{py0 + 20.5} {px0 + 27.6},{py0 + 17} "
+               f"Q{px0 + 27.6},{py0 + 13.5} {px0 + 24},{py0 + 13.5} Z").replace("/>", ' fill-rule="evenodd"/>'), "#FFFFFF", sil=False)
+    for x, y in ((132, 140), (144, 150)):                                                  # deux bouches d'aération
+        b.add(rect(x, y, 14, 9, 1.5), "#8B93A0", sil=False, edge=True)
+        b.raw(line(f"M{x + 2},{y + 3} L{x + 12},{y + 3} M{x + 2},{y + 6} L{x + 12},{y + 6}", "#5E636D", 0.7))
+    # la bouche : l'arc de pierres du tunnel, en miroir (elle regarde vers l'ouest, d'où vient la route)
+    p = Drawing(w, h)
+    arc = path(f"M{cx},40 A31,88 0 0 1 {cx},216 L{cx},200 A20,72 0 0 0 {cx},56 Z")
+    p.clip("porche_arc", [arc])
+    p.add(arc, "#D3D7DE")
+    p.add(rect(cx, 36, 40, 62), "#EDF0F4", sil=False, clip="porche_arc")
+    p.add(rect(cx, 160, 40, 60), "#A9AFB9", sil=False, clip="porche_arc")
+    for k in range(1, 12):
+        a = -math.pi / 2 + k * math.pi / 12
+        x0, y0 = cx + 20 * math.cos(a), 128 + 72 * math.sin(a)
+        xb, yb = cx + 31 * math.cos(a), 128 + 88 * math.sin(a)
+        p.raw(line(f"M{x0:.1f},{y0:.1f} L{xb:.1f},{yb:.1f}", "#8B93A0", 0.9))
+    p.defs.append(f'<linearGradient id="porche_nuit" gradientUnits="userSpaceOnUse" x1="{cx}" y1="0" x2="{cx + 17}" y2="0">'
+                  '<stop offset="0" stop-color="#17100C" stop-opacity="0"/>'
+                  '<stop offset="0.45" stop-color="#17100C" stop-opacity="0.62"/>'
+                  '<stop offset="1" stop-color="#17100C" stop-opacity="1"/></linearGradient>')
+    p.raw(f'<path d="M{cx},56 A20,72 0 0 1 {cx},200 Z" fill="url(#porche_nuit)"/>')
+    p.raw(line(f"M{cx},56 A20,72 0 0 1 {cx},200", "#6A6F7A", 0.9))
+    return nature.Sprite([(b, "#4A4F5A", nature.TRAIT), (p, "#4A4F5A", nature.TRAIT)], w, h, (PORCHE[1], 208))
+
+
 DECOR = {   # nom : fonction qui rend un nature.Sprite ; dessinés dans l'atlas sous decor/<nom>, à leur taille
     "tunnel": tunnel,
     "tunnel_est": lambda: tunnel(est=True),
+    "porche": porche,
 }
 
 # encombrement à l'écran (demi-largeur, hauteur au-dessus du pied), en tuiles : rien d'important ne doit être caché

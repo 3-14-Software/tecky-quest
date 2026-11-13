@@ -337,6 +337,8 @@ def valider(c, avec_genres=True, variante=False):
             and isinstance(r.get("crossings"), list) and all(isinstance(x, int) for x in r["crossings"])
             and isinstance(r.get("vehicles"), list)):
         err.append("traffic : {y: première rangée de la route, crossings: [x], vehicles: [[véhicule, voie, x]]}")
+    elif "fin" in r and not (isinstance(r["fin"], int) and 4 < r["fin"] < w - 6):
+        err.append("traffic.fin : le x (entier) où la route s'arrête, devant le porche du parking")
     else:
         for i, v in enumerate(r["vehicles"]):
             if not (isinstance(v, list) and len(v) == 3 and v[1] in (0, 1) and _num(v[2])

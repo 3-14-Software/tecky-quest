@@ -548,8 +548,11 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      de plage au pied des planches (`reference/v2/cote_bord_de_mer.png` ; dans le jeu :
      `reference/v2/lot6_cote_bord_de_mer_jeu.png`). Restent à valider : ces derniers
      dessins, les noms des zones, leurs musiques d'emprunt.
+   - *Route sans issue, faite le 13 novembre 2026* : la route de la côte finit sous le porche d'un parking
+     couvert (`traffic.fin`) ; les voitures y entrent, s'y garent un moment hors de vue et repartent vers le
+     tunnel, où elles font de même. Christophe a déplacé le casino et le phare dans l'éditeur de carte.
    - *À dessiner* : les motos, Tecky qui nage, les six personnages
-     des quêtes, le caniche, les moutons, les mouettes, les crabes ; le porche du parking ; les vagues de la
+     des quêtes, le caniche, les moutons, les mouettes, les crabes ; les voitures garées ; les vagues de la
      mer ; les objets (chapeau, pelle, tong, coquillages, bouées, jouets de plage). (Faits le 13 novembre
      2026 : le phare, le casino, les cabines de plage, le manège, les bateaux de pêche, la poissonnerie.)
 5. Les autres saisons (automne, hiver), puis les intérieurs.

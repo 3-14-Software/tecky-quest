@@ -1609,6 +1609,8 @@ const FOOT = {
   stall_fish: [-52, -24, 52, 0], stall_ice: [-52, -24, 52, 0], house_fisher: [-72, -72, 72, -2], hut_fisher: [-50, -50, 54, -2],
   // le phare, le casino, le manège, les cabines de plage (le cargo et les bateaux de pêche sont sur l'eau : pas de collision)
   lighthouse: [-46, -30, 46, -2], casino: [-148, -92, 144, -2], carousel: [-86, -30, 86, -2], beach_hut: [-28, -28, 34, -2],
+  // le porche du parking, au bout de la route de la côte (lisiere.porche) : tout le bâtiment, bouche comprise
+  porche: [-142, -372, 152, 8],
   bench: [-40, -20, 40, 0], mailbox: [-7, -6, 7, 0], hedge: [0, -36, 64, 0], flower_pot: [-14, -18, 14, 0],
   warehouse: [-116, -104, 116, -4], container: [-92, -54, 92, 0], pallet: [-26, -16, 26, 0],
   barrel_blue: [-18, -16, 18, 0], barrel_red: [-18, -16, 18, 0], crate: [-24, -22, 24, 0],
@@ -2218,10 +2220,34 @@ const VEHICLE = { car: { len: 116, spd: 215, pitch: 1.15 }, van: { len: 146, spd
                   bus: { len: 240, spd: 140, pitch: 0.75 },
                   sport: { len: 158, spd: 250, pitch: 1.3 } };      // la voiture du papa d'Alice (vehicles.sport())
 for (const n in VEHICLE) VEHICLE[n].len = Math.round(VEHICLE[n].len * (MAP.vehicleScale[n] || 1));   // (longueurs du dessin d'origine ; vehicles.py : ECH)
-const TRAFFIC = { gap: 60, accel: 260, brake: 900, honk: 300, knock: 950, look: 230 };
+const TRAFFIC = { gap: 60, accel: 260, brake: 900, honk: 300, knock: 950, look: 230,
+  // route sans issue (MAP.traffic.end : la côte) — porch : de combien un véhicule s'enfonce sous le porche avant de
+  // disparaître ; park, away : le temps qu'il y reste garé, ou parti par le tunnel, avant de revenir (min, max, en s)
+  porch: 44, park: [3, 9], away: [1, 5] };
 function newVehicle([name, lane, x]) {
   return { name, lane, x, T: VEHICLE[name.split('_')[0]], dir: lane === 0 ? -1 : 1, y: MAP.traffic.lanes[lane],
-    v: VEHICLE[name.split('_')[0]].spd, t: Math.random(), honkT: 0 };
+    v: VEHICLE[name.split('_')[0]].spd, t: Math.random(), honkT: 0, hidden: 0 };
+}
+/* Route sans issue : au bout, le porche d'un parking (la côte de l'été). Un véhicule qui y entre, ou qui sort de la
+   carte par le tunnel, fait demi-tour hors de vue : il attend un moment (v.hidden, en s), puis repart par l'autre
+   voie dès qu'elle est libre devant lui. Rend vrai tant qu'il est hors de vue. */
+function turnBack(v, dt) {
+  const half = v.T.len / 2, end = MAP.traffic.end;
+  if (v.hidden <= 0) {
+    const out = v.dir > 0 ? v.x - half > end + TRAFFIC.porch : v.x + half < -40;
+    if (!out) return false;
+    const [a, b] = v.dir > 0 ? TRAFFIC.park : TRAFFIC.away;
+    v.lane = 1 - v.lane; v.dir = -v.dir; v.y = MAP.traffic.lanes[v.lane];
+    v.x = v.dir < 0 ? end + TRAFFIC.porch + half : -half - 40;
+    v.v = 0; v.hidden = a + Math.random() * (b - a);
+    return true;
+  }
+  v.hidden -= dt;
+  if (v.hidden <= 0) {                                  // il repart, si personne n'est juste devant sa sortie
+    const busy = cars.some(o => o !== v && o.hidden <= 0 && o.lane === v.lane && Math.abs(o.x - v.x) < half + o.T.len / 2 + TRAFFIC.gap * 2);
+    if (busy) v.hidden = 0.5; else { v.hidden = 0; v.v = v.T.spd * 0.5; }
+  }
+  return v.hidden > 0;
 }
 // passage piéton où se trouve (ou entre) Tecky, sinon null
 function crossingAt(x, y) {
@@ -2233,8 +2259,9 @@ function crossingAt(x, y) {
 const inLane = (v, y) => y > v.y - 58 && y < v.y + 6;
 function updateVehicle(v, dt) {
   const W = MAP.w * TS, half = v.T.len / 2;
+  if (MAP.traffic.end != null) { if (turnBack(v, dt)) return; }
   // sortie de carte : il réapparaît de l'autre côté dès que la place est libre
-  if (v.dir > 0 ? v.x - half > W + 40 : v.x + half < -40) {
+  else if (v.dir > 0 ? v.x - half > W + 40 : v.x + half < -40) {
     const nx = v.dir > 0 ? -half - 40 : W + half + 40;
     if (!cars.some(o => o !== v && o.lane === v.lane && Math.abs(o.x - nx) < half + o.T.len / 2 + TRAFFIC.gap)) {
       v.x = nx; v.v = v.T.spd;
@@ -2243,7 +2270,7 @@ function updateVehicle(v, dt) {
   }
   const front = v.x + v.dir * half;
   let target = v.T.spd;
-  for (const o of cars) if (o !== v && o.lane === v.lane) {          // garder ses distances
+  for (const o of cars) if (o !== v && o.lane === v.lane && !(o.hidden > 0)) {      // garder ses distances
     const gap = (o.x - v.x) * v.dir - half - o.T.len / 2;
     if (gap > -20 && gap < TRAFFIC.look) target = Math.min(target, Math.max(0, (gap - TRAFFIC.gap) * 2.2));
   }

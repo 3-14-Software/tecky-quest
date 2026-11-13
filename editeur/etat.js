@@ -211,6 +211,7 @@
   // comme pack_web.derived_decor : clôtures de l'enclos, rails et heurtoirs (poteaux, terriers, filet : leurs objets)
   ED.deduits = c => {
     const out = [];
+    if (c.traffic && c.traffic.fin !== undefined) out.push(['porche', c.traffic.fin + 2.34375, c.traffic.y + 4]);   // (le porche du parking)
     if (c.track) {
       const [x0, x1, y] = c.track;
       out.push(['buffer_stop', x0, y + 0.1], ['buffer_stop', x1, y + 0.1]);

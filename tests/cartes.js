@@ -31,18 +31,32 @@ function main() {
   ok(Math.abs(run('P.y - MAP.traffic.road[0]') - run('yEntree')) < 30, 'à la hauteur où il est entré : ' + Math.round(run('yEntree')) + ' px sous le bord de la chaussée, ' + Math.round(run('P.y - MAP.traffic.road[0]')) + ' à la sortie');
   ok(run('score') === 321 && run('farm.state') === 'asked' && run('treasures') === 1 && run('P.hp') > 0, 'la partie continue : score, quêtes et trésors le suivent');
   ok(run('dogs.length') === run('MAP.enemies.length') && run('dogs.length') > 3 && run('items.length') > 15 && run('npcList().length') === 0
-     && run('decor.length') > 150 && run('butterflies.length') === 7 && run('cars.length') === 0 && run('alice.hidden') && !run('ici("alice")')
+     && run('decor.length') > 150 && run('butterflies.length') === 7 && run('cars.length') === 3 && run('alice.hidden') && !run('ici("alice")')
      && !run('ici("track")') && run('ici("traffic")'),
-     'la côte a ses décors, ses chiens, ses objets et ses papillons ; pas encore de personnages ni d\'Alice ; pas de voie ferrée, et rien ne roule encore');
-  run('dogs = [];');                    // (pour la suite : Tecky s'y promène sans qu'un chien s'en mêle)
+     'la côte a ses décors, ses chiens, ses objets, ses papillons et ses voitures ; pas encore de personnages ni d\'Alice ; pas de voie ferrée');
+  // la route sans issue : une voiture entre sous le porche du parking, s'y gare, repart par l'autre voie ; au tunnel, de même
+  ok(run('MAP.traffic.end') === 30 * 64 && run('CARTES.monde.traffic.end') === null && run('MAP.decor.filter(d => d[0] === "porche").length') === 1
+     && run('blockedFeet(MAP.traffic.end + 60, 8 * TS, 16)') && !run('blockedFeet(MAP.traffic.end - 60, 8 * TS, 16)'),
+     'la route s\'arrête au porche du parking : Tecky n\'y entre pas');
+  run('var pxA = P.x, pyA = P.y; P.x = 60 * TS; P.y = 30 * TS; dogs = [];');
+  run('var V = cars[0]; cars = [V]; Object.assign(V, { lane: 1, dir: 1, y: MAP.traffic.lanes[1], hidden: 0, x: MAP.traffic.end - 100, v: V.T.spd });');
+  step(120);
+  ok(run('V.lane') === 0 && run('V.dir') === -1 && run('V.hidden') > 0 && run('V.x') > run('MAP.traffic.end + V.T.len / 2'), 'une voiture entre sous le porche : elle y disparaît et s\'y gare');
+  run('V.hidden = 0.01;'); step(240);
+  ok(run('V.hidden') <= 0 && run('V.x') < run('MAP.traffic.end - 200') && run('V.y') === run('MAP.traffic.lanes[0]'), 'puis elle repart vers le tunnel, par la voie du haut');
+  run('V.x = -V.T.len;'); step(3);
+  ok(run('V.lane') === 1 && run('V.hidden') > 0 && run('V.x') < 0, 'au tunnel, elle sort de la carte et fait demi-tour hors de vue');
+  run('V.hidden = 0.01;'); step(150);
+  ok(run('V.dir') === 1 && run('V.x') > 100 && run('V.y') === run('MAP.traffic.lanes[1]'), 'et revient par la voie du bas');
+  run('P.x = pxA; P.y = pyA; cars = [];');     // (pour la suite : Tecky s'y promène sans qu'une voiture ni un chien s'en mêle)
   ok(run('ZONES.length') === 7 && run('ZONES[0].name') === 'Le port' && run('ZONES[6].name') === 'La Côte Fleurie'
      && run('EDGE_DECOR.filter(d => d.n === "tunnel").length') === 1
      && run('EDGE_DECOR.filter(d => d.n !== "tunnel").every(d => offMap(d.x, d.y - 12, d.x, d.y))'),
      'ses zones et sa lisière sont les siennes (' + run('EDGE_DECOR.length') + ' fourrés et arbres autour, un seul tunnel : la route finit au parking)');
   // la route s'arrête au parking : ses marquages aussi ; au bord est, à sa hauteur, pas de tunnel « pour les voitures »
-  ok(run('MAP.ground[7 * MAP.w + 10]') === 5 && run('MAP.ground[7 * MAP.w + 28]') === 5 && run('MAP.ground[7 * MAP.w + 34]') !== 5
+  ok(run('MAP.ground[7 * MAP.w + 10]') === 5 && run('MAP.ground[7 * MAP.w + 28]') === 5 && run('MAP.ground[7 * MAP.w + 7]') === 7 && run('MAP.ground[7 * MAP.w + 34]') !== 5
      && run('MAP.ground[7 * MAP.w + 60]') !== 5 && run('MAP.edge.ring.filter(([x, y, v]) => v === 5).every(([x, y]) => x < 0 && y === 7)'),
-     'les marquages de la route vont du tunnel au parking, pas plus loin');
+     'les marquages de la route vont du tunnel au parking, pas plus loin ; un passage piéton devant le chemin du port');
   run('var px0 = P.x, py0 = P.y; P.x = MAP.w * TS - 40; P.y = 7.5 * TS; P.mode = "free"; P.edgeAt = -99; pops = [];');
   step(60, 'held.right = true;'); run('held.right = false;');
   ok(run('MAP.id') === 'cote' && run('pops.some(p => p.text === txt("bord.carte"))') && !run('pops.some(p => p.text === txt("bord.tunnel"))'),

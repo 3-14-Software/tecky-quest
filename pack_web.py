@@ -94,6 +94,8 @@ def derived_decor():
         for y in ys:
             out += [("fence_wood_v", px0, y), ("fence_wood_v", px1, y)]
     out += [("burrow", x, y) for a, b in TUNNELS for x, y in (a, b)]
+    if ROAD_FIN is not None:                                  # la route s'arrête : le porche du parking (lisiere.porche)
+        out.append(("porche", ROAD_FIN + (lisiere.PORCHE[1] - lisiere.PORCHE[0]) / 32, ROAD + 4))
     return out
 
 
@@ -134,7 +136,7 @@ def charger_carte(nom=carte.MONDE, episode=None):
     global NOM, CARTE, MW, MH, ITEMS, ENEMIES, DIG, SIGNS, HENS, DUCKS, COWS, CRITTERS, BUTTERFLIES, VILLAGERS
     global LETTERS, BALLS, TOYS, BABIES, TUNNELS, START, ALICE, TITLE, FARMER, POSTMAN, NEIGHBOR, POMPON
     global LEON, GOAL, IRIS, PIQUETTE, PEN, PEN_GATE, TRACK, CALM, ROAD_TUNNELS, ROAD, CROSSINGS, TRAFFIC
-    global DETAILS, FLOWER_BEDS, DECOR, BRIDGES, EDGE
+    global DETAILS, FLOWER_BEDS, DECOR, BRIDGES, EDGE, ROAD_FIN
     NOM = nom
     CARTE = carte.completer(carte.charger_episode(nom, episode))
     MW, MH = CARTE["w"], CARTE["h"]
@@ -151,6 +153,7 @@ def charger_carte(nom=carte.MONDE, episode=None):
     ROAD_TUNNELS = _T("roadTunnels")      # tunnels aux deux bouts de la grande route (lisiere.py) : x, y du pied, miroir
     route = CARTE["traffic"] or {"y": None, "crossings": [], "vehicles": []}      # (pas de grande route : y = None)
     ROAD = route["y"]                     # première rangée de la grande route (4 rangées ; marquage sur la 2e)
+    ROAD_FIN = route.get("fin")           # le x où elle s'arrête, devant le porche du parking (None : elle traverse la carte)
     CROSSINGS = tuple(route["crossings"])                     # passages piétons : première des deux tuiles
     TRAFFIC = [tuple(v) for v in route["vehicles"]]           # véhicules : voie 0 (en haut, vers l'ouest) ou 1, x de départ
     DETAILS = _T("details")
@@ -276,8 +279,10 @@ def build_map():
         # (pas de grande route sur cette carte : rien n'y roule, personne ne la touche)
         "traffic": {"lanes": [px(ROAD + 0.95), px(ROAD + 2.95)], "road": [px(ROAD - 0.5), px(ROAD + 3.5)],
                     "crossings": [[px(tx), px(tx + 2)] for tx in CROSSINGS],
+                    # end : là où la route s'arrête, à la bouche du porche (null : elle traverse la carte)
+                    "end": px(ROAD_FIN) if ROAD_FIN is not None else None,
                     "vehicles": [[n, lane, px(x)] for n, lane, x in TRAFFIC]} if ROAD is not None
-        else {"lanes": [hors, hors], "road": [hors, hors], "crossings": [], "vehicles": []},
+        else {"lanes": [hors, hors], "road": [hors, hors], "crossings": [], "end": None, "vehicles": []},
         "dig": [[px(x), px(y)] for x, y in DIG],
         "start": [px(START[0]), px(START[1])],
         "alice": [px(ALICE[0]), px(ALICE[1])],
