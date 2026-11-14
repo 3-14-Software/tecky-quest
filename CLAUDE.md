@@ -12,6 +12,32 @@ blanches (elle est pieds nus sur l'illustration : Christophe a préféré la cha
 forêt (l'indice) : tant que Tecky ne la lui a pas rapportée, elle a un pied nu (sprites `alice1/*`, `alice2.frames(…, nu=True)` ;
 `endingHome()` lui rend sa chaussure, au noir). Garder ces traits en cas de retouche des sprites.
 
+## Vocabulaire : lieux et épisodes
+
+Demande de Christophe (14 novembre 2026) : ne plus dire « le monde » ni « la côte » pour les cartes — ces mots
+poussaient à des raccourcis (« si la carte est le monde… »). **Un épisode = un lieu à une saison** :
+
+| Épisode | Nom | Lieu (carte) |
+|---|---|---|
+| `printemps` | La région de Tecky (printemps) | `region` — `carte.json` |
+| `ete` | Les vacances à la plage (été) | `plage` — `cartes/plage.json` |
+| automne (à faire) | La région de Tecky (automne) | `region`, la même carte : d'autres couleurs, quêtes et indices (une surcharge) |
+| hiver (à faire) | Les vacances à la montagne (hiver) | `montagne` (à faire) |
+
+- Ces noms sont ceux du travail (comptes rendus, documentation, code) ; le joueur voit toujours « Le printemps »,
+  « L'été » : quatre épisodes, un par saison.
+- `episodes.json` : `lieu` = la carte où l'épisode se joue (ses indices, Alice, ses badges). `game.js` :
+  `EP().lieu`, `auLieu()`. **Rien dans le moteur ne doit dépendre du nom d'une carte** : ce qui est propre à un
+  épisode se décide d'après l'épisode (`episode`, `EP()`), pas d'après `MAP.id`. Les badges d'un épisode se
+  gagnent dans son lieu, pendant cet épisode ; l'écran titre montre la carte de départ de l'épisode
+  (`EP().depart`).
+- La région de Tecky reste la carte de départ des voyages, pour une raison pratique seulement. Idée de
+  Christophe, pas décidée : une petite carte « la maison d'Alice » (jeux bonus), qui servirait de point de
+  départ aux cinématiques (voir `PLAN_V2.md`).
+- Les cartes s'appelaient `monde` et `cote` jusqu'au 14 novembre 2026 : `loadSave()` lit encore une sauvegarde
+  à ces noms (`OLD_MAPS`). Dans la suite de ce fichier, « le monde » = la région de Tecky, « la côte » = la
+  plage (la zone « La Côte Fleurie », son morceau et son ambiance gardent l'identifiant `cote`).
+
 ## Commandes
 
 ```bash
@@ -264,7 +290,7 @@ node tests/zoe.js                                         # puis le ou les tests
   l'éditeur aussi, à l'enregistrement. La carte de la côte éprouve tout cela (`tests/cartes.js` : Tecky monte
   les deux escaliers, le bord du plateau l'arrête). Pas encore fait : l'habillage du sable par le jeu, la nage,
   les vagues animées.
-  **La carte de la côte** (`cartes/cote.json`, 96 x 64, carte annexe de l'été ; 13 novembre 2026), d'après le
+  **La carte de la côte** (`cartes/plage.json`, 96 x 64, carte annexe de l'été ; 13 novembre 2026), d'après le
   plan `reference/v2/ete_plan.png` (une tuile pour 20 px du plan) ; aperçu de la carte entière :
   `reference/v2/cote_carte.png`. La route sort du tunnel de l'ouest et **finit au parking** (x 24..36, y 4..13) ;
   la rivière descend du nord à la mer (x 39..45), franchie par **un pont en travers** (décor `bridge_h`, voir
@@ -302,7 +328,7 @@ node tests/zoe.js                                         # puis le ou les tests
   route sans issue (il dépasserait). Sur la côte : trois voitures, un passage piéton devant le chemin du
   port. Test : `cartes.js`.
   **Le voyage en voiture** (13 novembre 2026 ; `game.js`, section « le voyage en voiture ») : un épisode
-  qui a un champ `voyage` dans `episodes.json` (l'été : `"voyage": "cote"`) commence par une cinématique et
+  qui a un champ `voyage` dans `episodes.json` (l'été : `"voyage": "plage"`) commence par une cinématique et
   se joue sur cette carte-là. `newGame()` → `startTrip()` : `state === 'trip'`, `trip` (étape `step`, la
   voiture `car`, le papa `papa`, `aboard`, le noir `a` / `fade` / `then`), `TRIP` (durées, vitesses, places à
   partir de l'arrière de la voiture). Étapes de `updateTrip()` : `descente` (Alice et Tecky descendent le
@@ -323,7 +349,7 @@ node tests/zoe.js                                         # puis le ou les tests
   `passageHere()` rend toujours null (à pied, les tunnels sont « pour les voitures » — les passages de la
   carte ne servent qu'à dire où mène le tunnel) ; `loadGame()` ramène au point de départ de la carte du
   voyage une partie enregistrée ailleurs (pendant la scène, par exemple) ; `reset()` et `toTitle()` vident
-  `trip`. Données : `start` de `cartes/cote.json` (le parking), et le point libre `papa`
+  `trip`. Données : `start` de `cartes/plage.json` (le parking), et le point libre `papa`
   (`carte.POINTS_LIBRES` : jamais exigé) — le papa d'Alice y attend et **salue comme un villageois**
   (il n'est pas dessiné tant que la voiture roule vers le porche, étapes `arrivee` et `garee` : il est au
   volant ; `newVillager(['papa', …])` dans `resetWorld()`, `VILLAGER_LINES.papa`, textes `villageois.papa.<i>`,
@@ -335,7 +361,7 @@ node tests/zoe.js                                         # puis le ou les tests
   `items.py`, dans l'ordre ; sans ce champ, ceux du printemps). L'été : `hat` (le chapeau de paille, au
   village de pêcheurs), `spade` (la pelle, dans les jardins de la ville), `flipflop` (la tong, sur la plage),
   dessinés dans `items.py` (`CLUES_ETE`) ; Alice est cachée **tout en haut des falaises**, au nord du plateau
-  (`alice` de `cartes/cote.json`, entre un rocher et un buisson) — pas au phare : Christophe l'a voulue « plus
+  (`alice` de `cartes/plage.json`, entre un rocher et un buisson) — pas au phare : Christophe l'a voulue « plus
   haut dans les falaises, puisque la cinématique la fait redescendre vers le phare ».
   `episodes.py` vérifie que la carte où l'épisode se joue a exactement un de chaque indice, et Alice.
   `game.js` : `clueNames()` (ceux de l'épisode ; `CLUES` reste la liste du printemps), `CLUE_ICON` (l'image de
@@ -501,7 +527,7 @@ node tests/zoe.js                                         # puis le ou les tests
   Christophe. **Vaches** : le veau distancé de plus de `COW.calfFar` rattrape sa mère sans attendre, un peu
   plus vite (`calfHurry`) — c'était le test instable de `cows.js`. Premier jet posé par
   `v2/cote_carte.py`, **gelé depuis** : Christophe retouche la carte dans l'éditeur, c'est
-  `cartes/cote.json` qui fait foi (le script refuse d'écraser une carte qui existe ; ses listes ne sont plus
+  `cartes/plage.json` qui fait foi (le script refuse d'écraser une carte qui existe ; ses listes ne sont plus
   à jour ; `python3 v2/cote_carte.py --apercu` redessine l'aperçu à partir du fichier). Rien ne dépend de
   la place exacte du casino ni du phare (il les a déplacés : le casino en haut de sa place, le phare à la
   pointe du plateau), sauf la zone calme autour du phare, les étiquettes « Casino » et
@@ -651,7 +677,7 @@ node tests/zoe.js                                         # puis le ou les tests
   l'ombre est peinte dans le sol). Les couleurs écrites dans `game.js` (plages de l'herbe `MEADOW`, du sous-bois
   `WOOD`, fonds des mares `POND`) sont des voiles : elles n'ont pas eu besoin de changer en été ; les plants du
   champ et les brins d'herbe gardent leur vert. L'éditeur de carte montre toujours le printemps. Captures :
-  `python3 v2/capture.py sortie.png "70,30,balade,monde,ete"` (`--x2` : sans images nettes) ;
+  `python3 v2/capture.py sortie.png "70,30,balade,region,ete"` (`--x2` : sans images nettes) ;
   `reference/v2/lot6_ete_jeu.png`. Tests : `saisons.js` (bascule, images nettes, fichiers absents),
   `saisons.py` (fichiers : mêmes formes, mêmes cadres, x4 = x2). Décisions de Christophe : épisodes l'un après
   l'autre, Alice à chaque saison, l'été d'abord (découpage dans `PLAN_V2.md`, lot 6).
@@ -681,7 +707,7 @@ node tests/zoe.js                                         # puis le ou les tests
   (`tintsEte` : une teinte dorée dès le plein jour — `drawLight()` fait donc son remplissage toute la journée
   en été, le même que le soir ou sous la pluie). **Décors d'été posés** : la liste `extras` d'une carte
   (`carte.LISTES_LIBRES`, mêmes genres que `decor`) s'ajoute à ses décors (`pack_web.charger_carte()`), pour
-  qu'une surcharge n'ait pas à redire toute la liste `decor` ; `cartes/ete/monde.json` y pose une corde à linge
+  qu'une surcharge n'ait pas à redire toute la liste `decor` ; `cartes/ete/region.json` y pose une corde à linge
   (`clothesline`), une pataugeoire (`paddling_pool`), trois transats sous parasol (`deckchair`) et des bottes
   de foin — dessins `mobilier.corde_a_linge()`, `pataugeoire()`, `transat()` (`_parasol()`), obstacles `FOOT`.
   L'éditeur les montre et les déplace (type « Décor de saison », calque des décors). Test : `titre.js`.
@@ -708,7 +734,7 @@ node tests/zoe.js                                         # puis le ou les tests
   `valider()`, `python3 episodes.py`) donne les épisodes dans l'ordre où ils s'ouvrent : `id`, `saison`, `cartes`
   (un passage vers une carte qui n'en fait pas partie est fermé : `passageHere()`), `depart` (la carte de la
   niche), `chantier` (pas encore jouable). Aujourd'hui : `printemps` (le monde seul : le tunnel y est « pour les
-  voitures ») et `ete` (le monde et la côte, `cote`), **sorti du chantier le 14 novembre 2026** : il s'ouvre quand le printemps a été gagné. `pack_web.py` les embarque (`EPISODES`). `game.js` :
+  voitures ») et `ete` (la région et la plage, `plage`), **sorti du chantier le 14 novembre 2026** : il s'ouvre quand le printemps a été gagné. `pack_web.py` les embarque (`EPISODES`). `game.js` :
   `episode` = celui de la partie en cours et, sur l'écran titre, celui que le joueur a choisi ; `EP()` ses
   données ; `epOpen()` : le premier, ou un épisode prêt dont le précédent a été gagné (`epWon()` lit les
   records : pas d'autre donnée gardée ; n'importe quel mode ouvre le suivant) ; `openEpisodes()`, `lastOpen()`.
@@ -727,7 +753,7 @@ node tests/zoe.js                                         # puis le ou les tests
   **Ce qu'un épisode change à une carte** (les données d'un épisode) : `cartes/<épisode>/<carte>.json`, la
   surcharge, ne redit que les clés de la carte qui changent (objets, chiens, panneaux, place d'Alice… chaque clé
   remplace celle de la carte de base, en entier) ; une clé à `null` est retirée : la carte n'a plus ce
-  personnage, cette liste, comme une carte annexe (`absents`). Aujourd'hui : `cartes/ete/monde.json` (le monde
+  personnage, cette liste, comme une carte annexe (`absents`). Aujourd'hui : `cartes/ete/region.json` (le monde
   sans les trois indices du printemps ni Alice dans sa cabane : en été, ils seront sur la côte ; la flèche mène
   donc au tunnel). `carte.py` : `surcharge()`, `surcharges()`, `appliquer()`, `difference()` (l'inverse, pour
   l'éditeur), `valider_surcharge()` (refuse une clé redite à l'identique, la taille de la carte, et vérifie la
@@ -739,23 +765,23 @@ node tests/zoe.js                                         # puis le ou les tests
   par-dessus, `MAP.variante` la nomme (null : la carte de base), `onMap(id)` dit si la carte courante est bien
   celle de l'épisode en cours — à tester avant `useMap()` partout où l'épisode peut avoir changé (`newGame()`,
   `titleScene()` : l'écran titre montre le monde de l'épisode choisi, `stepEpisode()` le change sur place).
-  Éditeur : `?carte=monde&episode=ete`, ou le choix « Épisode » ; il ouvre la carte sous sa surcharge et
+  Éditeur : `?carte=region&episode=ete`, ou le choix « Épisode » ; il ouvre la carte sous sa surcharge et
   n'enregistre que ce qui diffère de la carte de base (`editeur.lire()`, `enregistrer_surcharge()` ; une
   surcharge qui ne redit plus rien est retirée) ; retirer un personnage (`null`) se fait dans le fichier ;
   « Essayer ici » passe l'épisode (`ESSAI[4]`). À venir avec le contenu : les indices propres à chaque épisode
   (`CLUES` est encore celui du printemps). Tests : `tests/surcharges.py`, `episodes.js`.
 - **Plusieurs cartes** (lot 6, jalon « deux cartes », 12 novembre 2026). Le jeu a la carte du monde (`carte.json`,
-  « monde » : toute l'aventure) et des **cartes annexes** (`cartes/<nom>.json`, `"annexe": true` ; aujourd'hui
-  `cartes/cote.json`, la côte de l'été, 96 x 64 ; la petite carte d'essai `pre` qui a prouvé le moteur a été retirée). `carte.noms()`, `carte.chemin(nom)`. Une
+  « region » : toute l'aventure du printemps) et des **cartes annexes** (`cartes/<nom>.json`, `"annexe": true` ; aujourd'hui
+  `cartes/plage.json`, la côte de l'été, 96 x 64 ; la petite carte d'essai `pre` qui a prouvé le moteur a été retirée). `carte.noms()`, `carte.chemin(nom)`. Une
   carte annexe n'a que ce qu'elle déclare : `carte.completer()` met le reste hors de la carte (`HORS`, loin de
   tout) ou vide, et en donne la liste (`absents`) ; `valider()` ne l'exige pas. On passe d'une carte à l'autre par
   un tunnel de la grande route : `"passages": [[n° du tunnel dans roadTunnels, carte, n° du tunnel d'arrivée]]`
-  (le tunnel de l'est du monde mène à celui de l'ouest de `cote`, et retour ; `pack_web.py` refuse un passage
+  (le tunnel de l'est du monde mène à celui de l'ouest de `plage`, et retour ; `pack_web.py` refuse un passage
   vers une carte ou un tunnel qui n'existe pas ; le passage n'est ouvert que dans un épisode qui a les deux
   cartes : l'été).
   `pack_web.py` : `charger_carte(nom)` fait d'une carte la carte courante (ses variables de module : `MW`,
-  `DECOR`, `EDGE`… ; « monde » à l'import, pour l'éditeur) ; `build_map()` rend ses données, `build_jeu()` celles
-  du jeu, les mêmes partout (dessins, ombres, cadences) ; la page embarque `JEU` et `CARTES = { monde, cote }`. Les
+  `DECOR`, `EDGE`… ; « region » à l'import, pour l'éditeur) ; `build_map()` rend ses données, `build_jeu()` celles
+  du jeu, les mêmes partout (dessins, ombres, cadences) ; la page embarque `JEU` et `CARTES = { region, plage }`. Les
   tuiles composées (`COMPOSITES`) sont numérotées à la suite pour toutes les cartes.
   `game.js` : **`MAP` est la carte courante**, qui hérite de `JEU` (`carteOf(id)` : `MAP.w` comme `MAP.ts`) ;
   `useMap(id)` en change et refait ce qui se calcule une fois par carte (`EDGE_DECOR`, `EDGE_SOLIDS`, `ZONES`,
@@ -771,14 +797,14 @@ node tests/zoe.js                                         # puis le ou les tests
   sauvegarde. On n'entre que par la chaussée : contre la butte, à côté, rien ne se passe. Ce qui le suivait (Pompon, hérissons, copains) l'attend ; un jouet d'Iris porté reste
   devant le tunnel. Sur une carte qui n'a ni l'indice suivant ni Alice, la flèche et le flair ramènent au
   tunnel (`arrowTarget()`). Les badges qui comptent ce que porte la carte (bêtes, canards, os dorés,
-  explorateur, copains) ne se gagnent que dans le monde : une carte vide les donnerait tous. Écran titre et
+  explorateur, copains) ne se gagnent que dans le lieu de l'épisode (`auLieu()`) : une carte vide les donnerait tous. Écran titre et
   nouvelle partie : toujours le monde. **Pièges** : une carte annexe ne doit jamais avoir à tester « null » — ce
   qu'elle n'a pas est en `HORS`, inerte ; un nouveau champ de carte lu par le moteur doit avoir sa valeur neutre
   dans `carte.completer()` et `build_map()` ; un cache construit à partir de la carte doit être vidé par
   `useMap()`. `check_placement.js --carte nom` vérifie chaque carte (sur une annexe, Tecky part de la sortie du
-  tunnel, et chaque sortie de tunnel doit être praticable). Éditeur : `http://127.0.0.1:8770/?carte=cote`, ou le
+  tunnel, et chaque sortie de tunnel doit être praticable). Éditeur : `http://127.0.0.1:8770/?carte=plage`, ou le
   choix « Carte » en haut à droite ; les passages se modifient dans le fichier. Tests : `cartes.js`
-  (aller-retour, état gardé, reprise sur la deuxième carte, sauvegarde v2), `editeur_sol.js` (sol de `cote`).
+  (aller-retour, état gardé, reprise sur la deuxième carte, sauvegarde v2), `editeur_sol.js` (sol de `plage`).
 - **La carte est une donnée** : `carte.json` (en tuiles ; `carte.py` : `charger()`, `valider()`, `enregistrer()`, format
   stable, une entrée par ligne ; `python3 carte.py --verifier` dans `run_all.sh`). Terrain = 65 lignes de 97 coins (une
   lettre par terrain, `LEGENDE`), `details` (détails au sol, tuile entière ; « fleurs » = massifs, perchoirs des
@@ -958,9 +984,14 @@ node tests/zoe.js                                         # puis le ou les tests
   Texte des dialogues (grand : 46 px, 4 lignes), Image (fluide = `MAX_PIXELS`, nette = sans plafond), Plein écran
   (dans les événements clavier / toucher : il faut un geste de l'utilisateur ; un bouton de manette en vaut un pour
   Chromium, pas pour Firefox : `fsRefusedAt`, la ligne dit alors « touche F, ou un clic » ; en sortir est toujours permis), Vibrations, Météo,
-  et, depuis l'écran titre seulement, « Réinitialiser la progression » (`resetAsk` : confirmation, « Non » d'abord ;
+  et, depuis l'écran titre seulement, « Réinitialiser la progression », un bouton rouge (`resetAsk` : confirmation, « Non » d'abord ;
   au toucher, deux cases `resetPills()` ; `resetProgress()` efface sauvegarde, records et badges, pas les options ;
-  lignes plus serrées au-delà de 9, `optBox(i, n)`). Test : `options.js`.
+  `optBox(i)`). **Disposition** (14 novembre 2026, choix de Christophe sur
+  `reference/v2/options_menu_options.png`, piste C ; `python3 v2/options_menu_options.py`) : deux colonnes, par
+  groupes sous un intertitre — Son et Jeu à gauche, Image à droite (`r.g`, `OPT_COL`, `optLayout()`, `OPTV`,
+  textes `options.groupes.*`) —, puis la remise à zéro et « Retour » sur toute la largeur ; haut / bas parcourt
+  les lignes dans l'ordre d'`optRows()` (gauche / droite règlent les valeurs). Dans le jeu :
+  `reference/v2/options_colonnes.png`. Test : `options.js`.
 - Badges (`MAP.badges` = `hud.BADGES`, image i de `hud/badge`, la dernière = verrouillé ; textes `badges.<id>.nom` / `.but` (`badgeName()`, `badgeGoal()`), `BADGES_KEY`,
   gardés d'une partie à l'autre) : `checkBadges()` toutes les demi-secondes, `winBadges()` à la victoire (aventure,
   sans morsure = `bitten` faux, sauvegardé : seules les vraies morsures comptent, `hurtPlayer(…, bite)` — l'aboiement du
@@ -974,7 +1005,7 @@ node tests/zoe.js                                         # puis le ou les tests
   l'été n'est pas ouvert — le printemps pas encore gagné —, seize badges et l'écran d'avant). **L'été en a seize
   aussi** (14 novembre 2026 ; Christophe : « très peu de badges pour l'été ») : ses six quêtes (`checkBadges()`
   donne le badge de celui qui tient le rôle, `MAP.roles`) et les pendants des dix autres, gagnés sur la côte
-  seulement (`MAP.id === 'cote'`) : `aventure_ete`, `copains_ete`, `os_dores_ete`, `intact_ete` (aucun coup :
+  seulement (pendant l'épisode de l'été, dans son lieu : `auLieu()`) : `aventure_ete`, `copains_ete`, `os_dores_ete`, `intact_ete` (aucun coup :
   `scratched`, levé par tout `hurtPlayer()` qui porte, pince et piqué compris, sauvegardé), `rapide_ete`,
   `explorateur_ete`, `sieste_ete` (endormi sur le sable : `beachNap`), `crabes` et `goelands` (tous `scored`,
   donc en aventure) à la place des bêtes et des canards, `bain` (`P.swum`) à la place de Titine. Une victoire
@@ -1279,7 +1310,7 @@ node tests/zoe.js                                         # puis le ou les tests
   des décors de la côte, les images de l'été) : Christophe a eu de « sérieux drops de frames en changeant de
   zones ». Toutes les images (atlas et tileset x2, pages x4, images des saisons) deviennent des `ImageBitmap`
   au chargement : 1 ms au premier dessin. Toute nouvelle image à dessiner doit passer par `keepDecoded()`.
-  `python3 tools/mesure_firefox.py --carte cote` mesure la côte (en été).
+  `python3 tools/mesure_firefox.py --carte plage` mesure la côte (en été).
   Images nettes : sur un canevas de 1920 x 1080 (échelle 2), Firefox va plus vite avec les images x4 (copie à
   l'identique : 6 à 12 ms par image) qu'en agrandissant les x2 (11 à 17 ms) ; à une échelle intermédiaire (1,33),
   réduire les x4 coûtait jusqu'à 45 % de plus, d'où le seuil `HD_MIN` (1,5). La fenêtre sans tête n'est pas en

@@ -7,7 +7,7 @@ Il faut d'abord construire le jeu (python3 pack_web.py) et servir web/tecky_ques
     python3 v2/capture.py sortie.png "x,y,mode[,carte[,épisode]]" ["js"] [--hud] [--x2]
 
 x, y : la case où placer Tecky ; mode : aventure ou balade (la partie démarre là, comme « Essayer ici » de
-l'éditeur) ; carte, épisode : une autre carte que le monde, la carte d'un épisode et sa saison ("12,8,balade,monde,ete"). js : du JavaScript lancé une fois, la partie démarrée (il a accès à tout le jeu : P, alice, dogs,
+l'éditeur) ; carte, épisode : une autre carte que le monde, la carte d'un épisode et sa saison ("12,8,balade,region,ete"). js : du JavaScript lancé une fois, la partie démarrée (il a accès à tout le jeu : P, alice, dogs,
 update()…). Pour figer une scène, finir par « update = function () {}; ». --hud : garder l'interface.
 
 --x2 : sans les images nettes (« ?x2 »), comme sur un téléphone.

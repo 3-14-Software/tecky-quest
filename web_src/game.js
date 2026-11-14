@@ -17,7 +17,7 @@ const GW = 1920, GH = 1080;             // repère de l'interface
    base) et onMap(id) si la carte courante est bien celle-là, telle que l'épisode en cours la joue. */
 const variantOf = (id, ep) => (ep && SURCHARGES[ep] && SURCHARGES[ep][id]) || null;
 const carteOf = (id, ep) => Object.assign(Object.create(JEU), CARTES[id], variantOf(id, ep), { variante: variantOf(id, ep) });
-let MAP = carteOf('monde');
+let MAP = carteOf(EPISODES[0].depart);       // (la carte de départ du premier épisode : la région de Tecky)
 const ici = k => !MAP.absents.includes(k);          // la carte courante a-t-elle ce personnage, l'enclos, la voie… ?
 const TS = MAP.ts;
 
@@ -2177,6 +2177,8 @@ const CHANTIER = typeof location !== 'undefined' && (/[?&]chantier\b/.test(locat
   /^(localhost|127\.0\.0\.1|\[::1\]|.*\.localhost)$/.test(location.hostname || ''));   // (sur le poste de travail : tout est ouvert)
 let episode = EPISODES[0].id, opened = null;
 const EP = () => EPISODES.find(e => e.id === episode) || EPISODES[0];
+// un épisode = un lieu à une saison (EP().lieu : la carte de ses indices, d'Alice, de ses badges) ; auLieu() : Tecky y est
+const auLieu = () => MAP.id === EP().lieu;
 const epWon = e => ['aventure', 'balade'].some(m => ['normal', 'facile'].some(d => (recs[recKey(m, d, e.id)] || {}).wins > 0));
 function epOpen(e) {
   const i = EPISODES.indexOf(e);
@@ -2189,7 +2191,7 @@ const epOfSave = s => (EPISODES.find(e => e.id === s.ep) || EPISODES[0]).id;    
 function stepEpisode(d) {               // écran titre : l'épisode suivant ou précédent, parmi ceux qui sont ouverts
   const o = openEpisodes(), i = o.findIndex(e => e.id === episode);
   episode = o[(Math.max(0, i) + d + o.length) % o.length].id;
-  if (!onMap('monde')) titleScene();     // le monde de cet épisode derrière le menu
+  if (!onMap(EP().depart)) titleScene();     // la carte de départ de cet épisode derrière le menu
   SFX.blip();
 }
 const ITEM = {
@@ -5196,7 +5198,15 @@ const STORE = {
 // v : version de la sauvegarde ; v2 = la carte agrandie (96 x 64) : une partie de l'ancienne carte ne se reprend pas
 const SAVE_V = 3;
 // (une sauvegarde v2, d'avant les cartes multiples, a les mêmes champs : elle est dans le monde, sans « ailleurs »)
-function loadSave() { const s = !essai && STORE.get(SAVE_KEY); return s && (s.v === SAVE_V || s.v === 2) ? s : null; }
+// (les cartes ont changé de nom le 14 novembre 2026 : une partie enregistrée avant se reprend sous les nouveaux)
+const OLD_MAPS = { monde: 'region', cote: 'plage' };
+function loadSave() {
+  const s = !essai && STORE.get(SAVE_KEY);
+  if (!s || (s.v !== SAVE_V && s.v !== 2)) return null;
+  if (OLD_MAPS[s.carte]) s.carte = OLD_MAPS[s.carte];
+  for (const k in OLD_MAPS) if (s.ailleurs && s.ailleurs[k]) { s.ailleurs[OLD_MAPS[k]] = s.ailleurs[k]; delete s.ailleurs[k]; }
+  return s;
+}
 const r1 = v => Math.round(v * 10) / 10;
 /* L'état de la carte courante : ce qu'une sauvegarde retient de ses habitants (objets au sol, trésors déterrés,
    chiens restants, poules, lettres, Pompon, ballons, jouets, petits hérissons, cases vues). travel() le range dans
@@ -5262,7 +5272,7 @@ function loadGame(s, rested) {
   episode = epOfSave(s);
   // (un épisode où l'on voyage en voiture ne se joue que sur la carte d'arrivée : une partie enregistrée ailleurs,
   // pendant la cinématique par exemple, y reprend, à son point de départ)
-  const voyage = EP().voyage, id = s.carte || 'monde';
+  const voyage = EP().voyage, id = s.carte || EPISODES[0].depart;
   const la = !!CARTES[id] && EP().cartes.includes(id) && !(voyage && id !== voyage);
   useMap(la ? id : voyage || EP().depart);           // la carte où la partie a été enregistrée
   reset();
@@ -5342,7 +5352,7 @@ let menu = null;              // { items: [{ id, label, sub, mode }], sel, y0, w
 function openTitleMenu() {
   recs = STORE.get(RECORDS_KEY) || {};
   if (!epOpen(EP())) episode = lastOpen();            // (progression effacée, épisode retourné en chantier)
-  if (!onMap('monde')) titleScene();
+  if (!onMap(EP().depart)) titleScene();
   const s = loadSave(), items = [];
   if (s) {
     const n = s.clues.filter(Boolean).length;
@@ -5407,7 +5417,7 @@ function chooseMenu(id) {
 const essai = typeof ESSAI !== 'undefined' ? ESSAI : null;
 function startEssai() {
   gameDiff = opts.diff;
-  const id = essai[3] && CARTES[essai[3]] ? essai[3] : 'monde';                     // (une carte annexe, depuis l'éditeur)
+  const id = essai[3] && CARTES[essai[3]] ? essai[3] : EPISODES[0].depart;                     // (une carte annexe, depuis l'éditeur)
   // l'épisode demandé (essai[4]), sinon le premier qui a cette carte
   episode = (EPISODES.find(e => e.id === essai[4]) || EPISODES.find(e => e.cartes.includes(id)) || EPISODES[0]).id;
   if (!onMap(id)) useMap(id);
@@ -5420,7 +5430,7 @@ function startEssai() {
 }
 // le décor de l'écran titre : la place du village, dans le monde tel que l'épisode choisi le joue
 function titleScene() {
-  if (!onMap('monde')) useMap('monde');
+  if (!onMap(EP().depart)) useMap(EP().depart);
   reset();
   camX = camClampX(MAP.title[0] - VW / 2);
   camY = camClampY(MAP.title[1] - VH / 2);
@@ -5492,10 +5502,12 @@ function unlockBadge(id) {
   SFX.badge();
 }
 function checkBadges() {
-  const monde = MAP.id === 'monde';     // (une carte annexe sans bêtes ni trésors les donnerait tous d'un coup)
-  const cote = MAP.id === 'cote';
-  if (monde && balade() && dogs.length && dogs.every(d => d.friend)) unlockBadge('copains');
-  if (monde && treasures >= MAP.dig.length) unlockBadge('os_dores');
+  // les badges d'un épisode se gagnent dans son lieu, pendant cet épisode (ailleurs, une carte sans bêtes ni trésors
+  // les donnerait tous d'un coup ; et revenir dans la région à une autre saison ne redonne pas ceux du printemps)
+  const prin = auLieu() && episode === 'printemps';
+  const ete = auLieu() && episode === 'ete';
+  if (prin && balade() && dogs.length && dogs.every(d => d.friend)) unlockBadge('copains');
+  if (prin && treasures >= MAP.dig.length) unlockBadge('os_dores');
   if (farm.state === 'done') unlockBadge(MAP.roles.farmer ? 'moutons' : 'poules');     // (les poules de Gaston, ou les moutons d'Anatole)
   if (post.state === 'done') unlockBadge(MAP.roles.postman ? 'coquillages' : 'facteur');    // (les lettres de Marcel, ou les coquillages de Zoé)
   if (rose.state === 'done') unlockBadge(MAP.roles.pompon ? 'caniche' : 'chat');       // (Pompon, ou Praline sur la côte)
@@ -5503,12 +5515,12 @@ function checkBadges() {
   if (jouets.state === 'done') unlockBadge(MAP.roles.iris ? 'nageur' : 'iris');          // (les jouets d'Iris, ou ceux de Théo)
   if (train.scored) unlockBadge('train');
   if (piq.state === 'done') unlockBadge(MAP.roles.piquette ? 'mouettes' : 'herissons');     // (les petits de Maman Piquette, ou les poissons de Suzanne)
-  if (monde && critters.every(c => c.scored)) unlockBadge('betes');
-  if (monde && ducks.filter(d => !d.lead).every(d => d.scored)) unlockBadge('canards');
-  if (monde && seenCells.reduce((a, v) => a + v, 0) >= seenCells.length * 0.95) unlockBadge('explorateur');
+  if (prin && critters.every(c => c.scored)) unlockBadge('betes');
+  if (prin && ducks.filter(d => !d.lead).every(d => d.scored)) unlockBadge('canards');
+  if (prin && seenCells.reduce((a, v) => a + v, 0) >= seenCells.length * 0.95) unlockBadge('explorateur');
   if (napped) unlockBadge('sieste');
   // la côte : les pendants d'été des badges du monde, et les siens (crabes, goélands, la baignade)
-  if (!cote) return;
+  if (!ete) return;
   if (balade() && dogs.length && dogs.every(d => d.friend)) unlockBadge('copains_ete');
   if (MAP.dig.length && treasures >= MAP.dig.length) unlockBadge('os_dores_ete');
   if (crabs.length && crabs.every(c => c.scored)) unlockBadge('crabes');
@@ -5536,10 +5548,10 @@ function completion() {
 }
 function winBadges() {
   // (Alice retrouvée sur la côte : les badges de l'été ; « sans un coup » y compte aussi les pinces et les piqués)
-  if (MAP.id === 'cote') {
+  if (episode === 'ete') {
     if (!balade()) { unlockBadge('aventure_ete'); if (!scratched) unlockBadge('intact_ete'); }
     if (timePlayed < 600) unlockBadge('rapide_ete');
-  } else {
+  } else if (episode === 'printemps') {
     if (!balade()) { unlockBadge('aventure'); if (!bitten) unlockBadge('intact'); }
     if (timePlayed < 600) unlockBadge('rapide');
   }
@@ -5612,23 +5624,52 @@ function drawBadges() {
    plafonné à MAX_PIXELS ; « nette » : pleine résolution, pour les machines rapides), vibrations, météo, plein écran. Ouvert depuis le menu
    principal ou le menu de la pause. Flèches ↑ ↓ pour choisir une ligne, ← → pour la régler (Entrée / A aussi),
    Échap / B pour revenir ; au toucher, la moitié gauche d'une ligne baisse, la moitié droite monte. */
-const OPTV = { y0: 196, w: 1120, h: 76, gap: 10, hTight: 68, gapTight: 8 };
+/* Disposition (choix de Christophe sur reference/v2/options_menu_options.png, piste C) : deux colonnes, par groupes
+   sous un intertitre — Son et Jeu à gauche, Image à droite — puis, sur toute la largeur, la remise à zéro et
+   « Retour ». Haut / bas parcourt les lignes dans l'ordre d'optRows() : la colonne de gauche, celle de droite, le
+   bas (gauche / droite règlent les valeurs). */
+const OPTV = { y0: 190, x: [90, 990], w: 840, h: 90, gap: 15, head: 39, group: 12, foot: 30, wide: 1740, hReset: 86, hBack: 72 };
+const OPT_COL = { son: 0, jeu: 0, image: 1 };
+const optGroupName = g => g === 'son' ? txt('options.groupes.son') : g === 'jeu' ? txt('options.groupes.jeu') : txt('options.groupes.image');
+function optLayout(rows) {             // { boxes: une case par ligne, heads: les intertitres [groupe, x, y] }
+  const y = [OPTV.y0, OPTV.y0], last = [null, null], boxes = [], heads = [];
+  rows.forEach((r, i) => {
+    if (!r.g) return;
+    const c = OPT_COL[r.g];
+    if (last[c] !== r.g) {
+      if (last[c]) y[c] += OPTV.group;
+      heads.push([r.g, OPTV.x[c], y[c]]); y[c] += OPTV.head; last[c] = r.g;
+    }
+    boxes[i] = { x: OPTV.x[c], y: y[c], w: OPTV.w, h: OPTV.h };
+    y[c] += OPTV.h + OPTV.gap;
+  });
+  let yb = Math.max(y[0], y[1]) - OPTV.gap + OPTV.foot;
+  rows.forEach((r, i) => {
+    if (r.g) return;
+    const h = r.id === 'back' ? OPTV.hBack : OPTV.hReset;
+    boxes[i] = { x: OPTV.x[0], y: yb, w: OPTV.wide, h };
+    yb += h + OPTV.gap;
+  });
+  return { boxes, heads };
+}
 let optSel = 0, optReturn = 'title';
 function optRows() {
+  // (rangées par groupes : Son et Jeu dans la colonne de gauche, Image dans celle de droite — optLayout())
   const rows = [
-    { id: 'music', label: txt('options.music.label'), level: true },
-    { id: 'sfx', label: txt('options.sfx.label'), level: true },
-    { id: 'diff', label: txt('options.diff.label'), values: [['normal', txt('options.diff.valeurs.normal')], ['facile', txt('options.diff.valeurs.facile')]],
+    { g: 'son', id: 'music', label: txt('options.music.label'), level: true },
+    { g: 'son', id: 'sfx', label: txt('options.sfx.label'), level: true },
+    { g: 'jeu', id: 'diff', label: txt('options.diff.label'), values: [['normal', txt('options.diff.valeurs.normal')], ['facile', txt('options.diff.valeurs.facile')]],
       note: opts.diff === 'facile' ? txt('options.diff.note.facile') : txt('options.diff.note.normal') },
-    { id: 'text', label: txt('options.text.label'), values: [['normal', txt('options.text.valeurs.normal')], ['grand', txt('options.text.valeurs.grand')]] },
-    { id: 'image', label: txt('options.image.label'), values: [['fluide', txt('options.image.valeurs.fluide')], ['nette', txt('options.image.valeurs.nette')]],
+    { g: 'jeu', id: 'vib', label: txt('options.vib.label'), values: [['oui', txt('commun.oui')], ['non', txt('commun.non')]], note: txt('options.vib.note') },
+    { g: 'image', id: 'image', label: txt('options.image.label'), values: [['fluide', txt('options.image.valeurs.fluide')], ['nette', txt('options.image.valeurs.nette')]],
       note: opts.image === 'nette' ? txt('options.image.note.nette') : txt('options.image.note.fluide') },
-    { id: 'vib', label: txt('options.vib.label'), values: [['oui', txt('commun.oui')], ['non', txt('commun.non')]], note: txt('options.vib.note') },
-    { id: 'weather', label: txt('options.weather.label'), values: [['auto', txt('options.weather.valeurs.auto')], ['soleil', txt('options.weather.valeurs.soleil')], ['pluie', txt('options.weather.valeurs.pluie')], ['neige', txt('options.weather.valeurs.neige')]],
-      note: opts.weather === 'auto' ? txt('options.weather.note') : '' },
   ];
-  if (canFullscreen()) rows.push({ id: 'fs', label: txt('options.fs.label'), value: fsElement() ? txt('commun.oui') : txt('commun.non'),
+  if (canFullscreen()) rows.push({ g: 'image', id: 'fs', label: txt('options.fs.label'), value: fsElement() ? txt('commun.oui') : txt('commun.non'),
     note: performance.now() - fsRefusedAt < FS_REFUSED_NOTE ? txt('options.fs.note') : '' });
+  rows.push(
+    { g: 'image', id: 'weather', label: txt('options.weather.label'), values: [['auto', txt('options.weather.valeurs.auto')], ['soleil', txt('options.weather.valeurs.soleil')], ['pluie', txt('options.weather.valeurs.pluie')], ['neige', txt('options.weather.valeurs.neige')]],
+      note: opts.weather === 'auto' ? txt('options.weather.note') : '' },
+    { g: 'image', id: 'text', label: txt('options.text.label'), values: [['normal', txt('options.text.valeurs.normal')], ['grand', txt('options.text.valeurs.grand')]] });
   // remise à zéro : seulement depuis l'écran titre (en jeu, la partie se resauvegarderait aussitôt) ; elle demande
   // confirmation, « Non » d'abord (resetAsk)
   if (optReturn === 'title') rows.push(resetAsk ? { id: 'reset', label: txt('options.reset.question'), ask: true, note: txt('options.reset.question_note') }
@@ -5689,16 +5730,13 @@ function optionsInput() {
   }
   if (pressed.pause || pressed.bark) closeOptions();
 }
-function optBox(i, n) {                // plus serré quand il y a beaucoup de lignes (remise à zéro, plein écran)
-  const h = n > 9 ? OPTV.hTight : OPTV.h, gap = n > 9 ? OPTV.gapTight : OPTV.gap;
-  return { x: GW / 2 - OPTV.w / 2, y: OPTV.y0 + i * (h + gap), w: OPTV.w, h };
-}
+const optBox = i => optLayout(optRows()).boxes[i];
 // au toucher, pendant la confirmation : « Non » et « Oui » sont deux cases à droite de la ligne
 const resetPills = b => [{ yes: false, x: b.x + b.w - 330, w: 130 }, { yes: true, x: b.x + b.w - 180, w: 130 }];
 function optionsTap(gx, gy) {         // toucher / clic : appelé directement par l'événement (plein écran permis)
   const rows = optRows();
   for (let i = 0; i < rows.length; i++) {
-    const b = optBox(i, rows.length), r = rows[i];
+    const b = optLayout(rows).boxes[i], r = rows[i];
     if (gx < b.x || gx > b.x + b.w || gy < b.y || gy > b.y + b.h) continue;
     if (i !== optSel) resetAsk = null;
     optSel = i;
@@ -5725,12 +5763,20 @@ function drawOptions() {
   veil(0.55);
   outlined(txt('options.titre'), GW / 2, 128, 68, '#FFF7E6');
   if (performance.now() - resetDoneAt < RESET_NOTE) outlined(txt('options.efface'), GW / 2, 178, 32, '#F2C14E');
-  const rows = optRows();
+  const rows = optRows(), lay = optLayout(rows);
+  lay.heads.forEach(([g, x, y]) => text(optGroupName(g), x + 8, y + 27, 26, '#F2C14E', 'left', 700));
   rows.forEach((r, i) => {
-    const b = optBox(i, rows.length), sel = i === optSel, ink = sel ? '#3A1E12' : '#FFF7E6', soft = sel ? '#6B5A4E' : '#E9DCC8';
+    const b = lay.boxes[i], sel = i === optSel, ink = sel ? '#3A1E12' : '#FFF7E6', soft = sel ? '#6B5A4E' : '#E9DCC8';
     drawNine(sel ? 'hud/panel' : 'hud/panel_dark', b.x, b.y, b.w, b.h, 32);
     const cy = b.y + b.h / 2, vx = b.x + b.w - 44;
     if (r.id === 'back') { text(r.label, GW / 2, cy + 13, 36, ink, 'center', 700); return; }
+    if (r.id === 'reset' && !r.ask) {                  // un bouton rouge : on ne l'actionne pas par mégarde
+      ctx.fillStyle = sel ? '#D7332B' : '#A3261F';
+      ctx.fillRect(b.x + 16, b.y + 12, b.w - 32, b.h - 24);
+      text(r.label, b.x + 44, cy - 2, 34, '#FFF7E6', 'left', 700);
+      text(r.note, b.x + 44, cy + 26, 21, '#FBDAD3', 'left', 500);
+      return;
+    }
     text(r.label, b.x + 44, r.note ? cy - 2 : cy + 12, 34, ink, 'left', 600);
     if (r.note) text(r.note, b.x + 44, cy + 26, 21, soft, 'left', 500);
     if (r.ask) {                                       // confirmation : « Non » / « Oui », le choix en couleur

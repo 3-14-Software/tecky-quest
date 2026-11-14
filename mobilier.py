@@ -727,7 +727,7 @@ def chaise_haute(couleur="#FFFFFF", ombre="#C9CDD4", toile="#D8362E"):
 
 
 # ====================================================================== L'ÉTÉ AU VILLAGE
-# Décors posés sur le monde en été seulement (liste « extras » de cartes/ete/monde.json ; choix de Christophe,
+# Décors posés sur le monde en été seulement (liste « extras » de cartes/ete/region.json ; choix de Christophe,
 # 14 novembre 2026 : « décors d'été posés »).
 def _parasol(d, px, top, cy, rx, ry, c1, c2, nervure):
     """Un parasol vu d'un peu au-dessus : six fuseaux de deux couleurs, ceux de droite dans l'ombre, un bouton doré."""

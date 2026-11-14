@@ -42,7 +42,7 @@ function main() {
      && run('SUN.tints[0].join()') === '255,255,255', 'au printemps : la lumière et les ombres de toujours');
   ok(!run('decor.some(d => ["clothesline", "paddling_pool", "deckchair"].includes(d.n))'), 'pas de linge ni de pataugeoire au printemps');
   run('toTitle(); episode = "ete"; delete EPISODES[1].voyage; newGame("balade", true);');
-  ok(run('SUMMER()') && run('MAP.id') === 'monde' && run('SHADOW.alpha') > run('SHADOW.alphaPr') && run('(sun = 0, shadowLen())') < 1
+  ok(run('SUMMER()') && run('MAP.id') === 'region' && run('SHADOW.alpha') > run('SHADOW.alphaPr') && run('(sun = 0, shadowLen())') < 1
      && run('SUN.tints[0][2]') < 255, 'en été : des ombres plus courtes et plus franches, une teinte dorée en plein jour');
   ok(['clothesline', 'paddling_pool', 'deckchair', 'hay'].every(n => run(`decor.some(d => d.n === "${n}")`))
      && run('decor.filter(d => d.n === "deckchair").length') === 3, 'le monde en été a son linge qui sèche, sa pataugeoire, ses transats');

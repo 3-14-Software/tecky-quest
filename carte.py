@@ -22,7 +22,7 @@ FORMAT = 1
 # autres, les cartes annexes, sont dans cartes/<nom>.json. Une carte annexe ("annexe": true) n'a que ce qu'elle
 # déclare : ni Alice, ni personnages, ni enclos si elle ne les cite pas (completer() met le reste hors de la carte).
 # On passe d'une carte à l'autre par un tunnel de la grande route : "passages".
-MONDE = "monde"
+REGION = "region"
 DOSSIER = os.path.join(ROOT, "cartes")
 HORS = -2000          # en tuiles : la place de ce qu'une carte n'a pas, loin de tout
 # Un épisode (episodes.json) peut changer une carte sans la recopier : cartes/<épisode>/<nom>.json, la surcharge, ne
@@ -146,13 +146,13 @@ def genres():
 # ------------------------------------------------------------------ lecture, vérification
 def chemin(nom):
     """Le fichier de la carte `nom`."""
-    return FICHIER if nom == MONDE else os.path.join(DOSSIER, nom + ".json")
+    return FICHIER if nom == REGION else os.path.join(DOSSIER, nom + ".json")
 
 
 def noms():
     """Les cartes du jeu : celle du monde d'abord, puis les annexes par ordre alphabétique."""
     autres = sorted(f[:-5] for f in os.listdir(DOSSIER) if f.endswith(".json")) if os.path.isdir(DOSSIER) else []
-    return [MONDE] + autres
+    return [REGION] + autres
 
 
 def surcharge(nom, episode):
@@ -473,7 +473,7 @@ if __name__ == "__main__":
         fichier = os.path.relpath(f, ROOT)
         c = charger(f, verifier=False)
         err = valider(c)
-        if not err and (c.get("annexe") is True) != (nom != MONDE):
+        if not err and (c.get("annexe") is True) != (nom != REGION):
             err = ["« annexe » : la carte du monde ne l'est pas, les autres le sont"]
         if err:
             raise SystemExit(fichier + " :\n  " + "\n  ".join(err))

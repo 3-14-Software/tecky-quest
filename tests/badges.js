@@ -77,8 +77,10 @@ function main() {
   // les pendants d'été : sur la côte seulement
   run('toTitle(); episode = "ete"; delete EPISODES[1].voyage; newGame("aventure", true);'); advanceDialog();
   run('var avant = Object.keys(badges).length; critters.forEach(c => c.scored = true); seenCells.fill(1); P.swum = true; beachNap = true; checkBadges();');
-  ok(run('MAP.id') === 'monde' && !run('badges.bain || badges.sieste_ete || badges.explorateur_ete || badges.crabes || badges.goelands'), 'dans le monde, aucun badge de la côte');
-  run('useMap("cote"); resetWorld(); dogs = []; cars = []; P.x = MAP.start[0] * 64; P.y = MAP.start[1] * 64; P.inv = 999; P.swum = false; beachNap = false; treasures = 0; seenCells.fill(0); checkBadges();');
+  ok(run('MAP.id') === 'region' && !run('badges.bain || badges.sieste_ete || badges.explorateur_ete || badges.crabes || badges.goelands'), 'dans la région de Tecky, aucun badge de la plage');
+  ok(run('Object.keys(badges).length') === run('avant') && !run('auLieu()'),
+     'ni ceux du printemps : en été, la région n’est pas le lieu de l’épisode (bêtes, explorateur)');
+  run('useMap("plage"); resetWorld(); dogs = []; cars = []; P.x = MAP.start[0] * 64; P.y = MAP.start[1] * 64; P.inv = 999; P.swum = false; beachNap = false; treasures = 0; seenCells.fill(0); checkBadges();');
   ok(!run('badges.bain || badges.sieste_ete || badges.explorateur_ete || badges.crabes || badges.goelands || badges.os_dores_ete || badges.copains_ete'), 'sur la côte, rien n’est donné d’avance');
   run('P.swum = true; beachNap = true; treasures = MAP.dig.length; seenCells.fill(1); crabs.forEach(c => c.scored = true); seagulls.forEach(g => g.scored = true); checkBadges();');
   ok(['bain', 'sieste_ete', 'os_dores_ete', 'explorateur_ete', 'crabes', 'goelands'].every(id => run(`!!badges.${id}`)) && !run('badges.copains_ete'),

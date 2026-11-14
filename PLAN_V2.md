@@ -399,6 +399,18 @@ Décidé le 12 novembre 2026 : **quatre épisodes, un par saison**, dans un mond
 grand ou les intérieurs d'abord). Et, avant d'écrire du contenu, **les textes passent en données** (le mécanisme du
 lot 5 : `textes/fr.json`, `t()`, sans traduire), pour que les nouveaux épisodes s'écrivent déjà hors de `game.js`.
 
+**Vocabulaire (Christophe, 14 novembre 2026)** — un épisode = un lieu à une saison ; on ne dit plus « le monde »
+ni « la côte » pour les cartes (identifiants `region`, `plage` ; `lieu` dans `episodes.json`) :
+
+1. La région de Tecky (printemps) ;
+2. Les vacances à la plage (été) ;
+3. La région de Tecky (automne) : la même carte, d'autres couleurs, d'autres quêtes, d'autres indices ;
+4. Les vacances à la montagne (hiver).
+
+Le joueur voit toujours quatre épisodes, un par saison. La région de Tecky reste la carte d'où l'on part en
+vacances, pour une raison pratique seulement. **Idée à garder (pas décidée)** : une petite carte « la maison
+d'Alice », avec des jeux bonus, qui servirait de point de départ (« hub ») aux cinématiques de départ.
+
 Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes multiples) :
 
 1. Textes en données (mécanisme du lot 5) : fait.
@@ -449,7 +461,7 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
       **Fait le 12 novembre 2026** : `cartes/<épisode>/<carte>.json`, la surcharge, ne redit que les clés qui
       changent ; `null` retire (un personnage, une liste). Le jeu, la vérification des placements et l'éditeur
       (choix « Épisode », qui n'enregistre que ce qui diffère) lisent la carte de l'épisode ; l'écran titre
-      montre le monde de l'épisode choisi. Première surcharge : `cartes/ete/monde.json`, le monde sans les
+      montre le monde de l'épisode choisi. Première surcharge : `cartes/ete/region.json`, le monde sans les
       trois indices du printemps ni Alice (ils seront sur la côte). Reste pour le contenu : des indices propres
       à chaque épisode (le jeu ne connaît que barrette, chaussure, doudou), et le moteur des quêtes réutilisable.
       À savoir : pour l'été, la côte est une carte neuve, sans surcharge ; ce mécanisme servira surtout à
@@ -476,7 +488,7 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      monde ne sert que le temps de cette cinématique**, qui emmène directement au parking de la plage ; on n'y
      joue pas. Tout l'épisode se joue sur la côte : la partie d'été commence vraiment au parking (c'est là que
      Tecky reprend la main, et que reprend une partie enregistrée), et rien ne ramène au monde avant la fin.
-     Conséquences : la surcharge `cartes/ete/monde.json` n'a plus à retirer les indices ni Alice (elle n'aura
+     Conséquences : la surcharge `cartes/ete/region.json` n'a plus à retirer les indices ni Alice (elle n'aura
      qu'à poser la scène : Alice et la voiture devant la niche) ; les couleurs d'été du monde ne se voient que
      pendant ces quelques secondes, c'est sur la côte qu'elles comptent et qu'il faudra les juger.
    - *La côte* (`reference/v2/ete_plan.png`), une carte neuve à la place de la carte d'essai : **la mer en bas**
@@ -530,7 +542,7 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      par l'escalier ; les planches ne touchent jamais la falaise. Tout est dans le moteur de tuiles et dans
      l'éditeur, essayé sur la carte d'essai (`reference/v2/lot6_plage_jeu.png`). Restent : l'habillage du sable
      (coquillages, traces), la nage, les vagues.
-   - *La carte de la côte, premier jet du 13 novembre 2026* : `cartes/cote.json`, 96 x 64, tracée d'après le
+   - *La carte de la côte, premier jet du 13 novembre 2026* : `cartes/plage.json`, 96 x 64, tracée d'après le
      plan (`reference/v2/cote_carte.png` : la carte entière ; `reference/v2/lot6_cote_jeu.png` : dans le jeu,
      aux couleurs de l'été). Le terrain est complet : la route qui finit au parking, la rivière et son pont de
      planches, le port, le village de pêcheurs et son bassin, la ville (place du casino, jardins, front de

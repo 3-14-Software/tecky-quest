@@ -5,7 +5,7 @@ tuiles, une tuile pour 20 px du plan.
     python3 v2/cote_carte.py --apercu   # reference/v2/cote_carte.png : la carte du dépôt, dessinée comme le jeu
 
 Ce script n'a servi qu'à poser le terrain et les premiers décors (13 novembre 2026). Depuis, **la carte est celle
-du fichier cartes/cote.json**, que Christophe retouche dans l'éditeur (http://127.0.0.1:8770/?carte=cote) : ce
+du fichier cartes/plage.json**, que Christophe retouche dans l'éditeur (http://127.0.0.1:8770/?carte=plage) : ce
 qui est écrit ici n'est plus à jour et ne doit plus l'écraser. --ecrire refuse donc de remplacer une carte qui
 existe (il faudrait la supprimer d'abord, en connaissance de cause).
 """
@@ -18,7 +18,7 @@ sys.path.insert(0, ROOT)
 import carte  # noqa: E402
 
 W, H = 96, 64
-NOM = "cote"
+NOM = "plage"
 
 
 # ------------------------------------------------------------------ outils
@@ -269,7 +269,7 @@ def faire():
         "format": carte.FORMAT, "annexe": True, "w": W, "h": H, "legende": carte.LEGENDE, "terrain": terrain(),
         "details": DETAILS, "decor": DECOR, "items": ITEMS, "dig": DIG, "enemies": ENEMIES, "signs": SIGNS,
         "ducks": DUCKS, "cows": COWS, "critters": CRITTERS, "butterflies": BUTTERFLIES,
-        "roadTunnels": [[0, ROUTE + 4, False]], "passages": [[0, "monde", 1]],
+        "roadTunnels": [[0, ROUTE + 4, False]], "passages": [[0, "region", 1]],
         "traffic": {"y": ROUTE, "crossings": [], "vehicles": []},
         "calm": CALM, "zones": ZONES, "landmarks": LANDMARKS,
     }
@@ -303,7 +303,7 @@ if __name__ == "__main__":
     print(f"{NOM} : {W} x {H}, {len(DECOR)} décors, {len(ITEMS)} objets, {len(ENEMIES)} chiens")
     if "--ecrire" in sys.argv and not err:
         if os.path.exists(carte.chemin(NOM)) and "--premier-jet" not in sys.argv:
-            sys.exit("refusé : cartes/cote.json existe, et c'est lui qui fait foi (retouché dans l'éditeur de carte)")
+            sys.exit("refusé : cartes/plage.json existe, et c'est lui qui fait foi (retouché dans l'éditeur de carte)")
         carte.enregistrer(c, carte.chemin(NOM))
         print("écrit :", os.path.relpath(carte.chemin(NOM), ROOT))
     if "--apercu" in sys.argv:

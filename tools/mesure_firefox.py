@@ -4,7 +4,7 @@ Mesure le coût du rendu dans Firefox, sans fenêtre : le pire cas, il dessine l
 Il faut d'abord construire le jeu (python3 pack_web.py) et servir web/tecky_quest_web sur le port 8765
 (./serve.sh 8765, ou l'aperçu « tecky-web »). Puis, depuis la racine du dépôt :
 
-    python3 tools/mesure_firefox.py [--x2] [--detail] [--sans-avance] [--carte cote] [--dossier sous-dossier] [--json sortie.json]
+    python3 tools/mesure_firefox.py [--x2] [--detail] [--sans-avance] [--carte plage] [--dossier sous-dossier] [--json sortie.json]
 
 Le canevas est forcé à 1920 x 1080 (échelle 2), avec les images x4 (--x2 : rester en x2). La page ne fait plus
 tourner le jeu : elle place la caméra, règle le soleil et chronomètre render() image par image.
@@ -38,8 +38,8 @@ LIEUX = [("niche", 4.5, 4.2), ("place du village", 49.5, 7.3), ("marché, rue", 
          ("grande route", 30, 20), ("pré des vaches", 20, 28), ("port", 50, 35), ("verger", 62, 27),
          ("pont, rivière", 80, 43), ("parc", 20, 55), ("forêt", 78, 58)]
 BANDES = [("nord (y 8)", 8), ("milieu (y 30)", 30), ("sud (y 54)", 54)]
-# --carte cote : la côte de l'été (ses lieux, ses bandes ; la partie démarre là, en été)
-AILLEURS = {"cote": dict(essai=[31.4, 11.9, "balade", "cote", "ete"],
+# --carte plage : la côte de l'été (ses lieux, ses bandes ; la partie démarre là, en été)
+AILLEURS = {"plage": dict(essai=[31.4, 11.9, "balade", "plage", "ete"],
                          lieux=[("parking", 31, 11), ("port", 8, 36), ("village de pêcheurs", 27, 27), ("casino", 60, 20),
                                 ("jardins", 62, 30), ("plage ouest", 30, 49), ("plage est", 62, 49), ("falaises", 86, 24),
                                 ("phare", 91, 37), ("campagne normande", 62, 6)],

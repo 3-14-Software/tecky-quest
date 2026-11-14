@@ -5,7 +5,7 @@ const base = fs.readFileSync(path.join(__dirname, 'sim.js'), 'utf8').split("setT
 function main() {
   run('EPISODES[1].chantier = false; audioOn(); episode = "ete"; newGame("balade", true);'); advanceDialog();
   run('cars = []; dogs = []; P.inv = 99;');
-  ok(run('MAP.id') === 'cote' && run('MAP.roles.neighbor') === 'hortense' && run('MAP.roles.pompon') === 'poodle' && run('JSON.stringify(CARTES.monde.roles)') === '{}'
+  ok(run('MAP.id') === 'plage' && run('MAP.roles.neighbor') === 'hortense' && run('MAP.roles.pompon') === 'poodle' && run('JSON.stringify(CARTES.region.roles)') === '{}'
      && run('neighbor.kind') === 'neighbor' && run('neighbor.look') === 'hortense' && run('pompon.kind') === 'poodle' && run('npcList().includes(neighbor)'),
      'sur la côte, le rôle de Mamie Rose est tenu par Madame Hortense, celui de Pompon par Praline, son caniche');
   ok(['hortense/idle', 'hortense/talk', 'hortense/worry', 'poodle/idle', 'poodle/walk', 'poodle/run', 'poodle/hiss', 'icone/poodle', 'hud/portrait_hortense']

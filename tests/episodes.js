@@ -14,8 +14,8 @@ function main() {
   const fleche = k => { run(`pressed.${k} = true`); step(1); run(`pressed.${k} = false`); };
 
   // 1. les données, et un jeu qui n'a qu'un épisode ouvert : l'écran titre d'avant
-  ok(run('EPISODES.map(e => e.id).join()') === 'printemps,ete' && run('EPISODES[0].cartes.join()') === 'monde'
-     && run('EPISODES[1].cartes.join()') === 'monde,cote' && !run('EPISODES[1].chantier') && run('EPISODES[1].voyage') === 'cote',
+  ok(run('EPISODES.map(e => e.id).join()') === 'printemps,ete' && run('EPISODES[0].cartes.join()') === 'region'
+     && run('EPISODES[1].cartes.join()') === 'region,plage' && !run('EPISODES[1].chantier') && run('EPISODES[1].voyage') === 'plage',
      'deux épisodes : le printemps (le monde), l\'été (le monde et la deuxième carte), sorti du chantier');
   ok(run('CHANTIER') === false && run('openEpisodes().length') === 1, 'hors de localhost, sans avoir gagné le printemps : l\'été est fermé');
   // (le mécanisme du chantier reste, pour les épisodes à venir : on y remet l'été le temps de l'éprouver)
@@ -28,7 +28,7 @@ function main() {
   fleche('right');
   ok(run('episode') === 'printemps', 'un seul épisode ouvert : gauche / droite ne changent rien');
   run('audioOn();'); choisir('aventure');
-  ok(run('state') === 'play' && run('STORE.get(SAVE_KEY).ep') === 'printemps' && run('MAP.id') === 'monde',
+  ok(run('state') === 'play' && run('STORE.get(SAVE_KEY).ep') === 'printemps' && run('MAP.id') === 'region',
      'nouvelle aventure : la sauvegarde nomme son épisode');
   ok(run('MAP.passages.length') === 1 && run('(P.x = MAP.w * TS - 200, passageHere())') === null,
      'au printemps, le tunnel de l\'est est fermé : la deuxième carte n\'est pas de l\'épisode');
@@ -59,10 +59,10 @@ function main() {
 
   // 4. une partie de l'été
   choisir('aventure');
-  ok(run('state') === 'play' && run('episode') === 'ete' && run('MAP.id') === 'monde' && run('STORE.get(SAVE_KEY).ep') === 'ete'
+  ok(run('state') === 'play' && run('episode') === 'ete' && run('MAP.id') === 'region' && run('STORE.get(SAVE_KEY).ep') === 'ete'
      && run('P.hpMax') === run('START_BONES * 2') && run('score') === 0,
      'nouvelle aventure en été : une partie neuve, à la niche');
-  ok(run('(P.x = MAP.w * TS - 200, passageHere() || [])[1]') === 'cote', 'en été, le tunnel de l\'est mène à la deuxième carte');
+  ok(run('(P.x = MAP.w * TS - 200, passageHere() || [])[1]') === 'plage', 'en été, le tunnel de l\'est mène à la deuxième carte');
   run('P.x = MAP.start[0]; P.y = MAP.start[1]; score = 77; saveGame(); toTitle();');
   ok(run('episode') === 'ete' && run('menu.items[0].id') === 'continue' && run('menu.items[0].sub').startsWith('L’été · '),
      'menu principal : « Continuer » dit de quel épisode (' + run('menu.items[0].sub') + ')');
@@ -85,9 +85,9 @@ function main() {
 
   // 6. une sauvegarde sur une carte qui n'est plus de son épisode : la partie reprend à la niche
   choisir('aventure');
-  run('items.splice(0, 1); score = 55; var nItems = items.length; travel("cote", 0); saveGame();');
+  run('items.splice(0, 1); score = 55; var nItems = items.length; travel("plage", 0); saveGame();');
   run('var S = STORE.get(SAVE_KEY); S.ep = "printemps"; STORE.set(SAVE_KEY, S); toTitle(); loadGame(loadSave(), false);'); advanceDialog();
-  ok(run('episode') === 'printemps' && run('MAP.id') === 'monde' && run('Math.abs(P.x - MAP.start[0]) < 1 && Math.abs(P.y - MAP.start[1]) < 1')
+  ok(run('episode') === 'printemps' && run('MAP.id') === 'region' && run('Math.abs(P.x - MAP.start[0]) < 1 && Math.abs(P.y - MAP.start[1]) < 1')
      && run('score') === 55 && run('items.length') === run('nItems') && run('Object.keys(elsewhere).length') === 0,
      'elle reprend à la niche, score gardé, le monde comme Tecky l\'avait laissé');
   run('saveGame(); S = STORE.get(SAVE_KEY); S.ep = "zzz"; STORE.set(SAVE_KEY, S); toTitle(); loadGame(loadSave(), false);'); advanceDialog();
@@ -97,29 +97,29 @@ function main() {
   ok(run('epOfSave({ ep: "ete" })') === 'ete' && run('epOfSave({})') === 'printemps' && run('lastOpen()') === 'ete',
      'au chargement : l\'épisode de la sauvegarde (le premier pour une sauvegarde d\'avant), sinon le dernier ouvert');
 
-  // 8. ce qu'un épisode change à une carte (cartes/ete/monde.json : ni les indices du printemps, ni Alice dans sa cabane)
-  ok(run('Object.keys(SURCHARGES).join()') === 'ete' && run('Object.keys(SURCHARGES.ete).join()') === 'monde'
-     && run('Object.keys(SURCHARGES.ete.monde).sort().join()') === 'absents,alice,decor,items',       // (decor : les décors d'été, la liste « extras » de la surcharge)
-     'la page n\'embarque de la carte de l\'été que ce qui diffère du monde : ' + run('Object.keys(SURCHARGES.ete.monde).join(", ")'));
+  // 8. ce qu'un épisode change à une carte (cartes/ete/region.json : ni les indices du printemps, ni Alice dans sa cabane)
+  ok(run('Object.keys(SURCHARGES).join()') === 'ete' && run('Object.keys(SURCHARGES.ete).join()') === 'region'
+     && run('Object.keys(SURCHARGES.ete.region).sort().join()') === 'absents,alice,decor,items',       // (decor : les décors d'été, la liste « extras » de la surcharge)
+     'la page n\'embarque de la carte de l\'été que ce qui diffère du monde : ' + run('Object.keys(SURCHARGES.ete.region).join(", ")'));
   run('episode = "printemps"; toTitle();');
   ok(run('MAP.variante') === null && run('items.length') === 47 && run('ici("alice")'), 'écran titre au printemps : la carte de base');
   fleche('right');
-  ok(run('episode') === 'ete' && run('MAP.id') === 'monde' && run('MAP.variante') === run('SURCHARGES.ete.monde') && run('items.length') === 44
+  ok(run('episode') === 'ete' && run('MAP.id') === 'region' && run('MAP.variante') === run('SURCHARGES.ete.region') && run('items.length') === 44
      && run('state') === 'title' && run('Math.abs(camX - camClampX(MAP.title[0] - VW / 2)) < 1'),
      'choisir l\'été : derrière le menu, le monde de l\'été');
   choisir('aventure');
   ok(run('MAP.variante !== null') && run('items.length') === 44 && run('!items.some(it => CLUES.includes(it.n))') && !run('ici("alice")')
-     && run('alice.hidden') && run('MAP.w') === 96 && run('MAP.ts') === 64 && run('dogs.length') === run('CARTES.monde.enemies.length'),
+     && run('alice.hidden') && run('MAP.w') === 96 && run('MAP.ts') === 64 && run('dogs.length') === run('CARTES.region.enemies.length'),
      'partie d\'été : le monde sans les trois indices ni Alice, tout le reste comme au printemps');
   ok(run('(() => { const a = arrowTarget(), [x, y] = arrivalAt(1); return a.x === x && a.y === y; })()'),
      'la flèche mène au tunnel de l\'est : la suite est sur l\'autre carte');
   run('cars = []; pressed.sniff = true;'); step(30);
   run('state = "pause"; openPauseMenu(); render(); state = "play"; menu = null;');
   ok(run('state') === 'play' && run('mapImg !== null'), 'flair et carte de la pause : rien ne casse sans indice ni Alice');
-  run('items.splice(0, 2); travel("cote", 0);');
-  ok(run('MAP.id') === 'cote' && run('MAP.variante') === null, 'la deuxième carte n\'a pas de surcharge : sa carte de base');
-  run('travel("monde", 1);');
-  ok(run('MAP.variante !== null') && run('items.length') === 42 && run('onMap("monde")'), 'retour : le monde de l\'été, comme Tecky l\'avait laissé');
+  run('items.splice(0, 2); travel("plage", 0);');
+  ok(run('MAP.id') === 'plage' && run('MAP.variante') === null, 'la deuxième carte n\'a pas de surcharge : sa carte de base');
+  run('travel("region", 1);');
+  ok(run('MAP.variante !== null') && run('items.length') === 42 && run('onMap("region")'), 'retour : le monde de l\'été, comme Tecky l\'avait laissé');
   run('saveGame(); episode = "printemps"; toTitle();');
   ok(run('MAP.variante') === null && run('items.length') === 47, 'retour au titre, printemps choisi : la carte de base');
   choisir('continue');

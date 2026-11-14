@@ -368,7 +368,7 @@
     await ED.charger();
     // le choix de la carte : celle du monde, ou une carte annexe (la page se recharge sur ?carte=nom)
     const sel = $('cartes');
-    for (const n of I.cartes) sel.append(h('option', { value: n, selected: n === ED.nom }, n === 'monde' ? 'monde (carte.json)' : n));
+    for (const n of I.cartes) sel.append(h('option', { value: n, selected: n === ED.nom }, n === 'region' ? 'monde (carte.json)' : n));
     sel.onchange = () => { if (!ED.modifie || confirm('Des modifications ne sont pas enregistrées. Changer de carte quand même ?')) location.search = '?carte=' + encodeURIComponent(sel.value); else sel.value = ED.nom; };
     // le choix de l'épisode : la carte de base, ou la carte telle qu'un épisode la joue (?episode=id)
     const eps = I.episodes.filter(e => e.cartes.includes(ED.nom)), se = $('episodes');

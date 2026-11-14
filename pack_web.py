@@ -134,7 +134,7 @@ def edge_decor(g, keep):
     return lisiere.decor(g, MW, MH, keep, forest, ROAD_TUNNELS)
 
 
-def charger_carte(nom=carte.MONDE, episode=None):
+def charger_carte(nom=carte.REGION, episode=None):
     """Fait de la carte `nom` la carte courante : ses listes (en tuiles) et ce qui s'en déduit (décors, pont, lisière).
     Une carte annexe (cartes/<nom>.json) n'a que ce qu'elle déclare : carte.completer() met le reste hors de la carte.
     episode : la carte telle que cet épisode la joue (sa surcharge cartes/<épisode>/<nom>.json par-dessus)."""
@@ -824,7 +824,7 @@ def main():
     if pb:
         raise SystemExit("episodes.json : " + " ; ".join(pb))
     charger_carte()
-    m = cartes[carte.MONDE]
+    m = cartes[carte.REGION]
     base = collect()
     atlas, meta = pack(base)
     atlas.save(os.path.join(WEB, "atlas.png"), optimize=True)

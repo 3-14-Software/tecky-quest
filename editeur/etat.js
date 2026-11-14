@@ -57,7 +57,7 @@
      carte annexe n'a que ce qu'elle déclare : ses listes absentes sont ouvertes vides (pour pouvoir y poser quelque
      chose) et ne sont écrites que si elles ne le sont plus ; ses personnages, son enclos, sa voie absents ne se
      voient pas. */
-  ED.nom = new URLSearchParams(location.search).get('carte') || 'monde';
+  ED.nom = new URLSearchParams(location.search).get('carte') || 'region';
   /* ?episode=id : la carte telle qu'un épisode la joue. Le serveur la donne sous sa surcharge (cartes/<id>/<nom>.json)
      et, à l'enregistrement, n'écrit dans ce fichier que ce qui diffère de la carte de base ; ce que l'épisode a retiré
      (un personnage, une liste) est absent, comme sur une carte annexe. */

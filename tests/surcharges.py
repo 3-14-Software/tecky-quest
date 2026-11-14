@@ -62,7 +62,7 @@ for ep, nom in carte.surcharges():
     ok(ep in eps and nom in eps[ep]["cartes"], f"cartes/{ep}/{nom}.json : un épisode qui a cette carte")
     ok(carte.valider_surcharge(s, b) == [] and carte.difference(carte.charger_episode(nom, ep), b) == s,
        f"cartes/{ep}/{nom}.json : correcte, et ne redit que ce qui change")
-ok(carte.charger_episode("monde", "printemps") == base and carte.charger_episode("monde") == base, "un épisode sans surcharge : la carte de base")
+ok(carte.charger_episode("region", "printemps") == base and carte.charger_episode("region") == base, "un épisode sans surcharge : la carte de base")
 ok(episodes.valider(episodes.charger()) == [], "episodes.json : correct")
 # 4. l'enregistrement de l'éditeur, sur une copie
 tmp = tempfile.mkdtemp(prefix="surcharges-")
@@ -71,18 +71,18 @@ try:
     shutil.copy(carte.FICHIER, tmp)
     vrai = (carte.DOSSIER, carte.FICHIER)
     carte.DOSSIER, carte.FICHIER = os.path.join(tmp, "cartes"), os.path.join(tmp, "carte.json")
-    f = carte.surcharge("cote", "ete")
-    cote = carte.charger(carte.chemin("cote"))
+    f = carte.surcharge("plage", "ete")
+    cote = carte.charger(carte.chemin("plage"))
     c = copy.deepcopy(cote)
     c["signs"][0][2] += " !"
-    ok(editeur.enregistrer_surcharge(c, "cote", "ete") == [] and json.load(open(f, encoding="utf-8")) == {"signs": c["signs"]},
+    ok(editeur.enregistrer_surcharge(c, "plage", "ete") == [] and json.load(open(f, encoding="utf-8")) == {"signs": c["signs"]},
        "éditeur : enregistrer la carte d'un épisode n'écrit que ce qu'elle change")
-    ok(open(carte.chemin("cote"), encoding="utf-8").read() == open(os.path.join(vrai[0], "cote.json"), encoding="utf-8").read(),
+    ok(open(carte.chemin("plage"), encoding="utf-8").read() == open(os.path.join(vrai[0], "plage.json"), encoding="utf-8").read(),
        "éditeur : la carte de base n'est pas touchée")
-    ok(editeur.lire("cote", "ete")[1] != editeur.lire("cote")[1] and json.loads(editeur.lire("cote", "ete")[0]) == c,
+    ok(editeur.lire("plage", "ete")[1] != editeur.lire("plage")[1] and json.loads(editeur.lire("plage", "ete")[0]) == c,
        "éditeur : la carte relue est celle de l'épisode")
-    ok(editeur.enregistrer_surcharge(cote, "cote", "ete") == [] and not os.path.exists(f), "éditeur : plus rien à redire, la surcharge est retirée")
-    ok(editeur.enregistrer_surcharge(dict(cote, w=3), "cote", "ete") != [] and not os.path.exists(f), "éditeur : un épisode ne change pas la taille de la carte")
+    ok(editeur.enregistrer_surcharge(cote, "plage", "ete") == [] and not os.path.exists(f), "éditeur : plus rien à redire, la surcharge est retirée")
+    ok(editeur.enregistrer_surcharge(dict(cote, w=3), "plage", "ete") != [] and not os.path.exists(f), "éditeur : un épisode ne change pas la taille de la carte")
 finally:
     carte.DOSSIER, carte.FICHIER = vrai
     shutil.rmtree(tmp, ignore_errors=True)

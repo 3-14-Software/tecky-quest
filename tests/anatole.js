@@ -10,7 +10,7 @@ function main() {
      'sur la côte, le rôle de Gaston est tenu par Anatole, celui des poules par ses moutons : cinq à ramener, un dans l\'enclos');
   ok(['anatole/idle', 'anatole/talk', 'anatole/wave', 'hud/portrait_anatole', 'sheep/idle/right', 'sheep/peck/right', 'sheep/walk/right', 'sheep/flap/right']
        .every(k => run(`!!ATLAS[${JSON.stringify(k)}]`)) && run('WHO.anatole.name') === 'Anatole' && run('calmAt(farmer.x, farmer.y)')
-     && run('MAP.cast.includes("sheep")') && run('MAP.farmRoadY') > run('MAP.h * TS') && run('CARTES.monde.farmRoadY') < run('20 * TS'),
+     && run('MAP.cast.includes("sheep")') && run('MAP.farmRoadY') > run('MAP.h * TS') && run('CARTES.region.farmRoadY') < run('20 * TS'),
      'ils ont leurs dessins et leur ombre ; ici, pas de grande route à ne pas franchir (au printemps, si)');
   ok(run('decor.filter(d => d.n.startsWith("fence_wood")).length') > 15 && run('blockedFeet(MAP.pen[0], (MAP.pen[1] + MAP.pen[3]) / 2, 8)')
      && !run('blockedFeet((MAP.penGate[0] + MAP.penGate[1]) / 2, MAP.pen[3], 8)'), 'l\'enclos est clôturé, sa barrière du sud est ouverte');

@@ -149,7 +149,7 @@ def carte_demandee(q):
     """Le nom de la carte d'une requête (?carte=nom, ou « carte » dans le corps) : une carte qui existe, sinon le monde."""
     nom = q.get("carte") if isinstance(q, dict) else None
     nom = nom[0] if isinstance(nom, list) else nom
-    return nom if nom in carte.noms() else carte.MONDE
+    return nom if nom in carte.noms() else carte.REGION
 
 
 def episode_demande(q, nom):
@@ -192,7 +192,7 @@ def enregistrer_surcharge(c, nom, ep):
     return []
 
 
-def verifier(d, nom=carte.MONDE, ep=None):
+def verifier(d, nom=carte.REGION, ep=None):
     with BUILD:
         ok, out = construire()
         res = {"construction": out, "construit": ok, "problemes": [], "atteint": None, "voix": "", "voixAJour": True}
@@ -221,7 +221,7 @@ def voix():
         return {"ok": code == 0, "sortie": vx}
 
 
-def essai(x, y, mode, nom=carte.MONDE, ep=None):
+def essai(x, y, mode, nom=carte.REGION, ep=None):
     with BUILD:
         ok, out = construire(force=False)
         if not ok:
@@ -334,7 +334,7 @@ class Handler(BaseHTTPRequestHandler):
             b, e = lire(nom, ep)
             return self.envoyer(200, {"ok": True, "change": b != actuel}, extra={"ETag": e})
         err = carte.valider(c) if isinstance(c, dict) else ["un objet JSON"]
-        if not err and (c.get("annexe") is True) != (nom != carte.MONDE):
+        if not err and (c.get("annexe") is True) != (nom != carte.REGION):
             err = ["« annexe » : la carte du monde ne l'est pas, les autres le sont"]
         if err:
             return self.envoyer(400, {"erreur": "carte refusée", "details": err})

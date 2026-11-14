@@ -1,4 +1,4 @@
-// plusieurs cartes : Tecky prend le tunnel de la route, arrive sur la côte (cartes/cote.json), y marche, revient ; chaque carte
+// plusieurs cartes : Tecky prend le tunnel de la route, arrive sur la côte (cartes/plage.json), y marche, revient ; chaque carte
 // garde son état ; une partie enregistrée là-bas reprend là-bas (sauvegarde v3 ; une v2 se reprend dans le monde).
 // Se joue dans l'épisode de l'été, encore en chantier : c'est lui qui a la deuxième carte (au printemps, le tunnel
 // est fermé : tests/episodes.js)
@@ -10,9 +10,9 @@ function main() {
   run('delete EPISODES[1].voyage;');
   run('episode = "ete"; audioOn(); pressed.ok = true'); step(1); advanceDialog();
   run('dogs.forEach(d => { d.x = d.hx; d.y = d.hy; }); cars = []; P.inv = 99;');
-  ok(run('Object.keys(CARTES).join()') === 'monde,cote' && run('MAP.id') === 'monde' && run('MAP.ts') === 64 && run('MAP.w') === 96,
+  ok(run('Object.keys(CARTES).join()') === 'region,plage' && run('MAP.id') === 'region' && run('MAP.ts') === 64 && run('MAP.w') === 96,
      'deux cartes ; la carte courante est celle du monde, et hérite des données du jeu (MAP.ts)');
-  ok(run('JSON.stringify(MAP.passages)') === '[[1,"cote",0]]' && run('JSON.stringify(CARTES.cote.passages)') === '[[0,"monde",1]]',
+  ok(run('JSON.stringify(MAP.passages)') === '[[1,"plage",0]]' && run('JSON.stringify(CARTES.plage.passages)') === '[[0,"region",1]]',
      'le tunnel de l\'est du monde mène au tunnel de l\'ouest de la deuxième carte, et retour');
   // l'état du monde avant de partir : un os ramassé, un trésor déterré, un chien de moins, Pompon qui suit
   run('items.splice(0, 1); digs[2].dug = true; treasures = 1; dogs.splice(3, 1); rose.state = "asked"; pompon.mode = "follow"; pompon.x = 5000; pompon.y = 1500;');
@@ -20,15 +20,15 @@ function main() {
   // le tunnel de l'ouest n'a pas de passage : Tecky dit que c'est pour les voitures
   run('var T0 = MAP.roadTunnels[0], T1 = MAP.roadTunnels[1]; P.x = T0[0] + 60; P.y = T0[1] - 100; P.mode = "free"; P.edgeAt = -99; pops = [];');
   step(60, 'held.left = true; cars = [];'); run('held.left = false;');
-  ok(run('MAP.id') === 'monde' && run('pops.some(p => p.text === txt("bord.tunnel"))'), 'tunnel sans passage : « ' + run('txt("bord.tunnel")') + ' »');
+  ok(run('MAP.id') === 'region' && run('pops.some(p => p.text === txt("bord.tunnel"))'), 'tunnel sans passage : « ' + run('txt("bord.tunnel")') + ' »');
   // celui de l'est mène ailleurs : Tecky pousse dedans
   // contre la butte, à côté de la route : rien ne se passe
   run('P.x = T1[0] - 60; P.y = T1[1] + 30; P.mode = "free"; pops = [];');
   step(60, 'held.right = true; cars = [];'); run('held.right = false;');
-  ok(run('MAP.id') === 'monde' && run('pops.length') === 0, 'contre la butte du tunnel, hors de la route : on ne passe pas');
+  ok(run('MAP.id') === 'region' && run('pops.length') === 0, 'contre la butte du tunnel, hors de la route : on ne passe pas');
   run('P.x = T1[0] - 60; P.y = MAP.traffic.road[0] + 70; P.mode = "free"; pops = []; var yEntree = P.y - MAP.traffic.road[0];');
-  step(45, 'held.right = true; if (MAP.id === "monde") cars = [];'); run('held.right = false;');
-  ok(run('MAP.id') === 'cote' && run('state') === 'play' && run('MAP.w') === 96 && run('MAP.h') === 64, 'Tecky pousse dans le tunnel de l\'est : il est sur la côte (96 x 64)');
+  step(45, 'held.right = true; if (MAP.id === "region") cars = [];'); run('held.right = false;');
+  ok(run('MAP.id') === 'plage' && run('state') === 'play' && run('MAP.w') === 96 && run('MAP.h') === 64, 'Tecky pousse dans le tunnel de l\'est : il est sur la côte (96 x 64)');
   ok(run('(() => { const [x, , d] = arrivalAt(0), [r0, r1] = MAP.traffic.road; return P.x - x >= 0 && P.x - x < 200 && P.y > r0 && P.y < r1 && d === "right"; })()') && run('!blockedFeet(P.x, P.y, 16)'),
      'il ressort sur la route, devant la bouche du tunnel de l\'ouest');
   ok(Math.abs(run('P.y - MAP.traffic.road[0]') - run('yEntree')) < 30, 'à la hauteur où il est entré : ' + Math.round(run('yEntree')) + ' px sous le bord de la chaussée, ' + Math.round(run('P.y - MAP.traffic.road[0]')) + ' à la sortie');
@@ -38,7 +38,7 @@ function main() {
      && !run('ici("track")') && run('ici("traffic")'),
      'la côte a ses décors, ses chiens, ses objets, ses papillons et ses voitures, Alice dans sa cachette, Madame Hortense devant le casino, Anatole sur la falaise, Zoé, Yvon et Théo sur la plage, Suzanne au village de pêcheurs ; pas de voie ferrée');
   // la route sans issue : une voiture entre sous le porche du parking, s'y gare, repart par l'autre voie ; au tunnel, de même
-  ok(run('MAP.traffic.end') === 30 * 64 && run('CARTES.monde.traffic.end') === null && run('MAP.decor.filter(d => d[0] === "porche").length') === 1
+  ok(run('MAP.traffic.end') === 30 * 64 && run('CARTES.region.traffic.end') === null && run('MAP.decor.filter(d => d[0] === "porche").length') === 1
      && run('blockedFeet(MAP.traffic.end + 60, 8 * TS, 16)') && !run('blockedFeet(MAP.traffic.end - 60, 8 * TS, 16)'),
      'la route s\'arrête au porche du parking : Tecky n\'y entre pas');
   run('var pxA = P.x, pyA = P.y; P.x = 60 * TS; P.y = 30 * TS; dogs = [];');
@@ -62,10 +62,10 @@ function main() {
      'les marquages de la route vont du tunnel au parking, pas plus loin ; un passage piéton devant le chemin du port');
   run('var px0 = P.x, py0 = P.y; P.x = MAP.w * TS - 40; P.y = 7.5 * TS; P.mode = "free"; P.edgeAt = -99; pops = [];');
   step(60, 'held.right = true;'); run('held.right = false;');
-  ok(run('MAP.id') === 'cote' && run('pops.some(p => p.text === txt("bord.carte"))') && !run('pops.some(p => p.text === txt("bord.tunnel"))'),
+  ok(run('MAP.id') === 'plage' && run('pops.some(p => p.text === txt("bord.carte"))') && !run('pops.some(p => p.text === txt("bord.tunnel"))'),
      'au bord est, à la hauteur de la route : le bord de la carte, pas un tunnel');
   // les terrains de la côte : sable, planches, mer, et la falaise (plateau, paroi, escalier)
-  ok(run('CARTES.monde.cliff.length') === 0 && run('CARTES.monde.plateau.length') === 0 && run('MAP.cliff.length') === run('(MAP.w + 1) * (MAP.h + 1)')
+  ok(run('CARTES.region.cliff.length') === 0 && run('CARTES.region.plateau.length') === 0 && run('MAP.cliff.length') === run('(MAP.w + 1) * (MAP.h + 1)')
      && run('cliffAt(82 * TS, 39.5 * TS)') && run('blockedFeet(82 * TS, 39.5 * TS, 16)') && !run('cliffAt(82 * TS, 42 * TS)') && !run('blockedFeet(82 * TS, 42 * TS, 16)'),
      'la paroi de la falaise : on ne marche pas sur la roche ; à son pied, sur le sable, si');
   ok(!run('blockedFeet(87 * TS, 30 * TS, 16)') && run('rimAt(85 * TS, 8.5 * TS)') && run('blockedFeet(85 * TS, 8.5 * TS, 16)')
@@ -109,31 +109,34 @@ function main() {
      'la côte entière vue : l\'explorateur de l\'été, mais aucun badge du monde gagné parce que la carte n\'en a pas (bêtes, canards, os dorés, explorateur)');
   ok(run('arrowTarget().n') === 'hat' && run('clueNames().join()') === 'hat,spade,flipflop', 'la flèche et le flair mènent au premier indice de l\'été : le chapeau de paille');
   // partie enregistrée là-bas : elle reprend là-bas
-  run('P.x = 700; P.y = 1100; saveGame(); var S = STORE.get(SAVE_KEY), chatAvant = S.ailleurs.monde.cat.slice();');
-  ok(run('S.v') === 3 && run('S.ep') === 'ete' && run('S.carte') === 'cote' && run('!!S.ailleurs.monde') && run('(() => { const m = S.ailleurs.monde, a = JSON.parse(avant); return m.items.length === nItems && JSON.stringify(m.dogs) === JSON.stringify(a.dogs) && JSON.stringify(m.dug) === JSON.stringify(a.dug); })()'),
+  run('P.x = 700; P.y = 1100; saveGame(); var S = STORE.get(SAVE_KEY), chatAvant = S.ailleurs.region.cat.slice();');
+  ok(run('S.v') === 3 && run('S.ep') === 'ete' && run('S.carte') === 'plage' && run('!!S.ailleurs.region') && run('(() => { const m = S.ailleurs.region, a = JSON.parse(avant); return m.items.length === nItems && JSON.stringify(m.dogs) === JSON.stringify(a.dogs) && JSON.stringify(m.dug) === JSON.stringify(a.dug); })()'),
      'sauvegarde v3 : la carte courante, et l\'état du monde rangé sous « ailleurs »');
+  // une partie enregistrée avant le changement de nom des cartes (« monde », « cote ») se reprend sous les nouveaux
+  run('var V = JSON.parse(JSON.stringify(S)); V.carte = "cote"; V.ailleurs = { monde: V.ailleurs.region }; STORE.set(SAVE_KEY, V); var L = loadSave(); STORE.set(SAVE_KEY, S);');
+  ok(run('L.carte') === 'plage' && run('!!L.ailleurs.region') && !run('"monde" in L.ailleurs'), 'une sauvegarde aux anciens noms de cartes est lue sous les nouveaux');
   run('toTitle();');
-  ok(run('MAP.id') === 'monde' && run('state') === 'title' && run('EDGE_DECOR.length') > 300, 'retour à l\'écran titre : la carte du monde, sur la place du village');
+  ok(run('MAP.id') === 'region' && run('state') === 'title' && run('EDGE_DECOR.length') > 300, 'retour à l\'écran titre : la carte du monde, sur la place du village');
   run('loadGame(STORE.get(SAVE_KEY), false);'); advanceDialog();
-  ok(run('episode') === 'ete' && run('MAP.id') === 'cote' && run('P.x') === 700 && run('P.y') === 1100 && run('score') === 321 && run('farm.state') === 'asked' && run('dogs.length') === 0,
+  ok(run('episode') === 'ete' && run('MAP.id') === 'plage' && run('P.x') === 700 && run('P.y') === 1100 && run('score') === 321 && run('farm.state') === 'asked' && run('dogs.length') === 0,
      'Continuer : la partie reprend sur la côte, là où elle a été enregistrée');
   // retour par le tunnel : le monde est comme il l'avait laissé
   run('{ const [x, y] = arrivalAt(0); P.x = x - 10; P.y = y; P.mode = "free"; cars = []; }');
-  step(45, 'held.left = true; if (MAP.id === "cote") cars = [];'); run('held.left = false;');
-  ok(run('MAP.id') === 'monde' && run('P.x') > run('MAP.w * TS - 300') && run('P.dir') === 'left', 'il repasse le tunnel : de retour dans le monde, côté est');
+  step(45, 'held.left = true; if (MAP.id === "plage") cars = [];'); run('held.left = false;');
+  ok(run('MAP.id') === 'region' && run('P.x') > run('MAP.w * TS - 300') && run('P.dir') === 'left', 'il repasse le tunnel : de retour dans le monde, côté est');
   ok(run('items.length') === run('nItems') && run('dogs.length') === run('nDogs') && run('digs[2].dug') && run('digs.filter(g => g.dug).length') === 1
      && run('pompon.mode') === 'wait' && run('pompon.x') === run("chatAvant[0]") && run('npcList().length') === 6 && run('ZONES.length') === 8,
      'le monde est comme il l\'avait laissé : l\'os ramassé, le trésor déterré, le chien parti ; Pompon, qui le suivait, l\'a attendu');
-  ok(run('Object.keys(elsewhere).join()') === 'cote' && run('elsewhere.cote.seen.includes("1")'), 'et la deuxième carte garde à son tour ce qu\'il y a vu');
+  ok(run('Object.keys(elsewhere).join()') === 'plage' && run('elsewhere.plage.seen.includes("1")'), 'et la deuxième carte garde à son tour ce qu\'il y a vu');
   // une sauvegarde d'avant les cartes multiples (v2) se reprend dans le monde
   run('saveGame(); var V2 = STORE.get(SAVE_KEY); V2.v = 2; delete V2.ep; delete V2.carte; delete V2.ailleurs; STORE.set(SAVE_KEY, V2); toTitle();');
   ok(run('!!loadSave()') && run('menu.items[0].id') === 'continue', 'une sauvegarde v2 est encore proposée (« Continuer »)');
   run('loadGame(loadSave(), false);'); advanceDialog();
-  ok(run('episode') === 'printemps' && run('MAP.id') === 'monde' && run('items.length') === run('nItems') && run('Object.keys(elsewhere).length') === 0,
+  ok(run('episode') === 'printemps' && run('MAP.id') === 'region' && run('items.length') === run('nItems') && run('Object.keys(elsewhere).length') === 0,
      'elle reprend dans le monde, sans autre carte, dans le premier épisode');
   // nouvelle partie depuis une autre carte : toujours à la niche
-  run('travel("cote", 0); newGame("aventure", true);'); advanceDialog();
-  ok(run('MAP.id') === 'monde' && run('Math.abs(P.x - MAP.start[0]) < 1') && run('Object.keys(elsewhere).length') === 0 && run('items.length') === run('MAP.items.length'),
+  run('travel("plage", 0); newGame("aventure", true);'); advanceDialog();
+  ok(run('MAP.id') === 'region' && run('Math.abs(P.x - MAP.start[0]) < 1') && run('Object.keys(elsewhere).length') === 0 && run('items.length') === run('MAP.items.length'),
      'nouvelle partie : à la niche, dans un monde neuf');
 }
 eval(base + 'setTimeout(' + main.toString() + ', 50);');

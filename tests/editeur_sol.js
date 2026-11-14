@@ -4,7 +4,7 @@ const ED = require('../editeur/sol.js');
 const root = __dirname + '/..';
 const ok = (c, m) => { if (!c) { console.log('ÉCHEC :', m); process.exitCode = 1; } else console.log('ok :', m); };
 const html = fs.readFileSync(root + '/web/index.html', 'utf8');
-const MAP = Object.assign(JSON.parse(html.match(/const JEU = (.*);\n/)[1]), JSON.parse(html.match(/const CARTES = (.*);\n/)[1]).monde);
+const MAP = Object.assign(JSON.parse(html.match(/const JEU = (.*);\n/)[1]), JSON.parse(html.match(/const CARTES = (.*);\n/)[1]).region);
 const I = JSON.parse(execFileSync('python3', ['editeur.py', '--infos'], { cwd: root, encoding: 'utf8' }));
 const c = JSON.parse(fs.readFileSync(root + '/carte.json', 'utf8'));
 const s = ED.calculerSol(c, I);
@@ -13,9 +13,9 @@ ok(diff(s.ground, MAP.ground) === 0, 'sol : les ' + MAP.ground.length + ' tuiles
 ok(diff(s.over, MAP.over) === 0, 'détails au sol (' + diff(s.over, MAP.over) + ' différences)');
 ok(JSON.stringify(s.ring) === JSON.stringify(MAP.edge.ring), 'sol de la lisière (' + s.ring.length + ' tuiles)');
 ok(s.composites.length > 0 && s.ground.some(i => i >= I.compositeBase), s.composites.length + ' tuiles composées, mêmes index');
-// une carte annexe (cartes/cote.json) : même sol que le jeu, elle aussi, avec sa route et sa lisière
+// une carte annexe (cartes/plage.json) : même sol que le jeu, elle aussi, avec sa route et sa lisière
 {
-  const cote = JSON.parse(fs.readFileSync(root + '/cartes/cote.json', 'utf8')), jeu = JSON.parse(html.match(/const CARTES = (.*);\n/)[1]).cote;
+  const cote = JSON.parse(fs.readFileSync(root + '/cartes/plage.json', 'utf8')), jeu = JSON.parse(html.match(/const CARTES = (.*);\n/)[1]).plage;
   const sp = ED.calculerSol(cote, I);
   // (les tuiles composées sont numérotées à la suite pour toutes les cartes du jeu : on compare leurs places, pas leur numéro)
   const sansNumero = a => a.map(v => v >= I.compositeBase ? -1 : v);

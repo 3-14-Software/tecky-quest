@@ -5,6 +5,8 @@ episodes.json en donne la liste, dans l'ordre où ils s'ouvrent :
 
     id        son nom dans le jeu (sauvegarde, records, textes `episodes.<id>.nom` / `.note` de textes/fr.json)
     saison    printemps, ete, automne ou hiver (palette : saisons.py)
+    lieu      la carte où l'épisode se joue : celle de ses indices, d'Alice, de ses badges (un épisode = un lieu à
+              une saison : la région de Tecky au printemps et en automne, la plage en été, la montagne en hiver)
     cartes    les cartes où il se joue (carte.noms()) ; un passage vers une carte qui n'en fait pas partie est fermé ;
               cartes/<id>/<carte>.json, s'il existe, dit ce que l'épisode change à cette carte (carte.py : surcharge)
     depart    celle où la partie commence (elle a la niche : `start`)
@@ -28,7 +30,7 @@ import carte
 ROOT = os.path.dirname(os.path.abspath(__file__))
 FICHIER = os.path.join(ROOT, "episodes.json")
 SAISONS = ("printemps", "ete", "automne", "hiver")
-CHAMPS = ("id", "saison", "cartes", "depart", "voyage", "indices", "chantier")
+CHAMPS = ("id", "saison", "lieu", "cartes", "depart", "voyage", "indices", "chantier")
 
 
 def charger(chemin=FICHIER):
@@ -66,6 +68,11 @@ def valider(eps, cartes=None):
             pb.append(f"épisode « {nom} » : la carte de départ « {dep} » n'est pas dans ses cartes")
         elif dep in cartes and "start" not in cartes[dep]:
             pb.append(f"épisode « {nom} » : la carte de départ « {dep} » n'a pas de niche (start)")
+        lieu = e.get("lieu")
+        if lieu not in les:
+            pb.append(f"épisode « {nom} » : son lieu « {lieu} » n'est pas dans ses cartes")
+        elif e.get("voyage", lieu) != lieu:
+            pb.append(f"épisode « {nom} » : le voyage mène au lieu de l'épisode (« {lieu} »), pas à « {e['voyage']} »")
         if "voyage" in e:
             v = e["voyage"]
             if v not in les or v == dep:
@@ -77,8 +84,8 @@ def valider(eps, cartes=None):
         ind = e.get("indices", list(carte.INDICES))
         if not (isinstance(ind, list) and len(ind) == 3 and all(isinstance(n, str) for n in ind)):
             pb.append(f"épisode « {nom} » : indices = trois noms d'objets")
-        elif "indices" in e:              # (sans ce champ, ceux du printemps : carte.valider() les exige déjà du monde)
-            jeu = e.get("voyage", dep)    # la carte où l'épisode se joue
+        elif "indices" in e:              # (sans ce champ, ceux du printemps : carte.valider() les exige déjà de la région)
+            jeu = lieu                    # la carte où l'épisode se joue
             c = cartes.get(jeu)
             if c is not None:
                 for n in ind:

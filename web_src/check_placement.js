@@ -10,7 +10,7 @@
 // --infos : collisions des décors (FOOT, RAILS), décors plats, portées des actions, taille de la caméra.
 const vm = require('vm'), fs = require('fs');
 const MODE = process.argv.includes('--json') ? 'json' : process.argv.includes('--infos') ? 'infos' : 'texte';
-const CARTE = process.argv.includes('--carte') ? process.argv[process.argv.indexOf('--carte') + 1] : 'monde';
+const CARTE = process.argv.includes('--carte') ? process.argv[process.argv.indexOf('--carte') + 1] : 'region';
 const EPISODE = process.argv.includes('--episode') ? process.argv[process.argv.indexOf('--episode') + 1] : null;
 const html = fs.readFileSync(process.argv[2], 'utf8');
 const code = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'));
@@ -34,9 +34,9 @@ setTimeout(() => {
   }
   if (EPISODE) {
     if (!r(`EPISODES.some(e => e.id === ${JSON.stringify(EPISODE)})`)) { console.log('PROBLÈMES :\n  épisode inconnu : ' + EPISODE); process.exitCode = 1; return; }
-    r(`episode = ${JSON.stringify(EPISODE)}; if (${JSON.stringify(CARTE)} === 'monde') { useMap('monde'); reset(); }`);
+    r(`episode = ${JSON.stringify(EPISODE)}; if (${JSON.stringify(CARTE)} === 'region') { useMap('region'); reset(); }`);
   }
-  if (CARTE !== 'monde') {              // carte annexe : on y arrive par son premier passage
+  if (CARTE !== 'region') {              // carte annexe : on y arrive par son premier passage
     if (!r(`!!CARTES[${JSON.stringify(CARTE)}]`)) { console.log('PROBLÈMES :\n  carte inconnue : ' + CARTE); process.exitCode = 1; return; }
     r(`useMap(${JSON.stringify(CARTE)}); resetWorld(); { const [x, y, dir] = arrivalAt(MAP.passages[0][0]); Object.assign(P, { x, y, dir }); }`);
   }
@@ -148,6 +148,6 @@ setTimeout(() => {
     return;
   }
   if (bad.length) { console.log('PROBLÈMES :\n  ' + bad.join('\n  ')); process.exitCode = 1; }
-  else if (CARTE !== 'monde' || EPISODE) console.log('placements ok (carte « ' + CARTE + ' »' + (EPISODE ? ', épisode « ' + EPISODE + ' »' : '') + ') :', r('items.length'), 'objets,', r('dogs.length'), 'chiens,', r('decor.length'), 'décors,', r('MAP.signs.length'), 'panneaux,', r('MAP.passages.length'), 'passage(s)');
+  else if (CARTE !== 'region' || EPISODE) console.log('placements ok (carte « ' + CARTE + ' »' + (EPISODE ? ', épisode « ' + EPISODE + ' »' : '') + ') :', r('items.length'), 'objets,', r('dogs.length'), 'chiens,', r('decor.length'), 'décors,', r('MAP.signs.length'), 'panneaux,', r('MAP.passages.length'), 'passage(s)');
   else console.log('placements ok :', r('items.length'), 'objets,', r('digs.length'), 'trésors,', r('dogs.length'), 'chiens,', r('hens.length'), 'poules,', r('ducks.length'), 'canards,', r('letters.length'), 'lettres, départ, panneaux, terriers, personnages, Pompon et Alice');
 }, 20);

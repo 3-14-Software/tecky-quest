@@ -7,7 +7,7 @@ function main() {
   run('audioOn(); STORE.mem = {};');
   ok(run('state') === 'title' && /options/.test(ids()), 'menu principal : entrée « Options »');
   run('menu.sel = menu.items.findIndex(i => i.id === "options"); pressed.ok = true'); step(1);
-  ok(run('state') === 'options' && /^music,sfx,diff,text,image,vib,weather,(fs,)?reset,back$/.test(rowIds()), 'écran d’options : ' + rowIds());
+  ok(run('state') === 'options' && /^music,sfx,diff,vib,image,(fs,)?weather,text,reset,back$/.test(rowIds()), 'écran d’options : ' + rowIds());
   // volumes
   const lv0 = run('Music.level()');
   run('pressed.right = true'); step(1);
@@ -19,7 +19,7 @@ function main() {
   ok(run('opts.sfx') === 1, 'Entrée : un cran de plus');
   run('opts.sfx = 8;');
   // au toucher : moitié gauche = moins, moitié droite = plus
-  run('var b = optBox(0, optRows().length); optionsTap(b.x + 40, b.y + 20);');
+  run('var b = optBox(0); optionsTap(b.x + 40, b.y + 20);');
   ok(run('opts.music') === 7 && run('optSel') === 0, 'toucher à gauche d’une ligne : moins');
   run('optionsTap(b.x + b.w - 40, b.y + 20);');
   ok(run('opts.music') === 8, 'à droite : plus');
@@ -102,7 +102,7 @@ function main() {
   ok(run('STORE.get(OPTIONS_KEY).music') === 8 && run('state') === 'options', 'les options, elles, restent');
   run('drawOptions()');
   // au toucher : « Non » et « Oui » sont deux cases à droite de la ligne
-  run('var rb = optBox(optSel, optRows().length); optionsTap(rb.x + 100, rb.y + 20);');
+  run('var rb = optBox(optSel); optionsTap(rb.x + 100, rb.y + 20);');
   ok(run('resetAsk') && run('resetAsk.yes') === false, 'au toucher : la ligne demande confirmation');
   run('var pl = resetPills(rb); optionsTap(pl[0].x + 10, rb.y + 20);');
   ok(!run('resetAsk'), 'touche « Non » : annulé');

@@ -1,6 +1,6 @@
 {
   "episodes": [
-    {"id": "printemps", "saison": "printemps", "cartes": ["monde"], "depart": "monde"},
-    {"id": "ete", "saison": "ete", "cartes": ["monde", "cote"], "depart": "monde", "voyage": "cote", "indices": ["hat", "spade", "flipflop"]}
+    {"id": "printemps", "saison": "printemps", "lieu": "region", "cartes": ["region"], "depart": "region"},
+    {"id": "ete", "saison": "ete", "lieu": "plage", "cartes": ["region", "plage"], "depart": "region", "voyage": "plage", "indices": ["hat", "spade", "flipflop"]}
   ]
 }

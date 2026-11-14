@@ -552,6 +552,11 @@
     }
   },
   "options": {
+    "groupes": {
+      "son": "SON",
+      "jeu": "JEU",
+      "image": "IMAGE"
+    },
     "music": {
       "label": "Musique"
     },
