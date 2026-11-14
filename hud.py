@@ -132,12 +132,12 @@ def tecky_portrait(scale):
     return out
 
 
-def alice_portrait(scale):
-    """0 : au calme ; 1 : clignement ; 2 : elle rit."""
+def alice_portrait(scale, tenue=None):
+    """0 : au calme ; 1 : clignement ; 2 : elle rit. tenue : celle d'une autre saison (alice2.TENUES)."""
     P = alice2.pose
     out = []
     for p in (P(), P(yeux="fermes"), P(yeux="rire", rire=True)):
-        svg = alice2.portrait(p).svg(outline_w=alice2.TRAIT * 0.75)
+        svg = alice2.portrait(p, tenue).svg(outline_w=alice2.TRAIT * 0.75)
         out.append(_portrait(scale, _crop_face(svg, 30, 21.6, 18.6, scale, 60, 76), bg="#FAD4E3"))
     return out
 
@@ -842,6 +842,7 @@ def all_sprites(scale):
         "spr_hud_next": next_arrow(scale),
         "spr_hud_portrait_tecky": tecky_portrait(scale),
         "spr_hud_portrait_alice": alice_portrait(scale),
+        "spr_hud_portrait_alice_ete": alice_portrait(scale, "ete"),
         "spr_hud_portrait_farmer": farmer_portrait(scale),
         "spr_hud_portrait_postman": npc_portrait("postman", scale),
         "spr_hud_portrait_neighbor": npc_portrait("neighbor", scale),

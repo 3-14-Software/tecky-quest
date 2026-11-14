@@ -319,8 +319,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `ENDING.start`, `endingWalk()` (un pas tout droit vers sa place). Sur la côte, ils arrivent par le haut du
   plateau (depuis la cachette) au pied du phare, la nuit tombe et la lanterne s'allume avec les fenêtres. Voix : les cas de l'été
   sont produits par `tools/export_voix.js` (`DYNAMIC_SITES` = 23). Tests : `voyage.js` joue l'été du départ à
-  la victoire. Pas encore fait : la tenue d'été d'Alice (elle garde ses chaussures rouges), une tong à un
-  pied.
+  la victoire. Pas encore fait : (la tenue d'été d'Alice et sa tong perdue sont faites : voir les finitions de l'été).
   **Quêtes rejouées avec d'autres acteurs : les rôles** (13 novembre 2026). Chaque quête de la côte reprend une
   mécanique du printemps ; plutôt que de la recopier, la carte **distribue le rôle** à d'autres acteurs :
   `"roles": { rôle: acteur }` dans la carte (`carte.ROLES` : les acteurs permis ; `MAP.roles`, vide ailleurs).
@@ -442,7 +441,36 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   (`land`). La première rencontre de chacun : Tecky explique (`crabSeen`, `seagullSeen`, sauvegardés ; textes
   `tecky.crabe`, `tecky.goeland`). `check_placement.js` : un crabe sur le sable, ni crabe ni goéland en zone
   calme. Éditeur : « Crabe », « Goéland » (calque des chiens, outil Poser). Test : `adversaires.js`. Planches :
-  `reference/v2/crabes.png`, `goelands.png` ; dans le jeu : `reference/v2/lot6_adversaires.png`. Premier jet posé par
+  `reference/v2/crabes.png`, `goelands.png` ; dans le jeu : `reference/v2/lot6_adversaires.png`.
+  **Les finitions de l'été** (13 novembre 2026 ; choix de Christophe sur `reference/v2/ete_options_alice.png` et
+  `ete_options_plage.png`, dessinées par `python3 v2/ete_options.py alice|plage`). **Tenue d'Alice** :
+  `alice2.TENUES` (une tenue = `ETE`, tongs et rayures, et les couleurs de `PAL` qui changent ; `_vetue()`,
+  `frames(…, tenue=)`, `portrait(…, tenue=)`) ; l'été : marinière, jupe rouge, tongs bleues, sans socquettes.
+  Sprites `alice_ete/*` et `alice_ete1/*` (une tong perdue), portrait `hud/portrait_alice_ete` ; `game.js` :
+  `aliceKind(nu)` (la famille de la saison ; `nu` : il lui manque une chaussure ou une tong) et
+  `WHO.alice.portrait` suivent `EP().saison` ; elle a ses deux tongs au départ du voyage, une seule dès
+  qu'elle est cachée, les deux à la scène de fin. La tong-indice (`items.flipflop`) est bleue comme les
+  siennes ; la passagère de la voiture porte la marinière. **Chaise haute** de Théo : `mobilier.chaise_haute()`,
+  décor `lifeguard_chair`. **Deux-roues** (`vehicles.scooter()`, `moto()`, `_pilote()`, `MOTO_COLORS`) :
+  véhicules `scooter_<couleur>`, `moto_<couleur>` de la route (`VEHICLE.scooter`, son klaxon `SFX.meep` par
+  `T.horn` ; `VEHICLE.moto`). **Véhicules garés** : des décors (`parked_car`, `parked_scooter`,
+  `parked_moto` ; `mobilier._gare()` : le dessin de `vehicles.py` sans personne, la couleur tirée de la
+  position), donc obstacle `FOOT`, ombre portée et éditeur sans rien de plus. **Sable** : `nature.sol_sable()`
+  (`SABLE`, sprite `sol/sable`), semé une fois dans le sol par `sandDetails()` (`SAND`, `sandTile()` : le
+  sable plein). **Cultures d'été** : `nature.sol_cultures_ete()` (blé, tournesols, maïs, tomates ; sprite
+  `sol/culture_ete`, mêmes cadres), que `fieldDetails()` plante quand `EP().saison` est l'été. **Vagues** :
+  `shoreLine()` relève une fois par carte (`shoreDots`, vidé par `useMap()`) les points du bord de mer là où
+  la mer touche le sable, et leur normale ; `drawSurf()` trace à chaque image deux lignes d'écume qui montent
+  et se retirent (`WAVE`), d'un seul tracé chacune, dans le repère du monde. **Manège** : `batiments.manege()`
+  reste le dessin entier (ombre, éditeur) ; `manege(partie)` et `manege_cheval(i)` en donnent les morceaux
+  (`MANEGE_PIECES`, sprites `decor/manege_socle|mat|chapiteau|cheval_<i>`) que `drawCarousel()` remonte à
+  chaque image, quatre chevaux tournant autour du mât (`CAROUSEL`) ; sa zone `manege` (la première de la
+  carte, dans la ville) joue sa valse d'orgue (`music.manege()`, fa majeur, le motif de Tecky). **Chenal** :
+  le bassin du village s'ouvre à l'est sur la rivière (coins de mer puis d'eau douce, en langue comme à
+  l'embouchure), franchi par le pont de bois du monde (décor `bridge` en 35 ; 34). Test : `ete_finitions.js`.
+  Je n'ai vu les vagues et le manège qu'en images fixes ; la valse et le klaxon ne sont jugés que par
+  Christophe. **Vaches** : le veau distancé de plus de `COW.calfFar` rattrape sa mère sans attendre, un peu
+  plus vite (`calfHurry`) — c'était le test instable de `cows.js`. Premier jet posé par
   `v2/cote_carte.py`, **gelé depuis** : Christophe retouche la carte dans l'éditeur, c'est
   `cartes/cote.json` qui fait foi (le script refuse d'écraser une carte qui existe ; ses listes ne sont plus
   à jour ; `python3 v2/cote_carte.py --apercu` redessine l'aperçu à partir du fichier). Rien ne dépend de

@@ -8,8 +8,8 @@ function main() {
   const ici = (x, y) => run(`P.x = ${x} * 64; P.y = ${y} * 64;`);
   const jusqua = (cond, max) => { let t = 0; while (!run(cond) && t < max) { step(1); t++; } return t; };
   ok(run('Music.zone') === 'niche' && run('Music.track.id') === 'niche' && !run('Music.swap'), 'à la niche : le thème');
-  ok(run('JSON.stringify(Object.keys(SONGS))') === '["niche","village","campagne","ferme","foret","parc","industrie","cote","port","ville","falaises","plage","berceuse","win","lose"]',
-     'un morceau par zone (les cinq de la côte compris), la berceuse de la fin, la fanfare et la défaite');
+  ok(run('JSON.stringify(Object.keys(SONGS))') === '["niche","village","campagne","ferme","foret","parc","industrie","cote","port","ville","falaises","plage","manege","berceuse","win","lose"]',
+     'un morceau par zone (les six de la côte compris), la berceuse de la fin, la fanfare et la défaite');
   ok(run('MAP.zones.every(z => SONGS[z.music || z.id])'), 'chaque zone de la carte a son morceau');
   ok(run('Object.values(SONGS).every(S => S.ev.every(e => e[0] < S.total && (e[1] === "drums" ? DRUMS[e[2]] : S.inst[e[1]])))'),
      'chaque note a son instrument');

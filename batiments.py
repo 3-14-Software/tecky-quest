@@ -780,50 +780,75 @@ def cabine_plage(couleur):
     return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), sol)
 
 
-def manege():
+MANEGE_ROBES = ("#FFFFFF", "#F7D58A", "#F6C1D6", "#B9E3D2")      # les quatre chevaux de bois
+
+
+def manege(partie=None):
     """Le manège des jardins : un plateau rond, un mât, quatre chevaux de bois sur leurs barres, un chapiteau à
-    quartiers rouges et crème frangé de festons et d'ampoules, un fanion."""
+    quartiers rouges et crème frangé de festons et d'ampoules, un fanion.
+    partie : None, le manège entier à l'arrêt (l'ombre portée, l'éditeur de carte) ; ou un de ses morceaux, dans le
+    même cadre — "socle" (le plateau), "mat", "chapiteau" — entre lesquels le jeu fait tourner les chevaux
+    (manege_cheval() ; game.js : drawCarousel())."""
+    tout = partie is None
     w, h, px, py = 104, 104, 52, 94
     xm, yb = px, py
     rouge, creme, or_ = "#D7332B", "#FFF3D2", "#F2C14E"
     d = _dessin(w, h)
-    d.add(ellipse(xm, yb - 5, 44, 9.5), "#8FA5C8")                                            # le plateau : son chant, son dessus
-    d.add(ellipse(xm, yb - 8.5, 44, 9.5), "#DCE6F4")
-    d.add(ellipse(xm, yb - 8.5, 36, 7), "#C3D2EA", sil=False)
     yh = 40                                                                                  # le bas du chapiteau
-    for x, p in ((xm - 22, 5), (xm + 22, 5)):                                                # les chevaux du fond
-        _cheval(d, x, yb - 13 - p, yh, ("#F6C1D6", "#B9E3D2")[x > xm], petit=True)
-    d.add(rect(xm - 5, yh - 2, 10, yb - yh - 7, 1.5), "#F7E7B8")                             # le mât, ses miroirs
-    for y in (yh + 6, yh + 18, yh + 30):
-        d.add(_pts([(xm, y), (xm + 3, y + 4), (xm, y + 8), (xm - 3, y + 4)]), "#A9D8F2", sil=False, edge=True)
-    for x, c in ((xm - 30, "#FFFFFF"), (xm + 30, "#F7D58A"), (xm - 1, None)):                # les chevaux de devant
-        if c:
+    if tout or partie == "socle":
+        d.add(ellipse(xm, yb - 5, 44, 9.5), "#8FA5C8")                                        # le plateau : son chant, son dessus
+        d.add(ellipse(xm, yb - 8.5, 44, 9.5), "#DCE6F4")
+        d.add(ellipse(xm, yb - 8.5, 36, 7), "#C3D2EA", sil=False)
+    if tout:
+        for x, p in ((xm - 22, 5), (xm + 22, 5)):                                            # les chevaux du fond
+            _cheval(d, x, yb - 13 - p, yh, MANEGE_ROBES[2 + (x > xm)], petit=True)
+    if tout or partie == "mat":
+        d.add(rect(xm - 5, yh - 2, 10, yb - yh - 7, 1.5), "#F7E7B8")                         # le mât, ses miroirs
+        for y in (yh + 6, yh + 18, yh + 30):
+            d.add(_pts([(xm, y), (xm + 3, y + 4), (xm, y + 8), (xm - 3, y + 4)]), "#A9D8F2", sil=False, edge=True)
+    if tout:
+        for x, c in ((xm - 30, MANEGE_ROBES[0]), (xm + 30, MANEGE_ROBES[1])):                # les chevaux de devant
             _cheval(d, x, yb - 9, yh, c)
-    # le chapiteau : un cône à quartiers, puis sa retombée festonnée
-    apex, r = (xm, 9), 48
-    n = 8
-    for k in range(n):
-        a, b = xm - r + 2 * r * k / n, xm - r + 2 * r * (k + 1) / n
-        d.add(_pts([apex, (a, yh), (b, yh)]), (rouge, creme)[k % 2], sil=(k == 0))
-    d.add(_pts([apex, (xm - r, yh), (xm + r, yh)]), "#000000", sil=True, opacity=0)           # (la silhouette du cône entier)
-    d.add(_pts([apex, (xm + r * 0.35, yh), (xm + r, yh)]), "#000000", sil=False, opacity=0.13)
-    pas = 2 * r / n
-    for k in range(n):
-        x = xm - r + k * pas
-        d.add(rect(x, yh, pas, 5.5, 0), (creme, rouge)[k % 2], sil=False)
-        d.add(circle(x + pas / 2, yh + 5.5, pas / 2), (creme, rouge)[k % 2], sil=False)
-    d.raw(line(f"M{xm - r},{yh} L{xm + r},{yh} M{xm - r},{yh} L{xm - r},{yh + 5.5} M{xm + r},{yh} L{xm + r},{yh + 5.5} "
-               f"M{xm},{apex[1]} L{xm - r},{yh} M{xm},{apex[1]} L{xm + r},{yh}", OUTLINE, 0.9))
-    d.raw(path(f"M{xm - r},{yh + 5.5} " + " ".join(f"A{pas / 2:.2f},{pas / 2:.2f} 0 0 0 {xm - r + (k + 1) * pas:.2f},{yh + 5.5}" for k in range(n)))
-          .replace('fill="%F%"', 'fill="none"').replace("/>", f' stroke="{OUTLINE}" stroke-width="0.9"/>'))
-    for k in range(n + 1):                                                                   # les ampoules (elles s'allument le soir)
-        c = circle(xm - r + k * pas, yh + 1, 1.5)
-        d.vitres.append((c, ""))
-        d.add(c, or_, sil=False, edge=True)
-    d.add(rect(xm - 0.8, apex[1] - 9, 1.6, 10, 0.6), "#6A6F7A")                              # le fanion
-    d.add(path(f"M{xm + 0.8},{apex[1] - 8.6} L{xm + 9},{apex[1] - 6.2} L{xm + 0.8},{apex[1] - 3.6} Z"), or_)
+    if tout or partie == "chapiteau":
+        # le chapiteau : un cône à quartiers, puis sa retombée festonnée
+        apex, r = (xm, 9), 48
+        n = 8
+        for k in range(n):
+            a, b = xm - r + 2 * r * k / n, xm - r + 2 * r * (k + 1) / n
+            d.add(_pts([apex, (a, yh), (b, yh)]), (rouge, creme)[k % 2], sil=(k == 0))
+        d.add(_pts([apex, (xm - r, yh), (xm + r, yh)]), "#000000", sil=True, opacity=0)       # (la silhouette du cône entier)
+        d.add(_pts([apex, (xm + r * 0.35, yh), (xm + r, yh)]), "#000000", sil=False, opacity=0.13)
+        pas = 2 * r / n
+        for k in range(n):
+            x = xm - r + k * pas
+            d.add(rect(x, yh, pas, 5.5, 0), (creme, rouge)[k % 2], sil=False)
+            d.add(circle(x + pas / 2, yh + 5.5, pas / 2), (creme, rouge)[k % 2], sil=False)
+        d.raw(line(f"M{xm - r},{yh} L{xm + r},{yh} M{xm - r},{yh} L{xm - r},{yh + 5.5} M{xm + r},{yh} L{xm + r},{yh + 5.5} "
+                   f"M{xm},{apex[1]} L{xm - r},{yh} M{xm},{apex[1]} L{xm + r},{yh}", OUTLINE, 0.9))
+        d.raw(path(f"M{xm - r},{yh + 5.5} " + " ".join(f"A{pas / 2:.2f},{pas / 2:.2f} 0 0 0 {xm - r + (k + 1) * pas:.2f},{yh + 5.5}" for k in range(n)))
+              .replace('fill="%F%"', 'fill="none"').replace("/>", f' stroke="{OUTLINE}" stroke-width="0.9"/>'))
+        for k in range(n + 1):                                                               # les ampoules (elles s'allument le soir)
+            c = circle(xm - r + k * pas, yh + 1, 1.5)
+            d.vitres.append((c, ""))
+            d.add(c, or_, sil=False, edge=True)
+        d.add(rect(xm - 0.8, apex[1] - 9, 1.6, 10, 0.6), "#6A6F7A")                          # le fanion
+        d.add(path(f"M{xm + 0.8},{apex[1] - 8.6} L{xm + 9},{apex[1] - 6.2} L{xm + 0.8},{apex[1] - 3.6} Z"), or_)
     sol = [(xm - 44, yb - 5), (xm + 44, yb - 5)]
     return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), sol)
+
+
+def manege_cheval(i):
+    """Un cheval de bois du manège, seul sur sa longue barre (elle monte se cacher sous le chapiteau) : le jeu en
+    fait tourner quatre autour du mât. Tourné vers la gauche ; les sabots sur l'origine."""
+    w, h, px, py = 36, 72, 21, 66
+    d = _dessin(w, h)
+    _cheval(d, px, py, 4, MANEGE_ROBES[i])
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py))
+
+
+# Les morceaux du manège qui tourne (sprites « decor/<nom> », à la taille du manège)
+MANEGE_PIECES = {"manege_socle": lambda: manege("socle"), "manege_mat": lambda: manege("mat"), "manege_chapiteau": lambda: manege("chapiteau"),
+                 **{f"manege_cheval_{i}": (lambda i: lambda: manege_cheval(i))(i) for i in range(4)}}
 
 
 def _cheval(d, x, y, haut, robe, petit=False):
@@ -1040,6 +1065,7 @@ CATALOGUE = {
     "cabane_pecheur_rouge": lambda: cabane_pecheur("#C2463B"), "cabane_pecheur_bleue": lambda: cabane_pecheur("#3F7FB5"),
     "cabane_pecheur_jaune": lambda: cabane_pecheur("#E6B43C"), "cabane_pecheur_verte": lambda: cabane_pecheur("#57AE9A"),
     "phare": phare, "casino": casino, "manege": manege,
+    **MANEGE_PIECES,
     "cabine_bleue": lambda: cabine_plage(CABINES["bleue"]), "cabine_rouge": lambda: cabine_plage(CABINES["rouge"]),
     "cabine_jaune": lambda: cabine_plage(CABINES["jaune"]), "cabine_verte": lambda: cabine_plage(CABINES["verte"]),
 }
@@ -1094,7 +1120,7 @@ ECH = {"maison_rouge": 1.3, "maison_rouge_pignon": 1.3, "maison_bleue": 1.3, "ma
        "etal_fruits": 1.25, "etal_legumes": 1.25, "etal_fleurs": 1.25, "poulailler": 1.25,
        "etal_poissons": 1.25, "etal_glaces": 1.25, "maison_pecheur": 1.3, "maison_pecheur_pignon": 1.3, "maison_pecheur_verte": 1.3,
        "cabane_pecheur_rouge": 1.25, "cabane_pecheur_bleue": 1.25, "cabane_pecheur_jaune": 1.25, "cabane_pecheur_verte": 1.25,
-       "phare": 1.4, "casino": 1.35, "manege": 1.35, "cabine_bleue": 1.25, "cabine_rouge": 1.25, "cabine_jaune": 1.25, "cabine_verte": 1.25}
+       "phare": 1.4, "casino": 1.35, "manege": 1.35, **{n: 1.35 for n in MANEGE_PIECES}, "cabine_bleue": 1.25, "cabine_rouge": 1.25, "cabine_jaune": 1.25, "cabine_verte": 1.25}
 
 
 def agrandis():

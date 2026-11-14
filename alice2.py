@@ -32,6 +32,10 @@ PAL = dict(skin="#FADFCB", skin_dk="#EDC6AB", hair="#B9976B", hair_hl="#DCC391",
            sock="#FFFFFF", sock_dk="#DDD6CB", rouge="#DB352C", rouge_dk="#B02620")
 
 
+ETE = None     # la tenue d'été : None (le printemps), ou dict(tong=couleur des tongs, rayures=couleur des rayures du
+#                haut ou None) — les couleurs des habits se changent dans PAL (voir tenue())
+
+
 def pose(**kw):
     """pas : avancée du cycle de marche (0..1) ; rebond ; saut : hauteur du saut ; bras : 0 le long du corps, 1 levés ;
     yeux : "fermes" (clignement) ou "rire" ; rire : bouche ouverte ; meche : balancement des cheveux ;
@@ -65,6 +69,8 @@ def _marche(p):
 def _socquette(d, x, fy, haut=3.2, large=2.5):
     """Une socquette blanche, sur le bas de la jambe (haut : sa hauteur), de face et de dos."""
     c = PAL
+    if ETE:                              # en tongs : pas de socquettes
+        return
     d.add(path(f"M{x - large:.2f},{fy - haut:.2f} L{x + large:.2f},{fy - haut:.2f} L{x + large - 0.2:.2f},{fy + 0.4:.2f} "
                f"L{x - large + 0.2:.2f},{fy + 0.4:.2f} Z"), c["sock"], sil=False)
     d.raw(line(f"M{x - large:.2f},{fy - haut:.2f} L{x + large:.2f},{fy - haut:.2f}", c["sock_dk"], 0.6))
@@ -80,8 +86,15 @@ def _pied(d, x, y, s, vue="face", loin=False, nu=False):
         cx, cy, rx, ry = x + s * 0.3, y, 3.1, 2.0
     else:
         cx, cy, rx, ry = x + s * 0.5, y, 3.5, 2.1
-    if nu:                               # le pied nu : la peau, et deux petits traits pour les orteils
+    if nu or ETE:                        # le pied nu : la peau, et deux petits traits pour les orteils
+        if ETE and not nu:               # la tong : une semelle qui dépasse sous le pied
+            d.add(ellipse(cx, cy + 0.9, rx + 0.7, ry - 0.2), ETE["tong"])
         d.add(ellipse(cx, cy, rx, ry), c["skin_dk"] if loin or vue == "dos" else c["skin"])
+        if ETE and not nu and vue != "dos":      # et sa bride en V, entre les orteils
+            bx = x + s * 1.5 if vue == "face" else x + 4.0
+            d.raw(line(f"M{cx - rx * 0.75:.2f},{cy - 0.9:.2f} L{bx:.2f},{cy + 0.9:.2f} L{cx + rx * 0.75:.2f},{cy - 0.9:.2f}"
+                       if vue == "face" else f"M{cx - 2.2:.2f},{cy - 1.4:.2f} L{bx:.2f},{cy + 0.8:.2f}", ETE["tong"], 0.9))
+            return
         if vue != "dos":
             ox = x + s * 1.3 if vue == "face" else x + 4.2
             d.raw(line(f"M{ox - 0.9:.2f},{y + 0.5:.2f} L{ox - 0.9:.2f},{y + 1.7:.2f} M{ox + 0.7:.2f},{y + 0.6:.2f} L{ox + 0.7:.2f},{y + 1.7:.2f}",
@@ -138,6 +151,9 @@ def _habits(d, Y, large=True, leves=False, col=True):
     d.add(haut, c["shirt"])
     d.add(path(f"M14,{Y(44.2):.2f} Q{X0:.2f},{Y(45.6):.2f} 46,{Y(44.2):.2f} L46,{Y(49):.2f} L14,{Y(49):.2f} Z"),
           c["shirt_dk"], sil=False, clip="haut", opacity=0.7)
+    if ETE and ETE.get("rayures"):       # la marinière : des rayures en travers du haut
+        d.raw('<g clip-path="url(#haut)">' + "".join(
+            line(f"M14,{Y(v):.2f} Q{X0:.2f},{Y(v + 1.0):.2f} 46,{Y(v):.2f}", ETE["rayures"], 1.0) for v in (35.6, 38.4, 41.2, 44.0)) + "</g>")
     if large and col:        # le col : le bord de l'encolure, et sa bande un peu plus foncée
         d.raw(f'<g clip-path="url(#haut)">' + line(f"M{X0 - 4.6:.2f},{Y(32.0):.2f} Q{X0:.2f},{Y(38.0):.2f} {X0 + 4.6:.2f},{Y(32.0):.2f}",
                                                     c["shirt_dk"], 1.5) + "</g>")
@@ -299,7 +315,7 @@ def profil(p=None):
         fx, fy = X0 + k * 4.6, SOL - 1.8 - lever - p["saut"]
         d.add(_membre(X0, Y(54), fx, fy, 5.0, 4.6), couleur)
         nu = p["nu"] and not loin                        # de profil : le pied nu est celui qu'on voit le mieux
-        if not nu:                                       # la socquette, sur le bas de la jambe
+        if not nu and not ETE:                           # la socquette, sur le bas de la jambe
             h = 0.22
             d.add(_membre(fx + (X0 - fx) * h, fy + (Y(54) - fy) * h, fx, fy + 0.3, 4.7, 4.6), c["sock_dk"] if loin else c["sock"], sil=False)
         _pied(d, fx, fy, 1, "profil", loin, nu)
@@ -399,15 +415,36 @@ def a_happy(view):
 ANIMS = {"idle": (a_idle, 6), "walk": (a_walk, 13), "happy": (a_happy, 8)}      # nom : (fonction, images par seconde)
 
 
-def frames(anim, view, nu=False):
+# Les tenues des autres saisons : (ETE, couleurs de PAL qui changent). L'été, choisi par Christophe sur
+# reference/v2/ete_options_alice.png (13 novembre 2026) : marinière, jupe rouge, tongs bleues, sans socquettes.
+TENUES = {"ete": (dict(tong="#2F6FC0", rayures="#2B4C8C"), dict(shirt="#FFFFFF", shirt_dk="#DDE3EC", skirt="#E0483C", skirt_dk="#B8322A"))}
+
+
+def _vetue(tenue, dessine):
+    """Appelle dessine() avec Alice dans cette tenue (None : celle du printemps), puis rend ses habits du printemps."""
+    global ETE
+    if not tenue:
+        return dessine()
+    garde = dict(PAL)
+    ETE = TENUES[tenue][0]
+    PAL.update(TENUES[tenue][1])
+    try:
+        return dessine()
+    finally:
+        ETE = None
+        PAL.clear()
+        PAL.update(garde)
+
+
+def frames(anim, view, nu=False, tenue=None):
     """SVG des images d'une animation. nu : Alice a un pied nu (les sprites « alice1 » du jeu : c'est ainsi que
     Tecky la retrouve, avant qu'elle remette la chaussure qu'il lui rapporte)."""
-    return [image(view, dict(p, nu=nu)) for p in ANIMS[anim][0](view)]
+    return _vetue(tenue, lambda: [image(view, dict(p, nu=nu)) for p in ANIMS[anim][0](view)])
 
 
-def portrait(p=None):
+def portrait(p=None, tenue=None):
     """Le dessin de face, non réduit, pour le portrait (hud.py) : cadre de 60 x 76, le visage autour de (30, 21)."""
-    return devant(p or pose())
+    return _vetue(tenue, lambda: devant(p or pose()))
 
 
 if __name__ == "__main__":

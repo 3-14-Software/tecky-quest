@@ -11,7 +11,7 @@ function main() {
   run('EPISODES[1].chantier = false; audioOn(); episode = "ete"; toTitle(); resetProgress(); episode = "ete";');
   // 1. nouvelle aventure : la cinématique, sur la carte de départ
   run('newGame("aventure");'); step(2);
-  ok(run('state') === 'trip' && run('MAP.id') === 'monde' && run('trip.car.name') === 'sport_vide' && run('!alice.hidden') && run('alice.kind') === 'alice'
+  ok(run('state') === 'trip' && run('MAP.id') === 'monde' && run('trip.car.name') === 'sport_vide' && run('!alice.hidden') && run('alice.kind') === 'alice_ete'
      && run('cars.length') === 0 && !run('loadSave()'),
      'nouvelle aventure d\'été : la cinématique commence dans le monde, la voiture du papa garée au bas du chemin de la niche');
   ok(jusqua('state === "dialog"', 900) && run('dialog.lines[0].who') === 'papa' && run('dialog.lines.length') === 3
@@ -33,7 +33,7 @@ function main() {
   run('vus = []; render(); drawVillager = dv0;');
   ok(run('vus.includes("papa")'), 'une fois garés, le papa est descendu');
   advanceDialog();
-  ok(jusqua('state === "play"', 400) && run('trip') === null && run('alice.hidden') && run('cars.length') === 3 && run('P.mode') === 'free'
+  ok(jusqua('state === "play"', 400) && run('trip') === null && run('alice.hidden') && run('cars.length') === 5 && run('P.mode') === 'free'
      && run('(() => { const s = loadSave(); return !!s && s.ep === "ete" && s.carte === "cote" && Math.abs(s.x - MAP.start[0]) < 1; })()'),
      'Alice file se cacher : Tecky a la main sur le parking, la partie y est enregistrée');
   // 2. le papa salue comme un villageois ; à pied, le tunnel est pour les voitures
@@ -55,7 +55,7 @@ function main() {
   run('newGame("aventure");'); step(30); run('pressed.ok = true'); step(1);
   ok(run('state') === 'trip', 'la première seconde, on ne passe pas la scène');
   step(45); run('pressed.ok = true'); step(1);
-  ok(run('state') === 'play' && run('MAP.id') === 'cote' && run('trip') === null && run('alice.hidden') && run('Math.abs(P.x - MAP.start[0]) < 1') && run('cars.length') === 3,
+  ok(run('state') === 'play' && run('MAP.id') === 'cote' && run('trip') === null && run('alice.hidden') && run('Math.abs(P.x - MAP.start[0]) < 1') && run('cars.length') === 5,
      'ensuite, un bouton la passe : Tecky est sur le parking');
   run('newGame("aventure");'); step(20); run('saveGame(); var S = loadSave();');
   ok(run('S.carte') === 'monde' && run('S.ep') === 'ete', 'une partie enregistrée pendant la scène est encore dans le monde');
@@ -65,7 +65,7 @@ function main() {
   // 5. les indices de l'été, la cachette d'Alice, la fin
   run('episode = "ete"; newGame("aventure");'); step(70); run('pressed.ok = true'); step(1);
   run('cars = []; dogs = []; P.inv = 99;');
-  ok(run('state') === 'play' && run('clueNames().join()') === 'hat,spade,flipflop' && run('arrowTarget().n') === 'hat' && run('alice.hidden') && run('alice.kind') === 'alice'
+  ok(run('state') === 'play' && run('clueNames().join()') === 'hat,spade,flipflop' && run('arrowTarget().n') === 'hat' && run('alice.hidden') && run('alice.kind') === 'alice_ete1'
      && run('Math.abs(alice.x - MAP.alice[0]) < 1') && run('MAP.alice[0]') > run('90 * TS') && run('MAP.alice[1]') < run('MAP.ending.alice[1] - 15 * TS'),
      'en été : trois autres indices (chapeau, pelle, tong), la flèche montre le chapeau ; Alice est cachée tout en haut des falaises, bien au-dessus du phare');
   const ramasser = n => { run(`{ const it = items.find(i => i.n === "${n}"); P.x = it.x; P.y = it.y + 8; P.mode = "free"; }`); step(3); };

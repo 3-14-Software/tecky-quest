@@ -576,6 +576,88 @@ def sol_cultures():
     return out
 
 
+CULTURES_ETE = ("ble", "tournesols", "mais", "tomates")          # les cultures de l'été, deux images chacune
+
+
+def sol_cultures_ete():
+    """Les cultures de l'été, dans l'ordre de CULTURES_ETE : blé mûr, tournesols, maïs, tomates. Mêmes cadres et même
+    pied que sol_cultures()."""
+    c = SOL_T / 2
+    ombre = lambda rx: f'<ellipse cx="{c + 0.7}" cy="{c + 0.7}" rx="{rx}" ry="{rx * 0.42:.2f}" fill="#7A5230" opacity="0.55"/>'
+    out = []
+    for tiges in (((-112, 4.6), (-90, 5.2), (-68, 4.4)), ((-120, 4.0), (-98, 5.0), (-78, 5.2), (-56, 4.0))):      # blé mûr
+        t = ombre(2.4)
+        for a, L in tiges:
+            r = math.radians(a)
+            x, y = c + L * math.cos(r), c + 0.4 + L * math.sin(r)
+            t += f'<path d="M{c:.2f},{c + 0.4:.2f} L{x:.2f},{y:.2f}" stroke="#C9972E" stroke-width="0.55" stroke-linecap="round"/>'
+            t += (f'<ellipse cx="{x:.2f}" cy="{y - 0.5:.2f}" rx="0.75" ry="1.5" transform="rotate({a + 90:.0f} {x:.2f} {y - 0.5:.2f})" '
+                  f'fill="#F2CB5A" stroke="#A8761E" stroke-width="0.4"/>')
+        out.append(_svg(SOL_T, t))
+    for r0, tourne in ((2.5, 0), (2.1, 25)):                                                                # tournesols
+        t = ombre(2.6) + _feuille(c, c + 0.8, -165, 3.0, 1.1, "#5DAE4E", "#2F6B3A", "#9BD680", 0.4) + _feuille(c, c + 0.8, -15, 3.0, 1.1, "#5DAE4E", "#2F6B3A", "#9BD680", 0.4)
+        y = c - 1.6
+        for i in range(9):
+            a = math.radians(i * 40 + tourne)
+            t += (f'<ellipse cx="{c + r0 * 0.78 * math.cos(a):.2f}" cy="{y + r0 * 0.78 * math.sin(a):.2f}" rx="{r0 * 0.5:.2f}" ry="{r0 * 0.28:.2f}" '
+                  f'transform="rotate({i * 40 + tourne} {c + r0 * 0.78 * math.cos(a):.2f} {y + r0 * 0.78 * math.sin(a):.2f})" fill="#F7C933" stroke="#B5801A" stroke-width="0.35"/>')
+        t += f'<circle cx="{c}" cy="{y}" r="{r0 * 0.5:.2f}" fill="#7A4A22" stroke="#4E2C12" stroke-width="0.4"/><circle cx="{c - 0.3}" cy="{y - 0.3}" r="{r0 * 0.2:.2f}" fill="#A06A38"/>'
+        out.append(_svg(SOL_T, t))
+    for feuilles in (((-150, 4.2), (-30, 4.2), (-118, 4.8), (-62, 4.8)), ((-160, 3.8), (-24, 4.4), (-110, 5.0), (-70, 4.4))):   # maïs
+        t = ombre(2.6) + "".join(_feuille(c, c + 0.4, a, L, 0.9, "#6DBB52", "#2F6B3A", "#B4E48C", 0.4) for a, L in feuilles)
+        t += (f'<ellipse cx="{c + 0.2}" cy="{c - 2.2}" rx="1.0" ry="2.1" fill="#F4D24A" stroke="#A8761E" stroke-width="0.4"/>'
+              f'<path d="M{c - 0.5},{c - 0.6} Q{c + 0.2},{c - 2.6} {c + 1.0},{c - 0.6} Z" fill="#8FD46A" stroke="#2F6B3A" stroke-width="0.35"/>')
+        out.append(_svg(SOL_T, t))
+    for fruits in (((-1.9, -1.0), (1.6, -1.9), (0.3, 0.3)), ((-1.4, -2.0), (1.9, -0.6), (-0.4, 0.2), (0.6, -3.0))):  # tomates
+        t = ombre(3.0) + "".join(_feuille(c, c + 0.4, a, 3.8, 1.5, "#4FA84C", "#2F6B3A", "#8ED278", 0.4) for a in (-155, -90, -25))
+        for dx, dy in fruits:
+            t += (f'<circle cx="{c + dx}" cy="{c + dy}" r="1.15" fill="#E2412E" stroke="#8E2018" stroke-width="0.4"/>'
+                  f'<circle cx="{c + dx - 0.35}" cy="{c + dy - 0.4}" r="0.35" fill="#FFFFFF" opacity="0.7"/>')
+        out.append(_svg(SOL_T, t))
+    return out
+
+
+SABLE = ("etoile", "coquille", "coquille2", "algue", "galet", "galet2", "bois", "rides", "rides2", "trou")
+
+
+def sol_sable():
+    """Ce que la mer a laissé sur le sable (le jeu le sème une fois dans le sol, comme les cailloux de la lande), dans
+    l'ordre de SABLE : une étoile de mer, deux éclats de coquille, une algue, deux galets, un bois flotté, deux rides
+    de sable, un petit trou de crabe."""
+    c = SOL_T / 2
+    om = "#C9A860"
+    out = []
+    pts = []
+    for i in range(10):                                                                                     # étoile de mer
+        a, r = math.radians(i * 36 - 90), (3.6 if i % 2 == 0 else 1.5)
+        pts.append(f"{c + r * math.cos(a):.2f},{c + r * math.sin(a) * 0.8:.2f}")
+    out.append(_svg(SOL_T, f'<polygon points="{" ".join(pts)}" transform="translate(0.5 0.6)" fill="{om}"/>'
+                           f'<polygon points="{" ".join(pts)}" fill="#F08A5A" stroke="#B4552E" stroke-width="0.5" stroke-linejoin="round"/>'
+                           f'<circle cx="{c}" cy="{c}" r="0.6" fill="#F9B48C"/>'))
+    for teinte, bord, rot in (("#FBF3E4", "#B9A48A", -20), ("#F6C9C0", "#B8847A", 35)):                      # éclats de coquille
+        out.append(_svg(SOL_T, f'<g transform="rotate({rot} {c} {c})"><path d="M{c - 2.6},{c + 1} Q{c},{c - 3.6} {c + 2.6},{c + 1} Q{c},{c + 2} {c - 2.6},{c + 1} Z" '
+                               f'fill="{om}" transform="translate(0.5 0.6)"/><path d="M{c - 2.6},{c + 1} Q{c},{c - 3.6} {c + 2.6},{c + 1} Q{c},{c + 2} {c - 2.6},{c + 1} Z" '
+                               f'fill="{teinte}" stroke="{bord}" stroke-width="0.45"/>'
+                               f'<path d="M{c},{c + 1.2} L{c},{c - 1.6} M{c},{c + 1.2} L{c - 1.3},{c - 0.9} M{c},{c + 1.2} L{c + 1.3},{c - 0.9}" stroke="{bord}" stroke-width="0.3" fill="none"/></g>'))
+    out.append(_svg(SOL_T, "".join(_feuille(c - 0.6, c + 1.4, a, L, 0.8, "#5E9A5A", "#35663A", None, 0.4) for a, L in ((-150, 3.6), (-100, 4.6), (-48, 4.0), (-10, 3.0)))))
+    for rx, ry, teinte, bord in ((2.2, 1.4, "#D9D4CA", "#8D8577"), (1.5, 1.0, "#BFC4CA", "#727981")):          # galets
+        out.append(_svg(SOL_T, f'<ellipse cx="{c + 0.5}" cy="{c + 0.7}" rx="{rx}" ry="{ry}" fill="{om}"/>'
+                               f'<ellipse cx="{c}" cy="{c}" rx="{rx}" ry="{ry}" fill="{teinte}" stroke="{bord}" stroke-width="0.5"/>'
+                               f'<ellipse cx="{c - rx * 0.25:.2f}" cy="{c - ry * 0.3:.2f}" rx="{rx * 0.4:.2f}" ry="{ry * 0.28:.2f}" fill="#FFFFFF" opacity="0.7"/>'))
+    out.append(_svg(SOL_T, f'<path d="M{c - 4},{c + 1.2} Q{c - 1},{c - 0.6} {c + 4},{c - 0.8}" stroke="{om}" stroke-width="2" stroke-linecap="round" fill="none" transform="translate(0.4 0.7)"/>'
+                           f'<path d="M{c - 4},{c + 1.2} Q{c - 1},{c - 0.6} {c + 4},{c - 0.8}" stroke="#8A6A48" stroke-width="2.3" stroke-linecap="round" fill="none"/>'
+                           f'<path d="M{c - 4},{c + 1.2} Q{c - 1},{c - 0.6} {c + 4},{c - 0.8}" stroke="#C4A27A" stroke-width="1.4" stroke-linecap="round" fill="none"/>'
+                           f'<path d="M{c + 0.6},{c - 0.4} l1.6,-1.8" stroke="#8A6A48" stroke-width="0.9" stroke-linecap="round"/>'))
+    for dy in (0.0, 0.6):                                                                                   # rides de sable
+        out.append(_svg(SOL_T, "".join(
+            f'<path d="M{c - 4.4 + k * 0.6},{c - 2 + k * 2 + dy} q2.2,-1.1 4.4,0 t4.4,0" stroke="{"#D9B870" if k % 2 else "#FBE7B0"}" stroke-width="0.55" '
+            f'stroke-linecap="round" fill="none" opacity="0.9"/>' for k in range(3))))
+    out.append(_svg(SOL_T, f'<ellipse cx="{c}" cy="{c}" rx="1.5" ry="0.9" fill="#8E7240"/><ellipse cx="{c - 0.2}" cy="{c - 0.2}" rx="0.9" ry="0.5" fill="#5E4A28"/>'
+                           + "".join(f'<circle cx="{c + dx}" cy="{c + dy}" r="0.45" fill="#F7E2A6" stroke="{om}" stroke-width="0.25"/>'
+                                     for dx, dy in ((2.2, 0.6), (2.9, -0.4), (-2.3, 0.9), (1.4, 1.5), (-1.6, -1.2)))))
+    return out
+
+
 def assise(plein):
     """La rangée où une silhouette (tableau de booléens) est assise sur le sol, vue du côté où tombe son ombre : en
     remontant depuis son point le plus bas, la première rangée où son bord droit cesse de s'écarter (il devient un

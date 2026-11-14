@@ -576,6 +576,9 @@ const SOUNDS = {
     for (const [at, d] of [[0, 0.12], [0.17, 0.27]])
       for (const f of [392, 494]) tone(f * k, d, 'sawtooth', 0.034, { at, lp: 2400, a: 0.008, h: 0.8 });
   },
+  meep(k) {                            // le petit klaxon d'un scooter : « mip mip », aigu et nasillard
+    for (const at of [0, 0.14]) { tone(880 * k, 0.09, 'square', 0.022, { at, lp: 3200, a: 0.004, h: 0.7 }); tone(1108 * k, 0.09, 'square', 0.014, { at, lp: 3200, a: 0.004, h: 0.7 }); }
+  },
   boing() {                            // un coup dans un gros ballon
     tone([185, 90], 0.09, 'sine', 0.1); noise(0.04, 0.035, 900);
     tone([300, 620, 430], 0.17, 'sine', 0.04, { at: 0.01 });
@@ -1045,6 +1048,7 @@ const AMB_EVENTS = {
   ville: [['bird', 5, 11, 'jour'], ['gull', 14, 30, 'jour'], ['bike', 22, 40, 'jour'], ['owl', 16, 30, 'soir']],
   falaises: [['gust', 7, 16], ['gull', 5, 12, 'jour']],
   plage: [['gull', 3.5, 9, 'jour']],
+  manege: [['bird', 7, 14, 'jour'], ['owl', 16, 30, 'soir']],            // (le manège : son orgue, c'est sa musique)
   bocage: [['bird', 4, 9, 'jour'], ['cuckoo', 30, 60, 'jour']],
 };
 function ambSound(name) {
@@ -1342,6 +1346,7 @@ function buildChunk(cx, cy, n, img, k, len, mask) {
   woodDetails(g, cx, cy, n, x0, y0, k);
   fieldDetails(g, cx, cy, n, x0, y0, k);
   heathDetails(g, cx, cy, n, x0, y0, k);
+  sandDetails(g, cx, cy, n, x0, y0, k);
   waterDetails(g, cx, cy, n, x0, y0, k);
   const m = groundShadows(g, x0, y0, w, k, len || 1, mask);
   return { c, x: x0, y: y0, w, h: w, k, len, m };
@@ -1479,6 +1484,70 @@ function heathDetails(g, cx, cy, n, x0, y0, k) {
     if (heathFree(x, y)) put('sol/caillou', P[2][0] + Math.floor(hash3(tx, ty, 253) * P[2][1]), x, y);
   }
 }
+/* Ce que la mer laisse sur le sable, peint une fois dans le sol d'après la position (« sol/sable », nature.sol_sable() :
+   0 étoile de mer, 1 et 2 éclats de coquille, 3 algue, 4 et 5 galets, 6 bois flotté, 7 et 8 rides de sable, 9 trou de
+   crabe), seulement dans les tuiles de sable plein (sandTile()). SAND.pick : les images, répétées selon leur poids. */
+const SAND = { lone: 0.3, pick: [7, 8, 7, 8, 7, 4, 5, 4, 1, 2, 1, 3, 3, 9, 9, 6, 0], twin: 0.25 };
+function sandTile(tx, ty) {                // la tuile est du sable plein (ses quatre coins)
+  if (!MAP.sand.length) return false;
+  const W1 = MAP.w + 1, c = (a, b) => MAP.sand[clamp(b, 0, MAP.h) * W1 + clamp(a, 0, MAP.w)];
+  return !!(c(tx, ty) && c(tx + 1, ty) && c(tx, ty + 1) && c(tx + 1, ty + 1));
+}
+function sandDetails(g, cx, cy, n, x0, y0, k) {
+  if (!MAP.sand.length) return;
+  const put = chunkPut(g, x0, y0, k), K = SAND.pick;
+  for (let ty = cy - 1; ty < cy + n + 1; ty++) for (let tx = cx - 1; tx < cx + n + 1; tx++) {
+    if (!sandTile(tx, ty) || hash3(tx, ty, 300) >= SAND.lone) continue;
+    const x = (tx + 0.2 + 0.6 * hash3(tx, ty, 301)) * TS, y = (ty + 0.2 + 0.6 * hash3(tx, ty, 302)) * TS;
+    put('sol/sable', K[Math.floor(hash3(tx, ty, 303) * K.length)], x, y);
+    if (hash3(tx, ty, 304) < SAND.twin)    // parfois un second, tout près (un galet à côté d'une coquille)
+      put('sol/sable', K[5 + Math.floor(hash3(tx, ty, 305) * 7)], x + (hash3(tx, ty, 306) - 0.5) * 30, y + 6 + hash3(tx, ty, 307) * 8);
+  }
+}
+/* Les vagues : le long du bord de mer (là où la mer touche le sable), une ligne d'écume monte sur le sable et se
+   retire, une seconde, plus pâle, la suit. shoreLine() relève une fois par carte les points du bord dessiné (là où
+   la présence de la mer passe à 0,5) et leur normale, tournée vers le sable ; drawSurf() trace à chaque image un
+   petit trait par point visible, décalé le long de la normale (WAVE.run : jusqu'où dans la mer, jusqu'où sur le
+   sable), d'un seul tracé. La phase glisse le long de la côte : la vague n'arrive pas partout en même temps. */
+const WAVE = { step: 12, run: [-10, 11], period: 4.2, lag: 0.16, slide: 0.0007, w: 3, alpha: 0.75, after: 0.3 };
+let shoreDots = null;
+function shoreLine() {
+  shoreDots = [];
+  if (!MAP.sea.length || !MAP.sand.length) return shoreDots;
+  const W1 = MAP.w + 1, S = WAVE.step, e = 4, seen = new Set();
+  const sea = (x, y) => cornerVal(MAP.sea, x, y), has = (A, i, j) => A[clamp(j, 0, MAP.h) * W1 + clamp(i, 0, MAP.w)];
+  for (let ty = 0; ty < MAP.h; ty++) for (let tx = 0; tx < MAP.w; tx++) {
+    let m = 0, a = 0;
+    for (const [i, j] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { m += has(MAP.sea, tx + i, ty + j); a += has(MAP.sand, tx + i, ty + j); }
+    if (!m || !a || m + a < 4) continue;                    // une tuile où la mer touche le sable, et rien d'autre
+    for (let v = S / 2; v < TS; v += S) for (let u = S / 2; u < TS; u += S) {
+      const x = tx * TS + u, y = ty * TS + v, gx = sea(x + e, y) - sea(x - e, y), gy = sea(x, y + e) - sea(x, y - e), l = Math.hypot(gx, gy);
+      if (l < 0.01) continue;
+      const d = (sea(x, y) - 0.5) / (l / (2 * e));            // distance au bord, le long de la pente
+      if (Math.abs(d) > S * 0.6) continue;
+      const nx = -gx / l, ny = -gy / l;                       // vers le sable
+      const bx = x + nx * d, by = y + ny * d, key = Math.round(bx / 12) + ',' + Math.round(by / 12);
+      if (seen.has(key)) continue;                            // (un seul point par tronçon du bord : sinon l'écume se dédouble)
+      seen.add(key); shoreDots.push([bx, by, nx, ny]);
+    }
+  }
+  return shoreDots;
+}
+function drawSurf(vx, vy, time) {
+  const dots = shoreDots || shoreLine();
+  if (!dots.length) return;
+  const [lo, hi] = WAVE.run, L = 9;
+  for (const [lag, alpha, w] of [[WAVE.lag, WAVE.after, WAVE.w - 1], [0, WAVE.alpha, WAVE.w]]) {
+    ctx.beginPath();
+    for (const [x, y, nx, ny] of dots) {
+      if (x < vx - 24 || x > vx + VW + 24 || y < vy - 24 || y > vy + VH + 24) continue;
+      const s = Math.sin((time / WAVE.period - lag + (x + y * 0.6) * WAVE.slide) * 6.283), o = lo + (hi - lo) * (0.5 + 0.5 * s);
+      const px = x + nx * o, py = y + ny * o;                 // (le repère est déjà celui du monde)
+      ctx.moveTo(px + ny * L, py - nx * L); ctx.lineTo(px - ny * L, py + nx * L);
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,' + alpha + ')'; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.stroke();
+  }
+}
 /* Les cultures du champ, peintes une fois dans le sol : des rangs de plants (« sol/culture », deux images par
    culture) sur les crêtes des buttes dessinées par la tuile (MAP.furrows, tiles.py : SILLONS). La culture change
    toutes les FIELD.band buttes, la même d'un bout à l'autre du rang ; un plant manque de temps en temps. Les tuiles
@@ -1507,7 +1576,7 @@ function fieldDetails(g, cx, cy, n, x0, y0, k) {
           const u = soften(px / TS), v = soften(py / TS);
           if (c(1) * (1 - u) * (1 - v) + c(2) * u * (1 - v) + c(4) * (1 - u) * v + c(8) * u * v < FIELD.inside) continue;
         }
-        put('sol/culture', crop * 2 + (hash3(q, rang, 173) < 0.5 ? 0 : 1), tx * TS + px, ty * TS + py + FIELD.dy);
+        put(EP().saison === 'ete' ? 'sol/culture_ete' : 'sol/culture', crop * 2 + (hash3(q, rang, 173) < 0.5 ? 0 : 1), tx * TS + px, ty * TS + py + FIELD.dy);
       }
     });
   }
@@ -1772,7 +1841,8 @@ const FOOT = {
   // la côte : poissonnerie, marchand de glaces, maisons et cabanes de pêcheurs
   stall_fish: [-52, -24, 52, 0], stall_ice: [-52, -24, 52, 0], house_fisher: [-72, -72, 72, -2], hut_fisher: [-50, -50, 54, -2],
   // le phare, le casino, le manège, les cabines de plage (le cargo et les bateaux de pêche sont sur l'eau : pas de collision)
-  lighthouse: [-46, -30, 46, -2], casino: [-148, -92, 144, -2], carousel: [-86, -30, 86, -2], beach_hut: [-28, -28, 34, -2], sandcastle: [-48, -24, 60, -2],
+  lighthouse: [-46, -30, 46, -2], casino: [-148, -92, 144, -2], carousel: [-86, -30, 86, -2], beach_hut: [-28, -28, 34, -2], sandcastle: [-48, -24, 60, -2], lifeguard_chair: [-36, -22, 44, -2],
+  parked_car: [-58, -22, 58, -2], parked_scooter: [-40, -14, 40, -2], parked_moto: [-42, -14, 42, -2],
   // le porche du parking, au bout de la route de la côte (lisiere.porche) : tout le bâtiment, bouche comprise
   porche: [-142, -372, 152, 8],
   bench: [-40, -20, 40, 0], mailbox: [-7, -6, 7, 0], hedge: [0, -36, 64, 0], flower_pot: [-14, -18, 14, 0],
@@ -2171,7 +2241,7 @@ function useMap(id) {
   EDGE_DECOR = edgeDecor(); EDGE_SOLIDS = edgeSolids();
   ZONES = zonesOf(); LANDMARKS = MAP.landmarks;
   buildGround();
-  waterTiles = null; mapImg = null; walkGrid = null; distField = null; puddles = null; leafTrees = null; zone = null;
+  waterTiles = null; shoreDots = null; mapImg = null; walkGrid = null; distField = null; puddles = null; leafTrees = null; zone = null;
 }
 /* Nouvelle partie : Tecky, l'état des quêtes, les compteurs ; puis les habitants de la carte courante (resetWorld,
    qui sert aussi à chaque changement de carte : travel()). */
@@ -2201,8 +2271,8 @@ function resetWorld() {
     return Object.assign({ x, y, n }, decorLook(n, x, y));
   });
   solids.push(...EDGE_SOLIDS);                       // les buttes des tunnels, au bord de la carte
-  // (au printemps, un pied nu : elle a perdu une chaussure en chemin ; les autres épisodes : ses deux chaussures)
-  alice = new Actor(episode === EPISODES[0].id ? 'alice1' : 'alice', MAP.alice[0], MAP.alice[1]);
+  // (au printemps, un pied nu : elle a perdu une chaussure en chemin ; en été, une tong — l'indice de la plage)
+  alice = new Actor(aliceKind(episode === EPISODES[0].id || EP().saison === 'ete'), MAP.alice[0], MAP.alice[1]);
   alice.fps = Object.assign({}, FPS, MAP.aliceFps);
   alice.found = false;
   alice.hidden = true;               // dans la cabane jusqu'aux trois indices
@@ -2285,9 +2355,12 @@ function travel(vers, arrivee) {
 /* ------------------------------------------------------------------ dialogues */
 // Visages du portrait de Tecky (hud.tecky_portrait) : le champ face d'une réplique
 const FACE = { calme: 0, clin: 1, parle: 2, ko: 3, inquiet: 4, surpris: 5, fier: 6 };
+// Les dessins d'Alice : sa tenue est celle de la saison (alice2.TENUES ; l'été : marinière et tongs), et il lui manque
+// une chaussure — ou une tong — tant que Tecky ne la lui a pas rapportée (nu).
+const aliceKind = nu => (EP().saison === 'ete' ? 'alice_ete' : 'alice') + (nu ? '1' : '');
 const WHO = {
   tecky: { get name() { return txt('noms.tecky'); }, portrait: 'hud/portrait_tecky' },      // ses visages : FACE
-  alice: { get name() { return txt('noms.alice'); }, portrait: 'hud/portrait_alice' },
+  alice: { get name() { return txt('noms.alice'); }, get portrait() { return EP().saison === 'ete' ? 'hud/portrait_alice_ete' : 'hud/portrait_alice'; } },
   farmer: { get name() { return txt('noms.farmer'); }, portrait: 'hud/portrait_farmer' },
   postman: { get name() { return txt('noms.postman'); }, portrait: 'hud/portrait_postman' },
   neighbor: { get name() { return txt('noms.neighbor'); }, portrait: 'hud/portrait_neighbor' },
@@ -2491,7 +2564,9 @@ function doBark() {
    Les chiens sont aussi écartés de la route. */
 const VEHICLE = { car: { len: 116, spd: 215, pitch: 1.15 }, van: { len: 146, spd: 185, pitch: 1 },
                   bus: { len: 240, spd: 140, pitch: 0.75 },
-                  sport: { len: 158, spd: 250, pitch: 1.3 } };      // la voiture du papa d'Alice (vehicles.sport())
+                  sport: { len: 158, spd: 250, pitch: 1.3 },
+                  // les deux-roues de la côte : le scooter a son petit klaxon (SFX.meep), la moto un klaxon grave
+                  scooter: { len: 76, spd: 170, pitch: 1.25, horn: 'meep' }, moto: { len: 84, spd: 245, pitch: 0.85 } };      // la voiture du papa d'Alice (vehicles.sport())
 for (const n in VEHICLE) VEHICLE[n].len = Math.round(VEHICLE[n].len * (MAP.vehicleScale[n] || 1));   // (longueurs du dessin d'origine ; vehicles.py : ECH)
 const TRAFFIC = { gap: 60, accel: 260, brake: 900, honk: 300, knock: 950, look: 230,
   // route sans issue (MAP.traffic.end : la côte) — porch : de combien un véhicule s'enfonce sous le porche avant de
@@ -2560,7 +2635,7 @@ function updateVehicle(v, dt) {
   if (P.mode === 'ko' || state !== 'play') return;
   const ahead = (P.x - v.x) * v.dir;
   if (!cw && inLane(v, P.y) && ahead > 0 && ahead < half + TRAFFIC.honk && v.v > 40 && v.honkT <= 0) {
-    SFX.honk(v.T.pitch, v); v.honkT = 2.5;
+    SFX[v.T.horn || 'honk'](v.T.pitch, v); v.honkT = 2.5;
   }
   const mid = (MAP.traffic.road[0] + MAP.traffic.road[1]) / 2;
   if (!cw && inLane(v, P.y) && Math.abs(P.x - v.x) < half + 10 && v.v > 30 && P.bumpT <= 0) {
@@ -2698,7 +2773,7 @@ function updateHen(h, dt) {
    (« Meuh ! »). Un aboiement les fait meugler et s'éloigner au petit trot (le veau suit sa mère). Ce sont des obstacles :
    une boîte de `solids` (box) déplacée avec elles, vidée le temps de leur propre pas (cowStep) ; elles ne marchent
    jamais sur Tecky. Rien n'est sauvegardé. */
-const COW = { roam: 150, spd: 38, trot: 130, trotT: 1.5, look: 200, moo: [9, 20], hear: 520, half: 48, calfHalf: 32, depth: 16 };
+const COW = { roam: 150, spd: 38, trot: 130, trotT: 1.5, look: 200, moo: [9, 20], hear: 520, half: 48, calfHalf: 32, depth: 16, calfFar: 150, calfHurry: 1.5 };
 let cows = [];
 function newCow([kind, x, y], i) {
   const c = { kind, i, x, y, hx: x, hy: y, anim: 'graze', mode: 'graze', t: Math.random() * 3, timer: 2 + Math.random() * 4,
@@ -2749,8 +2824,10 @@ function updateCow(c, dt) {
       return;
     }
     case 'walk': {
-      const dx = c.tx - c.x, dy = c.ty - c.y, l = Math.hypot(dx, dy);
-      const moved = l > 4 && cowStep(c, dx / l * COW.spd * dt, dy / l * COW.spd * dt);
+      const m = cowMother(c), late = m && dist(c.x, c.y, m.x, m.y) > COW.calfFar;   // le veau distancé rattrape sa mère
+      if (late) { c.tx = m.x + (m.dir === 'left' ? 80 : -80); c.ty = m.y + 12; c.dir = c.tx < c.x ? 'left' : 'right'; c.timer = Math.max(c.timer, 1); }
+      const dx = c.tx - c.x, dy = c.ty - c.y, l = Math.hypot(dx, dy), v = COW.spd * (late ? COW.calfHurry : 1);
+      const moved = l > 4 && cowStep(c, dx / l * v * dt, dy / l * v * dt);
       if (l <= 4 || c.timer <= 0 || !moved) { c.mode = 'graze'; c.timer = 3 + Math.random() * 5; cowAnim(c, 'graze'); }
       return;
     }
@@ -2758,8 +2835,9 @@ function updateCow(c, dt) {
       if (dP < COW.look && P.mode !== 'ko') {
         cowAnim(c, 'idle'); c.dir = P.x < c.x ? 'left' : 'right'; c.timer = Math.max(c.timer, 1.2); return;
       }
-      if (c.timer > 0) return;
-      if (Math.random() < 0.45) {
+      const far = cowMother(c) && dist(c.x, c.y, cowMother(c).x, cowMother(c).y) > COW.calfFar;   // sa mère s'éloigne : il n'attend pas
+      if (c.timer > 0 && !far) return;
+      if (!far && Math.random() < 0.45) {
         c.mode = c.mode === 'graze' ? 'idle' : 'graze'; cowAnim(c, c.mode); c.timer = 2 + Math.random() * 4; return;
       }
       // quelques pas autour de sa place (le veau, à côté de sa mère)
@@ -2769,6 +2847,26 @@ function updateCow(c, dt) {
       c.dir = c.tx < c.x ? 'left' : 'right'; c.mode = 'walk'; c.timer = 5; cowAnim(c, 'walk');
     }
   }
+}
+/* Le manège tourne. Son dessin entier (« decor/manege ») ne sert qu'à son ombre et à l'éditeur ; le jeu le remonte à
+   chaque image : le plateau, les chevaux du fond, le mât, les chevaux de devant, le chapiteau (batiments.py :
+   MANEGE_PIECES). Quatre chevaux à un quart de tour l'un de l'autre tournent autour du mât sur une ellipse (CAROUSEL.r,
+   ry, autour de y — en unités du dessin, k pixels chacune), montent et descendent sur leur barre (bob, deux fois par
+   tour, à contretemps de leur voisin), rapetissent au fond et y regardent de l'autre côté : ils vont où ils regardent. */
+const CAROUSEL = { r: 28, ry: 4.5, y: -13.5, bob: 3.2, turn: 10, far: 0.8, k: 2 * (MAP.grow.carousel || 1) };
+function drawCarousel(d, now) {
+  const C = CAROUSEL, a0 = now / C.turn * 6.283, H = [];
+  for (let i = 0; i < 4; i++) {
+    const a = a0 + i * 1.5708, s = Math.sin(a);
+    H.push({ i, s, x: d.x + Math.cos(a) * C.r * C.k, y: d.y + (C.y + s * C.ry - C.bob * (0.5 + 0.5 * Math.sin(2 * a + i * 3.1416))) * C.k });
+  }
+  H.sort((p, q) => p.s - q.s);
+  const horse = h => drawSpr('decor/manege_cheval_' + h.i, 0, h.x, h.y, { flip: h.s < 0, sc: C.far + (1 - C.far) * (0.5 + 0.5 * h.s) });
+  drawSpr('decor/manege_socle', 0, d.x, d.y);
+  for (const h of H) if (h.s < 0) horse(h);
+  drawSpr('decor/manege_mat', 0, d.x, d.y);
+  for (const h of H) if (h.s >= 0) horse(h);
+  drawSpr('decor/manege_chapiteau', 0, d.x, d.y);
 }
 function drawCow(c) {
   const fps = MAP.cowFps[c.kind][c.anim] * (c.mode === 'trot' ? 2.2 : 1);
@@ -6121,7 +6219,7 @@ function endingHome() {
   // (cadrage fixe, dans la carte : la lisière n'y entre pas) ; ils arrivent d'un peu plus bas que l'écran (from)
   camX = clamp(E.alice[0] - VW / 2, 0, MAP.w * TS - VW); camY = clamp(E.alice[1] - 40 - VH / 2, 0, MAP.h * TS - VH);
   const y0 = camY + VH + E.from, d = E.start;
-  alice.kind = 'alice';                // au noir, elle a remis la chaussure que Tecky lui a rapportée
+  alice.kind = aliceKind(false);       // au noir, elle a remis la chaussure (la tong) que Tecky lui a rapportée
   alice.x = E.alice[0] + (d ? d[0] : 0); alice.y = d ? E.alice[1] + d[1] : y0; alice.dir = 'up'; alice.setAnim('walk');
   P.x = E.tecky[0] + (d ? d[0] : 0); P.y = d ? E.tecky[1] + d[1] - 30 : y0 + 30; P.dir = 'up'; P.mode = 'free'; P.setAnim('walk');
   fxs = []; pops = []; rings = []; dusts = []; leaves = []; butterflies = []; drops = []; flakes = [];
@@ -6237,7 +6335,7 @@ function startTrip() {
     papa: { x: rear + TRIP.papa[0], y: lane + TRIP.papa[1], anim: 'wave', t: 0 } };
   cars = []; dogs = []; pops = [];
   camX = camClampX(car.x - VW / 2); camY = camClampY((r0 + r1) / 2 - 60 - VH / 2);
-  alice.kind = 'alice'; alice.hidden = false;                  // (ses deux chaussures : c'est une autre saison)
+  alice.kind = aliceKind(false); alice.hidden = false;         // (au départ, elle a ses deux tongs)
   tripActor(alice, MAP.start[0] - 76, camY - 30, 'down');
   tripActor(P, MAP.start[0] - 44, camY - 70, 'down');
   P.mode = 'free';
@@ -6268,7 +6366,7 @@ function tripCoast() {
 // au noir : tout le monde est descendu ; Alice et Tecky sur le parking
 function tripParking() {
   trip.car = null; trip.aboard = false; trip.step = 'parking';
-  alice.kind = 'alice'; alice.hidden = false;
+  alice.kind = aliceKind(false); alice.hidden = false;
   tripActor(P, MAP.start[0], MAP.start[1], 'left');
   tripActor(alice, MAP.start[0] - 64, MAP.start[1] - 6, 'right');
   camX = camClampX(P.x - VW / 2); camY = camClampY(P.y - 40 - VH / 2);
@@ -6278,7 +6376,7 @@ function tripDone() {
   const passee = !!trip && trip.step !== 'cache';
   if (MAP.id !== EP().voyage) { useMap(EP().voyage); resetWorld(); }
   trip = null; state = 'play'; elsewhere = {};
-  alice.kind = 'alice'; alice.hidden = true; alice.x = MAP.alice[0]; alice.y = MAP.alice[1];
+  alice.kind = aliceKind(true); alice.hidden = true; alice.x = MAP.alice[0]; alice.y = MAP.alice[1];
   tripActor(P, MAP.start[0], MAP.start[1], 'down');
   P.mode = 'free';
   cars = MAP.traffic.vehicles.map(newVehicle);
@@ -6506,6 +6604,7 @@ function drawWorld() {
   drawGround(cx, cy);
   prepareGround(cx, cy);
   drawWater(cx, cy, performance.now() / 1000);
+  drawSurf(cx, cy, performance.now() / 1000);
   drawGroundWeather(cx, cy);
 
   const vis = (x, y, m) => x > cx - m && x < cx + VW + m && y > cy - m && y < cy + VH + m + 140;
@@ -6526,7 +6625,7 @@ function drawWorld() {
   const list = [];
   const now = performance.now() / 1000;            // décors animés (fontaine) : MAP.decorFps
   for (const d of decor) if (!FLAT.has(d.n) && vis(d.x, d.y, 280))
-    list.push({ y: d.y, draw: () => drawSpr(d.key, Math.floor(now * (MAP.decorFps[d.n] || 0)), d.x, d.y) });
+    list.push({ y: d.y, draw: d.n === 'carousel' ? () => drawCarousel(d, now) : () => drawSpr(d.key, Math.floor(now * (MAP.decorFps[d.n] || 0)), d.x, d.y) });
   for (const d of EDGE_DECOR) if (vis(d.x, d.y, d.n === 'tunnel' ? 460 : 280))     // la lisière, au bord de la carte
     list.push({ y: d.y, draw: () => drawSpr(d.key, 0, d.x, d.y, d.flip ? { flip: true } : undefined) });
   for (const it of items) if (vis(it.x, it.y, 80)) {
@@ -6987,7 +7086,7 @@ function drawEnd(win) {
     outlined(txt('victoire.episode', { nom: txt('episodes.' + opened + '.nom') }), GW / 2, py + ph + 70 + Math.sin(overT * 3) * 4, 52, '#F2C14E');
   outlined(txt('victoire.titre'), GW / 2, py + 100, 64, '#F2C14E');
   drawSpr('hud/portrait_tecky', 2, GW / 2 - 130, py + 140);
-  drawSpr('hud/portrait_alice', 2, GW / 2 + 34, py + 140);
+  drawSpr(WHO.alice.portrait, 2, GW / 2 + 34, py + 140);
   // badges gagnés pendant cette partie, en petit sous les portraits
   newBadges.forEach((id, i) => drawSpr('hud/badge', MAP.badges.indexOf(id), GW / 2 - newBadges.length * 30 + i * 60 + 4, py + 242, { sc: 0.55 }));
   const rows = [[txt('victoire.score'), String(score)], [txt('victoire.temps'), fmtTime(timePlayed)],

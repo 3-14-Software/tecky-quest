@@ -375,7 +375,7 @@ def sans_ovale(svg):
 
 def portees():
     """Familles de sprites qui ont une ombre portée dans le jeu (le début de leur clé dans l'atlas)."""
-    return (["tecky", "alice", "alice1", "farmer", "hedgehog", "vehicle", "item", "port", "plage"] + list(chiens2.CHIENS) + list(npcs.KINDS)
+    return (["tecky", "alice", "alice1", "alice_ete", "alice_ete1", "farmer", "hedgehog", "vehicle", "item", "port", "plage"] + list(chiens2.CHIENS) + list(npcs.KINDS)
             + list(villageois.KINDS) + list(critters.KINDS) + list(cows.KINDS) + list(hens.COLORS) + ["sheep", "gull", "crab", "seagull"])
 
 
@@ -454,6 +454,10 @@ def collect(r=1):
             out.append((f"alice/{a}/{v}", [render_svg(sans_ovale(s), w, h, R, PAD) for s in alice2.frames(a, v)], (ox * S + M, oy * S + M), True))
             # « alice1 » : un pied nu, tant que Tecky ne lui a pas rapporté sa chaussure (les retrouvailles)
             out.append((f"alice1/{a}/{v}", [render_svg(sans_ovale(s), w, h, R, PAD) for s in alice2.frames(a, v, True)], (ox * S + M, oy * S + M), True))
+            for t in alice2.TENUES:      # sa tenue des autres saisons (« alice_ete », et « alice_ete1 » : une tong perdue)
+                for nu in (False, True):
+                    out.append((f"alice_{t}{'1' if nu else ''}/{a}/{v}", [render_svg(sans_ovale(s), w, h, R, PAD) for s in alice2.frames(a, v, nu, t)],
+                                (ox * S + M, oy * S + M), True))
     for a, (_, fps, _) in farmer.ANIMS.items():          # le fermier Gaston, vu de face, pieds en (24, 60)
         out.append((f"farmer/{a}", [render_svg(sans_ovale(sv), farmer.W, farmer.H, R, PAD) for sv in farmer.frames(a)], (24 * S + M, 60 * S + M), True))
     for kind in npcs.KINDS:                             # le facteur et la voisine, vus de face, pieds en (24, 60)
@@ -530,8 +534,12 @@ def collect(r=1):
     for n, fn, t in (("fleur", nature.sol_fleurs, nature.SOL_T), ("brins", nature.sol_brins, nature.SOL_T),      # détails
                      ("galet", nature.sol_galets, nature.SOL_T), ("nenuphar", nature.sol_nenuphars, nature.EAU_T),    # du sol
                      ("sousbois", nature.sol_sousbois, nature.BOIS_T), ("culture", nature.sol_cultures, nature.SOL_T),
-                     ("caillou", nature.sol_cailloux, nature.SOL_T)):
+                     ("caillou", nature.sol_cailloux, nature.SOL_T),
+                     ("culture_ete", nature.sol_cultures_ete, nature.SOL_T), ("sable", nature.sol_sable, nature.SOL_T)):
         out.append((f"sol/{n}", [render_svg(sv, t, t, R, PAD) for sv in fn()], (t // 2 * S + M, t // 2 * S + M), True))
+    for n in batiments.MANEGE_PIECES:                               # le manège qui tourne : ses morceaux (drawCarousel())
+        _, w, h, ox, oy = nature.cadre(n)
+        out.append((f"decor/{n}", [nature.image(n, R)], (ox * S + M, oy * S + M), True))
     for n in sorted({v for noms, _ in nature.VARIANTES.values() for v in noms}):       # la nature et les bâtiments
         _, w, h, ox, oy = nature.cadre(n)
         out.append((f"decor/{n}", [nature.image(n, R)], (ox * S + M, oy * S + M), True))

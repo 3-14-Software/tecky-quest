@@ -686,6 +686,46 @@ def toboggan():
     return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), _marches([(4, 0), (27.4, -fy), (31.6, -fy / 2), (62, None)], py))
 
 
+def chaise_haute(couleur="#FFFFFF", ombre="#C9CDD4", toile="#D8362E"):
+    """La chaise haute du maître-nageur : quatre montants écartés, une échelle devant, le siège et son dossier en
+    haut sous un petit parasol, une bouée de sauvetage accrochée au flanc."""
+    w, h, px, py = 56, 96, 28, 92
+    P, ys = 12, py - 50                                   # profondeur ; hauteur du siège
+    fx, fy = P * FUITE[0], -P * FUITE[1]
+    d = Drawing(w, h)
+    for x0, x1 in ((12, 18), (42, 36)):                   # montants du fond
+        d.add(_pts([(x0 + fx - 1.3, py + fy), (x0 + fx + 1.3, py + fy), (x1 + fx + 1.3, ys + fy), (x1 + fx - 1.3, ys + fy)]), ombre)
+    d.add(_pts([(14 + fx, py - 22 + fy), (40 + fx, py - 22 + fy), (40 + fx, py - 19.6 + fy), (14 + fx, py - 19.6 + fy)]), ombre)   # traverse du fond
+    for x0, x1 in ((12, 18), (42, 36)):                   # montants de devant
+        d.add(_pts([(x0 - 1.4, py), (x0 + 1.4, py), (x1 + 1.4, ys), (x1 - 1.4, ys)]), couleur)
+    for k in range(5):                                    # les barreaux de l'échelle, entre les montants de devant
+        t = (k + 0.8) / 5.6
+        xa, xb, y = 12 + 6 * t, 42 - 6 * t, py + (ys - py) * t
+        d.add(_pts([(xa, y), (xb, y), (xb, y + 2.2), (xa, y + 2.2)]), couleur)
+        d.raw(line(f"M{xa:.2f},{y + 2.0:.2f} L{xb:.2f},{y + 2.0:.2f}", ombre, 0.7))
+    _boite(d, "si", 15, 39, ys + 2.4, 3.2, P, couleur, ombre, "#FFFFFF")                    # le siège
+    d.add(_pts([(17 + fx, ys + fy - 1), (37 + fx, ys + fy - 1), (37 + fx, ys + fy - 15), (17 + fx, ys + fy - 15)]), toile)   # le dossier
+    d.add(rect(17 + fx, ys + fy - 15, 20, 2.6, 0.8), _fonce(toile, 0.8), sil=False)
+    for x in (16.2, 37.8):                                # les accoudoirs
+        d.add(_pts([(x - 1, ys - 6), (x + 1, ys - 6), (x + 1 + fx, ys - 6 + fy), (x - 1 + fx, ys - 6 + fy)]), couleur)
+        d.add(rect(x - 1, ys - 6, 2, 6.4, 0.6), couleur)
+    mx, my = 27 + fx / 2, ys + fy / 2                     # le mât du parasol, derrière le siège
+    d.add(rect(mx + 7.4, my - 34, 1.8, 34, 0.6), "#8E949E")
+    d.add(path(f"M{mx - 13:.2f},{my - 30:.2f} Q{mx + 8.3:.2f},{my - 50:.2f} {mx + 29.6:.2f},{my - 30:.2f} Q{mx + 8.3:.2f},{my - 34:.2f} {mx - 13:.2f},{my - 30:.2f} Z"), toile)
+    d.clip("par", [path(f"M{mx - 13:.2f},{my - 30:.2f} Q{mx + 8.3:.2f},{my - 50:.2f} {mx + 29.6:.2f},{my - 30:.2f} Q{mx + 8.3:.2f},{my - 34:.2f} {mx - 13:.2f},{my - 30:.2f} Z")])
+    for a, b in ((-6, -2), (4.6, 6.4), (15.2, 14.8)):     # les quartiers blancs
+        d.add(_pts([(mx + a, my - 28), (mx + a + 7, my - 28), (mx + 8.3 + (b - 4) * 0.2 + 2, my - 42), (mx + 8.3 + (b - 4) * 0.2 - 1, my - 42)]),
+              "#FFFFFF", sil=False, clip="par")
+    d.add(circle(mx + 8.3, my - 41.4, 1.5), "#F2C14E")
+    bx, by = 44.6, py - 30                                # la bouée, au flanc
+    d.add(circle(bx, by, 5.6), "#FFFFFF")
+    d.clip("bo", [circle(bx, by, 5.6)])
+    for a in (0, 90, 180, 270):
+        d.add(rect(bx - 1.7, by - 6, 3.4, 4.2, 0, f"rotate({a + 45} {bx} {by})"), "#D8362E", sil=False, clip="bo")
+    d.add(circle(bx, by, 2.4), ombre, edge=True, sil=False)
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), _marches([(9, 0), (20, -fy), (40, 0), (48, -fy), (54, None)], py))
+
+
 def heurtoir():
     """Heurtoir du bout de la voie : une traverse rayée rouge et blanc sur deux montants, étayés vers l'arrière."""
     w, h, px, py = 32, 40, 16, 36
@@ -1044,7 +1084,20 @@ CATALOGUE = {
     "cargo": cargo, "bateau_de_peche": bateau_de_peche, "bateau_de_peche_rouge": lambda: bateau_de_peche("rouge"),
     "bateau_de_peche_vert": lambda: bateau_de_peche("vert"),
     "chateau_de_sable": chateau_de_sable, "chateau_de_sable_fini": lambda: chateau_de_sable(True),
+    "chaise_haute": chaise_haute,
 }
+def _gare(d, w=48, sol=38.6):
+    """Un véhicule de vehicles.py, garé : le même dessin sans personne, comme un décor (obstacle, ombre portée)."""
+    d.under = []
+    return Sprite([(d, OUTLINE, TRAIT)], w, 40, (w / 2, sol))
+
+
+import vehicles
+CATALOGUE.update({f"voiture_garee_{c}": (lambda c: lambda: _gare(vehicles.car(c, vide=True), 64))(c) for c in vehicles.CAR_COLORS})
+CATALOGUE.update({f"scooter_gare_{c}": (lambda c: lambda: _gare(vehicles.scooter(c, pilote=False)))(c) for c in ("menthe", "corail", "creme")})
+CATALOGUE.update({f"moto_garee_{c}": (lambda c: lambda: _gare(vehicles.moto(c, pilote=False)))(c) for c in ("noir", "rouge", "bleu")})
+
+
 # Décor de carte.json -> ses dessins (un par position, comme la nature) ; `n` reste le nom du décor et son obstacle.
 VARIANTES = {
     "container": (["conteneur"], [0]), "container_blue": (["conteneur_bleu"], [0]), "container_green": (["conteneur_vert"], [0]),
@@ -1064,6 +1117,11 @@ VARIANTES = {
     "fishing_boat": (["bateau_de_peche", "bateau_de_peche_rouge", "bateau_de_peche_vert"], [0, 1, 2]),
     # (le second dessin n'est jamais tiré de la position : le jeu le pose quand la quête de Zoé est finie)
     "sandcastle": (["chateau_de_sable", "chateau_de_sable_fini"], [0]),
+    "lifeguard_chair": (["chaise_haute"], [0]),
+    # les véhicules garés : la couleur se tire de la position
+    "parked_car": ([f"voiture_garee_{c}" for c in vehicles.CAR_COLORS], [0, 1, 2, 3]),
+    "parked_scooter": ([f"scooter_gare_{c}" for c in ("menthe", "corail", "creme")], [0, 1, 2]),
+    "parked_moto": ([f"moto_garee_{c}" for c in ("noir", "rouge", "bleu")], [0, 1, 2]),
 }
 # Où un chat se réfugie sur un conteneur : points du cadre (game.js : REFUGES, MAP.perches)
 PERCHOIRS = {
@@ -1078,7 +1136,9 @@ ECH = {"conteneur": 1.5, "conteneur_bleu": 1.5, "conteneur_vert": 1.5, "conteneu
        "table_de_terrasse": 1.35, "banc": 1.2,            # (un parasol plus haut qu'un villageois, un banc où s'asseoir)
        "foin": 1.3, "foin_rond": 1.3, "tonneau_bleu": 1.35, "tonneau_rouge": 1.35, "portique": 1.5, "peniche": 1.4,
        "lampadaire": 1.3, "toboggan": 1.3, "balancoire": 1.3,
-       "cargo": 1.3, "bateau_de_peche": 1.3, "bateau_de_peche_rouge": 1.3, "bateau_de_peche_vert": 1.3}
+       "cargo": 1.3, "bateau_de_peche": 1.3, "bateau_de_peche_rouge": 1.3, "bateau_de_peche_vert": 1.3,
+       **{f"voiture_garee_{c}": 1.5 for c in vehicles.CAR_COLORS},          # les tailles de vehicles.ECH
+       **{f"scooter_gare_{c}": 1.4 for c in ("menthe", "corail", "creme")}, **{f"moto_garee_{c}": 1.4 for c in ("noir", "rouge", "bleu")}}
 
 
 def agrandis():

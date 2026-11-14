@@ -74,7 +74,7 @@ def _bord(d, forme):
     d.raw(forme.replace('fill="%F%"', 'fill="none" stroke="#3A1E12" stroke-width="0.9" stroke-linejoin="round"'))
 
 
-def car(color, spin=0):
+def car(color, spin=0, vide=False):
     """Petite voiture 64x40 : carrosserie arrondie éclairée d'en haut (toit, capot et coffre plus clairs, bas de
     caisse à l'ombre), deux vitres et son conducteur, rétroviseur, poignée, phare, feu arrière, pare-chocs."""
     body, dark = CAR_COLORS[color]
@@ -94,7 +94,8 @@ def car(color, spin=0):
     v1, v2 = poly([(24, 11), (32, 11), (32, 19.2), (19.6, 19.2)]), poly([(34.2, 11), (43, 11), (48.2, 19.2), (34.2, 19.2)])
     for cle, v in (("v1", v1), ("v2", v2)):
         _vitre(d, cle, v, None)
-    _tete(d, 39.6, 15.6, 2.7, list(CAR_COLORS).index(color), "v2")
+    if not vide:                             # garée : personne au volant
+        _tete(d, 39.6, 15.6, 2.7, list(CAR_COLORS).index(color), "v2")
     d.raw('<g clip-path="url(#v1)">' + line("M25.6,17.8 L29.6,12.2", "#FFFFFF", 1.0) + "</g>")
     d.raw('<g clip-path="url(#v2)">' + line("M44.4,18.6 L41.2,12.6", "#FFFFFF", 0.8) + "</g>")
     _bord(d, v1)
@@ -109,6 +110,91 @@ def car(color, spin=0):
         d.add(rect(x + 0.5, 30.6, 3.4, 1.2, 0.6), "#8E949E", sil=False)
     for x in (16, 49):
         _wheel(d, x, 33, 5.6, spin)
+    return d
+
+
+# ------------------------------------------------------------------ les deux-roues de la côte
+MOTO_COLORS = {"menthe": ("#7FD1B9", "#58AE96"), "corail": ("#F0806A", "#CF5F4B"), "creme": ("#F6E6B8", "#D9C48C"),
+               "noir": ("#3A3E48", "#26262C"), "rouge": ("#D7332B", "#A82520"), "bleu": ("#2E6FD1", "#23579F")}
+
+
+def _pilote(d, x, y, i, casque, penche=0.0):
+    """Le pilote, de profil vers la droite : casque rond à visière, buste, un bras tendu vers le guidon, une jambe pliée."""
+    veste = ("#5C86C4", "#C8553D", "#6DB758", "#F2C14E")[i % 4]
+    d.add(path(f"M{x - 2.4:.2f},{y + 9.5:.2f} L{x + 7.5:.2f},{y + 10.5:.2f} L{x + 9.5:.2f},{y + 17:.2f} L{x + 6.6:.2f},{y + 17.6:.2f} "
+               f"L{x + 5:.2f},{y + 13.4:.2f} L{x - 2.8:.2f},{y + 13:.2f} Z"), "#4A5568")                      # la jambe
+    d.add(path(f"M{x - 3.4 - penche:.2f},{y + 12:.2f} Q{x - 4.6:.2f},{y + 2:.2f} {x - 0.6 + penche:.2f},{y - 1:.2f} "
+               f"L{x + 3.2 + penche:.2f},{y - 0.4:.2f} Q{x + 4.4:.2f},{y + 6:.2f} {x + 2.6:.2f},{y + 12.4:.2f} Z"), veste)   # le buste
+    d.add(path(f"M{x + 1.2 + penche:.2f},{y + 1.2:.2f} L{x + 10.6:.2f},{y + 5.2:.2f} L{x + 10:.2f},{y + 7.4:.2f} L{x + 0.6 + penche:.2f},{y + 4.4:.2f} Z"), veste)
+    d.add(circle(x + 10.6, y + 6.2, 1.5), PEAUX[i % len(PEAUX)])
+    hx, hy = x + 1.6 + penche, y - 5.4
+    d.add(circle(hx, hy, 4.6), casque)
+    d.clip(f"cq{i}", [circle(hx, hy, 4.6)])
+    d.add(path(f"M{hx + 0.4:.2f},{hy - 1.6:.2f} L{hx + 5:.2f},{hy - 1.6:.2f} L{hx + 5:.2f},{hy + 2.2:.2f} L{hx + 1.2:.2f},{hy + 2.2:.2f} Z"),
+          GLASS, sil=False, clip=f"cq{i}", edge=True)
+    d.add(ellipse(hx - 1.4, hy - 2.6, 1.8, 0.9), "#FFFFFF", sil=False, opacity=0.5)
+
+
+def scooter(color, spin=0, pilote=True):
+    """Un scooter rond, à l'italienne : tablier galbé, selle longue, petit phare rond, petites roues."""
+    body, dark = MOTO_COLORS[color]
+    light = _clair(body)
+    d = Drawing(48, 40)
+    _shadow(d, 5, 43, 38.6)
+    d.raw(line("M33.4,12.6 L37.6,31", "#8E949E", 2.2))                                # la fourche
+    coque = ("M4.6,27 Q4.2,20.4 11,19.6 L21.4,19.6 Q25,19.8 26.4,24 L27.6,28 L31.6,28 L29.4,13.6 Q29.2,11.4 31.4,11 "
+             "L35,10.6 Q36.6,13.4 37,17.4 L38.6,29.6 Q38.8,32.6 35.6,32.6 L8,32.6 Q4.8,32.6 4.6,27 Z")
+    d.clip("coque", [path(coque)])
+    d.add(path(coque), body)
+    d.add(rect(3, 19, 24, 2.2), light, sil=False, clip="coque")
+    d.add(rect(3, 29.6, 38, 4), dark, sil=False, clip="coque")
+    d.add(path("M29.6,13.6 L32.4,13.2 L35.2,30 L32.4,30 Z"), dark, sil=False, clip="coque", opacity=0.55)
+    _passage(d, 10.6, 33, 6.2, "coque")
+    d.add(path("M7.4,19.8 Q7.6,16.4 11.4,16.4 L21,16.4 Q24.6,16.6 24.6,19.8 Z"), "#5A3A28")          # la selle
+    d.add(rect(9, 17, 13, 1.1, 0.5), "#7C5540", sil=False)
+    d.add(rect(3.2, 22.4, 2.2, 3, 0.8), "#E24B4B", sil=False)                           # feu arrière
+    d.add(circle(35.6, 13.2, 2.4), "#FFF1B8", edge=True)                                # phare
+    d.raw(line("M30.6,10.2 L34.6,8.2", "#3A3E48", 1.6))                                 # guidon
+    d.add(circle(31, 8.6, 1.5), "#C9CED6", edge=True)                                   # rétroviseur
+    d.add(path("M33.8,27.4 Q38.6,25.6 43,28.4 L42.4,30 Q38.4,27.8 34.4,29.4 Z"), body)   # garde-boue avant
+    for x in (10.6, 38.6):
+        _wheel(d, x, 33, 5.2, spin, "#F4F1E6")
+    if pilote:
+        _pilote(d, 17.4, 5.4, list(MOTO_COLORS).index(color), light)
+    else:
+        d.raw(line("M22,32.4 L24.6,38.2", "#6A6F7A", 1.6))                              # la béquille
+    return d
+
+
+def moto(color, spin=0, pilote=True):
+    """Une moto de route : réservoir en goutte, selle, moteur apparent, pot chromé, fourche inclinée, grandes roues."""
+    body, dark = MOTO_COLORS[color]
+    light = _clair(body)
+    d = Drawing(48, 40)
+    _shadow(d, 3, 45, 38.6)
+    d.raw(line("M31.6,13 L39,31", "#8E949E", 2.4))                                    # la fourche
+    d.raw(line("M9,31.6 L19,24 L27,24", "#4A4F57", 2.4))                              # le bras oscillant, le cadre
+    d.add(path("M16.6,22.4 L28.6,22.4 L30,29.6 Q30.2,31.6 28,31.6 L18.4,31.6 Q16.4,31.6 16.4,29.6 Z"), "#6A6F7A")   # le moteur
+    for y in (24.6, 26.6, 28.6):
+        d.raw(line(f"M18,{y} L28.4,{y}", "#8E949E", 0.8))
+    d.add(path("M6,29.4 L22,31 L22,33.4 L5.4,31.6 Z"), "#C9CED6")                      # le pot
+    res = "M20.6,16.4 Q24,11.6 30.6,13.4 Q33.4,14.6 32.6,18.6 L29,22.6 L20.6,22.6 Z"
+    d.clip("res", [path(res)])
+    d.add(path(res), body)                                                            # le réservoir
+    d.add(ellipse(26, 14.6, 4.4, 1.3), light, sil=False, clip="res")
+    d.add(rect(18, 20.6, 16, 3), dark, sil=False, clip="res")
+    d.add(path("M8.4,17.4 Q9,15.2 12,15.4 L21.4,16.4 L21.4,20.6 L11,20.6 Q8.2,20.4 8.4,17.4 Z"), "#2B2B33")          # la selle
+    d.add(path("M4.4,18.4 L10.4,17 L11,20.6 L6,20.6 Z"), body)                         # la coque arrière
+    d.add(rect(3.2, 18.4, 2, 2.2, 0.8), "#E24B4B", sil=False)
+    d.add(circle(34.4, 13.4, 2.6), "#FFF1B8", edge=True)                                # phare
+    d.raw(line("M29.6,10.4 L33.4,9", "#3A3E48", 1.6))
+    d.add(path("M33,25.6 Q39,22.8 44.4,26.6 L43.6,28.4 Q39,25.4 33.8,27.6 Z"), body)    # garde-boue avant
+    for x in (9, 39):
+        _wheel(d, x, 31.6, 6.6, spin, "#C9CED6")
+    if pilote:
+        _pilote(d, 14.4, 5.6, list(MOTO_COLORS).index(color), body, 1.6)
+    else:
+        d.raw(line("M22,31 L19.4,38.2", "#6A6F7A", 1.6))
     return d
 
 
@@ -171,8 +257,11 @@ def _passager(d, qui, x, y, r, clip):
               "#8E4A1E", sil=False, clip=clip)                                                                      # oreille
         d.add(circle(x + r * 0.45, y - r * 0.1, r * 0.2), "#3A1E12", sil=False, clip=clip)
         return
-    peau, cheveux, habit = (("#E9B184", "#2B1A14", "#C9242E") if qui == "papa" else ("#FADFCB", "#B9976B", "#F6D360"))
+    peau, cheveux, habit = (("#E9B184", "#2B1A14", "#C9242E") if qui == "papa" else ("#FADFCB", "#B9976B", "#FFFFFF"))
     d.add(rect(x - r * 1.1, y + r * 0.8, r * 2.2, r * 3, r * 0.8), habit, sil=False, clip=clip)
+    if qui == "alice":                                      # sa marinière de l'été
+        for k in (1.25, 1.85, 2.45):
+            d.add(rect(x - r * 1.1, y + r * k, r * 2.2, r * 0.26), "#2B4C8C", sil=False, clip=clip)
     if qui == "alice":                                                                                              # le carré, derrière
         d.add(rect(x - r * 1.15, y - r * 0.9, r * 1.5, r * 2.5, r * 0.6), cheveux, sil=False, clip=clip)
     d.add(circle(x, y, r), peau, sil=False, clip=clip)
@@ -395,11 +484,14 @@ def wagon(color, spin=0):
 
 
 SPINS = (0, 30, 60, 90)          # 3 rayons : un tour d'enjoliveur tous les 120°
-VEHICLES = {   # nom : (fonction(spin), (largeur, hauteur) 1x, origine 1x)
+VEHICLES = {   # nom : (fonction(spin), (largeur, hauteur) 1x, origine 1x[, de combien le dessin est descendu dans son cadre])
     **{f"car_{c}": ((lambda c: lambda s: car(c, s))(c), (64, 40), (32, 38.6)) for c in CAR_COLORS},
     # la voiture de sport du papa d'Alice : avec lui, Alice et Tecky derrière les vitres ; garée, vide
     "sport": (sport, (88, 40), (44, 38.6)),
     "sport_vide": ((lambda s: sport(s, passagers=())), (88, 40), (44, 38.6)),
+    # les deux-roues de la côte (choisis par Christophe sur reference/v2/ete_options_plage.png, 13 novembre 2026)
+    **{f"scooter_{c}": ((lambda c: lambda s: scooter(c, s))(c), (48, 48), (24, 46.6), 8) for c in ("menthe", "corail", "creme")},
+    **{f"moto_{c}": ((lambda c: lambda s: moto(c, s))(c), (48, 48), (24, 46.6), 8) for c in ("noir", "rouge", "bleu")},
     "van": (van, (80, 48), (40, 44.4)),
     "bus": (bus, (128, 56), (64, 52.6)),
     "loco": (loco, (64, 48), (32, 44.4)),
@@ -409,7 +501,7 @@ VEHICLES = {   # nom : (fonction(spin), (largeur, hauteur) 1x, origine 1x)
 
 # Taille dans le jeu : les véhicules de la route sont agrandis (Christophe les trouvait trop petits, le 12 novembre
 # 2026) ; Titine reste un petit train. game.js : VEHICLE (longueurs).
-ECH = {"car": 1.5, "van": 1.5, "bus": 1.5, "sport": 1.5}
+ECH = {"car": 1.5, "van": 1.5, "bus": 1.5, "sport": 1.5, "scooter": 1.4, "moto": 1.4}
 
 
 def echelle(name):
@@ -418,7 +510,7 @@ def echelle(name):
 
 def cadre(name):
     """(largeur, hauteur, origine x, origine y) d'un véhicule dans le jeu, en unités de l'atlas."""
-    _, (w, h), (ox, oy) = VEHICLES[name]
+    _, (w, h), (ox, oy) = VEHICLES[name][:3]
     k = echelle(name)
     return math.ceil(w * k), math.ceil(h * k), ox * k, oy * k
 
@@ -432,5 +524,6 @@ def frames(name):
     for s in SPINS:
         d = fn(s)
         d.under, d.w, d.h = [], w, h
-        out.append(d.svg(f"scale({k})", outline_w=OUTLINE_W / k) if k != 1 else d.svg())
+        dy = VEHICLES[name][3] if len(VEHICLES[name]) > 3 else 0      # (un pilote casqué dépasse : le dessin est descendu dans un cadre plus haut)
+        out.append(d.svg(f"scale({k}) translate(0 {dy})", outline_w=OUTLINE_W / k) if k != 1 or dy else d.svg())
     return out

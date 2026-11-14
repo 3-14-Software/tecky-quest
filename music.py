@@ -674,6 +674,36 @@ def plage():
 # ------------------------------------------------------------------ fanfare de victoire, musique de défaite
 # Trois mesures à 140, jouées une fois. La défaite est en la mineur : la mélodie descend doucement, passe par la
 # tension de mi majeur (sol dièse) et se pose sur un la grave tenu. Triste mais tendre, pas moqueuse.
+# ------------------------------------------------------------------ le manège : une valse d'orgue de foire
+# Fa majeur, vif, à trois temps : l'orgue (deux jeux à l'octave), la pompe « oum-pa-pa », une caisse claire légère.
+# Le motif de Tecky ouvre la première phrase et ferme la seconde.
+MANEGE_A = """
+A5 C6 F6 C6 A5 -   | C6 - A5 - F5 -    | E5 G5 Bb5 G5 E5 - | G5 - Bb5 - C6 -
+E6 - C6 - Bb5 -    | G5 Bb5 C6 Bb5 G5 - | A5 C6 F6 - A6 -   | F6 - - - . .
+"""
+MANEGE_B = """
+D6 - Bb5 - D6 -    | F6 - D6 - Bb5 -   | C6 - A5 - C6 -    | F6 - C6 - A5 -
+Bb5 - G5 - E5 -    | G5 - Bb5 - C6 -   | A5 C6 F6 C6 A5 -  | F5 - - - . .
+"""
+
+
+def manege():
+    m = Morceau("manege", 168, "F", bar=12,
+                inst=dict(lead=dict(w=0.5, v=0.13, s=0.9, vib=5, a=0.01), harm=dict(w=0.25, v=0.05, s=0.85),
+                          arp=dict(w=0.5, v=0.045, s=0.4), bass=dict(v=0.19)))
+    a = "F F C7 C7 C7 C7 F F"
+    pompe = [(0, 0, 3.4, 1.0)]
+    accords = [(4, (1, 2, 3), 1.5, 0.9), (8, (1, 2, 3), 1.5, 0.8)]
+    caisse = bat(kick=[(0, 0.5)], rim=[(4, 0.4), (8, 0.4)])
+    leve = [(8, "snare", 0.45), (10, "snare", 0.6)]
+    m.partie(a, lead=MANEGE_A, bass=pompe, arp=accords, drums=caisse, fin=leve)
+    m.partie(a, lead=MANEGE_A, harm="tierces", bass=pompe + [(8, "q", 3.0, 0.6)], arp=accords, drums=caisse, fin=leve)
+    m.partie("Bb Bb F F C7 C7 F F", lead=MANEGE_B, bass=pompe, arp=accords, drums=caisse, fin=leve)
+    m.partie(a, lead=MANEGE_A, harm="tierces", hv=1.2, bass=pompe + [(8, "q", 3.0, 0.6)], arp=accords,
+             drums=bat(kick=[(0, 0.6)], rim=[(4, 0.45), (8, 0.45)], hat=[(k, 0.28) for k in (2, 6, 10)]), fin=leve)
+    return m
+
+
 def fanfare():
     m = Morceau("win", 140, "C", boucle=False)
     croches = [(k, 0.9 if k % 4 == 0 else 0.6) for k in range(0, 16, 2)]
@@ -700,7 +730,7 @@ def defaite():
 
 
 MORCEAUX = dict(niche=niche, village=village, campagne=campagne, ferme=ferme, foret=foret, parc=parc,
-                industrie=industrie, cote=cote, port=port, ville=ville, falaises=falaises, plage=plage,
+                industrie=industrie, cote=cote, port=port, ville=ville, falaises=falaises, plage=plage, manege=manege,
                 berceuse=berceuse, win=fanfare, lose=defaite)
 
 

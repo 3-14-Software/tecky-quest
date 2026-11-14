@@ -51,10 +51,10 @@
     "..bbbbbbbbbbbb...ppppppmmmmmmmmmmmppptttt~~~~tttttssssssssssssssssssssss.........hhhhhhhhhhhhhhhh",
     "..bbbbbbbbbbbb...ppppppmmmmmmmmmmmppptttt~~~.tttttssssssssssssssssssssss.........hhhhhhhhhhhhhhhh",
     "..bbbbbbbbbbbb...ppppppmmmmmmmmmmmppp....~~~......sss..............sssss.........hhhhhhhhhhhhhhhh",
-    "..bbbbbbbbbbbbtttppppppmmmmmmmmmmmppp....~~~......sss..............sssss.........hhhhhhhhhhhhhhhh",
-    "..bbbbbbbbbbbbtttppppppmmmmmmmmmmmppp....~~~......sss..............sssss.........hhhhhhhhhhhhhhhh",
-    "..bbbbbbbbbbbb...ppppppmmmmmmmmmmmppp....~~~......sss..............sssss.........hhhhhhhhhhhhhhhh",
-    "..bbbbbbbbbbbb...ppppppmmmmmmmmmmmppp...~~~~......sss..............sssss.........hhhhhhhhhhhhhhhh",
+    "..bbbbbbbbbbbbtttppppppmmmmmmmmmmmmmmm~~~~~~......sss..............sssss.........hhhhhhhhhhhhhhhh",
+    "..bbbbbbbbbbbbtttppppppmmmmmmmmmmmmmmmmm~~~~......sss..............sssss.........hhhhhhhhhhhhhhhh",
+    "..bbbbbbbbbbbb...ppppppmmmmmmmmmmmmmmmm~~~~~......sss..............sssss.........hhhhhhhhhhhhhhhh",
+    "..bbbbbbbbbbbb...ppppppmmmmmmmmmmmmmmm~~~~~~......sss..............sssss.........hhhhhhhhhhhhhhhh",
     "..bbbbbbbbbbbb...pppppppppppppppppppp...~~~~......sss..............ssssss........hhhhhhhhhhhhhhhh",
     "..bbbbbbbbbbbb...pppppppppppppppppppp...~~~~......sss..............ssss..........hhhhhhhhhhhhhhhh",
     "..bbbbbbbbbbbb...pppppppppppppppppppp...~~~~......ssssssssssssssssssss...........hhhhhhhhhhhhhhhh",
@@ -187,10 +187,10 @@
     ["boat", 32.85, 29],
     ["boat", 32.8, 31.1],
     ["lamppost", 22, 26.4],
-    ["lamppost", 34.6, 34.6],
-    ["crate", 34.8, 30.2],
-    ["barrel_blue", 35.6, 30.5],
-    ["barrel_red", 35, 32.2],
+    ["lamppost", 33.4, 34.7],
+    ["crate", 36.6, 28.3],
+    ["barrel_blue", 36.7, 27.4],
+    ["barrel_red", 36.3, 35.3],
     ["pallet", 36, 28.4],
     ["crate", 34.5, 27.9],
     ["bench", 28.2, 34.7],
@@ -203,7 +203,7 @@
     ["reeds", 44.4, 32.4],
     ["reeds", 39, 37.6],
     ["rock", 44.6, 3.6],
-    ["bush", 38.6, 31.6],
+    ["bush", 38.6, 35.4],
     ["tree", 46.2, 21.6],
     ["tree", 46.6, 36.4],
     ["bush", 46.2, 31.4],
@@ -330,7 +330,17 @@
     ["lamppost", 35.5, 11.4],
     ["rock", 93.5, 13.1],
     ["bush", 91.3, 12.8],
-    ["sandcastle", 34.6, 47.9]
+    ["sandcastle", 34.6, 47.9],
+    ["lifeguard_chair", 70.9, 45.9],
+    ["bridge", 35, 34],
+    ["parked_car", 25.6, 5.4],
+    ["parked_car", 28.5, 5.4],
+    ["parked_car", 25.7, 12.9],
+    ["parked_car", 28.4, 12.9],
+    ["parked_moto", 30.6, 13],
+    ["parked_scooter", 55.2, 17.3],
+    ["parked_scooter", 56.4, 17.3],
+    ["parked_moto", 64.2, 17.4]
   ],
   "items": [
     ["bone", 20.5, 12.4],
@@ -380,7 +390,7 @@
   "signs": [
     [3, 11.2, "Par le tunnel, à l'ouest : le village de Tecky et la ferme des Tilleuls."],
     [32.6, 14.8, "Le village de pêcheurs est juste en bas. Pour la plage, suivez le quai jusqu'aux planches."],
-    [37.6, 29.6, "Le pont de la rivière. En face : la ville, son casino et ses jardins."],
+    [38.6, 25.3, "Le pont de la rivière. En face : la ville, son casino et ses jardins."],
     [75.4, 27.6, "Sentier des falaises. Le phare est tout au bout. Attention au bord !"],
     [61.4, 42.6, "Les Planches : la promenade du bord de mer. La jetée est à l'embouchure de la rivière."],
     [55.5, 46.2, "Baignade surveillée. Les chiens bons nageurs sont les bienvenus : ne dépassez pas les bouées !"]
@@ -491,7 +501,9 @@
     "vehicles": [
       ["car_red", 1, 12],
       ["car_yellow", 0, 21],
-      ["car_green", 1, 24]
+      ["car_green", 1, 24],
+      ["scooter_menthe", 0, 16],
+      ["moto_rouge", 1, 4]
     ]
   },
   "roles": {
@@ -514,6 +526,7 @@
     [23.4, 48.8, 27.4, 51.2]
   ],
   "zones": [
+    {"id": "manege", "name": "Le manège", "label": "Manège", "at": [62.4, 35.3], "rects": [[58.6, 30, 66.2, 36.4]]},
     {"id": "port", "name": "Le port", "label": "Port", "at": [7.5, 25.2], "rects": [[0, 22.5, 14.5, 64]]},
     {"id": "pecheurs", "music": "port", "name": "Le village de pêcheurs", "label": "Village de pêcheurs", "at": [27, 22.4], "rects": [[14.5, 14.5, 39, 39.5]]},
     {"id": "ville", "name": "La ville", "label": "Ville", "at": [60, 27.6], "rects": [[47.5, 13, 75.5, 42.5]]},

@@ -200,17 +200,17 @@ def spade(d):
 
 
 def flipflop(d):
-    """Une tong rose à bride jaune : elle répond à la chaussure du printemps."""
+    """Une tong bleue, comme celles qu'Alice porte en été (alice2.TENUES) : elle répond à la chaussure du printemps."""
     tr = "rotate(-28 16 16)"
     semelle = path("M16,4.6 Q22.4,4.6 22.2,12 Q22,16.4 21,20.4 Q20.6,27.6 16,27.6 Q11.4,27.6 11,20.4 Q10,16.4 9.8,12 Q9.6,4.6 16,4.6 Z", tr)
     d.clip("semelle", [semelle])
-    d.add(semelle, "#E86AA0")
-    _dans(d, "semelle", path("M15,3.6 Q21.4,3.6 21.2,11 Q21,15.4 20,19.4 Q19.6,26.6 15,26.6 Q10.4,26.6 10,19.4 Q9,15.4 8.8,11 Q8.6,3.6 15,3.6 Z", tr), "#F79AC0")
-    d.add(ellipse(16, 21.6, 2.6, 3.4, tr), "#E86AA0", sil=False, opacity=0.5)          # l'empreinte du talon
+    d.add(semelle, "#2F6FC0")
+    _dans(d, "semelle", path("M15,3.6 Q21.4,3.6 21.2,11 Q21,15.4 20,19.4 Q19.6,26.6 15,26.6 Q10.4,26.6 10,19.4 Q9,15.4 8.8,11 Q8.6,3.6 15,3.6 Z", tr), "#5B95DC")
+    d.add(ellipse(16, 21.6, 2.6, 3.4, tr), "#2F6FC0", sil=False, opacity=0.5)          # l'empreinte du talon
     for x in (11.4, 20.6):                                                             # la bride, en Y
         d.raw(line(f"M16,9.6 Q{(16 + x) / 2},11 {x},16.6", "#3A1E12", 3.0).replace("<path", f'<path transform="{tr}"'))
-        d.raw(line(f"M16,9.6 Q{(16 + x) / 2},11 {x},16.6", "#F7D154", 1.7).replace("<path", f'<path transform="{tr}"'))
-    d.add(circle(16, 9.6, 1.5, tr), "#F7D154", sil=False, edge=True)
+        d.raw(line(f"M16,9.6 Q{(16 + x) / 2},11 {x},16.6", "#DCE8F8", 1.7).replace("<path", f'<path transform="{tr}"'))
+    d.add(circle(16, 9.6, 1.5, tr), "#DCE8F8", sil=False, edge=True)
 
 
 def goldbone(d):

@@ -84,11 +84,12 @@ const NOMS = {
   ville: ['Été — la ville', 'valse musette'],
   falaises: ['Été — les falaises', 'un air du large : flûte, bourdon, harpe'],
   plage: ['Été — la plage', 'calypso'],
+  manege: ['Été — le manège', 'valse d’orgue de foire'],
   berceuse: ['La scène de fin', 'berceuse : le thème, lent'],
   win: ['Victoire', 'fanfare, jouée une fois'],
   lose: ['Défaite', 'jouée une fois'],
 };
-const ZONES = ['niche', 'village', 'campagne', 'ferme', 'foret', 'parc', 'industrie', 'cote', 'port', 'ville', 'falaises', 'plage'];
+const ZONES = ['niche', 'village', 'campagne', 'ferme', 'foret', 'parc', 'industrie', 'cote', 'port', 'ville', 'falaises', 'plage', 'manege'];
 const $ = id => document.getElementById(id), boutons = {};
 function audio() {
   if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
@@ -252,7 +253,7 @@ const BRUITS = [
     ['dire', 'Babil', VOIX]]],
   ['Les gens, la route, le port', [
     ['hey', 'Hé-ho !', [['Gaston', 0.8], ['Marcel', 1.05], ['Mamie Rose', 1.35], ['Lucas', 1.7]]],
-    ['honk', 'Klaxon', [['voiture', 1.15], ['camionnette', 1], ['bus', 0.75]]], ['boing', 'Ballon'],
+    ['honk', 'Klaxon', [['voiture', 1.15], ['camionnette', 1], ['bus', 0.75], ['moto', 0.85]]], ['meep', 'Klaxon du scooter', [['scooter', 1.25]]], ['boing', 'Ballon'],
     ['whistle', 'Titine siffle'], ['bell', 'Titine s’arrête'], ['puff', 'Vapeur'], ['horn', 'Péniche'], ['clank', 'Ferraille'], ['bike', 'Sonnette de vélo']]],
   ['Les bêtes', [
     ['quack', 'Coin coin', [['cane', 1.1], ['colvert', 0.95], ['caneton', 1.5]]], ['flap', 'Envol'], ['splash', 'Plouf du canard'], ['paddle', 'Tecky nage'], ['plop', 'Flaque'],

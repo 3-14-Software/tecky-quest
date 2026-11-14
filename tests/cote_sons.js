@@ -9,7 +9,7 @@ function main() {
   const va = (x, y) => run(`P.x = ${x} * 64; P.y = ${y} * 64; P.mode = "free";`);
   // les morceaux
   const zs = JSON.parse(run('JSON.stringify(MAP.zones.map(z => [z.id, z.music || z.id]))'));
-  ok(run('MAP.id') === 'cote' && zs.map(z => z.join(':')).join() === 'port:port,pecheurs:port,ville:ville,falaises:falaises,plage:plage,bocage:ferme,cote:cote',
+  ok(run('MAP.id') === 'cote' && zs.map(z => z.join(':')).join() === 'manege:manege,port:port,pecheurs:port,ville:ville,falaises:falaises,plage:plage,bocage:ferme,cote:cote',
      'les zones de la côte et leurs morceaux : ' + zs.map(z => z[0] + ' → ' + z[1]).join(', '));
   ok(['cote', 'port', 'ville', 'falaises', 'plage'].every(k => run(`!!SONGS.${k} && SONGS.${k}.loop !== null && SONGS.${k}.ev.some(e => e[1] === "harm")`))
      && run('SONGS.port.bar') === 12 && run('SONGS.ville.bar') === 12 && run('SONGS.falaises.echo && SONGS.falaises.inst.lead.echo') === 1

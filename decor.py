@@ -1801,6 +1801,10 @@ DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x)
     "buoy_pen": (buoy_pen, (96, 64), (48, 60)),             # le parc à bouées d'Yvon (la côte : le filet de Léon, dans l'eau)
     "leaf_nest": (leaf_nest, (48, 32), (24, 28)),
     "sandcastle": (leaf_nest, (64, 52), (30, 45)),          # le château de sable de Zoé (dessin : mobilier.chateau_de_sable)
+    "lifeguard_chair": (leaf_nest, (56, 96), (28, 92)),     # la chaise haute de Théo (dessin : mobilier.chaise_haute)
+    "parked_car": (leaf_nest, (64, 40), (32, 38.6)),        # véhicules garés (dessins : mobilier, d'après vehicles.py)
+    "parked_scooter": (leaf_nest, (48, 40), (24, 38.6)),
+    "parked_moto": (leaf_nest, (48, 40), (24, 38.6)),
     "dog_bed": (dog_bed, (48, 32), (24, 22)),
     "rail": (rail, (32, 32), (0, 16)),
     "buffer_stop": (buffer_stop, (32, 40), (16, 36)),

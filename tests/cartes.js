@@ -34,7 +34,7 @@ function main() {
   ok(Math.abs(run('P.y - MAP.traffic.road[0]') - run('yEntree')) < 30, 'à la hauteur où il est entré : ' + Math.round(run('yEntree')) + ' px sous le bord de la chaussée, ' + Math.round(run('P.y - MAP.traffic.road[0]')) + ' à la sortie');
   ok(run('score') === 321 && run('farm.state') === 'asked' && run('treasures') === 1 && run('P.hp') > 0, 'la partie continue : score, quêtes et trésors le suivent');
   ok(run('dogs.length') === run('MAP.enemies.length') && run('dogs.length') > 3 && run('items.length') > 15 && run('npcList().map(n => n.look).join()') === 'anatole,zoe,hortense,yvon,theo,suzanne'
-     && run('decor.length') > 150 && run('butterflies.length') === 7 && run('cars.length') === 3 && run('alice.hidden') && run('ici("alice")')
+     && run('decor.length') > 150 && run('butterflies.length') === 7 && run('cars.length') === 5 && run('alice.hidden') && run('ici("alice")')
      && !run('ici("track")') && run('ici("traffic")'),
      'la côte a ses décors, ses chiens, ses objets, ses papillons et ses voitures, Alice dans sa cachette, Madame Hortense devant le casino, Anatole sur la falaise, Zoé, Yvon et Théo sur la plage, Suzanne au village de pêcheurs ; pas de voie ferrée');
   // la route sans issue : une voiture entre sous le porche du parking, s'y gare, repart par l'autre voie ; au tunnel, de même
@@ -52,7 +52,7 @@ function main() {
   run('V.hidden = 0.01;'); step(150);
   ok(run('V.dir') === 1 && run('V.x') > 100 && run('V.y') === run('MAP.traffic.lanes[1]'), 'et revient par la voie du bas');
   run('P.x = pxA; P.y = pyA; cars = [];');     // (pour la suite : Tecky s'y promène sans qu'une voiture ni un chien s'en mêle)
-  ok(run('ZONES.length') === 7 && run('ZONES[0].name') === 'Le port' && run('ZONES[6].name') === 'La Côte Fleurie'
+  ok(run('ZONES.length') === 8 && run('ZONES[0].name') === 'Le manège' && run('ZONES[1].name') === 'Le port' && run('ZONES[7].name') === 'La Côte Fleurie'
      && run('EDGE_DECOR.filter(d => d.n === "tunnel").length') === 1
      && run('EDGE_DECOR.filter(d => d.n !== "tunnel").every(d => offMap(d.x, d.y - 12, d.x, d.y))'),
      'ses zones et sa lisière sont les siennes (' + run('EDGE_DECOR.length') + ' fourrés et arbres autour, un seul tunnel : la route finit au parking)');
