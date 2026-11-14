@@ -3383,6 +3383,7 @@ function updateLetters(dt) {
   for (const l of letters) {
     l.t += dt;
     if (l.wait > 0) { l.wait -= dt; l.up = Math.max(0, Math.sin(Math.PI * l.wait / POST.wait)) * POST.jump; continue; }   // il retombe sur le sable
+    if (admired(l, dt)) continue;
     if (l.got || !l.dug || dist(P.x, P.y, l.x, l.y + 20) > POST.pick || P.mode === 'ko') continue;
     l.got = true;
     const n = letters.length - lettersLeft();
@@ -3395,6 +3396,7 @@ function updateLetters(dt) {
 // un coquillage enfoui sort du sable : il saute, retombe à côté de son trou, et attend que Tecky le ramasse
 function uncoverShell(l) {
   l.dug = true; l.wait = POST.wait; l.t = 0;
+  admire(l);
   addFx('fx/pickup', l.x, l.y - 20, { fps: 12 });
   SFX.shell(1, l);
   rumble('treasure');
@@ -4681,6 +4683,7 @@ function updateDig(dt) {
 function uncover(g) {
   g.dug = true; treasures++; score += 100;
   items.push({ n: 'goldbone', x: g.x, y: g.y - 30, t: 0, pop: 0.001 });
+  admire(items[items.length - 1]);
   addFx('fx/pickup', g.x, g.y - 20, { fps: 12 });
   addPop('+100', g.x - 30, g.y - 90);
   SFX.treasure();
@@ -6143,11 +6146,22 @@ function separateDogs() {
     }
 }
 
+// Un trésor qui vient de sortir de terre reste un instant sous le nez de Tecky : tant qu'il ne bouge pas, il a
+// UNEARTH.hold s pour le regarder avant de le ramasser ; dès qu'il fait un pas (UNEARTH.move px), il le prend.
+const UNEARTH = { hold: 1.6, move: 6 };
+function admire(o) { o.hold = UNEARTH.hold; o.px = P.x; o.py = P.y; }
+function admired(o, dt) {
+  if (!(o.hold > 0)) return false;
+  o.hold -= dt;
+  if (dist(P.x, P.y, o.px, o.py) > UNEARTH.move) o.hold = 0;
+  return o.hold > 0;
+}
 function updateItems(dt) {
   for (const it of items) it.t += dt;
   for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
     if (it.t < 0.5 && it.pop !== undefined) continue;
+    if (admired(it, dt)) continue;
     if (dist(P.x, P.y - 10, it.x, it.y + 22) < REACH.item && P.mode !== 'ko') {
       const e = ITEM[it.n];
       if (e.grow) {

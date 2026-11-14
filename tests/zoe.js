@@ -22,7 +22,9 @@ function main() {
   ok(run('L.dug && !L.got && L.wait > 0') && run('fx0.includes("fx/sand") && !fx0.includes("fx/dirt")'), 'le coquillage saute du sable (une gerbe de sable, pas de terre)');
   step(60);
   ok(run('!L.got && L.up === 0'), 'il retombe et attend');
-  run('P.x = L.x; P.y = L.y + 20;'); step(3);
+  run('var px0 = P.x, py0 = P.y; P.x = L.x; P.y = L.y + 20; admire(L);'); step(30);
+  ok(run('!L.got && L.hold > 0'), 'Tecky ne bouge pas : il a le temps de le regarder');
+  run('P.x += 10;'); step(3);
   ok(run('L.got') && run('pops.some(p => p.text === txt("coquillages.premiere"))'), 'Tecky le ramasse : « ' + run('txt("coquillages.premiere")') + ' »');
   // la demande
   run('P.x = postman.x - 60; P.y = postman.y + 40; talkTo(postman);');

@@ -1164,6 +1164,10 @@ node tests/zoe.js                                         # puis le ou les tests
   poules rentrées, lettres retrouvées, Pompon retrouvé (0/1, 1/1) ; ceux des quêtes seulement pendant la quête
   (`asked`). Quand ils descendraient jusqu'aux boutons d'action (au toucher, le bouton du flair ; sinon, les aides de
   touches du bas), ils passent sur une colonne de plus, à gauche (`COUNTER`, `counterBox()`). Test : `hud.js`.
+  **Le temps de le voir** (14 novembre 2026 ; Christophe : « on a à peine le temps de le voir qu'il l'a déjà
+  ramassé ») : un os doré ou un coquillage qui sort de terre n'est pas ramassé tant que Tecky ne bouge pas,
+  pendant `UNEARTH.hold` s (`admire()`, `admired()`) ; dès qu'il fait un pas (`UNEARTH.move` px), il le prend.
+  Tests : `tunnel.js`, `zoe.js`.
   Au toucher, les boutons Pause (`PAUSE_BTN`) et Plein écran (`FS_BTN`) sont en haut, à gauche du score.
 - Petites bêtes (`critters`, `CRITTER`, `REFUGES`, `MAP.critters`) : écureuils et chats flânent ; Tecky trop près ou
   qui aboie les fait filer vers un refuge pas de son côté (arbre/sapin : l'écureuil grimpe et disparaît ; toit ou

@@ -92,6 +92,8 @@ function main() {
      'un os doré jaillit du trou');
   ok(run('state') === 'dialog' && /os doré/.test(run('dialog.lines[0].text')), 'Tecky : « Un os doré était enterré ! »');
   advanceDialog(); step(40);
+  ok(run('items.some(i => i.n === "goldbone")') && run('score') === run('s0') + 100, 'Tecky ne bouge pas : l’os doré reste un instant sous son nez');
+  step(90);
   ok(!run('items.some(i => i.n === "goldbone")') && run('score') === run('s0') + 200, 'ramassé : +200 en tout');
   run('var used = []; var ds0 = drawSpr; drawSpr = function (k) { used.push(k); return ds0.apply(this, arguments); }; drawHUD(); drawSpr = ds0;');
   ok(run('used.includes("item/goldbone")') && run('hudCounters()[0][0]') === 'item/goldbone', 'compteur d’os dorés dans le HUD, en haut de la colonne');
