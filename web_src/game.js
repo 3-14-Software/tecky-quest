@@ -5439,6 +5439,7 @@ function toTitle() {
 }
 
 /* ------------------------------------------------------------------ vibrations */
+  Music.refresh();                                        // (venu de la pause : la musique y jouait tout bas)
 /* Option « Vibrations » : la manette (vibrationActuator, si c'est elle qui sert) ou le téléphone (navigator.vibrate, au
    toucher) vibrent quand Tecky est mordu ou heurté, plus fort au KO, et d'un petit coup quand sa morsure porte ou qu'un
    os doré sort de terre. RUMBLE : [force du gros moteur, du petit, durée en ms]. */

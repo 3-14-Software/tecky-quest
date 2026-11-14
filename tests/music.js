@@ -85,5 +85,10 @@ function main() {
   run('toTitle();'); step(90);
   ok(run('state') === 'title' && run('Music.zone') === run('TITLE_MUSIC') && run('Music.track.id') === run('TITLE_MUSIC') &&
      run('Music.step') < run('SONGS.niche.loop'), 'retour au menu : le thème de l’écran titre, depuis ses mesures d’entrée');
+  // ---- de la pause au menu principal : la musique, tout bas pendant la pause, retrouve son volume
+  run('newGame("balade", true); state = "pause"; openPauseMenu(); Music.refresh();');
+  ok(run('Music.level()') === run('MUSIC_VOL.pause'), 'en pause, la musique joue tout bas');
+  run('var vols = []; Music.gain = { gain: { setTargetAtTime: v => vols.push(v) }, connect() {}, disconnect() {} }; chooseMenu("quit");');
+  ok(run('state') === 'title' && run('vols[vols.length - 1]') === run('MUSIC_VOL.zone'), 'pause, puis menu principal : elle retrouve son volume');
 }
 eval(base + 'setTimeout(' + main.toString() + ', 50);');
