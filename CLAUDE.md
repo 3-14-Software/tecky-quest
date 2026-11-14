@@ -307,15 +307,19 @@ node tests/zoe.js                                         # puis le ou les tests
   voiture `car`, le papa `papa`, `aboard`, le noir `a` / `fade` / `then`), `TRIP` (durées, vitesses, places à
   partir de l'arrière de la voiture). Étapes de `updateTrip()` : `descente` (Alice et Tecky descendent le
   chemin de la niche jusqu'à la voiture garée sur la voie du bas, `tripWalk()`), les répliques du départ
-  (`tripDepartLines()`), `embarque` (chacun disparaît à la portière, la voiture passe de `sport_vide` à
-  `sport`), `route`, le noir, `tunnel` (`tripTunnel()` : la caméra à l'autre bout de la grande route, la
-  voiture s'enfonce dans le tunnel qui mène à la carte du voyage), le noir (`tripCoast` : `useMap(voyage)`,
-  la voiture sort du tunnel),
+  (`tripDepartLines()`), `embarque` (Alice puis Tecky disparaissent à la portière), `installe` (le papa fait le
+  tour jusqu'à sa portière — sprite `papa/walk`, pose `step` de `npcs.P` —, monte, la voiture passe de
+  `sport_vide` à `sport`), `route` (**la caméra suit la voiture d'un bout à l'autre de la grande route**,
+  `TRIP.cruise`, jusqu'au tunnel où elle s'enfonce : Christophe n'a pas voulu du fondu au milieu de la route),
+  le noir (`tripCoast` : `useMap(voyage)`, la voiture sort du tunnel),
   `arrivee` (la caméra la suit jusqu'au porche), `garee`, le noir (`tripParking`), les répliques de
   l'arrivée (`tripArrivalLines()` : Alice propose le cache-cache), `cache` (elle file), puis `tripDone()` :
   Tecky a la main en `MAP.start` de la carte du voyage (le parking), la partie est enregistrée. Un bouton
   passe la scène après `TRIP.skip` s ; « Recommencer » va droit au parking. Pendant la scène, le monde est
-  figé, le HUD caché (les dialogues restent), Tecky n'est pas dessiné quand il est à bord. Avec un voyage :
+  figé, le HUD caché (les dialogues restent), Tecky n'est pas dessiné quand il est à bord. Le papa, lui, vit pendant
+  toute la scène, répliques comprises (`tripPapa()` : il parle à son tour, salue Alice qui file ; figé, Christophe
+  l'a tout de suite vu) ; `tripDone()` le laisse muet tant que Tecky ne s'est pas éloigné (il demandait « tu l'as
+  trouvée ? » alors qu'Alice venait de partir : cette phrase est sa dernière, pas sa première). Avec un voyage :
   `passageHere()` rend toujours null (à pied, les tunnels sont « pour les voitures » — les passages de la
   carte ne servent qu'à dire où mène le tunnel) ; `loadGame()` ramène au point de départ de la carte du
   voyage une partie enregistrée ailleurs (pendant la scène, par exemple) ; `reset()` et `toTitle()` vident
@@ -1160,14 +1164,14 @@ node tests/zoe.js                                         # puis le ou les tests
   (`facile()` ; demande de Christophe) : en mode normal, la butte nue, à repérer ; les textes ne parlent donc
   que de « butte » et de « bosses », jamais du bout qui dépasse. Il n'y a plus de traces de pattes ni de trou dans le tileset (les tuiles restent, inutilisées : les
   index n'ont pas bougé). Pour une autre saison (la neige) : un sol de plus dans `plage.SOLS`.
-- Compteurs du HUD (`hudCounters()`) : empilés à droite sous le score, dans l'ordre os dorés (dès le premier trouvé),
-  poules rentrées, lettres retrouvées, Pompon retrouvé (0/1, 1/1) ; ceux des quêtes seulement pendant la quête
-  (`asked`). Quand ils descendraient jusqu'aux boutons d'action (au toucher, le bouton du flair ; sinon, les aides de
-  touches du bas), ils passent sur une colonne de plus, à gauche (`COUNTER`, `counterBox()`). Test : `hud.js`.
   **Le temps de le voir** (14 novembre 2026 ; Christophe : « on a à peine le temps de le voir qu'il l'a déjà
   ramassé ») : un os doré ou un coquillage qui sort de terre n'est pas ramassé tant que Tecky ne bouge pas,
   pendant `UNEARTH.hold` s (`admire()`, `admired()`) ; dès qu'il fait un pas (`UNEARTH.move` px), il le prend.
   Tests : `tunnel.js`, `zoe.js`.
+- Compteurs du HUD (`hudCounters()`) : empilés à droite sous le score, dans l'ordre os dorés (dès le premier trouvé),
+  poules rentrées, lettres retrouvées, Pompon retrouvé (0/1, 1/1) ; ceux des quêtes seulement pendant la quête
+  (`asked`). Quand ils descendraient jusqu'aux boutons d'action (au toucher, le bouton du flair ; sinon, les aides de
+  touches du bas), ils passent sur une colonne de plus, à gauche (`COUNTER`, `counterBox()`). Test : `hud.js`.
   Au toucher, les boutons Pause (`PAUSE_BTN`) et Plein écran (`FS_BTN`) sont en haut, à gauche du score.
 - Petites bêtes (`critters`, `CRITTER`, `REFUGES`, `MAP.critters`) : écureuils et chats flânent ; Tecky trop près ou
   qui aboie les fait filer vers un refuge pas de son côté (arbre/sapin : l'écureuil grimpe et disparaît ; toit ou

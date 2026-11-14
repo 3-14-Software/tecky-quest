@@ -166,10 +166,11 @@ def P(**kw):
     worry : 0..1 sourcils relevés au milieu, petite bouche inquiète ; sweat : goutte d'inquiétude sur la tempe ;
     wave : 1 = bras droit (à gauche de l'image) levé qui salue, wave_a : angle (°) de l'avant-bras depuis la
     verticale (négatif = vers l'extérieur) ; gesture : 0..1 main gauche (à droite de l'image) ouverte qui
-    accompagne la parole ; cheer : 0..1 les deux bras levés ; cheeks : les deux mains sur les joues."""
+    accompagne la parole ; cheer : 0..1 les deux bras levés ; cheeks : les deux mains sur les joues ;
+    step : la marche du papa d'Alice, -1 = le pied à gauche de l'image levé, 1 = l'autre (les bras balancent)."""
     base = dict(bob=0.0, breath=0.0, lift=0.0, nod=0.0, blink=0.0, look=0.0, mouth=0.0, happy=False,
                 worry=0.0, sweat=False, wave=0.0, wave_a=0.0, gesture=0.0, cheer=0.0, cheeks=False,
-                wag=0.0, droop=0.0)       # Iris : angle de la queue (°), oreilles plus basses (triste)
+                wag=0.0, droop=0.0, step=0.0)       # Iris : angle de la queue (°), oreilles plus basses (triste)
     base.update(kw)
     return base
 
@@ -421,15 +422,17 @@ def _papa(p, tenue="jean", lunettes=False):
     T = lambda v: v - L
     _shadow(d, L, 10.2)
     # baskets blanches, jambes (nues sous le bermuda, ou en jean)
+    # (en marchant, `step` : un pied se lève, la jambe raccourcit d'autant)
+    pas = {-1: 2.4 * max(0.0, -p["step"]), 1: 2.4 * max(0.0, p["step"])}
     for x, s in ((20.4, -1), (27.6, 1)):
-        d.add(ellipse(x + s * 0.6, T(G - 1.7), 3.6, 1.9), c["shoe"])
-        d.add(rect(x + s * 0.6 - 3.3, T(G - 1.0), 6.6, 1.0, 0.5), c["sole"], sil=False)
-    for x in (20.4, 27.6):
+        d.add(ellipse(x + s * 0.6, T(G - 1.7) - pas[s], 3.6, 1.9), c["shoe"])
+        d.add(rect(x + s * 0.6 - 3.3, T(G - 1.0) - pas[s], 6.6, 1.0, 0.5), c["sole"], sil=False)
+    for x, s in ((20.4, -1), (27.6, 1)):
         if tenue == "jean":
-            d.add(leg(x, Y(44), x, T(57.0), 5.2), c["jean"])
-            d.raw(line(f"M{x:.2f},{Y(47.6):.2f} L{x:.2f},{T(56.2):.2f}", c["jean_dk"], 0.6))
+            d.add(leg(x, Y(44), x, T(57.0) - pas[s], 5.2), c["jean"])
+            d.raw(line(f"M{x:.2f},{Y(47.6):.2f} L{x:.2f},{T(56.2) - pas[s]:.2f}", c["jean_dk"], 0.6))
         else:
-            d.add(leg(x, Y(49), x, T(57.2), 4.2), c["skin"])
+            d.add(leg(x, Y(49), x, T(57.2) - pas[s], 4.2), c["skin"])
             d.add(leg(x, Y(44), x, Y(51.2), 5.8), c["short"])
             d.raw(line(f"M{x - 2.7:.2f},{Y(51.6):.2f} L{x + 2.7:.2f},{Y(51.6):.2f}", c["short_dk"], 0.7))
     # tee-shirt rouge : buste aux épaules larges, taille plus fine que celle de Léon ; encolure ronde ; « 3.14 »
@@ -449,7 +452,8 @@ def _papa(p, tenue="jean", lunettes=False):
     d.add(circle(x0 + 2.35, y0 + 2.6, 0.36), c["logo"], sil=False)                         # le point
 
     def rest(s, sx):
-        return (sx + s * 2.2, Y(31.2) + 5.8), (sx + s * 2.8, Y(31.2) + 11.6), False
+        b = -s * p["step"]                     # le bras opposé au pied levé part en avant : la main remonte un peu
+        return (sx + s * (2.2 + 0.5 * b), Y(31.2) + 5.8 - 0.3 * b), (sx + s * (2.8 + 0.9 * b), Y(31.2) + 11.6 - 1.5 * max(0.0, b)), False
     hy, X, V = _head_frame(Y, p)
     _arms(d, c, p, 15.0, 33.0, Y(31.2), rest)
     # tête : oreilles, visage
@@ -1361,6 +1365,8 @@ ANIMS = {   # PNJ : {nom : (poses, fps, boucle)}
         "wave": (_WAVE, 8, True),
         "cheer": ([P(cheer=0.6, happy=True, bob=0.4), P(cheer=1, happy=True, lift=1.8),
                    P(cheer=1, happy=True, lift=2.6), P(cheer=0.85, happy=True, lift=1.0)], 8, True),
+        # il marche vers nous ou de côté, vu de face (le voyage en voiture : il fait le tour jusqu'à sa portière)
+        "walk": ([P(step=-1, bob=0.5), P(step=-0.35, bob=0.1), P(step=1, bob=0.5), P(step=0.35, bob=0.1)], 8, True),
     },
     "iris": {       # wave : il remue la queue ; cheer : il saute de joie (il n'est jamais inquiet : c'est le sage)
         "idle": ([P(), P(bob=0.3, wag=8), P(bob=0.5), P(bob=0.3, blink=1, wag=-6)], 4, True),

@@ -4699,10 +4699,10 @@ function hurtPlayer(dmg, fromX, fromY, bite = true) {
   if (facile()) dmg = Math.max(1, Math.floor(dmg / 2));
   P.hp = Math.max(0, P.hp - dmg);
   if (bite) bitten = true;
+  scratched = true;
   const l = Math.max(1, dist(P.x, P.y, fromX, fromY));
   P.kx = (P.x - fromX) / l * 420; P.ky = (P.y - fromY) / l * 420;
   P.inv = 1.2; shake = 0.25;
-  scratched = true;
   addFx('fx/hit', P.x, P.y - 32, { fps: 16 });
   SFX.hurt();
   rumble(P.hp <= 0 ? 'ko' : 'hurt');
@@ -5439,10 +5439,10 @@ function toTitle() {
   Music.pos = {};                                         // chaque morceau reprendra à son début
   Music.setZone(TITLE_MUSIC, true);                       // (arrêtée : retient seulement la zone)
   Music.start();
+  Music.refresh();                                        // (venu de la pause : la musique y jouait tout bas)
 }
 
 /* ------------------------------------------------------------------ vibrations */
-  Music.refresh();                                        // (venu de la pause : la musique y jouait tout bas)
 /* Option « Vibrations » : la manette (vibrationActuator, si c'est elle qui sert) ou le téléphone (navigator.vibrate, au
    toucher) vibrent quand Tecky est mordu ou heurté, plus fort au KO, et d'un petit coup quand sa morsure porte ou qu'un
    os doré sort de terre. RUMBLE : [force du gros moteur, du petit, durée en ms]. */
@@ -5471,12 +5471,12 @@ const BADGES_KEY = 'tecky-quest-badges';
 const badgeName = id => txt('badges.' + id + '.nom'), badgeGoal = id => txt('badges.' + id + '.but');
 const TOAST = { life: 3.6 };
 let badges = {}, toasts = [], newBadges = [], badgeT = 0, bitten = false;
+let scratched = false;                // un coup a porté, morsure ou non (pince d'un crabe, piqué d'un goéland : badge de l'été)
+let beachNap = false;                 // il s'est endormi sur le sable (badge de l'été)
 function loadBadges() { badges = STORE.get(BADGES_KEY) || {}; }
 /* Un badge est celui d'un épisode (MAP.badgeEp ; sans cela, il est rangé avec le premier). L'écran des badges a une
    page par épisode : seulement ceux qui sont ouverts, ou dont un badge est déjà gagné — tant que l'été n'est pas
    ouvert, ses badges ne sont ni montrés ni comptés. */
-let scratched = false;                // un coup a porté, morsure ou non (pince d'un crabe, piqué d'un goéland : badge de l'été)
-let beachNap = false;                 // il s'est endormi sur le sable (badge de l'été)
 const badgeEp = id => MAP.badgeEp[id] || EPISODES[0].id;
 // (l'ordre d'une page : MAP.badgeOrdre[épisode], les pendants d'été à la place de ceux du printemps ; sinon celui de MAP.badges)
 const badgeIds = ep => MAP.badgeOrdre[ep] || MAP.badges.filter(id => badgeEp(id) === ep);
@@ -5493,11 +5493,11 @@ function unlockBadge(id) {
 }
 function checkBadges() {
   const monde = MAP.id === 'monde';     // (une carte annexe sans bêtes ni trésors les donnerait tous d'un coup)
+  const cote = MAP.id === 'cote';
   if (monde && balade() && dogs.length && dogs.every(d => d.friend)) unlockBadge('copains');
   if (monde && treasures >= MAP.dig.length) unlockBadge('os_dores');
   if (farm.state === 'done') unlockBadge(MAP.roles.farmer ? 'moutons' : 'poules');     // (les poules de Gaston, ou les moutons d'Anatole)
   if (post.state === 'done') unlockBadge(MAP.roles.postman ? 'coquillages' : 'facteur');    // (les lettres de Marcel, ou les coquillages de Zoé)
-  const cote = MAP.id === 'cote';
   if (rose.state === 'done') unlockBadge(MAP.roles.pompon ? 'caniche' : 'chat');       // (Pompon, ou Praline sur la côte)
   if (fete.state === 'done') unlockBadge(MAP.roles.leon ? 'bouees' : 'ballons');         // (les ballons de Léon, ou les bouées d'Yvon)
   if (jouets.state === 'done') unlockBadge(MAP.roles.iris ? 'nageur' : 'iris');          // (les jouets d'Iris, ou ceux de Théo)
@@ -5507,10 +5507,6 @@ function checkBadges() {
   if (monde && ducks.filter(d => !d.lead).every(d => d.scored)) unlockBadge('canards');
   if (monde && seenCells.reduce((a, v) => a + v, 0) >= seenCells.length * 0.95) unlockBadge('explorateur');
   if (napped) unlockBadge('sieste');
-}
-/* Complétion de la partie (écran de victoire), en % : moyenne de catégories qui comptent toutes autant — os dorés, quêtes,
-   petites bêtes, canards, carte explorée (95 % suffisent, comme pour le badge), et les copains en balade. Une nouvelle
-   quête : l'ajouter à QUESTS_DONE. */
   // la côte : les pendants d'été des badges du monde, et les siens (crabes, goélands, la baignade)
   if (!cote) return;
   if (balade() && dogs.length && dogs.every(d => d.friend)) unlockBadge('copains_ete');
@@ -5520,6 +5516,10 @@ function checkBadges() {
   if (seenCells.reduce((a, v) => a + v, 0) >= seenCells.length * 0.95) unlockBadge('explorateur_ete');
   if (beachNap) unlockBadge('sieste_ete');
   if (P.swum) unlockBadge('bain');
+}
+/* Complétion de la partie (écran de victoire), en % : moyenne de catégories qui comptent toutes autant — os dorés, quêtes,
+   petites bêtes, canards, carte explorée (95 % suffisent, comme pour le badge), et les copains en balade. Une nouvelle
+   quête : l'ajouter à QUESTS_DONE. */
 const QUESTS_DONE = [() => farm.state === 'done', () => post.state === 'done', () => rose.state === 'done',
   () => fete.state === 'done', () => jouets.state === 'done', () => piq.state === 'done'];
 // (celui qui donne chaque quête : seules comptent celles de la carte où l'on joue)
@@ -6346,15 +6346,20 @@ function drawEnding() {
 /* ------------------------------------------------------------------ le voyage en voiture */
 /* Un épisode qui a un « voyage » (episodes.json : l'été, vers la côte) commence par une cinématique. Sur la carte de
    départ, le papa d'Alice attend près de sa voiture, au bas du chemin de la niche ; Alice et Tecky descendent le
-   rejoindre, tout le monde monte, la voiture s'en va. Au noir, on change de carte : elle sort du tunnel, roule
+   rejoindre, ils montent, le papa fait le tour jusqu'à sa portière et monte à son tour, la voiture s'en va : la
+   caméra la suit d'un bout à l'autre de la grande route (cruise), jusqu'au tunnel où elle s'enfonce. Au noir, on
+   change de carte : elle sort du tunnel, roule
    jusqu'au porche du parking et y entre ; au noir encore, Alice et Tecky sont sur le parking (MAP.start), le papa
    à sa place (MAP.papa, il salue ensuite comme un villageois) ; Alice propose une partie de cache-cache et file se
    cacher. Tecky a la main : la partie est enregistrée là, et c'est là qu'elle reprend. Après `skip` s, un bouton
    passe la scène (tripDone). Pendant la scène, le monde est figé : seuls ses acteurs bougent.
    Distances en pixels du monde ; car : vitesse de la voiture ; kids, papa : où ils se tiennent, à partir de
-   l'arrière de la voiture ; door : où l'on monte ; away : jusqu'où Alice s'éloigne, en s. */
-const TRIP = { skip: 1, fade: 0.6, walk: 110, car: 300, accel: 260, park: 140, papa: [-46, -22], kids: [[-116, -26], [-168, -4]],
-  door: [26, -6], wait: 0.5, away: 2.4 };
+   l'arrière de la voiture ; door : où l'on monte ; wheel : la portière du papa (il passe derrière la voiture) ;
+   duck, sink : il se baisse pour s'asseoir (durée, hauteur : il descend derrière la voiture, qui le cache) ;
+   sit : le temps de s'installer avant de démarrer ; away : jusqu'où Alice s'éloigne, en s. Le papa (trip.papa au
+   départ, le villageois `papa` à l'arrivée) vit pendant toute la scène, répliques comprises : tripPapa(). */
+const TRIP = { skip: 1, fade: 0.6, walk: 110, car: 300, cruise: 480, accel: 260, park: 140, papa: [-46, -22], kids: [[-116, -26], [-168, -4]],
+  door: [26, -6], wheel: [88, -22], duck: 0.4, sink: 76, sit: 0.45, wait: 0.5, away: 2.4 };
 const tripActor = (a, x, y, dir) => { a.x = x; a.y = y; a.dir = dir; a.setAnim('idle'); };
 // fait marcher un acteur vers (x, y) ; rend vrai quand il y est
 function tripWalk(a, x, y, dt) {
@@ -6364,6 +6369,14 @@ function tripWalk(a, x, y, dt) {
   a.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
   if (a.anim !== 'walk') a.setAnim('walk');
   return false;
+}
+// le papa pendant la scène : il parle quand c'est sa réplique, sinon `anim` (appelée aussi pendant les dialogues)
+function tripPapa(dt, anim) {
+  const p = trip.papa || villagers.find(v => v.kind === 'papa');
+  if (!p) return;
+  const a = state === 'dialog' && dialog && dialog.lines[dialog.i].who === 'papa' ? 'talk' : anim || (p.anim === 'talk' ? 'idle' : p.anim);
+  if (a !== p.anim) { p.anim = a; p.t = 0; }
+  p.t += dt;
 }
 // ce qui se dit au départ, puis à l'arrivée sur le parking
 const tripDepartLines = () => [{ who: 'papa', text: txt('voyage.papa.depart') }, { who: 'alice', face: 0, text: txt('voyage.alice.depart') },
@@ -6385,16 +6398,6 @@ function startTrip() {
 }
 // passe au noir, fait `then`, puis revient
 function tripFade(then) { trip.fade = 1; trip.then = then; }
-// au noir : l'autre bout de la grande route ; la voiture arrive devant le tunnel qui mène à la carte du voyage
-// (celui de l'est : les véhicules ne sont dessinés que roulant vers la droite ; sinon, on passe tout de suite)
-function tripTunnel() {
-  const q = MAP.passages.find(p => p[1] === EP().voyage), t = q && MAP.roadTunnels[q[0]];
-  if (!t || !t[2]) { tripCoast(); return; }
-  const half = VEHICLE.sport.len / 2;
-  camX = camClampX(MAP.w * TS);                        // (calée contre le bord est : la bouche du tunnel à droite)
-  Object.assign(trip.car, { x: camX - half - 20, v: TRIP.car });
-  trip.step = 'tunnel';
-}
 // au noir : la côte ; la voiture sort du tunnel
 function tripCoast() {
   useMap(EP().voyage); resetWorld();
@@ -6419,6 +6422,8 @@ function tripDone() {
   const passee = !!trip && trip.step !== 'cache';
   if (MAP.id !== EP().voyage) { useMap(EP().voyage); resetWorld(); }
   trip = null; state = 'play'; elsewhere = {};
+  for (const v of villagers) if (v.kind === 'papa')      // (Tecky est à côté du papa : il ne le salue que s'il revient le voir)
+    Object.assign(v, { anim: 'idle', near: true, cd: VILLAGER.again, waveT: 0 });
   alice.kind = aliceKind(true); alice.hidden = true; alice.x = MAP.alice[0]; alice.y = MAP.alice[1];
   tripActor(P, MAP.start[0], MAP.start[1], 'down');
   P.mode = 'free';
@@ -6430,7 +6435,10 @@ function tripDone() {
 function updateTrip(dt) {
   const T = TRIP, e = trip, c = e.car;
   e.t += dt; e.s += dt; alice.t += dt; P.t += dt;
-  if (e.papa) e.papa.t += dt;
+  for (const h of hens) h.t += dt;
+  for (const w of cows) w.t += dt;
+  for (const v of villagers) if (v.kind !== 'papa') v.t += dt;
+  tripPapa(dt, e.step === 'cache' || e.step === 'descente' ? 'wave' : e.step === 'installe' && e.papa && !e.papa.sink ? 'walk' : 'idle');
   updateFx(dt);
   if (e.t > T.skip && (pressed.ok || pressed.bite || pressed.bark || pressed.act || pressed.pause)) { tripDone(); return; }
   if (e.fade) {                                          // un fondu en cours : au noir, la suite, puis le retour
@@ -6446,26 +6454,42 @@ function updateTrip(dt) {
       const rear = c.x - half, k = T.kids;
       const a = tripWalk(alice, rear + k[0][0], c.y + k[0][1], dt), b = tripWalk(P, rear + k[1][0], c.y + k[1][1], dt);
       if (!a || !b) break;
-      alice.dir = P.dir = 'right'; e.papa.anim = 'talk'; e.step = 'paroles';
-      say(tripDepartLines(), () => { trip.step = 'embarque'; trip.papa.anim = 'idle'; });
+      alice.dir = P.dir = 'right'; e.step = 'paroles';
+      say(tripDepartLines(), () => { trip.step = 'embarque'; });
       break;
     }
     case 'embarque': {                                   // tout le monde monte : chacun disparaît à la portière
       const x = c.x - half + T.door[0], y = c.y + T.door[1];
       if (!alice.hidden && tripWalk(alice, x, y, dt)) alice.hidden = true;
       if (alice.hidden && !e.aboard && tripWalk(P, x, y, dt)) e.aboard = true;
-      if (!e.aboard) break;
-      e.papa = null; c.name = 'sport'; e.step = 'route';
+      if (e.aboard) { e.step = 'installe'; e.s = 0; }
+      break;
+    }
+    case 'installe': {                                   // le papa fait le tour jusqu'à sa portière, monte, et démarre
+      const p = e.papa, x = c.x - half + T.wheel[0];
+      if (p) {
+        const d = x - p.x, s = T.walk * dt;
+        if (Math.abs(d) > s) { p.x += Math.sign(d) * s; break; }
+        p.x = x; p.sink = Math.min(1, (p.sink || 0) + dt / T.duck);
+        if (p.sink < 1) break;
+        e.papa = null; e.s = 0;
+      }
+      if (e.s < T.sit) break;
+      c.name = 'sport'; e.step = 'route';
       SFX.honk(VEHICLE.sport.pitch, c);
       break;
     }
-    case 'route':                                        // la voiture s'en va ; hors de l'écran, le noir, puis le tunnel
-      c.v = Math.min(T.car, c.v + T.accel * dt);
-      if (c.x - half > camX + VW + 30 && !e.fade) tripFade(tripTunnel);
+    case 'route': {                                      // la voiture s'en va : la caméra la suit d'un bout à l'autre de la route
+      const q = MAP.passages.find(g => g[1] === EP().voyage), t = q && MAP.roadTunnels[q[0]];
+      c.v = Math.min(T.cruise, c.v + T.accel * dt);
+      if (!t || !t[2]) {                                 // (pas de tunnel à l'est vers la carte du voyage : hors de l'écran, le noir)
+        if (c.x - half > camX + VW + 30 && !e.fade) tripFade(tripCoast);
+        break;
+      }
+      camX = camClampX(Math.max(camX, c.x - VW * 0.45));
+      if (c.x - half > MAP.w * TS + EDGE.cam + 10 && !e.fade) { SFX.tunnel(); tripFade(tripCoast); }   // elle s'enfonce dans le tunnel
       break;
-    case 'tunnel':                                       // au bout de la grande route : elle s'enfonce dans le tunnel
-      if (c.x - half > MAP.w * TS + EDGE.cam + 10 && !e.fade) { SFX.tunnel(); tripFade(tripCoast); }
-      break;
+    }
     case 'arrivee':                                      // elle sort du tunnel et roule jusqu'au porche du parking
       camX = camClampX(Math.max(camX, c.x - VW * 0.45));
       if (c.x - half > MAP.traffic.end + TRAFFIC.porch) { c.v = 0; e.step = 'garee'; e.s = 0; }
@@ -6559,6 +6583,7 @@ function update(dt) {
       for (const h of hens) h.t += dt;
       for (const c of cows) c.t += dt;
       for (const v of villagers) v.t += dt;
+      if (trip) tripPapa(dt);                            // (le voyage en voiture : le papa parle à son tour)
       updateFx(dt);
       updateCamera(dt);
       break;
@@ -6712,7 +6737,14 @@ function drawWorld() {
   if (trip) {                                          // le voyage en voiture : la voiture du papa, et lui à côté
     const c = trip.car, p = trip.papa;
     if (c) list.push({ y: c.y, draw: () => drawSpr('vehicle/' + c.name, Math.floor(c.t * 4), c.x, c.y) });
-    if (p) list.push({ y: p.y, draw: () => drawSpr('papa/' + p.anim, Math.floor(p.t * ((MAP.npcFps.papa || {})[p.anim] || 6)), p.x, p.y) });
+    if (p) list.push({ y: p.y, draw: () => {
+      const i = Math.floor(p.t * ((MAP.npcFps.papa || {})[p.anim] || 6));
+      if (!p.sink) { drawSpr('papa/' + p.anim, i, p.x, p.y); return; }
+      if (shadowCtx) return;                             // il s'assoit : il descend derrière la voiture, coupé sous les vitres
+      ctx.save(); ctx.beginPath(); ctx.rect(p.x - 80, p.y - 220, 160, 220 - TRIP.sink / 2); ctx.clip();
+      drawSpr('papa/idle', i, p.x, p.y + soften(p.sink) * TRIP.sink);
+      ctx.restore();
+    } });
   }
   list.sort((a, b) => a.y - b.y);
   drawCastShadows(list, cx, cy);          // les ombres portées de ce qui bouge, sous tous les sprites

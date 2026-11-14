@@ -17,11 +17,21 @@ function main() {
   ok(jusqua('state === "dialog"', 900) && run('dialog.lines[0].who') === 'papa' && run('dialog.lines.length') === 3
      && run('Math.abs(alice.y - trip.car.y) < 60 && Math.abs(P.y - trip.car.y) < 60'),
      'Alice et Tecky descendent jusqu\'à la voiture ; le papa : « ' + run('dialog.lines[0].text') + ' »');
+  ok(run('trip.papa.anim') === 'talk', 'le papa parle pendant sa réplique');
+  run('var pt = trip.papa.t; pressed.ok = true;'); step(1); run('pressed.ok = true;'); step(20);
+  ok(run('state') === 'dialog' && run('dialog.lines[dialog.i].who') === 'alice' && run('trip.papa.anim') === 'idle' && run('trip.papa.t') > 0.2,
+     'pendant celle d\'Alice, il se tait mais ne se fige pas');
   advanceDialog();
-  ok(run('state') === 'trip' && jusqua('trip.aboard', 600) && run('alice.hidden') && run('trip.car.name') === 'sport' && run('trip.papa') === null,
-     'tout le monde monte : la voiture a ses passagers, plus personne à côté');
-  ok(jusqua('trip.step === "tunnel"', 600) && run('MAP.id') === 'monde' && run('camX') > run('MAP.w * TS - VW') && run('trip.car.x') < run('camX'),
-     'la voiture s\'en va ; au noir, l\'autre bout de la route : elle arrive devant le tunnel de l\'est');
+  ok(run('state') === 'trip' && jusqua('trip.aboard', 600) && run('alice.hidden') && run('trip.car.name') === 'sport_vide' && run('trip.papa') !== null,
+     'Alice et Tecky montent ; le papa est encore dehors');
+  run('var px0 = trip.papa.x;'); step(20);
+  ok(run('trip.papa.anim') === 'walk' && run('trip.papa.x') > run('px0') + 20 && !!run('ATLAS["papa/walk"]'), 'il marche jusqu\'à sa portière');
+  ok(jusqua('trip.step === "route"', 300) && run('trip.car.name') === 'sport' && run('trip.papa') === null,
+     'il monte à son tour : la voiture a ses passagers, plus personne à côté');
+  run('var noir = 0, cam0 = camX;');
+  ok(jusqua('(noir = Math.max(noir, trip.a), trip.car.x > MAP.w * TS - 200)', 1500) && run('MAP.id') === 'monde' && run('noir') === 0
+     && run('camX') > run('cam0') + 3000 && run('camX') > run('MAP.w * TS - VW') && run('trip.step') === 'route',
+     'la voiture traverse toute la carte, la caméra la suit, sans fondu, jusqu\'au tunnel de l\'est');
   ok(jusqua('MAP.id === "cote"', 900) && run('state') === 'trip' && run('trip.step') === 'arrivee' && run('trip.car.x') < 0,
      'elle s\'enfonce dans le tunnel ; au noir, la côte : elle en ressort');
   ok((run('Music.want') || run('Music.zone')) === 'cote', 'la musique de la côte commence quand la voiture sort du tunnel');
@@ -32,10 +42,18 @@ function main() {
      'elle roule jusqu\'au porche et y entre ; sur le parking, Alice : « ' + run('dialog.lines[0].text') + ' »');
   run('vus = []; render(); drawVillager = dv0;');
   ok(run('vus.includes("papa")'), 'une fois garés, le papa est descendu');
-  advanceDialog();
+  run('pressed.ok = true;'); step(1); run('pressed.ok = true;'); step(10);
+  ok(run('dialog.lines[dialog.i].who') === 'papa' && run('villagers.find(v => v.kind === "papa").anim') === 'talk', 'sur le parking, le papa parle à son tour');
+  advanceDialog(); step(20);
+  ok(run('state') === 'trip' && run('trip.step') === 'cache' && run('villagers.find(v => v.kind === "papa").anim') === 'wave' && run('villagers.find(v => v.kind === "papa").t') > 0.1,
+     'Alice file : il lui fait signe, il n\'est pas figé');
   ok(jusqua('state === "play"', 400) && run('trip') === null && run('alice.hidden') && run('cars.length') === 5 && run('P.mode') === 'free'
      && run('(() => { const s = loadSave(); return !!s && s.ep === "ete" && s.carte === "cote" && Math.abs(s.x - MAP.start[0]) < 1; })()'),
      'Alice file se cacher : Tecky a la main sur le parking, la partie y est enregistrée');
+  run('pops = [];'); step(60);
+  ok(run('!pops.some(p => p.who === "papa" || /trouv/.test(p.text))') && run('villagers.find(v => v.kind === "papa").anim') === 'idle',
+     'Tecky a la main : le papa, juste à côté, ne lui demande pas déjà s\'il a trouvé Alice');
+  ok(run('!/trouv/.test(txt("villageois.papa.0"))'), 'et sa première phrase, quand Tecky revient, n\'est pas cette question');
   // 2. le papa salue comme un villageois ; à pied, le tunnel est pour les voitures
   run('cars = []; dogs = []; pops = []; var V = villagers.find(v => v.kind === "papa"); V.near = false; V.cd = 0; P.x = V.x - 60; P.y = V.y + 60;'); step(2);
   ok(run('pops.some(p => p.text === txt("villageois.papa.0"))') && run('V.anim') === 'wave', 'le papa, resté près du parking : « ' + run('txt("villageois.papa.0")') + ' »');
