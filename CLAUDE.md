@@ -21,7 +21,7 @@ python3 pack_web.py --sans-hd             # la même chose sans les images x4 (l
 python3 editeur.py                        # éditeur de carte : http://127.0.0.1:8770/ (modifie carte.json)
 python3 episodes.py                       # vérifie episodes.json (les épisodes, leurs cartes)
 python3 music.py                          # contrôle des partitions ; écoute : web/musique.html (après pack_web.py)
-./tests/run_all.sh                        # reconstruit puis lance tous les tests (doit finir avec exit=0)
+./tests/run_all.sh                        # TOUS les tests : seulement dans les trois cas de « Quand lancer les tests »
 ./publish_docs.sh                         # copie la version autonome dans docs/ (GitHub Pages)
 python3 tools/mesure_firefox.py           # coût du rendu dans Firefox sans fenêtre (jeu servi sur le port 8765)
 ```
@@ -31,6 +31,31 @@ Pour livrer une modification : `./tests/run_all.sh && ./publish_docs.sh`, commit
 `web/` est généré et ignoré par Git ; `docs/` est commité.
 `docs/glitch/` : la démo de **Glitch**, fork pour adultes (dossier `../glitch`, son propre `CLAUDE.md`), publiée là
 par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) ; `publish_docs.sh` d'ici l'épargne.
+
+## Quand lancer les tests
+
+**Ne pas lancer `./tests/run_all.sh` à la moindre modification** (demande de Christophe, 14 novembre 2026) : la
+batterie entière est longue. Elle ne se lance que dans trois cas :
+
+1. **avant de pousser en ligne** (`./tests/run_all.sh && ./publish_docs.sh`, puis commit et push) ;
+2. **à la demande de Christophe** ;
+3. **après un gros refactoring** : un changement qui traverse le moteur (collisions, sauvegarde, cartes, boucle
+   de jeu, format de `carte.json`, atlas ou tileset), pas une retouche, même étendue, d'un seul sujet.
+
+Le reste du temps, ne vérifier que ce que la modification touche :
+
+```bash
+python3 pack_web.py --sans-hd && python3 tests/regen.py   # une fois, après une modif de game.js, d'une carte ou d'un dessin
+node tests/zoe.js                                         # puis le ou les tests du sujet (deux ou trois au plus)
+```
+
+- Un dessin seul : la planche du module (`python3 tecky2.py`…), `python3 tests/heros.py` ou `tests/edges.py` s'il
+  est concerné, une capture (`v2/capture.py`) ; pas de tests Node.
+- Un texte ou une réplique : `node tests/textes.js`, `node tools/export_voix.js` (puis `--check`).
+- Une carte : `python3 carte.py --verifier` ; `pack_web.py` lance déjà `check_placement.js`.
+- Un test qui échoue : le relancer seul, pas la batterie.
+- Ne pas relancer la batterie « pour être sûr » à la fin d'une tâche, ni avant un commit qui n'est pas poussé.
+  Dans le compte rendu, dire quels tests ont été lancés, et que la batterie entière ne l'a pas été.
 
 ## Architecture
 
