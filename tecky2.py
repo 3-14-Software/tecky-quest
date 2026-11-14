@@ -747,12 +747,13 @@ def dos(p=None):
     d.add(path(_ovale(B, 0, 39.0, 4.3, 3.0)), c["light"], sil=False, clip="corpsd")
     d.add(path(_trace(B, HARNAIS_D)), c["harness"], sil=False, clip="corpsd")
 
-    # la queue, dressée devant nous
+    _oreilles(d, p, place, OREILLE_D, OREILLE_D_PLI, OREILLE_D_PIVOT, devant=True)
+
+    # la queue, dressée devant nous : ce qu'il a de plus près de nous, donc par-dessus les oreilles (en remuant,
+    # son bout passait sous l'oreille droite)
     place_q = _tourne(p["queue"], 0, 32.5, B)
     d.add(path(_trace(place_q, QUEUE_D[0])), c["fur"])
     d.raw(line(_trace(place_q, QUEUE_D[1]), OUTLINE, 1.3))
-
-    _oreilles(d, p, place, OREILLE_D, OREILLE_D_PLI, OREILLE_D_PIVOT, devant=True)
     return d
 
 
