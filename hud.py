@@ -437,10 +437,20 @@ def arrow_icons(scale):
 # ------------------------------------------------------------------ badges (succès)
 BADGES = ["aventure", "copains", "os_dores", "intact", "rapide", "poules",
           "facteur", "chat", "betes", "canards", "explorateur", "sieste", "ballons", "iris", "train", "herissons",
-          "caniche", "moutons", "coquillages", "nageur", "bouees", "mouettes"]
+          "caniche", "moutons", "coquillages", "nageur", "bouees", "mouettes",
+          "aventure_ete", "copains_ete", "os_dores_ete", "intact_ete", "rapide_ete", "crabes", "goelands",
+          "explorateur_ete", "sieste_ete", "bain"]
 # Les badges d'un épisode (les autres sont ceux du jeu, rangés avec le premier) : l'écran des badges a une page par
 # épisode ouvert (game.js : badgePages()).
-BADGE_EP = {"caniche": "ete", "moutons": "ete", "coquillages": "ete", "nageur": "ete", "bouees": "ete", "mouettes": "ete"}
+# L'été en a seize, comme le printemps : ses six quêtes et les pendants des dix autres (retrouvailles, copains, os
+# dorés, sans un coup, rapide, exploration, sieste ; les crabes et les goélands pour les bêtes et les canards ; la
+# baignade pour Titine). L'écran les montre dans l'ordre de BADGE_ORDRE (les pendants à la place de ceux du printemps).
+BADGE_EP = {k: "ete" for k in ("caniche", "moutons", "coquillages", "nageur", "bouees", "mouettes",
+                               "aventure_ete", "copains_ete", "os_dores_ete", "intact_ete", "rapide_ete", "crabes",
+                               "goelands", "explorateur_ete", "sieste_ete", "bain")}
+BADGE_ORDRE = {"ete": ["aventure_ete", "copains_ete", "os_dores_ete", "intact_ete", "rapide_ete", "moutons",
+                       "coquillages", "caniche", "crabes", "goelands", "explorateur_ete", "sieste_ete", "bouees",
+                       "nageur", "bain", "mouettes"]}
 BADGE_C = (24, 20.5)      # centre de la médaille dans le cadre 48x48
 _HEART = ("M16,23.5 C9,18.6 7,15.2 7,12.6 C7,9.9 9.1,8 11.6,8 C13.6,8 15.1,9.2 16,10.9 "
           "C16.9,9.2 18.4,8 20.4,8 C22.9,8 25,9.9 25,12.6 C25,15.2 23,18.6 16,23.5 Z")   # même cœur que fx/heart
@@ -768,6 +778,157 @@ def _ic_mouettes(d):
     mouettes._poisson(d, "rouget")
 
 
+# --- les pendants d'été des badges du jeu (retrouvailles, copains, os dorés… : un par badge du printemps)
+def _ic_aventure_ete(d):
+    """Le phare des falaises, sa lanterne allumée : Alice retrouvée sur la côte."""
+    for a in (-152, -180, -208, -28, 0, 28):                             # les rayons de la lanterne
+        r = math.radians(a)
+        d.raw(line(f"M{16 + 5.6 * math.cos(r):.2f},{8.4 + 5.6 * math.sin(r):.2f} "
+                   f"L{16 + 9.4 * math.cos(r):.2f},{8.4 + 9.4 * math.sin(r):.2f}", "#F2A32E", 1.3))
+    tour = "M11.6,28 L13.2,11.6 L18.8,11.6 L20.4,28 Z"
+    d.clip("bphare", [path(tour)])
+    d.add(path(tour), "#FFFFFF")
+    for y in (14.2, 20.6):
+        d.add(rect(8, y, 16, 3.3), "#D7332B", sil=False, clip="bphare")
+    d.add(rect(16, 10, 6, 19), "#000000", sil=False, clip="bphare", opacity=0.1)
+    d.add(rect(14.7, 24.4, 2.6, 3.6, 1.2), "#7A4B2A", sil=False)
+    d.add(rect(11.6, 10.4, 8.8, 1.8, 0.6), "#3F4652")                    # la galerie
+    d.add(rect(13.4, 5.8, 5.2, 4.8, 0.6), "#FFE27A")                     # la lanterne
+    d.add(rect(13.9, 6.3, 1.6, 3.8), "#FFFFFF", sil=False, opacity=0.7)
+    d.add(path("M12.6,6.2 Q16,1.6 19.4,6.2 Z"), "#D7332B")               # le dôme
+    d.add(rect(7.6, 27.4, 16.8, 2.2, 1.1), "#7FB069")                    # la lande
+
+
+def _etoile_de_mer(d, x, y, r, couleur="#F2853A", clair="#FBC08A"):
+    """Une étoile de mer à cinq branches arrondies, de petits grains clairs."""
+    pts = []
+    for i in range(10):
+        a = math.radians(-90 + i * 36)
+        k = r if i % 2 == 0 else r * 0.46
+        pts.append((x + k * math.cos(a), y + k * math.sin(a)))
+    d.add('<polygon points="%s" fill="%%F%%"/>' % " ".join(f"{px:.2f},{py:.2f}" for px, py in pts),
+          couleur)
+    d.add(circle(x, y, r * 0.16), clair, sil=False)
+    for i in range(5):
+        a = math.radians(-90 + i * 72)
+        d.add(circle(x + r * 0.5 * math.cos(a), y + r * 0.5 * math.sin(a), r * 0.1), clair, sil=False)
+
+
+def _ic_copains_ete(d):
+    """La patte de Tecky et une étoile de mer : copain de tous les chiens de la côte."""
+    fur, light = tecky2.PAL["fur"], tecky2.PAL["light"]
+    px, py = 13.6, 21.0
+    d.add(ellipse(px, py, 5.8, 4.8), fur)
+    for x, y in ((-6.4, -6.0), (-2.6, -9.6), (2.6, -9.6), (6.4, -6.0)):
+        d.add(ellipse(px + x, py + y, 2.1, 2.6, f"rotate({x * 3:.0f} {px + x} {py + y})"), fur)
+    d.add(ellipse(px - 1.6, py - 1.4, 2.2, 1.3), light, sil=False)
+    _etoile_de_mer(d, 24.0, 10.4, 5.6)
+
+
+def _ic_os_dores_ete(d):
+    """Un coffre de pirate ouvert, un os doré qui en dépasse : tous les os dorés de la côte."""
+    bois, sombre, fer = "#A8683A", "#7E4A26", "#F2C14E"
+    d.add(path("M6.4,13.6 Q7.2,6.0 16,6.0 Q24.8,6.0 25.6,13.6 Z"), sombre)          # le couvercle relevé
+    d.add(path("M9.2,13.6 Q9.8,8.4 16,8.4 Q22.2,8.4 22.8,13.6 Z"), "#5E3518", sil=False)
+    # l'os doré, debout dans le coffre
+    d.add(rect(14.6, 9.4, 2.8, 9, 1.2, "rotate(24 16 15)"), "#F7D24A")
+    for x, y in ((17.0, 8.6), (19.6, 9.8)):
+        d.add(circle(x, y, 2.0), "#F7D24A")
+    d.add(circle(17.6, 8.2, 0.7), "#FFF3B0", sil=False)
+    d.add(ellipse(12.2, 15.0, 3.0, 1.9), "#F7D24A")                                  # le tas d'or
+    d.add(ellipse(20.4, 15.2, 2.6, 1.7), "#EDB93A")
+    d.add(rect(5.6, 15.0, 20.8, 11.6, 1.6), bois)                                    # la caisse
+    d.add(rect(5.6, 21.2, 20.8, 5.4, 1.6), sombre, sil=False, opacity=0.45)
+    for x in (8.2, 21.8):
+        d.add(rect(x, 15.0, 2.0, 11.6), fer, sil=False, edge=True)
+    d.add(rect(14.2, 17.6, 3.6, 4.4, 0.8), fer, sil=False, edge=True)
+    d.add(circle(16, 19.4, 0.8), OUTLINE, sil=False)
+    _sparkle(d, 25.4, 6.4, 3.0)
+    _sparkle(d, 6.6, 9.4, 2.0)
+
+
+def _ic_intact_ete(d):
+    """Bouclier turquoise frappé d'une étoile de mer : ni mordu, ni pincé, ni piqué."""
+    shield = path("M16,4.2 C19.4,6.2 22.6,6.8 26,6.8 C26.2,16.6 22.8,23.8 16,28.2 C9.2,23.8 5.8,16.6 6,6.8 "
+                  "C9.4,6.8 12.6,6.2 16,4.2 Z")
+    d.clip("bshield_e", [shield])
+    d.add(shield, "#2FBFB4")
+    d.add(rect(16, 0, 14, 30), "#229E96", sil=False, clip="bshield_e")
+    _etoile_de_mer(d, 16, 15.4, 7.0, "#FFF4DC", "#F2C98A")
+    _sparkle(d, 24.6, 7.0, 3.2)
+
+
+def _ic_rapide_ete(d):
+    """Un petit voilier qui file, penché par le vent : vent en poupe."""
+    tr = "rotate(8 17 17)"
+    d.add(rect(16.4, 4.6, 1.3, 17.6, 0.5, tr), "#8A6A46")                             # le mât
+    d.add(path("M18.4,5.4 Q27.6,12.4 26.6,20.0 L18.4,20.0 Z", tr), "#FFFFFF")         # la grand-voile
+    d.add(path("M18.4,14.6 L26.9,16.6 L26.6,20.0 L18.4,20.0 Z", tr), "#E2332B", sil=False)
+    d.add(path("M15.6,8.0 Q10.6,14.6 9.6,20.0 L15.6,20.0 Z", tr), "#FFE9A0")          # le foc
+    d.add(path("M7.2,21.6 L27.6,21.6 Q26.4,26.8 21.8,26.8 L11.6,26.8 Q8.2,25.6 7.2,21.6 Z", tr), "#2E6FD1")   # la coque
+    d.add(rect(7.4, 21.6, 20, 1.5, 0.5, tr), "#FFFFFF", sil=False)
+    d.raw(line("M5.6,29.2 Q8.4,27.8 11.2,29.2 Q14,30.6 16.8,29.2 Q19.6,27.8 22.4,29.2 Q25.2,30.6 28,29.2", "#4A90D9", 1.2))
+    for y, x0, w in ((9.6, 3.4, 3.4), (13.6, 2.4, 4.0), (17.6, 3.4, 3.0)):
+        d.raw(line(f"M{x0},{y} L{x0 + w},{y}", OUTLINE, 1.3))
+
+
+def _ic_crabes(d):
+    """Un crabe de la plage, pinces levées (crabes.py)."""
+    import crabes
+    c = crabes.pose(pinces=1.0, ouvert=0.7)
+    c.under, c.w, c.h = [], 48, 48     # (sans son ovale d'ombre, dans le cadre des badges)
+    return c
+
+
+def _ic_goelands(d):
+    """Un goéland posé, le bec ouvert (goelands.py)."""
+    import goelands
+    g = goelands.pose(ouvert=1.0)
+    g.under, g.w, g.h = [], 48, 48     # (sans son ovale d'ombre, dans le cadre des badges)
+    return g
+
+
+def _ic_explorateur_ete(d):
+    """Une carte de la côte dépliée : le chemin en pointillés, la croix rouge."""
+    plis = ((4.6, 8.6), (11.4, 6.2), (20.6, 8.6), (27.4, 6.2), (27.4, 24.0), (20.6, 26.4), (11.4, 24.0), (4.6, 26.4))
+    d.add(poly(list(plis)), "#F6E3B4")
+    d.add(poly([(11.4, 6.2), (20.6, 8.6), (20.6, 26.4), (11.4, 24.0)]), "#E6CC92", sil=False)
+    d.add(path("M20.6,8.6 L27.4,6.2 L27.4,13.0 Q23.6,13.6 20.6,17.0 Z"), "#58C7D6", sil=False)      # la mer
+    d.raw(line("M11.4,6.2 L11.4,24.0 M20.6,8.6 L20.6,26.4", "#C9A866", 0.8))
+    d.raw(f'<path d="M7.6,22.4 Q9.6,16.4 14.2,17.6 Q18.6,18.8 19.4,14.2" fill="none" stroke="{OUTLINE}" '
+          f'stroke-width="1.1" stroke-linecap="round" stroke-dasharray="1.6 1.9"/>')
+    d.raw(line("M21.4,19.2 L25.4,23.2 M25.4,19.2 L21.4,23.2", OUTLINE, 2.6) + line("M21.4,19.2 L25.4,23.2 M25.4,19.2 L21.4,23.2", "#E2332B", 1.4))
+    d.add(circle(7.6, 22.4, 1.3), "#E2332B", sil=False, edge=True)
+
+
+def _ic_sieste_ete(d):
+    """Un parasol rayé planté dans le sable et deux « z » : la sieste à la plage."""
+    d.add(rect(15.3, 12, 1.5, 15.4, 0.6, "rotate(10 16 20)"), "#8A6A46")
+    dome = "M3.6,15.6 Q5.0,5.2 15.4,4.6 Q25.4,6.6 26.0,19.4 Q20.6,16.2 14.8,17.4 Q8.8,14.6 3.6,15.6 Z"
+    d.clip("bparasol", [path(dome)])
+    d.add(path(dome), "#FFFFFF")
+    d.add(path("M15.4,4.6 L3.6,15.6 L9.6,15.2 Z"), "#E2332B", sil=False, clip="bparasol")
+    d.add(path("M15.4,4.6 L14.8,17.4 L20.8,17.0 Z"), "#E2332B", sil=False, clip="bparasol")
+    d.add(path("M15.4,4.6 L26.0,19.4 L30,12 Z"), "#000000", sil=False, clip="bparasol", opacity=0.1)
+    d.add(circle(15.4, 4.4, 1.2), "#F2C14E")
+    d.add(ellipse(15.4, 27.6, 10.6, 2.2), "#F1D592")                                   # le sable
+    d.raw(_zee(25.4, 8.4, 3.8, "#4A90D9", 1.5))
+    d.raw(_zee(28.4, 4.2, 2.4, "#4A90D9", 1.2))
+
+
+def _ic_bain(d):
+    """Un masque de plongée et son tuba : tous à l'eau."""
+    d.raw(line("M24.6,17.4 L24.6,7.4 Q24.6,4.6 27.2,4.6", OUTLINE, 4.6) + line("M24.6,17.4 L24.6,7.4 Q24.6,4.6 27.2,4.6", "#F2C14E", 2.6))
+    d.raw(line("M26.0,4.6 L27.6,4.6", OUTLINE, 4.6) + line("M26.0,4.6 L27.6,4.6", "#E2332B", 2.6))
+    d.add(rect(2.6, 14.6, 22.6, 3.0, 1.4), "#2B2B33")                                  # la sangle
+    masque = "M5.4,11.0 Q5.4,9.0 7.6,9.0 L20.4,9.0 Q22.6,9.0 22.6,11.0 L22.6,17.6 Q22.6,21.6 18.6,21.6 Q16.2,21.6 15.2,19.4 Q14,18.2 12.8,19.4 Q11.8,21.6 9.4,21.6 Q5.4,21.6 5.4,17.6 Z"
+    d.add(path(masque), "#2E6FD1")
+    verre = "M7.4,11.6 Q7.4,10.8 8.4,10.8 L19.6,10.8 Q20.6,10.8 20.6,11.6 L20.6,17.2 Q20.6,19.8 18.4,19.8 Q16.8,19.8 16.2,18.0 Q14,15.8 11.8,18.0 Q11.2,19.8 9.6,19.8 Q7.4,19.8 7.4,17.2 Z"
+    d.add(path(verre), "#BFE9F5", sil=False, edge=True)
+    d.raw(line("M9.6,13.0 L12.2,13.0 M9.6,15.2 L10.8,15.2", "#FFFFFF", 1.1))
+    d.raw(line("M4.6,26.4 Q7.4,25.0 10.2,26.4 Q13,27.8 15.8,26.4 Q18.6,25.0 21.4,26.4 Q24.2,27.8 27,26.4", "#4A90D9", 1.3))
+
+
 BADGE_ICONS = {   # nom : (dessin, échelle, point de l'icône posé au centre du disque)
     "aventure": (_ic_aventure, 0.95, 16, 16), "copains": (_ic_copains, 0.92, 16, 16),
     "os_dores": (_ic_os_dores, 0.95, 16, 16), "intact": (_ic_intact, 0.92, 16, 16),
@@ -781,6 +942,11 @@ BADGE_ICONS = {   # nom : (dessin, échelle, point de l'icône posé au centre d
     "coquillages": (_ic_coquillages, 0.92, 16, 16),
     "nageur": (_ic_nageur, 0.95, 16, 16.4), "bouees": (_ic_bouees, 0.9, 16, 15.4),
     "mouettes": (_ic_mouettes, 1.0, 16, 16),
+    "aventure_ete": (_ic_aventure_ete, 0.9, 16, 16), "copains_ete": (_ic_copains_ete, 0.92, 16, 16),
+    "os_dores_ete": (_ic_os_dores_ete, 0.92, 16, 16), "intact_ete": (_ic_intact_ete, 0.92, 16, 16),
+    "rapide_ete": (_ic_rapide_ete, 0.86, 16, 17), "crabes": (_ic_crabes, 0.78, 16, 16.4),
+    "goelands": (_ic_goelands, 0.64, 22.6, 19.0), "explorateur_ete": (_ic_explorateur_ete, 0.9, 16, 16.2),
+    "sieste_ete": (_ic_sieste_ete, 0.84, 16.4, 16.6), "bain": (_ic_bain, 0.9, 15.6, 15.6),
 }
 
 
@@ -794,7 +960,7 @@ def badge_frames(scale):
     for name in BADGES:
         fn, k, ix, iy = BADGE_ICONS[name]
         d = Drawing(48, 48)
-        fn(d)
+        d = fn(d) or d                 # (une icône peut rendre le dessin d'un module : crabe, goéland)
         im = base.copy()
         im.alpha_composite(render_svg(d.svg(f"translate({cx} {cy}) scale({k}) translate({-ix} {-iy})"), 48, 48, scale))
         out.append(im)
@@ -811,6 +977,10 @@ def badge_frames(scale):
 
 
 # ------------------------------------------------------------------ logo
+LOGO = 2          # le logo est rangé dans l'atlas deux fois plus grand que le reste de l'interface : l'écran titre le
+                  # montre agrandi (1,6 à 1,75), et l'image d'avant, étirée, était floue sur un écran 4K
+
+
 def logo(scale):
     W, H = 240, 96
     im = Image.new("RGBA", (W * scale, H * scale), (0, 0, 0, 0))
@@ -867,5 +1037,5 @@ def all_sprites(scale):
         "spr_hud_arrow": arrow(scale),
         "spr_hud_arrow_icon": arrow_icons(scale),
         "spr_hud_badge": badge_frames(scale),
-        "spr_title_logo": [logo(scale)],
+        "spr_title_logo": [logo(scale * LOGO)],
     }

@@ -509,6 +509,46 @@
     "mouettes": {
       "nom": "Chasse-mouettes",
       "but": "Reprendre aux mouettes les trois poissons de Suzanne."
+    },
+    "aventure_ete": {
+      "nom": "Retrouvailles au phare",
+      "but": "Retrouver Alice sur la côte en mode aventure."
+    },
+    "copains_ete": {
+      "nom": "Copain des vacances",
+      "but": "En balade, devenir copain avec tous les chiens de la côte."
+    },
+    "os_dores_ete": {
+      "nom": "Chasseur de trésors",
+      "but": "Déterrer tous les os dorés de la côte."
+    },
+    "intact_ete": {
+      "nom": "Ni mordu ni pincé",
+      "but": "Retrouver Alice sur la côte en aventure sans prendre un seul coup."
+    },
+    "rapide_ete": {
+      "nom": "Vent en poupe",
+      "but": "Retrouver Alice sur la côte en moins de 10 minutes."
+    },
+    "crabes": {
+      "nom": "Pas de pince !",
+      "but": "En aventure, faire s’enterrer tous les crabes."
+    },
+    "goelands": {
+      "nom": "Gardien de la plage",
+      "but": "En aventure, repousser tous les goélands qui attaquent."
+    },
+    "explorateur_ete": {
+      "nom": "Vacancier curieux",
+      "but": "Découvrir toute la côte."
+    },
+    "sieste_ete": {
+      "nom": "Sieste à la plage",
+      "but": "Laisser Tecky s’endormir sur le sable."
+    },
+    "bain": {
+      "nom": "Tous à l’eau !",
+      "but": "Se baigner dans la mer."
     }
   },
   "options": {

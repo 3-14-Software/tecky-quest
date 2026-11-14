@@ -8,7 +8,7 @@ function main() {
   run('audioOn(); STORE.mem = {}; loadBadges(); toTitle();');
   // (les badges de l'été ne sont ni montrés ni comptés tant que l'épisode n'est pas ouvert)
   const N = run('shownBadges().length'), T = run('MAP.badges.length');
-  ok(N === 16 && T === 22 && run('ATLAS["hud/badge"].f.length') === T + 1 && run('badgePages().join()') === 'printemps',
+  ok(N === 16 && T === 32 && run('ATLAS["hud/badge"].f.length') === T + 1 && run('badgePages().join()') === 'printemps',
      N + ' badges montrés sur ' + T + ' (et l’image « verrouillé ») : une seule page');
   ok(run('MAP.badges.every(id => txtAt("badges." + id + ".nom") && txtAt("badges." + id + ".but"))'), 'chacun a un nom et un objectif');
   ok(ids().endsWith('options,badges') && run('menu.items[menu.items.length - 1].sub').includes('0 sur ' + N), 'menu principal : « Badges », 0 sur ' + N);
@@ -71,7 +71,27 @@ function main() {
   run('menu.sel = menu.items.length - 1; pressed.ok = true'); step(1);
   run('pressed.right = true'); step(1);
   run('used = []; drawSpr = function (k) { used.push(k); return ds0.apply(this, arguments); }; render(); drawSpr = ds0;');
-  ok(run('badgePage') === 1 && run('used.filter(k => k === "hud/badge").length') === 6, 'flèche droite : la page de l’été, ses six médailles');
+  ok(run('badgePage') === 1 && run('used.filter(k => k === "hud/badge").length') === 16, 'flèche droite : la page de l’été, seize médailles comme au printemps');
+  ok(run('badgeIds("ete").length') === 16 && run('new Set(badgeIds("ete")).size') === 16 && run('badgeIds("ete").every(id => badgeEp(id) === "ete")')
+     && run('MAP.badges.filter(id => badgeEp(id) === "ete").length') === 16, 'la page de l’été range tous ses badges, une fois chacun');
+  // les pendants d'été : sur la côte seulement
+  run('toTitle(); episode = "ete"; delete EPISODES[1].voyage; newGame("aventure", true);'); advanceDialog();
+  run('var avant = Object.keys(badges).length; critters.forEach(c => c.scored = true); seenCells.fill(1); P.swum = true; beachNap = true; checkBadges();');
+  ok(run('MAP.id') === 'monde' && !run('badges.bain || badges.sieste_ete || badges.explorateur_ete || badges.crabes || badges.goelands'), 'dans le monde, aucun badge de la côte');
+  run('useMap("cote"); resetWorld(); dogs = []; cars = []; P.x = MAP.start[0] * 64; P.y = MAP.start[1] * 64; P.inv = 999; P.swum = false; beachNap = false; treasures = 0; seenCells.fill(0); checkBadges();');
+  ok(!run('badges.bain || badges.sieste_ete || badges.explorateur_ete || badges.crabes || badges.goelands || badges.os_dores_ete || badges.copains_ete'), 'sur la côte, rien n’est donné d’avance');
+  run('P.swum = true; beachNap = true; treasures = MAP.dig.length; seenCells.fill(1); crabs.forEach(c => c.scored = true); seagulls.forEach(g => g.scored = true); checkBadges();');
+  ok(['bain', 'sieste_ete', 'os_dores_ete', 'explorateur_ete', 'crabes', 'goelands'].every(id => run(`!!badges.${id}`)) && !run('badges.copains_ete'),
+     'baignade, sieste sur le sable, os dorés, carte, crabes, goélands');
+  // un pincement n'est pas une morsure, mais c'est un coup
+  run('P.inv = 0; P.mode = "free"; graceT = 0; bitten = false; scratched = false; var cz = MAP.calm; MAP.calm = []; hurtPlayer(1, P.x + 40, P.y, false); MAP.calm = cz;');
+  ok(!run('bitten') && run('scratched') && run('saveGame() || loadSave().scratched'), 'un pincement : pas une morsure, mais un coup (sauvegardé)');
+  run('delete badges.aventure; delete badges.intact; delete badges.rapide; timePlayed = 300; winBadges();');
+  ok(run('!!badges.aventure_ete && !!badges.rapide_ete && !badges.intact_ete') && !run('badges.aventure || badges.intact || badges.rapide'),
+     'victoire sur la côte : les retrouvailles et la vitesse de l’été, pas « ' + run('badgeName("intact_ete")') + ' », ni les badges du printemps');
+  run('scratched = false; winBadges();');
+  ok(run('!!badges.intact_ete'), 'sans un coup : « ' + run('badgeName("intact_ete")') + ' »');
+  run('toTitle(); menu.sel = menu.items.length - 1; pressed.ok = true'); step(1); run('badgePage = 1;');
   run('badgesTap(GW / 2 - 200, BADGE_PICK.y - 14)');
   ok(run('badgePage') === 0 && run('state') === 'badges', 'au toucher, la flèche de gauche revient à la première page');
   run('badgesTap(GW / 2, 700)');

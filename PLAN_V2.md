@@ -617,7 +617,11 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      cerisier en fleurs, plage et phare), Alice et Tecky au premier plan, nuages, papillons et mouettes
      animés, le menu à droite, un fondu d'une saison à l'autre. À valider : les places des décors d'été, la
      force de la teinte dorée, les animations du titre (je ne les ai vues qu'en images fixes), ce qui se
-     trouve derrière le menu. *Reports assumés* : noms des zones et répliques à valider ; pas de cigales
+     trouve derrière le menu. **Seize badges pour l'été, comme au printemps** (14 novembre 2026) : dix de plus —
+     retrouvailles au phare, copain des vacances, chasseur de trésors, ni mordu ni pincé, vent en poupe, les
+     crabes, les goélands, vacancier curieux, sieste à la plage, tous à l'eau (`reference/v2/badges_ete.png`).
+     À valider : leurs noms, les dix minutes de « Vent en poupe » sur une carte plus grande, crabes et goélands
+     gagnables en aventure seulement. *Reports assumés* : noms des zones et répliques à valider ; pas de cigales
      (Christophe n'a pas retenu les sons d'été).
    - *À dessiner* : les motos, les voitures garées (faits), les quatre autres personnages
      des quêtes, le caniche, les moutons, les mouettes, les crabes, les goélands (faits) ; les vagues de la

@@ -967,9 +967,17 @@ node tests/zoe.js                                         # puis le ou les tests
   épisode) : l'écran des badges a une page par épisode (`badgePages()`, `badgeIds(ep)`, `badgePage`,
   `stepBadges()` : gauche / droite, `badgesTap()` au toucher, « ◀ L'été ▶ » sous le titre), seulement ceux qui
   sont ouverts ou dont un badge est déjà gagné ; `shownBadges()` = ceux qu'on montre et qu'on compte (tant que
-  l'été n'est pas ouvert — le printemps pas encore gagné —, seize badges et l'écran d'avant). L'été : `caniche`
-  (Praline ramenée) et `moutons` (les moutons rentrés) ; `checkBadges()` donne le badge de celui qui tient le
-  rôle (`MAP.roles`). Test : `badges.js`.
+  l'été n'est pas ouvert — le printemps pas encore gagné —, seize badges et l'écran d'avant). **L'été en a seize
+  aussi** (14 novembre 2026 ; Christophe : « très peu de badges pour l'été ») : ses six quêtes (`checkBadges()`
+  donne le badge de celui qui tient le rôle, `MAP.roles`) et les pendants des dix autres, gagnés sur la côte
+  seulement (`MAP.id === 'cote'`) : `aventure_ete`, `copains_ete`, `os_dores_ete`, `intact_ete` (aucun coup :
+  `scratched`, levé par tout `hurtPlayer()` qui porte, pince et piqué compris, sauvegardé), `rapide_ete`,
+  `explorateur_ete`, `sieste_ete` (endormi sur le sable : `beachNap`), `crabes` et `goelands` (tous `scored`,
+  donc en aventure) à la place des bêtes et des canards, `bain` (`P.swum`) à la place de Titine. Une victoire
+  sur la côte donne les badges de l'été, pas ceux du printemps (`winBadges()`). `hud.BADGE_ORDRE` →
+  `MAP.badgeOrdre` : l'ordre d'une page (`badgeIds()`), les pendants à la place de ceux du printemps. Une
+  icône peut rendre le dessin d'un module (`_ic_crabes`, `_ic_goelands`). Planche : `reference/v2/badges_ete.png`.
+  Test : `badges.js`.
 - Météo (`weather`, `WEATHER`, option `opts.weather` : auto / soleil / pluie / neige ; `december()`) : en auto, une averse
   de temps en temps (neige en décembre). `weather.k` = force (monte et descend en `WEATHER.ramp` s). Pluie : gouttes
   (traits, `drops`), `fx/splash`, teinte gris-bleu (dans le remplissage de `drawLight()`, `weatherTint()`), flaques

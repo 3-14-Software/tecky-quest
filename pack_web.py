@@ -343,7 +343,7 @@ def build_jeu():
         "teckyFps": {a: fps for a, (_, fps, _) in tecky2.ANIMS.items()},     # cadences propres à Tecky (marche en 8 images)
         "aliceFps": {a: fps for a, (_, fps) in alice2.ANIMS.items()},
         "dogFps": {a: fps for a, (_, fps, _) in chiens2.ANIMS.items()},      # celles des chiens (chiens2.py)
-        "badges": hud.BADGES, "badgeEp": hud.BADGE_EP,     # (les badges d'un épisode : une page de l'écran des badges)
+        "badges": hud.BADGES, "badgeEp": hud.BADGE_EP, "badgeOrdre": hud.BADGE_ORDRE,     # (les badges d'un épisode : une page de l'écran des badges)
         "keys": hud.KEYS, "pads": [k for k, _ in hud.PAD_BUTTONS],   # noms des images de hud/key et hud/pad
         # (le papa d'Alice salue comme un villageois : game.js, newVillager(['papa', …]))
         "villagerFps": dict({k: {a: v[1] for a, v in villageois.ANIMS[k].items()} for k in villageois.KINDS},

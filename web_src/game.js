@@ -2262,7 +2262,7 @@ function reset() {
     mode: 'free', kx: 0, ky: 0, hitDone: false, edgeT: 0, edgeAt: -99 });
   farm = { state: 'new' }; post = { state: 'new' }; rose = { state: 'new' }; fete = { state: 'new' };
   jouets = { state: 'new' }; piq = { state: 'new' };
-  bitten = false; newBadges = []; toasts = []; napped = false;
+  bitten = false; scratched = false; newBadges = []; toasts = []; napped = false; beachNap = false;
   resetWeather(); graceT = 0; tunnelSeen = false; elsewhere = {}; iris = null;
   score = 0; timePlayed = 0; fled = 0; treasures = 0; shake = 0; barkImmuneSeen = false; pendingSay = null; crabSeen = seagullSeen = false;
   clues = [false, false, false]; aliceSniffed = false; arrowT = 0; stuckT = 0; sun = 0; hug = 0; saveT = 0;
@@ -4699,6 +4699,7 @@ function hurtPlayer(dmg, fromX, fromY, bite = true) {
   const l = Math.max(1, dist(P.x, P.y, fromX, fromY));
   P.kx = (P.x - fromX) / l * 420; P.ky = (P.y - fromY) / l * 420;
   P.inv = 1.2; shake = 0.25;
+  scratched = true;
   addFx('fx/hit', P.x, P.y - 32, { fps: 16 });
   SFX.hurt();
   rumble(P.hp <= 0 ? 'ko' : 'hurt');
@@ -5241,7 +5242,7 @@ function saveGame() {
     v: SAVE_V, ep: episode, carte: MAP.id, ailleurs: Object.assign({}, elsewhere),
     mode: gameMode, diff: gameDiff, at: Date.now(), x: r1(P.x), y: r1(P.y), dir: P.dir, hp: P.hp, hpMax: P.hpMax,
     score, time: r1(timePlayed), fled, treasures, clues: clues.slice(), sniffed: aliceSniffed, immune: barkImmuneSeen, crabSeen, seagullSeen,
-    farm: farm.state, post: post.state, rose: rose.state, fete: fete.state, jouets: jouets.state, piq: piq.state, bitten,
+    farm: farm.state, post: post.state, rose: rose.state, fete: fete.state, jouets: jouets.state, piq: piq.state, bitten, scratched,
     swum: P.swum ? 1 : 0,
   }, mapState()));
 }
@@ -5277,7 +5278,7 @@ function loadGame(s, rested) {
   farm.state = s.farm || 'new'; post.state = s.post || 'new'; rose.state = s.rose || 'new';
   dressCastle();
   fete.state = s.fete || 'new'; jouets.state = s.jouets || 'new'; piq.state = s.piq || 'new';
-  bitten = !!s.bitten || rested;
+  bitten = !!s.bitten || rested; scratched = !!s.scratched || rested;
   P.swum = !!s.swum;
   applyMapState(s);
   syncSwim(true);                       // (enregistré dans l'eau : il y nage encore)
@@ -5470,8 +5471,11 @@ function loadBadges() { badges = STORE.get(BADGES_KEY) || {}; }
 /* Un badge est celui d'un épisode (MAP.badgeEp ; sans cela, il est rangé avec le premier). L'écran des badges a une
    page par épisode : seulement ceux qui sont ouverts, ou dont un badge est déjà gagné — tant que l'été n'est pas
    ouvert, ses badges ne sont ni montrés ni comptés. */
+let scratched = false;                // un coup a porté, morsure ou non (pince d'un crabe, piqué d'un goéland : badge de l'été)
+let beachNap = false;                 // il s'est endormi sur le sable (badge de l'été)
 const badgeEp = id => MAP.badgeEp[id] || EPISODES[0].id;
-const badgeIds = ep => MAP.badges.filter(id => badgeEp(id) === ep);
+// (l'ordre d'une page : MAP.badgeOrdre[épisode], les pendants d'été à la place de ceux du printemps ; sinon celui de MAP.badges)
+const badgeIds = ep => MAP.badgeOrdre[ep] || MAP.badges.filter(id => badgeEp(id) === ep);
 const badgePages = () => EPISODES.filter(e => badgeIds(e.id).length && (epOpen(e) || badgeIds(e.id).some(id => badges[id]))).map(e => e.id);
 const shownBadges = () => badgePages().flatMap(badgeIds);
 const badgeCount = () => shownBadges().filter(id => badges[id]).length;
@@ -5489,6 +5493,7 @@ function checkBadges() {
   if (monde && treasures >= MAP.dig.length) unlockBadge('os_dores');
   if (farm.state === 'done') unlockBadge(MAP.roles.farmer ? 'moutons' : 'poules');     // (les poules de Gaston, ou les moutons d'Anatole)
   if (post.state === 'done') unlockBadge(MAP.roles.postman ? 'coquillages' : 'facteur');    // (les lettres de Marcel, ou les coquillages de Zoé)
+  const cote = MAP.id === 'cote';
   if (rose.state === 'done') unlockBadge(MAP.roles.pompon ? 'caniche' : 'chat');       // (Pompon, ou Praline sur la côte)
   if (fete.state === 'done') unlockBadge(MAP.roles.leon ? 'bouees' : 'ballons');         // (les ballons de Léon, ou les bouées d'Yvon)
   if (jouets.state === 'done') unlockBadge(MAP.roles.iris ? 'nageur' : 'iris');          // (les jouets d'Iris, ou ceux de Théo)
@@ -5502,6 +5507,15 @@ function checkBadges() {
 /* Complétion de la partie (écran de victoire), en % : moyenne de catégories qui comptent toutes autant — os dorés, quêtes,
    petites bêtes, canards, carte explorée (95 % suffisent, comme pour le badge), et les copains en balade. Une nouvelle
    quête : l'ajouter à QUESTS_DONE. */
+  // la côte : les pendants d'été des badges du monde, et les siens (crabes, goélands, la baignade)
+  if (!cote) return;
+  if (balade() && dogs.length && dogs.every(d => d.friend)) unlockBadge('copains_ete');
+  if (MAP.dig.length && treasures >= MAP.dig.length) unlockBadge('os_dores_ete');
+  if (crabs.length && crabs.every(c => c.scored)) unlockBadge('crabes');
+  if (seagulls.length && seagulls.every(g => g.scored)) unlockBadge('goelands');
+  if (seenCells.reduce((a, v) => a + v, 0) >= seenCells.length * 0.95) unlockBadge('explorateur_ete');
+  if (beachNap) unlockBadge('sieste_ete');
+  if (P.swum) unlockBadge('bain');
 const QUESTS_DONE = [() => farm.state === 'done', () => post.state === 'done', () => rose.state === 'done',
   () => fete.state === 'done', () => jouets.state === 'done', () => piq.state === 'done'];
 // (celui qui donne chaque quête : seules comptent celles de la carte où l'on joue)
@@ -5517,8 +5531,14 @@ function completion() {
   return Math.floor(100 * parts.reduce((a, v) => a + v, 0) / parts.length);
 }
 function winBadges() {
-  if (!balade()) { unlockBadge('aventure'); if (!bitten) unlockBadge('intact'); }
-  if (timePlayed < 600) unlockBadge('rapide');
+  // (Alice retrouvée sur la côte : les badges de l'été ; « sans un coup » y compte aussi les pinces et les piqués)
+  if (MAP.id === 'cote') {
+    if (!balade()) { unlockBadge('aventure_ete'); if (!scratched) unlockBadge('intact_ete'); }
+    if (timePlayed < 600) unlockBadge('rapide_ete');
+  } else {
+    if (!balade()) { unlockBadge('aventure'); if (!bitten) unlockBadge('intact'); }
+    if (timePlayed < 600) unlockBadge('rapide');
+  }
   checkBadges();
 }
 function updateToasts(dt) {
@@ -5771,7 +5791,7 @@ function restPose(dt) {
   if (P.restT < REST.sit) { P.setAnim('idle'); return; }
   if (P.dir === 'up') P.dir = 'down';
   if (P.restT >= REST.sleep) {
-    if (P.anim !== 'sleep') { P.setAnim('sleep'); P.zT = 0.4; P.snoreT = 1; napped = true; }
+    if (P.anim !== 'sleep') { P.setAnim('sleep'); P.zT = 0.4; P.snoreT = 1; napped = true; if (sandAt(P.x, P.y)) beachNap = true; }
     snooze(dt, false);
     return;
   }
