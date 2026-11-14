@@ -2165,16 +2165,17 @@ const facile = () => gameDiff === 'facile';
 /* Épisodes : le jeu se joue en épisodes, un par saison (EPISODES, écrit par pack_web.py d'après episodes.json : id,
    saison, cartes, depart). Ils s'ouvrent l'un après l'autre : le premier l'est toujours, un autre quand le précédent
    a été gagné une fois, dans n'importe quel mode — ce sont les records qui le disent, il n'y a rien d'autre à
-   garder. Un épisode « en chantier » n'est ni proposé ni ouvert, sauf avec ?chantier dans l'adresse. `episode` :
+   garder. Un épisode « en chantier » n'est ni proposé ni ouvert, sauf avec ?chantier dans l'adresse, ou quand le jeu est servi par localhost. `episode` :
    celui de la partie en cours ; sur l'écran titre, celui que le joueur a choisi (stepEpisode). Chaque épisode est
    une partie neuve (trois os) et a ses records (recKey). `opened` : l'épisode que la victoire vient d'ouvrir. */
-const CHANTIER = typeof location !== 'undefined' && /[?&]chantier\b/.test(location.search || '');
+const CHANTIER = typeof location !== 'undefined' && (/[?&]chantier\b/.test(location.search || '') ||
+  /^(localhost|127\.0\.0\.1|\[::1\]|.*\.localhost)$/.test(location.hostname || ''));   // (sur le poste de travail : tout est ouvert)
 let episode = EPISODES[0].id, opened = null;
 const EP = () => EPISODES.find(e => e.id === episode) || EPISODES[0];
 const epWon = e => ['aventure', 'balade'].some(m => ['normal', 'facile'].some(d => (recs[recKey(m, d, e.id)] || {}).wins > 0));
 function epOpen(e) {
   const i = EPISODES.indexOf(e);
-  if (CHANTIER) return true;           // (?chantier : tout est ouvert, sans avoir à gagner l'épisode d'avant — pour essayer)
+  if (CHANTIER) return true;           // (?chantier ou localhost : tout est ouvert, sans avoir à gagner l'épisode d'avant — pour essayer)
   return i === 0 || (!e.chantier && epOpen(EPISODES[i - 1]) && epWon(EPISODES[i - 1]));
 }
 const openEpisodes = () => EPISODES.filter(epOpen);

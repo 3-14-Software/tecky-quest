@@ -631,22 +631,22 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `valider()`, `python3 episodes.py`) donne les épisodes dans l'ordre où ils s'ouvrent : `id`, `saison`, `cartes`
   (un passage vers une carte qui n'en fait pas partie est fermé : `passageHere()`), `depart` (la carte de la
   niche), `chantier` (pas encore jouable). Aujourd'hui : `printemps` (le monde seul : le tunnel y est « pour les
-  voitures ») et `ete` (le monde et la côte, `cote`), en chantier. `pack_web.py` les embarque (`EPISODES`). `game.js` :
+  voitures ») et `ete` (le monde et la côte, `cote`), **sorti du chantier le 14 novembre 2026** : il s'ouvre quand le printemps a été gagné. `pack_web.py` les embarque (`EPISODES`). `game.js` :
   `episode` = celui de la partie en cours et, sur l'écran titre, celui que le joueur a choisi ; `EP()` ses
   données ; `epOpen()` : le premier, ou un épisode prêt dont le précédent a été gagné (`epWon()` lit les
   records : pas d'autre donnée gardée ; n'importe quel mode ouvre le suivant) ; `openEpisodes()`, `lastOpen()`.
-  Un épisode en chantier n'est ni proposé ni ouvert, sauf avec `?chantier` à la fin de l'adresse (`CHANTIER` : tous les
-  épisodes sont alors ouverts, sans avoir à gagner le précédent — les records sont gardés par adresse, et
-  Christophe ne retrouvait pas l'été sur un autre port) :
-  le jeu publié n'a donc qu'un épisode et son écran titre n'a pas changé. Chaque épisode est une partie neuve et
+  Un épisode en chantier n'est ni proposé ni ouvert, sauf avec `?chantier` à la fin de l'adresse ou quand le jeu est
+  servi par localhost (127.0.0.1, [::1], *.localhost) — `CHANTIER` : tous les
+  épisodes sont alors ouverts, sans avoir à gagner le précédent (les records sont gardés par adresse, et
+  Christophe ne retrouvait pas l'été sur un autre port). Le champ `chantier` reste pour les épisodes à venir. Chaque épisode est une partie neuve et
   a ses records (`recKey(mode, diff, ep)` : le premier garde les clés d'avant, les autres « ete:aventure »). La
   sauvegarde nomme son épisode (`ep` ; sans lui, le premier : `epOfSave()`) ; si sa carte n'est plus de
   l'épisode, la partie reprend à la niche. Écran titre : dès que deux épisodes sont ouverts, l'accroche devient
   le choix de l'épisode (`drawEpisodePick()`, `stepEpisode()` : gauche / droite ; `episodeTap()` au toucher ;
   textes `episodes.<id>.nom` / `.note`). La victoire qui ouvre un épisode l'annonce sous le tableau (`opened`,
   « Nouvel épisode : L'été ! ») et le titre le propose ensuite. La saison (`EP().saison`) ne change encore rien
-  à l'image. Un nouvel épisode : une entrée dans `episodes.json`, ses deux textes. Dans un test, sortir l'été du
-  chantier : `EPISODES[1].chantier = false`. Tests : `episodes.js` ; `cartes.js` se joue en été.
+  à l'image. Un nouvel épisode : une entrée dans `episodes.json`, ses deux textes. Dans un test, `CHANTIER` est faux (pas
+  de `location`) : l'été ne s'ouvre qu'après une victoire au printemps, ou en choisissant `episode = "ete"`. Tests : `episodes.js` ; `cartes.js` se joue en été.
   **Ce qu'un épisode change à une carte** (les données d'un épisode) : `cartes/<épisode>/<carte>.json`, la
   surcharge, ne redit que les clés de la carte qui changent (objets, chiens, panneaux, place d'Alice… chaque clé
   remplace celle de la carte de base, en entier) ; une clé à `null` est retirée : la carte n'a plus ce
@@ -894,7 +894,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   épisode) : l'écran des badges a une page par épisode (`badgePages()`, `badgeIds(ep)`, `badgePage`,
   `stepBadges()` : gauche / droite, `badgesTap()` au toucher, « ◀ L'été ▶ » sous le titre), seulement ceux qui
   sont ouverts ou dont un badge est déjà gagné ; `shownBadges()` = ceux qu'on montre et qu'on compte (tant que
-  l'été est en chantier, le jeu publié a toujours seize badges et son écran n'a pas changé). L'été : `caniche`
+  l'été n'est pas ouvert — le printemps pas encore gagné —, seize badges et l'écran d'avant). L'été : `caniche`
   (Praline ramenée) et `moutons` (les moutons rentrés) ; `checkBadges()` donne le badge de celui qui tient le
   rôle (`MAP.roles`). Test : `badges.js`.
 - Météo (`weather`, `WEATHER`, option `opts.weather` : auto / soleil / pluie / neige ; `december()`) : en auto, une averse

@@ -436,7 +436,7 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
       carte d'essai), ce dernier marqué « en chantier » : le jeu publié ne le propose pas, `?chantier` à la fin
       de l'adresse le montre. Les épisodes s'ouvrent l'un après l'autre : gagner le précédent, dans n'importe
       quel mode, ouvre le suivant — ce sont les records qui le disent, donc un joueur qui a déjà fini le
-      printemps trouvera l'été ouvert le jour où il sortira du chantier. Chaque épisode est une partie neuve
+      printemps trouvera l'été ouvert le jour où il sortira du chantier. **L'été en est sorti le 14 novembre 2026** (et sur localhost, tout est ouvert d'office). Chaque épisode est une partie neuve
       (trois os, score à zéro) et a ses records. La sauvegarde (toujours une seule partie en cours) nomme son
       épisode. Écran titre : dès que deux épisodes sont ouverts, la ligne d'accroche devient le choix de
       l'épisode (gauche / droite, ou un toucher) ; l'écran de victoire annonce « Nouvel épisode : L'été ! » et

@@ -2,6 +2,7 @@
 const base = require('fs').readFileSync(__dirname + '/sim.js', 'utf8').split("setTimeout(() => {")[0];
 function main() {
   ok(run('clouds.length') === run('CLOUD.n') && run('cloudImgs.length') === 3, 'ombres de nuages prêtes (' + run('clouds.length') + ')');
+  run('EPISODES[1].chantier = true;');         // (le premier épisode seul : sinon la victoire ouvre l'été, que le titre propose)
   run('camX = 3500; camY = 2600;');            // l'écran titre vit aussi : feuilles et nuages
   run('var c0 = clouds[0].x;'); step(60 * 4);
   ok(run('clouds[0].x') > run('c0') + 40, 'les nuages glissent, même sur l’écran titre');

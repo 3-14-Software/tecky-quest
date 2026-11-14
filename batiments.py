@@ -842,7 +842,9 @@ def manege_cheval(i):
     fait tourner quatre autour du mât. Tourné vers la gauche ; les sabots sur l'origine."""
     w, h, px, py = 36, 72, 21, 66
     d = _dessin(w, h)
-    _cheval(d, px, py, 4, MANEGE_ROBES[i])
+    # (une barre de 50 : plus longue, elle dépassait du cône du chapiteau sur les côtés du manège, là où il est
+    # le plus bas ; plus courte, son bout se verrait sous les festons quand le cheval passe au fond)
+    _cheval(d, px, py, py - 50, MANEGE_ROBES[i])
     return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py))
 
 

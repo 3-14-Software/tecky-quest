@@ -3,6 +3,9 @@ const base = require('fs').readFileSync(__dirname + '/sim.js', 'utf8').split("se
 function main() {
   const ids = () => run('menu.items.map(i => i.id).join()');
   const save = () => JSON.parse(run('LS[SAVE_KEY] || "null"'));
+  // (ce test éprouve le premier épisode seul : l'été est remis en chantier, sinon une victoire au printemps l'ouvre
+  // et l'écran titre le propose)
+  run('EPISODES[1].chantier = true;');
   ok(run('state') === 'title' && ids() === 'aventure,balade,options,badges', 'écran titre sans sauvegarde : nouvelle aventure, nouvelle balade');
   // faux localStorage (chaînes JSON, comme le vrai)
   run('var LS = {}; this.localStorage = { getItem: k => k in LS ? LS[k] : null, setItem: (k, v) => { LS[k] = String(v); }, removeItem: k => { delete LS[k]; } };');

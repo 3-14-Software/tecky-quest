@@ -1,6 +1,6 @@
 {
   "episodes": [
     {"id": "printemps", "saison": "printemps", "cartes": ["monde"], "depart": "monde"},
-    {"id": "ete", "saison": "ete", "cartes": ["monde", "cote"], "depart": "monde", "voyage": "cote", "indices": ["hat", "spade", "flipflop"], "chantier": true}
+    {"id": "ete", "saison": "ete", "cartes": ["monde", "cote"], "depart": "monde", "voyage": "cote", "indices": ["hat", "spade", "flipflop"]}
   ]
 }

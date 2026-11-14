@@ -2,6 +2,9 @@
 const base = require('fs').readFileSync(__dirname + '/sim.js', 'utf8').split("setTimeout(() => {")[0];
 function main() {
   const ids = () => run('menu.items.map(i => i.id).join()');
+  // (ce test éprouve le premier épisode seul : l'été est remis en chantier, sinon une victoire au printemps l'ouvre
+  // et l'écran titre le propose)
+  run('EPISODES[1].chantier = true;');
   run('audioOn(); STORE.mem = {}; loadBadges(); toTitle();');
   // (les badges de l'été ne sont ni montrés ni comptés tant que l'épisode n'est pas ouvert)
   const N = run('shownBadges().length'), T = run('MAP.badges.length');
