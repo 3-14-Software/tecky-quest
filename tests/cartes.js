@@ -104,7 +104,9 @@ function main() {
   run('state = "pause"; openPauseMenu(); render(); state = "play"; menu = null;');
   ok(run('mapImg !== null') && run('seenCells.length') === run('cellsW() * cellsH()') && run('seenCells.some(v => v)'), 'la carte de la pause est celle de cette carte');
   run('var b0 = JSON.stringify(badges); seenCells.fill(1); checkBadges();');
-  ok(run('JSON.stringify(badges)') === run('b0'), 'pas de badge gagné parce que la carte est vide (bêtes, canards, os dorés, explorateur)');
+  // (toute la côte vue : son badge d'explorateur, et lui seul — aucun de ceux du monde)
+  ok(run('const av = JSON.parse(b0); JSON.stringify(Object.keys(badges).filter(k => badges[k] && !av[k]))') === '["explorateur_ete"]',
+     'la côte entière vue : l\'explorateur de l\'été, mais aucun badge du monde gagné parce que la carte n\'en a pas (bêtes, canards, os dorés, explorateur)');
   ok(run('arrowTarget().n') === 'hat' && run('clueNames().join()') === 'hat,spade,flipflop', 'la flèche et le flair mènent au premier indice de l\'été : le chapeau de paille');
   // partie enregistrée là-bas : elle reprend là-bas
   run('P.x = 700; P.y = 1100; saveGame(); var S = STORE.get(SAVE_KEY), chatAvant = S.ailleurs.monde.cat.slice();');

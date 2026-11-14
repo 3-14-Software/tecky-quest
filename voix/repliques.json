@@ -3168,17 +3168,6 @@
     },
     {
       "voix": "papa",
-      "fichier": "papa-0a0fc5dd",
-      "personnage": "Papa",
-      "type": "bulle",
-      "appareil": "",
-      "ton": "",
-      "texte": "Alors, Tecky, tu l'as trouvée ?",
-      "affiche": "Alors, Tecky, tu l'as trouvée ?",
-      "contexte": "Papa salue Tecky qui passe"
-    },
-    {
-      "voix": "papa",
       "fichier": "papa-7f666603",
       "personnage": "Papa",
       "type": "bulle",
@@ -3197,6 +3186,17 @@
       "ton": "",
       "texte": "Bonne chasse, mon grand !",
       "affiche": "Bonne chasse, mon grand !",
+      "contexte": "Papa salue Tecky qui passe"
+    },
+    {
+      "voix": "papa",
+      "fichier": "papa-0a0fc5dd",
+      "personnage": "Papa",
+      "type": "bulle",
+      "appareil": "",
+      "ton": "",
+      "texte": "Alors, Tecky, tu l'as trouvée ?",
+      "affiche": "Alors, Tecky, tu l'as trouvée ?",
       "contexte": "Papa salue Tecky qui passe"
     },
     {

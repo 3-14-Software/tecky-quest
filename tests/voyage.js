@@ -17,6 +17,7 @@ function main() {
   ok(jusqua('state === "dialog"', 900) && run('dialog.lines[0].who') === 'papa' && run('dialog.lines.length') === 3
      && run('Math.abs(alice.y - trip.car.y) < 60 && Math.abs(P.y - trip.car.y) < 60'),
      'Alice et Tecky descendent jusqu\'à la voiture ; le papa : « ' + run('dialog.lines[0].text') + ' »');
+  step(1);                                              // (il prend la parole à l'image suivante)
   ok(run('trip.papa.anim') === 'talk', 'le papa parle pendant sa réplique');
   run('var pt = trip.papa.t; pressed.ok = true;'); step(1); run('pressed.ok = true;'); step(20);
   ok(run('state') === 'dialog' && run('dialog.lines[dialog.i].who') === 'alice' && run('trip.papa.anim') === 'idle' && run('trip.papa.t') > 0.2,
