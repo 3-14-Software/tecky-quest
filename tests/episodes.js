@@ -99,7 +99,7 @@ function main() {
 
   // 8. ce qu'un épisode change à une carte (cartes/ete/monde.json : ni les indices du printemps, ni Alice dans sa cabane)
   ok(run('Object.keys(SURCHARGES).join()') === 'ete' && run('Object.keys(SURCHARGES.ete).join()') === 'monde'
-     && run('Object.keys(SURCHARGES.ete.monde).sort().join()') === 'absents,alice,items',
+     && run('Object.keys(SURCHARGES.ete.monde).sort().join()') === 'absents,alice,decor,items',       // (decor : les décors d'été, la liste « extras » de la surcharge)
      'la page n\'embarque de la carte de l\'été que ce qui diffère du monde : ' + run('Object.keys(SURCHARGES.ete.monde).join(", ")'));
   run('episode = "printemps"; toTitle();');
   ok(run('MAP.variante') === null && run('items.length') === 47 && run('ici("alice")'), 'écran titre au printemps : la carte de base');

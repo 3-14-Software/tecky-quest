@@ -44,7 +44,7 @@ INCOMPATIBLES = [("planks", "chalk"), ("planks", "heath")]
 _DITS = {"planks": "les planches", "chalk": "la falaise", "heath": "le plateau"}
 
 # ordre des clés dans le fichier (une clé inconnue est gardée, à la fin)
-ORDRE = ["format", "annexe", "w", "h", "legende", "terrain", "details", "decor",
+ORDRE = ["format", "annexe", "w", "h", "legende", "terrain", "details", "decor", "extras",
          "items", "dig", "enemies", "signs", "tunnels",
          "hens", "ducks", "cows", "critters", "butterflies", "villagers", "crabs", "seagulls",
          "start", "alice", "title", "ending",
@@ -92,16 +92,18 @@ POINTS = ["start", "alice", "title", "farmer", "postman", "neighbor", "pompon", 
 # au parking de la côte
 POINTS_LIBRES = ["papa"]
 # listes [genre, x, y] (genres() dit lesquels existent)
-NOMMEES = ["decor", "items", "enemies", "cows", "critters", "butterflies", "villagers"]
+NOMMEES = ["decor", "extras", "items", "enemies", "cows", "critters", "butterflies", "villagers"]
 # listes qu'une carte peut ne pas avoir, même la carte du monde (le printemps n'a ni crabes ni goélands)
-LISTES_LIBRES = ("passages", "crabs", "seagulls")
+# (« extras » : des décors en plus de « decor », pour la surcharge d'un épisode — les décors d'été du monde — sans
+# avoir à redire toute la liste des décors)
+LISTES_LIBRES = ("passages", "crabs", "seagulls", "extras")
 # listes de points [x, y]
 POSITIONS = ["dig", "letters", "balls", "toys", "babies", "crabs", "seagulls"]     # (crabes et goélands : les adversaires de la côte)
 
 # image de l'atlas qui représente un élément dans l'éditeur ({} : son genre ; [clé, n° d'image] pour les listes dont
 # chaque élément a son image)
 SPRITES = {
-    "decor": "decor/{}", "items": "item/{}", "enemies": "{}/idle/down", "hens": "{}/idle/right", "ducks": "{}/swim",
+    "decor": "decor/{}", "extras": "decor/{}", "items": "item/{}", "enemies": "{}/idle/down", "hens": "{}/idle/right", "ducks": "{}/swim",
     "cows": "{}/graze", "critters": "{}/idle", "butterflies": "butterfly/{}", "villagers": "{}/idle",
     "vehicles": "vehicle/{}", "dig": "item/goldbone", "signs": "decor/signpost", "tunnels": "decor/burrow",
     "letters": "item/letter", "balls": ["port/balloon"], "toys": ["port/toy"], "babies": "hedgehog/idle",
@@ -127,6 +129,7 @@ def genres():
     import villageois
     return {
         "decor": [n for n in decor.DECOR if n not in DECORS_DEDUITS],
+        "extras": [n for n in decor.DECOR if n not in DECORS_DEDUITS],
         "items": [n for n in items.ITEMS if n != "goldbone"],
         "enemies": list(chiens2.CHIENS),
         "hens": list(hens.COLORS) + ["sheep"],            # (les moutons d'Anatole, sur la côte : moutons.py)
@@ -213,7 +216,7 @@ def charger_episode(nom, episode=None, verifier=True):
 
 
 # ce qu'une carte annexe peut ne pas avoir, et ce qui en tient lieu (hors de la carte, ou rien)
-_LISTES = ["details", "decor", "items", "dig", "enemies", "signs", "tunnels", "hens", "ducks", "cows", "critters",
+_LISTES = ["details", "decor", "extras", "items", "dig", "enemies", "signs", "tunnels", "hens", "ducks", "cows", "critters",
            "butterflies", "villagers", "crabs", "seagulls", "letters", "balls", "toys", "babies", "roadTunnels", "passages", "calm", "landmarks"]
 _RECT = [HORS, HORS, HORS + 1, HORS + 1]
 

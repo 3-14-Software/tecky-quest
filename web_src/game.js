@@ -1667,8 +1667,12 @@ function waterDetails(g, cx, cy, n, x0, y0, k) {
    réduit de SHADOW.mask, est gardé avec le bloc (ch.m) : c'est le masque qui retient l'ombre d'un personnage de
    s'ajouter à celle d'un décor (drawCastShadows()).
    Quand la longueur change (shadowLen(), par paliers), les blocs de sol sont repeints un par image (drawGround). */
-const SHADOW = { sx: MAP.shadow[0], sy: MAP.shadow[1], color: 'rgb(22, 50, 60)', alpha: 0.3,
-  len: [1, 1.15, 1.5, 1.85, 1.4], step: 0.1, mask: 0.5 };
+/* La lumière d'été (choix de Christophe, 14 novembre 2026) : le soleil est plus haut — des ombres plus courtes et
+   plus franches en plein jour (lenEte, alphaEte), une teinte dorée sur le monde (SUN.tintsEte). */
+const SUMMER = () => EP().saison === 'ete';
+const SHADOW = { sx: MAP.shadow[0], sy: MAP.shadow[1], color: 'rgb(22, 50, 60)', alphaPr: 0.3, alphaEte: 0.38,
+  lenPr: [1, 1.15, 1.5, 1.85, 1.4], lenEte: [0.8, 1, 1.4, 1.8, 1.4], step: 0.1, mask: 0.5,
+  get len() { return SUMMER() ? this.lenEte : this.lenPr; }, get alpha() { return SUMMER() ? this.alphaEte : this.alphaPr; } };
 const shadowLen = () => Math.round(sunAt(SHADOW.len, clamp(sun, 0, 4)) / SHADOW.step) * SHADOW.step;
 function blitCols(g, f, c0, c1, x, y) {       // les colonnes c0..c1 d'une image de l'atlas, posées en (x, y)
   const n = c1 - c0;
@@ -1842,6 +1846,7 @@ const FOOT = {
   stall_fish: [-52, -24, 52, 0], stall_ice: [-52, -24, 52, 0], house_fisher: [-72, -72, 72, -2], hut_fisher: [-50, -50, 54, -2],
   // le phare, le casino, le manège, les cabines de plage (le cargo et les bateaux de pêche sont sur l'eau : pas de collision)
   lighthouse: [-46, -30, 46, -2], casino: [-148, -92, 144, -2], carousel: [-86, -30, 86, -2], beach_hut: [-28, -28, 34, -2], sandcastle: [-48, -24, 60, -2], lifeguard_chair: [-36, -22, 44, -2],
+  clothesline: [-88, -12, 88, -2], paddling_pool: [-78, -40, 78, -6], deckchair: [-60, -18, 46, -2],
   parked_car: [-58, -22, 58, -2], parked_scooter: [-40, -14, 40, -2], parked_moto: [-42, -14, 42, -2],
   // le porche du parking, au bout de la route de la côte (lisiere.porche) : tout le bâtiment, bouche comprise
   porche: [-142, -372, 152, 8],
@@ -4814,7 +4819,9 @@ function drawClouds(cx, cy) {
    Teinte multipliée sur le monde (pas sur l'interface), halo doré venant de l'ouest au coucher, vignette le soir.
    hug : la lumière chaude autour d'Alice et de Tecky, qui monte une fois qu'il l'a trouvée. */
 const SUN = { speed: 0.25, lamp: 2.5,
-  tints: [[255, 255, 255], [255, 241, 220], [255, 214, 170], [250, 198, 160], [132, 142, 196]],
+  tintsPr: [[255, 255, 255], [255, 241, 220], [255, 214, 170], [250, 198, 160], [132, 142, 196]],
+  tintsEte: [[255, 246, 222], [255, 236, 204], [255, 210, 162], [250, 198, 160], [132, 142, 196]],
+  get tints() { return SUMMER() ? this.tintsEte : this.tintsPr; },
   glow: [0, 0.08, 0.2, 0.24, 0], vignette: [0, 0, 0.08, 0.14, 0.3] };
 let hug = 0;
 const sunGoal = () => !alice.found ? clues.filter(Boolean).length : (ending && ending.home) || state === 'win' ? 4 : 3;
@@ -4893,7 +4900,7 @@ function drawWindows(cx, cy, list, lamp) {
   }
 }
 function drawLight(cx, cy, list) {
-  if (sun < 0.01 && weather.k < 0.01) return;
+  if (sun < 0.01 && weather.k < 0.01 && !SUMMER()) return;
   const k = clamp(sun, 0, 4), wt = weatherTint();          // (la météo assombrit dans le même remplissage)
   const tint = [0, 1, 2].map(j => Math.round(sunAt(SUN.tints.map(t => t[j]), k) * wt[j] / 255));
   ctx.save();
@@ -5362,7 +5369,7 @@ function menuBox(i) {
     const n = menu.items.length, tw = n * menu.w + (n - 1) * menu.gap;
     return { x: GW / 2 - tw / 2 + i * (menu.w + menu.gap), y: menu.y0, w: menu.w, h: menu.h };
   }
-  return { x: GW / 2 - menu.w / 2, y: menu.y0 + i * (menu.h + menu.gap), w: menu.w, h: menu.h };
+  return { x: titleCX() - menu.w / 2, y: menu.y0 + i * (menu.h + menu.gap), w: menu.w, h: menu.h };     // (à droite sur le paysage du titre)
 }
 function menuHit(gx, gy) {
   for (let i = 0; i < menu.items.length; i++) {
@@ -6496,6 +6503,7 @@ function update(dt) {
   switch (state) {
     case 'title': {
       titleT += dt;
+      titleArt.t = Math.min(1, titleArt.t + dt / ART.fade);
       alice.t += dt; P.t += dt;
       for (const v of cars) updateVehicle(v, dt);
       for (const b of butterflies) updateButterfly(b, dt);
@@ -7017,16 +7025,91 @@ function veil(a) {
   ctx.fillRect(0, 0, GW, GH);
 }
 
+/* L'écran titre dessiné (choix de Christophe, 14 novembre 2026 : « un paysage dessiné pour chaque saison ») : à la
+   place du monde sous un voile, le paysage de la saison de l'épisode choisi (titre.py ; TITRE, écrit par
+   pack_web.build_titre() : des images à côté de la page, comme les images nettes), sur lequel le jeu anime les
+   nuages, Alice et Tecky, des papillons au printemps, des mouettes et le soleil sur l'eau en été ; le logo et le
+   menu passent à droite (ART.cx, titleCX()). Changer d'épisode fond un paysage dans l'autre (ART.fade). Tant que
+   les images ne sont pas là, ou si elles manquent (la page seule, ouverte depuis le disque ; les tests) : l'écran
+   titre d'avant, le monde vivant sous son voile, le menu au milieu. Options et Badges, ouverts depuis le titre,
+   se posent sur le même paysage. */
+const ART = { cx: 1440, fade: 0.45, clouds: [[0, 150, 13, 200], [1, 90, 8, 1000], [2, 250, 17, 1500], [1, 340, 11, 2300]],
+  gulls: [[330, 62, 0], [470, -48, 900], [250, 44, 1500]], flies: [[330, 860, 0], [1000, 900, 2.2], [150, 960, 4.1]], glints: 16 };
+let titleArt = { asked: false, ok: false, fonds: {}, sheet: null, shown: null, from: null, t: 1 };
+function loadTitleArt() {
+  if (titleArt.asked || typeof TITRE === 'undefined' || !TITRE || typeof location === 'undefined') return;
+  titleArt.asked = true;
+  const noms = Object.keys(TITRE.fonds);
+  loadImages(noms.map(n => TITRE.fonds[n]).concat([TITRE.sprites])).then(ims => {
+    titleArt.sheet = ims.pop();
+    noms.forEach((n, i) => { titleArt.fonds[n] = ims[i]; });
+    titleArt.ok = true;
+  }).catch(() => {});                   // fichiers absents : l'écran titre d'avant
+}
+const artOn = () => titleArt.ok && !!titleArt.fonds[EP().saison] &&
+  (state === 'title' || state === 'badges' || (state === 'options' && optReturn === 'title'));
+const titleCX = () => state === 'title' && artOn() ? ART.cx : GW / 2;
+function artSpr(nom, i, x, y, flip) {    // une image de la planche du titre, son origine en (x, y) de l'interface
+  const m = TITRE.meta[nom], f = m.f[((i % m.f.length) + m.f.length) % m.f.length];
+  if (!flip) { ctx.drawImage(titleArt.sheet, f[0], f[1], f[2], f[3], Math.round(x - m.ox), Math.round(y - m.oy), f[2], f[3]); return; }
+  ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.scale(-1, 1);
+  ctx.drawImage(titleArt.sheet, f[0], f[1], f[2], f[3], -m.ox, -m.oy, f[2], f[3]);
+  ctx.restore();
+}
+function artShadow(x, y, rx, ry) {
+  ctx.fillStyle = 'rgba(22, 50, 60, 0.2)';
+  ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, 6.2832); ctx.fill();
+}
+function drawTitleArt() {
+  guiTransform();
+  const A = titleArt, sa = EP().saison, t = titleT, M = TITRE.meta;
+  if (A.shown !== sa) { A.from = A.shown; A.shown = sa; A.t = A.from ? 0 : 1; }
+  ctx.drawImage(A.fonds[sa], 0, 0, GW, GH);
+  if (sa === 'ete') {                    // le soleil qui brille sur la mer, par petits éclats
+    for (let i = 0; i < ART.glints; i++) {
+      const y = TITRE.horizon + 40 + hash3(i, 3, 51) * (TITRE.rivage - TITRE.horizon - 110), l = 26 + 50 * hash3(i, 5, 51);
+      const x = (hash3(i, 7, 51) * GW + t * (6 + 10 * hash3(i, 9, 51))) % GW;
+      ctx.fillStyle = `rgba(255, 255, 255, ${(0.3 + 0.3 * Math.sin(t * 1.4 + i * 1.7)).toFixed(3)})`;
+      ctx.fillRect(Math.round(x), Math.round(y), Math.round(l), 4);
+    }
+  }
+  for (const [i, y, v, x0] of ART.clouds) {      // les nuages passent
+    const w = M.nuage.f[i][2];
+    artSpr('nuage', i, (x0 + t * v) % (GW + w) - w, y);
+  }
+  if (sa === 'ete') for (const [y, v, x0] of ART.gulls) {
+    const x = ((x0 + t * Math.abs(v)) % (GW + 300)) - 150;
+    artSpr('mouette', Math.floor(t * M.mouette.fps + x0), v > 0 ? x : GW - x, y + Math.sin(t * 0.8 + x0) * 26, v < 0);
+  } else for (const [cx, cy, ph] of ART.flies) {
+    const x = cx + Math.sin(t * 0.45 + ph) * 210, y = cy + Math.sin(t * 0.8 + ph * 2) * 50 + Math.sin(t * 5 + ph) * 8;
+    artSpr('papillon', Math.floor(t * M.papillon.fps), x, y, Math.cos(t * 0.45 + ph) < 0);
+  }
+  artShadow(TITRE.alice[0], TITRE.alice[1], 150, 20);
+  artShadow(TITRE.tecky[0], TITRE.tecky[1], 112, 18);
+  artSpr('alice_' + sa, Math.floor(t * M['alice_' + sa].fps), TITRE.alice[0], TITRE.alice[1]);
+  artSpr('tecky', Math.floor(t * M.tecky.fps), TITRE.tecky[0], TITRE.tecky[1]);
+  if (A.t < 1 && A.from && A.fonds[A.from]) {    // l'ancien paysage s'efface
+    ctx.globalAlpha = 1 - A.t; ctx.drawImage(A.fonds[A.from], 0, 0, GW, GH); ctx.globalAlpha = 1;
+  }
+}
 function drawTitle() {
-  veil(0.35);
+  const art = artOn(), cx = titleCX();
+  if (!art) veil(0.35);
+  const last = menuBox(menu.items.length - 1), r = recordLine(menu.items[menu.sel].mode);
+  if (art) {                             // sur le paysage : un cartouche sombre derrière le menu, un bandeau sous l'aide
+    ctx.fillStyle = 'rgba(27, 18, 12, 0.5)';
+    ctx.beginPath();
+    const box = [cx - menu.w / 2 - 36, EP_PICK.y - 78, menu.w + 72, last.y + last.h - EP_PICK.y + 78 + (r ? 74 : 30)];
+    if (ctx.roundRect) ctx.roundRect(...box, 36); else ctx.rect(...box);
+    ctx.fill();
+    ctx.fillRect(0, GH - 62, GW, 62);
+  }
   const bob = Math.sin(titleT * 2) * 8;
-  drawSpr('hud/title_logo', 0, GW / 2, 250 + bob, { sc: 1.75 });
+  drawSpr('hud/title_logo', 0, cx, (art ? 232 : 250) + bob, { sc: art ? 1.6 : 1.75 });
   if (openEpisodes().length > 1) drawEpisodePick();
-  else outlined(txt('titre.accroche'), GW / 2, 472, 38, '#FFF7E6');
+  else outlined(txt('titre.accroche'), cx, 472, 38, '#FFF7E6');
   drawMenu(titleT);
-  const r = recordLine(menu.items[menu.sel].mode);
-  const last = menuBox(menu.items.length - 1);
-  if (r) outlined(r, GW / 2, last.y + last.h + 46, 30, '#F2C14E');
+  if (r) outlined(r, cx, last.y + last.h + 46, 30, '#F2C14E');
   if (!touchMode) text(openEpisodes().length > 1 ? txt('titre.aide_episodes') : txt('titre.aide'),
     GW / 2, GH - 28, 26, '#E9DCC8', 'center', 500);
   // date de construction (pack_web), et « images x4 » quand le jeu lit les images nettes
@@ -7039,17 +7122,18 @@ const EP_PICK = { y: 472, size: 38, h: 64, w: 1000, gap: 40, head: 13 };
 const episodeLabel = () => txt('titre.episode', { nom: txt('episodes.' + episode + '.nom'), note: txt('episodes.' + episode + '.note') });
 function drawEpisodePick() {
   const E = EP_PICK, label = episodeLabel();
-  outlined(label, GW / 2, E.y, E.size, '#F2C14E');
+  const cx = titleCX();
+  outlined(label, cx, E.y, E.size, '#F2C14E');
   const w = ctx.measureText(label).width / 2 + E.gap, k = Math.sin(titleT * 6) * 4, cy = E.y - E.size * 0.34;
   for (const d of [-1, 1]) {
-    arrowHead(GW / 2 + d * (w + k), cy, d, E.head + 4, '#3A1E12');
-    arrowHead(GW / 2 + d * (w + k), cy, d, E.head, '#F2C14E');
+    arrowHead(cx + d * (w + k), cy, d, E.head + 4, '#3A1E12');
+    arrowHead(cx + d * (w + k), cy, d, E.head, '#F2C14E');
   }
 }
 function episodeTap(gx, gy) {
   const E = EP_PICK;
-  if (openEpisodes().length < 2 || Math.abs(gx - GW / 2) > E.w / 2 || gy < E.y - E.h * 0.75 || gy > E.y + E.h * 0.25) return false;
-  stepEpisode(gx < GW / 2 ? -1 : 1);
+  if (openEpisodes().length < 2 || Math.abs(gx - titleCX()) > E.w / 2 || gy < E.y - E.h * 0.75 || gy > E.y + E.h * 0.25) return false;
+  stepEpisode(gx < titleCX() ? -1 : 1);
   return true;
 }
 /* entrées du menu : l'entrée choisie est claire, encadrée de deux os qui la montrent */
@@ -7060,7 +7144,7 @@ function drawMenu(t) {
     const ink = sel ? '#3A1E12' : '#FFF7E6';
     const small = b.h < 90;                                        // menu principal à cinq entrées : un peu plus petit
     text(it.label, b.x + b.w / 2, it.sub ? b.y + b.h * (small ? 0.46 : 0.48) : b.y + b.h / 2 + 14, small ? 36 : 40, ink, 'center', 700);
-    if (it.sub) text(it.sub, GW / 2, b.y + b.h * (small ? 0.46 : 0.48) + (small ? 29 : 34), small ? 23 : 26, sel ? '#6B5A4E' : '#E9DCC8', 'center', 500);
+    if (it.sub) text(it.sub, b.x + b.w / 2, b.y + b.h * (small ? 0.46 : 0.48) + (small ? 29 : 34), small ? 23 : 26, sel ? '#6B5A4E' : '#E9DCC8', 'center', 500);
     if (sel && !menu.row) {
       const k = Math.sin(t * 6) * 6;
       drawSpr('hud/bone', 0, b.x - 76 - k, b.y + b.h / 2 - 32);
@@ -7120,8 +7204,8 @@ function render() {
   }
   ctx.save();
   ctx.beginPath(); ctx.rect(offX, offY, VW * scale, VH * scale); ctx.clip();
-  drawWorld();
-  drawRainbow();
+  if (artOn()) drawTitleArt();                         // (l'écran titre dessiné : le monde n'est pas à l'image)
+  else { drawWorld(); drawRainbow(); }
   if (state === 'title') drawTitle();
   else if (state === 'options' && optReturn === 'title') { veil(0.35); drawOptions(); }
   else if (state === 'badges') { veil(0.35); drawBadges(); }
@@ -7170,6 +7254,7 @@ function start() {
     atlasPx = a; tilesPx = t;
     buildGround();
     loadHD();
+    loadTitleArt();
     buildClouds();
     loadBadges();
     recs = STORE.get(RECORDS_KEY) || {};

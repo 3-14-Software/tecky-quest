@@ -164,7 +164,7 @@ def charger_carte(nom=carte.MONDE, episode=None):
     TRAFFIC = [tuple(v) for v in route["vehicles"]]           # véhicules : voie 0 (en haut, vers l'ouest) ou 1, x de départ
     DETAILS = _T("details")
     FLOWER_BEDS = [(tx, ty) for n, tx, ty in DETAILS if n == "fleurs"]      # massifs de fleurs : perchoirs des papillons
-    DECOR = _T("decor") + derived_decor()
+    DECOR = _T("decor") + _T("extras") + derived_decor()        # (« extras » : les décors de saison d'une surcharge)
     # pont : coins (x0, y0, x1, y1) qui ne sont plus de l'eau, sous le tablier de chaque décor « bridge » (5 tuiles de haut)
     BRIDGES = [(round(x) - 1, round(y) - 5, round(x) + 1, round(y)) for n, x, y in DECOR if n == "bridge"]
     # (le pont en travers, « bridge_h », posé sur un milieu de tuile : sept coins de large, trois de haut)
@@ -658,6 +658,36 @@ SAISON_Y = 1 << 20     # y d'un cadre de saison dans ATLAS : celui de l'image de
 SAISON_W = 1024        # largeur de l'image des sprites d'une saison, en pixels x2
 
 
+def build_titre():
+    """Les images de l'écran titre (titre.py), à côté de la page : un paysage par saison, titre_<saison>.png, et la
+    planche de ce que le jeu anime dessus, titre_sprites.png. Rend ce que le jeu doit en savoir (TITRE de game.js :
+    les adresses, les cadres de la planche, les places d'Alice et de Tecky) et la liste des fichiers. Rien n'est
+    redessiné si les sources n'ont pas changé (web/titre.json)."""
+    import titre
+    stamp = source_stamp()
+    info = os.path.join(WEB, "titre.json")
+    try:
+        o = json.load(open(info, encoding="utf-8"))
+    except (OSError, ValueError):
+        o = {}
+    if not (o.get("stamp") == stamp and all(os.path.exists(os.path.join(WEB, n)) for n in o.get("files", []))):
+        files = []
+        for saison in titre.SAISONS:
+            files.append(f"titre_{saison}.png")
+            titre.fond(saison).save(os.path.join(WEB, files[-1]), optimize=True)
+        img, meta = titre.planche(titre.sprites())
+        files.append("titre_sprites.png")
+        img.save(os.path.join(WEB, files[-1]), optimize=True)
+        o = {"stamp": stamp, "files": files, "meta": meta}
+        json.dump(o, open(info, "w", encoding="utf-8"))
+        print("écran titre :", ", ".join(f"{n} {os.path.getsize(os.path.join(WEB, n)) // 1024} Ko" for n in files))
+    else:
+        print("écran titre : à jour")
+    v = lambda n: n + "?v=" + stamp
+    return ({"fonds": {sa: v(f"titre_{sa}.png") for sa in titre.SAISONS}, "sprites": v("titre_sprites.png"), "meta": o["meta"],
+             "alice": titre.ALICE, "tecky": titre.TECKY, "horizon": titre.HORIZON, "rivage": titre.RIVAGE}, o["files"])
+
+
 def build_saisons(base, meta, avec_hd):
     """Les images des saisons que jouent les épisodes (episodes.json ; le printemps est dans la page) : le tileset
     redessiné avec la palette de la saison (saisons.py), et les sprites qui en changent — trouvés en redessinant
@@ -803,6 +833,7 @@ def main():
     preview(m, atlas, meta, tileset)
     hd = None if "--sans-hd" in sys.argv else build_hd(meta, atlas.height)
     sais, sais_files = build_saisons(base, meta, hd is not None)
+    titre_src, titre_files = build_titre()
     tpl = open(os.path.join(SRC, "index.template.html"), encoding="utf-8").read()
     game = open(os.path.join(SRC, "game.js"), encoding="utf-8").read()
     import base64
@@ -814,6 +845,8 @@ def main():
             "const HD_SRC = " + json.dumps(hd and {k: v for k, v in hd.items() if k != "files"}, separators=(",", ":")) + ";\n"
             # les images des saisons, à côté de la page elles aussi (game.js : askSeason) ; le printemps est dans la page
             "const SAISONS = " + json.dumps(sais, separators=(",", ":")) + ";\n"
+            # les images de l'écran titre, à côté de la page (game.js : loadTitleArt)
+            "const TITRE = " + json.dumps(titre_src, separators=(",", ":")) + ";\n"
             "const SONGS = " + json.dumps(music.songs(), separators=(",", ":")) + ";\n"
             # les textes du jeu, par langue (game.js : txt()) ; la source est textes/fr.json
             "const TEXTES = " + json.dumps({"fr": json.load(open(os.path.join(ROOT, "textes", "fr.json"), encoding="utf-8"))},
@@ -830,7 +863,7 @@ def main():
     open(os.path.join(WEB, "index.html"), "w", encoding="utf-8").write(html)
     ecoute(game)
     print("atlas", atlas.size, "| html", len(html) // 1024, "Ko")
-    build_standalone(data, game, (hd["files"] if hd else []) + sais_files)
+    build_standalone(data, game, (hd["files"] if hd else []) + sais_files + titre_files)
     check_placement()
 
 
@@ -882,7 +915,7 @@ def build_standalone(data, game, hd_files=()):
     for fn in ("sw.js", "serve.sh"):
         shutil.copy(os.path.join(SRC, fn), os.path.join(out, fn))
     for fn in os.listdir(out):                         # images x4 et de saison d'une construction précédente
-        if ("_x4" in fn or fn.startswith("saison_")) and fn not in hd_files:
+        if ("_x4" in fn or fn.startswith("saison_") or fn.startswith("titre_")) and fn not in hd_files:
             os.remove(os.path.join(out, fn))
     for fn in hd_files:
         shutil.copy(os.path.join(WEB, fn), os.path.join(out, fn))

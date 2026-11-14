@@ -128,7 +128,8 @@ def bouleau():
 
 
 def cerisier():
-    """Cerisier en fleurs : feuillage rose, quelques touffes vertes, tronc sombre."""
+    """Cerisier en fleurs : feuillage rose, quelques touffes vertes, tronc sombre. En été (FRUITS), le même arbre,
+    vert (la palette de la saison), ses cœurs de fleurs devenus des paires de cerises."""
     w, h, px, py = 96, 104, 48, 96
     tr = _tronc(w, h, px, py, 60, 9.5, ("#7E5238", "#5F3B27", "#9A6A4A"))
     v = Drawing(w, h)
@@ -137,6 +138,12 @@ def cerisier():
     _touffes(f, [(48, 22, 15.5), (30, 29, 13.5), (66, 29, 13.5), (20, 43, 11), (77, 43, 11), (48, 39, 19),
                  (33, 54, 11.5), (64, 54, 11.5), (49, 58, 11.5)], "cerisier", "r")
     for x, y in ((40, 30), (58, 35), (27, 40), (70, 41), (47, 50), (36, 20), (61, 22)):      # cœurs de fleurs
+        if FRUITS:                                                                           # … ou cerises, par deux
+            f.raw(line(f"M{x - 1.6},{y + 1.2} Q{x - 0.6},{y - 2.2} {x + 0.4},{y - 2.6} Q{x + 1.2},{y - 1.0} {x + 1.7},{y + 1.6}", "#3E6B2A", 0.55))
+            for cx, cy in ((x - 1.6, y + 1.6), (x + 1.7, y + 2.0)):
+                f.add(circle(cx, cy, 1.55), "#D7263D", sil=False, edge=True)
+                f.add(circle(cx - 0.45, cy - 0.5, 0.42), "#FF9AA8", sil=False)
+            continue
         f.add(circle(x, y, 1.15), "#FFF6C9", sil=False)
         f.add(circle(x, y, 0.5), "#E8A93A", sil=False)
     return Sprite([(tr, BOIS, TRAIT), (v, FEUILLAGES["chene"][3], TRAIT), (f, FEUILLAGES["cerisier"][3], TRAIT)],
@@ -379,10 +386,17 @@ def image(nom, echelle):
 SOL_T = 12                       # cadre des détails du sol (origine au centre)
 
 
+# Les fleurs semées dans l'herbe et les touffes de brins : (pétales, cœur, nombre de pétales), (teinte des brins).
+# saisons.py les remplace (en été : marguerite, coquelicot, bleuet, bouton d'or ; des brins plus jaunes).
+FLEURS = [("#FFFFFF", "#F6C945", 6), ("#FBD84A", "#E8932E", 5), ("#F9A8C4", "#FFF1B8", 5), ("#A9C8F2", "#FFF1B8", 5)]
+BRINS = ["#4FA04A", "#5DAE50", "#9BD86A", "#4FA04A"]
+FRUITS = False                   # en été : des cerises sur le cerisier, à la place des fleurs
+
+
 def sol_fleurs():
     """Petites fleurs semées dans l'herbe (game.js : groundDetails()) : pâquerette, bouton d'or, rose, bleue."""
     out = []
-    for petales, coeur, n in (("#FFFFFF", "#F6C945", 6), ("#FBD84A", "#E8932E", 5), ("#F9A8C4", "#FFF1B8", 5), ("#A9C8F2", "#FFF1B8", 5)):
+    for petales, coeur, n in FLEURS:
         d = Drawing(SOL_T, SOL_T)
         for k in range(n):
             a = k * 2 * math.pi / n + 0.4
@@ -395,8 +409,8 @@ def sol_fleurs():
 def sol_brins():
     """Touffes de brins d'herbe, plus sombres ou plus claires que le pré."""
     out = []
-    for teinte, brins in (("#4FA04A", ((-2.6, 1.2, -4.0), (0, 0, -5.4), (2.4, 1.0, -3.6))), ("#5DAE50", ((-1.6, 0.6, -4.4), (1.6, -0.4, -4.8))),
-                          ("#9BD86A", ((-2.2, 1.0, -3.6), (0.4, 0, -4.8), (2.6, 0.6, -3.2))), ("#4FA04A", ((-3.0, 2.0, -3.4), (-0.6, 0.4, -5.0), (1.6, -0.6, -5.6), (3.4, 1.4, -3.0)))):
+    for teinte, brins in zip(BRINS, (((-2.6, 1.2, -4.0), (0, 0, -5.4), (2.4, 1.0, -3.6)), ((-1.6, 0.6, -4.4), (1.6, -0.4, -4.8)),
+                                     ((-2.2, 1.0, -3.6), (0.4, 0, -4.8), (2.6, 0.6, -3.2)), ((-3.0, 2.0, -3.4), (-0.6, 0.4, -5.0), (1.6, -0.6, -5.6), (3.4, 1.4, -3.0)))):
         d = Drawing(SOL_T, SOL_T)
         d.raw(line(" ".join(f"M{6 + x},{9.5} Q{6 + x + c * 0.4:.2f},{9.5 + h * 0.6:.2f} {6 + x + c:.2f},{9.5 + h:.2f}" for x, c, h in brins),
                    teinte, 1.15))

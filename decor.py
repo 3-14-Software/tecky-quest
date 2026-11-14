@@ -1802,6 +1802,8 @@ DECOR = {   # nom : (fonction, (largeur, hauteur) 1x, origine 1x)
     "leaf_nest": (leaf_nest, (48, 32), (24, 28)),
     "sandcastle": (leaf_nest, (64, 52), (30, 45)),          # le château de sable de Zoé (dessin : mobilier.chateau_de_sable)
     "lifeguard_chair": (leaf_nest, (56, 96), (28, 92)),     # la chaise haute de Théo (dessin : mobilier.chaise_haute)
+    # l'été au village (dessins : mobilier.corde_a_linge, pataugeoire, transat)
+    "clothesline": (leaf_nest, (76, 56), (38, 52)), "paddling_pool": (leaf_nest, (68, 44), (34, 38)), "deckchair": (leaf_nest, (60, 76), (30, 70)),
     "parked_car": (leaf_nest, (64, 40), (32, 38.6)),        # véhicules garés (dessins : mobilier, d'après vehicles.py)
     "parked_scooter": (leaf_nest, (48, 40), (24, 38.6)),
     "parked_moto": (leaf_nest, (48, 40), (24, 38.6)),

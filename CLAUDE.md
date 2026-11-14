@@ -489,8 +489,7 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
     long d'une rive. La paire qui a sa rangée est (mer, sable) — le bord de mer `PLAGE` — à la place de (eau,
     sable) ; la mer pleine, la mer le long d'un quai ou de l'herbe sont des tuiles composées (hauts-fonds de
     `PLAGE`) ; là où la rivière traverse la plage, du sable mouillé. À l'embouchure, la mer se fond sur l'eau
-    douce sans rive (`_layer()` : mer sur eau), et la carte y avance l'eau douce en langue dans la mer (une
-    ligne droite se voyait). L'habillage de l'eau par le jeu (nénuphars, galets, fonds sombres :
+    douce sans rive (voir « Jointures de l'eau »), et la carte y avance l'eau douce en langue dans la mer. L'habillage de l'eau par le jeu (nénuphars, galets, fonds sombres :
     `MAP.shore`) ne concerne que l'eau douce, et ses fonds sombres ne sont pas posés à moins de `POND.sea`
     tuiles de la mer (`MAP.sea`, `seaNear()` : ils faisaient une tache dans l'embouchure). Le bassin du village est de la mer.
   - **Le pont en travers** (`decor.bridge_h()`, décor `bridge_h`) : le pont de bois du monde, dans l'autre
@@ -627,6 +626,55 @@ par son `publish_docs.sh` (https://3-14-software.github.io/tecky-quest/glitch/) 
   `reference/v2/lot6_ete_jeu.png`. Tests : `saisons.js` (bascule, images nettes, fichiers absents),
   `saisons.py` (fichiers : mêmes formes, mêmes cadres, x4 = x2). Décisions de Christophe : épisodes l'un après
   l'autre, Alice à chaque saison, l'été d'abord (découpage dans `PLAN_V2.md`, lot 6).
+- **Jointures de l'eau** (14 novembre 2026 ; Christophe : « les jointures ne sont pas bien faites » aux bords de la
+  mer et de la rivière). Deux défauts des tuiles composées (`tiles.py`). **Mer et eau douce** : dans une tuile qui
+  a les deux, elles ne font plus qu'une seule eau, posée d'un coup (`composite()` retire `sea` de ses terrains et
+  donne à `_layer()` la part de mer en chaque point, `_part_mer()` : les seuls coins d'eau, pesés en ligne
+  droite — le long d'un bord de tuile elle ne dépend que des deux coins de ce bord, donc elle se raccorde à la
+  voisine, mêlée, toute de mer ou toute d'eau douce) ; `_shore()` reçoit cette part (`mer` : vrai, faux ou un
+  tableau) et tout ce qui distingue les deux rives passe de l'une à l'autre en continu (`_teinte()`, `_eaux()`).
+  Avant, la tuile posait la rive d'eau douce puis un voile de mer : elle ne se raccordait à aucune voisine
+  (coupures nettes le long des berges du chenal et de l'embouchure). **Eau en pointe contre un quai ou des
+  planches** (`vrai` de `_shore()` = les coins qui sont vraiment de l'eau) : la rive (sable mouillé, lèvre,
+  écume) s'amincit avec l'eau au lieu d'être coupée net au bord de la tuile. Les tuiles à deux terrains n'ont
+  pas changé. Sur la carte, la jonction mer / eau douce du chenal est une ligne droite, sous le pont ; en eau
+  libre, le fondu ne fait qu'une tuile de large (pour l'allonger, il faudrait un terrain d'eau intermédiaire).
+  Capture : `reference/v2/lot6_jointures_eau.png`.
+- **L'été plus marqué sur le monde** (14 novembre 2026 ; Christophe : « augmenter la différence visuelle entre le
+  printemps et l'été », choix sur `reference/v2/ete_monde_options.png`, `python3 v2/ete_monde_options.py`).
+  **Palette « plein été »** (`saisons.SAISONS["ete"]`) : herbe vert-jaune chaude, feuillages profonds (sapins et
+  fond de forêt compris), chemins de terre clairs, sous-bois plus sombre ; la première palette ne se distinguait
+  pas assez. Une saison porte aussi `fleurs` (`nature.FLEURS` : en été marguerite, bouton d'or, coquelicot,
+  bleuet — **les formes du printemps, d'autres couleurs** : `build_saisons()` refuse un cadre qui change),
+  `brins` (`nature.BRINS`) et `fruits` (`nature.FRUITS` : des cerises sur le cerisier, à la place des cœurs de
+  fleurs). **Lumière d'été** (`game.js` : `SUMMER()` = la saison de l'épisode) : `SHADOW.len` et `.alpha` sont
+  des accesseurs (`lenEte`, `alphaEte` : ombres plus courtes et plus franches en plein jour), `SUN.tints` aussi
+  (`tintsEte` : une teinte dorée dès le plein jour — `drawLight()` fait donc son remplissage toute la journée
+  en été, le même que le soir ou sous la pluie). **Décors d'été posés** : la liste `extras` d'une carte
+  (`carte.LISTES_LIBRES`, mêmes genres que `decor`) s'ajoute à ses décors (`pack_web.charger_carte()`), pour
+  qu'une surcharge n'ait pas à redire toute la liste `decor` ; `cartes/ete/monde.json` y pose une corde à linge
+  (`clothesline`), une pataugeoire (`paddling_pool`), trois transats sous parasol (`deckchair`) et des bottes
+  de foin — dessins `mobilier.corde_a_linge()`, `pataugeoire()`, `transat()` (`_parasol()`), obstacles `FOOT`.
+  L'éditeur les montre et les déplace (type « Décor de saison », calque des décors). Test : `titre.js`.
+  Captures : `reference/v2/lot6_ete_monde.png`.
+- **Écran titre dessiné** (14 novembre 2026 ; choix sur `reference/v2/titre_options.png`, piste B : « un paysage
+  dessiné pour chaque saison »). `titre.py` : `fond(saison)` — 1920 x 1080, un pixel par pixel d'interface ; le
+  printemps : prairie, village sur sa colline, cerisier en fleurs, niche ; l'été : mer, falaise et phare,
+  bateaux, plage, cabines, transat —, composé avec les dessins du jeu agrandis (`nature.CATALOGUE`) et des
+  formes PIL suréchantillonnées (`SS`) ; `sprites()` — ce que le jeu anime dessus : nuages, Alice dans la tenue
+  de la saison et Tecky assis (leurs animations du jeu, à `K` = 9 px par unité), papillon, mouette ;
+  `planche()` les range. `python3 titre.py` : `reference/v2/titre_printemps.png`, `titre_ete.png`.
+  `pack_web.build_titre()` : fichiers à côté de la page (`titre_<saison>.png`, `titre_sprites.png`, 1 Mo en
+  tout ; `web/titre.json` ; copiés dans la version autonome et par `publish_docs.sh`) et `TITRE` dans la page
+  (adresses, cadres de la planche, places d'Alice et de Tecky, horizon et rivage). `game.js` :
+  `loadTitleArt()` au démarrage, `titleArt`, `artOn()` (titre, et Options ou Badges ouverts depuis le titre),
+  `drawTitleArt()` à la place de `drawWorld()` (`ART` : nuages qui passent, papillons au printemps, mouettes et
+  éclats de soleil sur la mer en été, fondu d'un paysage à l'autre quand on change d'épisode), `titleCX()` :
+  sur le paysage, le logo, le choix de l'épisode et le menu passent à droite (`ART.cx`), sur un cartouche
+  sombre ; `menuBox()` et `episodeTap()` suivent. **Sans les images** (page seule ouverte depuis le disque,
+  tests : pas de `location`) : l'écran titre d'avant, le monde vivant sous son voile, le menu au milieu — les
+  tests des menus n'ont donc pas changé. Une saison de plus : son paysage dans `titre.py` (`SAISONS`). Je n'ai
+  vu les animations qu'en images fixes. Test : `titre.js`. Capture : `reference/v2/lot6_titre.png`.
 - **Épisodes** (lot 6, le moteur ; 12 novembre 2026) : `episodes.json` (`episodes.py` : `charger()`,
   `valider()`, `python3 episodes.py`) donne les épisodes dans l'ordre où ils s'ouvrent : `id`, `saison`, `cartes`
   (un passage vers une carte qui n'en fait pas partie est fermé : `passageHere()`), `depart` (la carte de la

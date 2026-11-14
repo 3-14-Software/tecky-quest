@@ -54,13 +54,14 @@ for nom, s in SAISONS.items():
     ok(memes and dedans, f"{nom} : mêmes cadres et mêmes origines qu'au printemps, rangés dans son image (y décalés de SAISON_Y)")
     formes = teintes = 0
     for k, v in meta.items():
-        for f, g in zip(v["f"], ATLAS[k]["f"]):
+        change = False                  # (un sprite change dès qu'une de ses images change : la marguerite et le
+        for f, g in zip(v["f"], ATLAS[k]["f"]):      # bouton d'or de sol/fleur sont les mêmes en été)
             e = a.crop((f[0], f[1] - SAISON_Y, f[0] + f[2], f[1] - SAISON_Y + f[3]))
             p = atlas.crop((g[0], g[1], g[0] + g[2], g[1] + g[3]))
             formes += alpha(e, p) > 0
-            teintes += couleur(e, p) > 0.01
-    n = sum(len(v["f"]) for v in meta.values())
-    ok(formes == 0 and teintes == n, f"{nom} : chaque sprite a la forme de celui du printemps, et d'autres couleurs ({teintes} / {n})")
+            change = change or couleur(e, p) > 0.01
+        teintes += change
+    ok(formes == 0 and teintes == len(meta), f"{nom} : chaque sprite a la forme de celui du printemps, et d'autres couleurs ({teintes} / {len(meta)})")
     if not s["hd"]:
         print(f"ok : {nom} : pas d'images x4 (jeu construit avec --sans-hd)")
         continue

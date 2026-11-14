@@ -28,7 +28,7 @@
   const OUTILS = [['select', 'Sélection', 'V'], ['pinceau', 'Pinceau', 'B'], ['rect', 'Rectangle', 'R'], ['remplir', 'Remplir', 'G'],
     ['pipette', 'Pipette', 'I'], ['details', 'Détails au sol', 'D'], ['poser', 'Poser', 'P']];
   // ce que l'outil « Poser » sait ajouter
-  const POSABLES = ['decor', 'items', 'dig', 'enemies', 'crabs', 'seagulls', 'signs', 'tunnels', 'hens', 'ducks', 'cows', 'critters', 'butterflies',
+  const POSABLES = ['decor', 'extras', 'items', 'dig', 'enemies', 'crabs', 'seagulls', 'signs', 'tunnels', 'hens', 'ducks', 'cows', 'critters', 'butterflies',
     'villagers', 'vehicles', 'crossings', 'calm', 'landmarks'];
   const AIDE = {
     select: 'Clic : choisir (Maj : ajouter ; Alt : l’objet suivant au même endroit). Glisser : déplacer, ou encadrer pour en choisir plusieurs. Flèches : petits pas (Maj : ×10). Suppr, Ctrl+D (dupliquer), Ctrl+A.',

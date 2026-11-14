@@ -7,9 +7,10 @@ ces couleurs : changer la palette redonne les tuiles et les arbres de la saison,
 
     python3 saisons.py        # étude : le même coin du monde aux quatre saisons -> reference/v2/saisons_etude.png
 
-appliquer(saison) pose la palette d'une saison dans nature.py et tiles.py (« printemps » : celle d'origine). Ce
-n'est pour l'instant qu'une étude : le jeu ne connaît que le printemps. Restent à dessiner, au-delà des couleurs :
-la neige sur les toits et les branches nues de l'hiver, les feuilles au sol de l'automne.
+appliquer(saison) pose la palette d'une saison dans nature.py et tiles.py (« printemps » : celle d'origine), et avec
+elle les fleurs semées dans l'herbe, les brins, les fruits (nature.FLEURS, BRINS, FRUITS). pack_web.build_saisons()
+en fait les images d'une saison. Restent à dessiner, au-delà des couleurs : la neige sur les toits et les branches
+nues de l'hiver, les feuilles au sol de l'automne.
 """
 import copy
 import os
@@ -20,17 +21,26 @@ import tiles
 
 NOMS = {"printemps": "Printemps (aujourd'hui)", "ete": "Été", "automne": "Automne", "hiver": "Hiver"}
 _F0, _G0, _T0 = copy.deepcopy(nature.FEUILLAGES), copy.deepcopy(tiles.GRASS), copy.deepcopy(tiles.TERRAINS)
+_FL0, _BR0 = list(nature.FLEURS), list(nature.BRINS)
 
 # par saison : feuillages (ombre, base, clair, contour), herbe (fond, brins, fleurs), terrains (fond, liseré, trait)
 SAISONS = {
     "printemps": dict(),
+    # « plein été », choisi par Christophe sur reference/v2/ete_monde_options.png (14 novembre 2026 : la première
+    # palette ne se distinguait pas assez du printemps) : herbe vert-jaune chaude, feuillages profonds, chemins clairs
     "ete": dict(
-        feuillages={"chene": ("#2F8436", "#4BA63C", "#86CB4C", "#1F5226"), "sombre": ("#256F39", "#388A3E", "#5AA648", "#184326"),
-                    "bouleau": ("#6AA63A", "#8FC348", "#BEDD68", "#3A6428"), "jeune": ("#2A8554", "#41A069", "#79C68D", "#1B503B"),
-                    "buisson": ("#358A3C", "#55AB43", "#8CCF55", "#205327"), "cerisier": ("#2F8A46", "#4FAE56", "#8FD46A", "#1F5A2E")},
-        herbe=dict(fill="#A5CB62", blade="#86AE4A"), terrains={"field": dict(fill="#DDB851", edge="#C59E3E", out="#8E6E26"),
-                                                                 # (l'eau douce garde son bleu en été : la mer turquoise de la côte est un terrain à part, tiles « sea »)
-                                                                 "forest": dict(fill="#5F9B48", edge="#538C40", out="#427534")}),
+        feuillages={"chene": ("#1F6E33", "#33903A", "#6DBB45", "#17431F"), "sombre": ("#1B5C33", "#2A7638", "#4A9440", "#12381F"),
+                    "bouleau": ("#5F9A34", "#84B840", "#B4D65C", "#335A22"), "jeune": ("#1F7448", "#35905C", "#69B880", "#164432"),
+                    "buisson": ("#2A7636", "#44983C", "#7AC04A", "#1A4520"), "cerisier": ("#267A3C", "#42A04C", "#7CCB5E", "#184A26"),
+                    "sapin": ("#1A5C3C", "#297A4A", "#4F9E5E", "#123A26"), "fond": ("#144E32", "#1E6540", "#37834F", "#0E301E")},
+        herbe=dict(fill="#B4CE5C", blade="#8FAE40", flower=("#FFFFFF", "#E8483A", "#5B8FE0")),
+        # (l'eau douce garde son bleu en été : la mer turquoise de la côte est un terrain à part, tiles « sea »)
+        terrains={"field": dict(fill="#E2BC50", edge="#C9A03C", out="#8E6E26"), "forest": dict(fill="#4E8C40", edge="#447E38", out="#35682C"),
+                  "dirt": dict(fill="#E6CB92", edge="#CFB178", out="#96784A")},
+        # marguerite, bouton d'or, coquelicot (cœur noir), bleuet — les formes du printemps, d'autres couleurs (une
+        # saison ne change pas le cadre d'un sprite : pack_web.build_saisons()) ; des brins plus jaunes ; des cerises
+        fleurs=[("#FFFFFF", "#F6C945", 6), ("#FBD84A", "#E8932E", 5), ("#E8483A", "#2B2A30", 5), ("#4F86E0", "#27408A", 5)],
+        brins=["#7C9E36", "#88AA40", "#D2E478", "#7C9E36"], fruits=True),
     "automne": dict(
         feuillages={"chene": ("#C2611F", "#E48A2A", "#F6BD4C", "#6E3612"), "sombre": ("#96381F", "#BE5128", "#DF7E3A", "#571F10"),
                     "bouleau": ("#D29E1C", "#EEC636", "#FAE584", "#775612"), "jeune": ("#B8502A", "#DA7434", "#F0A458", "#6A2A14"),
@@ -63,6 +73,9 @@ def appliquer(saison="printemps"):
     tiles.GRASS.clear()
     tiles.GRASS.update(copy.deepcopy(_G0))
     tiles.GRASS.update(p.get("herbe", {}))
+    nature.FLEURS[:] = p.get("fleurs", _FL0)
+    nature.BRINS[:] = p.get("brins", _BR0)
+    nature.FRUITS = p.get("fruits", False)
     for k in _T0:
         tiles.TERRAINS[k].clear()
         tiles.TERRAINS[k].update(copy.deepcopy(_T0[k]))

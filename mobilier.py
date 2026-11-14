@@ -726,6 +726,133 @@ def chaise_haute(couleur="#FFFFFF", ombre="#C9CDD4", toile="#D8362E"):
     return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), _marches([(9, 0), (20, -fy), (40, 0), (48, -fy), (54, None)], py))
 
 
+# ====================================================================== L'ÉTÉ AU VILLAGE
+# Décors posés sur le monde en été seulement (liste « extras » de cartes/ete/monde.json ; choix de Christophe,
+# 14 novembre 2026 : « décors d'été posés »).
+def _parasol(d, px, top, cy, rx, ry, c1, c2, nervure):
+    """Un parasol vu d'un peu au-dessus : six fuseaux de deux couleurs, ceux de droite dans l'ombre, un bouton doré."""
+    rim = lambda t: (px + rx * math.cos(math.radians(t)), cy + ry * math.sin(math.radians(t)))
+    n = 6
+    for i in range(n):
+        (ax, ay), (bx, by) = rim(180 - i * 180 / n), rim(180 - (i + 1) * 180 / n)
+        mx, my = rim(180 - (i + 0.5) * 180 / n)
+        haut = lambda x, y: f"Q{(px + x) / 2 - (px - x) * 0.08:.2f},{(top + y) / 2 - 3.4:.2f}"
+        teinte = (c1, c2)[i % 2]
+        d.add(path(f"M{px},{top} {haut(ax, ay)} {ax:.2f},{ay:.2f} Q{mx:.2f},{my + 3.2:.2f} {bx:.2f},{by:.2f} {haut(bx, by)} {px},{top} Z"),
+              teinte if i < n / 2 else _fonce(teinte, 0.84))
+        if i:
+            d.raw(line(f"M{px},{top} {haut(ax, ay)} {ax:.2f},{ay:.2f}", nervure, 0.5))
+    d.add(circle(px, top - 0.6, 1.5), "#F2C14E")
+
+
+def corde_a_linge():
+    """Une corde à linge entre deux poteaux en T : un drap, une marinière, une serviette et deux chaussettes qui
+    sèchent au soleil, tenus par des pinces."""
+    w, h, px, py = 76, 56, 38, 52
+    bois, bois_f = "#B98A58", "#8E6238"
+    d = Drawing(w, h)
+    xa, xb, yc = 7, 69, 13                                  # les deux poteaux, la hauteur de la corde
+    for x in (xa, xb):
+        d.add(rect(x - 1.5, yc - 3, 3, py - yc + 3, 0.6), bois)
+        d.add(rect(x + 0.3, yc - 3, 1.2, py - yc + 3, 0.4), bois_f, sil=False)
+        d.add(rect(x - 6, yc - 3.4, 12, 2.6, 0.8), bois)
+    fil = lambda x: yc + 3.2 * math.sin(math.pi * (x - xa) / (xb - xa))      # la corde ploie sous le linge
+    d.raw(line("M" + " L".join(f"{x:.2f},{fil(x):.2f}" for x in range(xa, xb + 1, 2)), "#F4EAD6", 0.9))
+    # le drap : un grand pan blanc, un pli d'ombre, le bas qui ondule
+    x0, x1 = 12, 31
+    y0, y1 = fil(x0), fil(x1)
+    drap = (f"M{x0},{y0:.2f} L{x1},{y1:.2f} L{x1 + 0.6},{y1 + 25:.2f} Q{x1 - 4},{y1 + 27.4:.2f} {x1 - 9},{y1 + 25.4:.2f} "
+            f"Q{x0 + 4},{y0 + 23.4:.2f} {x0 - 0.4},{y0 + 25.6:.2f} Z")
+    d.add(path(drap), "#FFFFFF")
+    d.clip("drap", [path(drap)])
+    d.add(rect(x1 - 5.5, y0, 6.5, 30, 0), "#DCE4EE", sil=False, clip="drap")
+    d.raw('<g clip-path="url(#drap)">' + line(f"M{x0 + 6},{y0 + 1} L{x0 + 6.6},{y0 + 26} M{x0 + 12},{y0 + 1} L{x0 + 11.4},{y0 + 26}", "#C9D3E0", 0.7) + "</g>")
+    # la marinière
+    mx = 41
+    my = fil(mx) + 0.4
+    tee = (f"M{mx - 3},{my:.2f} L{mx - 9.4},{my + 4.4:.2f} L{mx - 7.6},{my + 8.4:.2f} L{mx - 5},{my + 6.8:.2f} L{mx - 5},{my + 17:.2f} "
+           f"L{mx + 5},{my + 17:.2f} L{mx + 5},{my + 6.8:.2f} L{mx + 7.6},{my + 8.4:.2f} L{mx + 9.4},{my + 4.4:.2f} L{mx + 3},{my:.2f} "
+           f"Q{mx},{my + 2.6:.2f} {mx - 3},{my:.2f} Z")
+    d.add(path(tee), "#FFFFFF")
+    d.clip("tee", [path(tee)])
+    for k in range(5):
+        d.add(rect(mx - 10, my + 3.6 + k * 3, 20, 1.2, 0), "#2B4C8C", sil=False, clip="tee")
+    d.add(rect(mx + 2.4, my, 3, 18, 0), "#000000", sil=False, clip="tee", opacity=0.1)
+    # la serviette, rayée
+    sx0, sx1 = 51, 59
+    sy = fil(55)
+    d.add(rect(sx0, sy, sx1 - sx0, 19, 0.8), "#F2A83B")
+    for k in range(3):
+        d.add(rect(sx0, sy + 3 + k * 5.4, sx1 - sx0, 2, 0), "#FFF3D2", sil=False)
+    d.add(rect(sx1 - 2.2, sy, 2.2, 19, 0), "#000000", sil=False, opacity=0.12)
+    # les chaussettes
+    for x in (62.4, 65.6):
+        y = fil(x)
+        d.add(path(f"M{x - 1.2},{y:.2f} L{x + 1.2},{y:.2f} L{x + 1.2},{y + 6:.2f} L{x + 3.4},{y + 7.2:.2f} Q{x + 3.8},{y + 9.4:.2f} {x + 1.4},{y + 9.2:.2f} "
+                    f"L{x - 1.2},{y + 8.4:.2f} Z"), "#D8362E")
+        d.add(rect(x - 1.2, y, 2.4, 1.6, 0), "#FFFFFF", sil=False)
+    for x in (13.5, 21.5, 29.5, 38.4, 43.6, 52.6, 57.4, 62.4, 65.6):          # les pinces à linge
+        d.add(rect(x - 0.7, fil(x) - 1.6, 1.4, 3.4, 0.4), ("#E8B04A", "#C8553D", "#6FA8DC")[int(x) % 3], sil=False, edge=True)
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), [(xa - 2, py), (xb + 2, py)])
+
+
+def pataugeoire():
+    """Une pataugeoire gonflable : deux boudins rayés bleu et blanc, de l'eau claire, un canard de bain, un ballon."""
+    w, h, px, py = 68, 44, 34, 38
+    bleu, bleu_f, blanc = "#3E8FD8", "#2C6FB4", "#FFFFFF"
+    d = Drawing(w, h)
+    cx, cy, rx, ry = px, py - 13, 30, 12.5
+    d.add(ellipse(cx, cy + 5.4, rx, ry), bleu_f)                              # le boudin du bas
+    d.add(ellipse(cx, cy, rx, ry), bleu)                                      # celui du haut
+    d.clip("bou", [ellipse(cx, cy, rx, ry), ellipse(cx, cy + 5.4, rx, ry)])
+    for k in range(-5, 6):                                                    # les rayures blanches, en éventail
+        if k % 2 == 0:
+            x = cx + k * 5.6
+            d.add(_pts([(x - 2.4, cy - 16), (x + 2.4, cy - 16), (x + 3.4 + k * 0.5, cy + 22), (x - 3.4 + k * 0.5, cy + 22)]), blanc, sil=False, clip="bou")
+    d.raw('<g clip-path="url(#bou)">' + line(f"M{cx - rx},{cy + 1.2} A{rx},{ry} 0 0 0 {cx + rx},{cy + 1.2}", "#1F4F86", 0.8) + "</g>")
+    eau = ellipse(cx, cy - 1.2, rx - 6.4, ry - 4.6)
+    d.add(eau, "#8FD8F2", sil=False, edge=True)
+    d.clip("eau", [eau])
+    d.add(ellipse(cx - 3, cy - 4.4, rx - 9, ry - 7), "#B9E9FA", sil=False, clip="eau")
+    d.add(ellipse(cx, cy - 7.2, rx - 6.4, 2.6), "#2C6FB4", sil=False, clip="eau", opacity=0.35)      # l'ombre du bord
+    for x, y, l in ((cx - 14, cy - 1.0, 5), (cx + 9, cy + 1.6, 6), (cx - 2, cy + 3.2, 4)):            # des reflets
+        d.raw('<g clip-path="url(#eau)">' + line(f"M{x},{y} q{l / 2},-1.2 {l},0", "#FFFFFF", 0.8) + "</g>")
+    kx, ky = cx - 8, cy - 2.6                                                  # le canard de bain
+    d.add(ellipse(kx, ky, 3.6, 2.5), "#F8D23A", sil=False, edge=True)
+    d.add(circle(kx + 2.4, ky - 2.6, 2.0), "#F8D23A", sil=False, edge=True)
+    d.add(path(f"M{kx + 4.0},{ky - 2.8} l2.2,0.5 l-2.0,0.9 Z"), "#F08A2C", sil=False)
+    d.add(circle(kx + 2.9, ky - 3.0, 0.4), OUTLINE, sil=False)
+    bx, by = cx + 11, cy - 3.6                                                 # le ballon
+    d.add(circle(bx, by, 3.3), "#FFFFFF", sil=False, edge=True)
+    d.clip("bal", [circle(bx, by, 3.3)])
+    d.add(rect(bx - 4, by - 4, 3, 8, 0), "#E8483A", sil=False, clip="bal")
+    d.add(rect(bx + 1, by - 4, 3, 8, 0), "#F8D23A", sil=False, clip="bal")
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), "contour")
+
+
+def transat():
+    """Une chaise longue de toile rayée sur son cadre de bois, à l'ombre d'un parasol de jardin jaune et blanc."""
+    w, h, px, py = 60, 76, 30, 70
+    bois, bois_f = "#C99B62", "#96693A"
+    d = Drawing(w, h)
+    # le parasol, planté derrière
+    d.add(ellipse(41, py - 2.4, 4.6, 1.6), "#6A6F7A")
+    d.add(rect(40.1, 16, 1.8, py - 18, 0.5), "#B9BCC4")
+    _parasol(d, 41, 5, 21, 18.5, 5.8, "#F6C63C", "#FFF8EC", "#B8862A")
+    # la chaise longue : deux longerons croisés, la toile tendue en hamac
+    d.raw(line(f"M8,{py - 1} L33,{py - 27}", OUTLINE, 3.4) + line(f"M8,{py - 1} L33,{py - 27}", bois, 1.8))
+    d.raw(line(f"M30,{py - 1} L13,{py - 15}", OUTLINE, 3.4) + line(f"M30,{py - 1} L13,{py - 15}", bois_f, 1.8))
+    toile = (f"M11,{py - 15.4} Q19,{py - 6.4} 25.6,{py - 11.6} L34.6,{py - 27.6} L29.6,{py - 29.4} Q24,{py - 15.6} 20,{py - 14.6} "
+             f"Q16,{py - 15} 14,{py - 18.4} Z")
+    d.add(path(toile), "#E8483A")
+    d.clip("toile", [path(toile)])
+    for k in range(6):
+        d.add(_pts([(9 + k * 6, py - 34), (11.6 + k * 6, py - 34), (5.6 + k * 6, py), (3 + k * 6, py)]), "#FFF3D2", sil=False, clip="toile")
+    d.add(path(f"M11,{py - 15.4} Q19,{py - 6.4} 25.6,{py - 11.6} L24.4,{py - 13.4} Q19,{py - 9.4} 12.6,{py - 16.6} Z"), "#000000", sil=False, clip="toile", opacity=0.14)
+    d.add(rect(28.4, py - 30.6, 7.6, 2.4, 1, f"rotate(20 32 {py - 29.4})"), bois)                 # la barre du haut
+    return Sprite([(d, OUTLINE, TRAIT)], w, h, (px, py), [(6, py - 1), (46, py - 1)])
+
+
 def heurtoir():
     """Heurtoir du bout de la voie : une traverse rayée rouge et blanc sur deux montants, étayés vers l'arrière."""
     w, h, px, py = 32, 40, 16, 36
@@ -1085,6 +1212,7 @@ CATALOGUE = {
     "bateau_de_peche_vert": lambda: bateau_de_peche("vert"),
     "chateau_de_sable": chateau_de_sable, "chateau_de_sable_fini": lambda: chateau_de_sable(True),
     "chaise_haute": chaise_haute,
+    "corde_a_linge": corde_a_linge, "pataugeoire": pataugeoire, "transat": transat,
 }
 def _gare(d, w=48, sol=38.6):
     """Un véhicule de vehicles.py, garé : le même dessin sans personne, comme un décor (obstacle, ombre portée)."""
@@ -1118,6 +1246,7 @@ VARIANTES = {
     # (le second dessin n'est jamais tiré de la position : le jeu le pose quand la quête de Zoé est finie)
     "sandcastle": (["chateau_de_sable", "chateau_de_sable_fini"], [0]),
     "lifeguard_chair": (["chaise_haute"], [0]),
+    "clothesline": (["corde_a_linge"], [0]), "paddling_pool": (["pataugeoire"], [0]), "deckchair": (["transat"], [0]),
     # les véhicules garés : la couleur se tire de la position
     "parked_car": ([f"voiture_garee_{c}" for c in vehicles.CAR_COLORS], [0, 1, 2, 3]),
     "parked_scooter": ([f"scooter_gare_{c}" for c in ("menthe", "corail", "creme")], [0, 1, 2]),
@@ -1136,6 +1265,7 @@ ECH = {"conteneur": 1.5, "conteneur_bleu": 1.5, "conteneur_vert": 1.5, "conteneu
        "table_de_terrasse": 1.35, "banc": 1.2,            # (un parasol plus haut qu'un villageois, un banc où s'asseoir)
        "foin": 1.3, "foin_rond": 1.3, "tonneau_bleu": 1.35, "tonneau_rouge": 1.35, "portique": 1.5, "peniche": 1.4,
        "lampadaire": 1.3, "toboggan": 1.3, "balancoire": 1.3,
+       "corde_a_linge": 1.3, "pataugeoire": 1.3, "transat": 1.3,
        "cargo": 1.3, "bateau_de_peche": 1.3, "bateau_de_peche_rouge": 1.3, "bateau_de_peche_vert": 1.3,
        **{f"voiture_garee_{c}": 1.5 for c in vehicles.CAR_COLORS},          # les tailles de vehicles.ECH
        **{f"scooter_gare_{c}": 1.4 for c in ("menthe", "corail", "creme")}, **{f"moto_garee_{c}": 1.4 for c in ("noir", "rouge", "bleu")}}

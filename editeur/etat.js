@@ -63,7 +63,7 @@
      (un personnage, une liste) est absent, comme sur une carte annexe. */
   ED.episode = new URLSearchParams(location.search).get('episode') || '';
   ED.fichier = () => 'carte.json?carte=' + encodeURIComponent(ED.nom) + (ED.episode ? '&episode=' + encodeURIComponent(ED.episode) : '');
-  const LISTES_VIDES = ['details', 'decor', 'items', 'dig', 'enemies', 'signs', 'tunnels', 'hens', 'ducks', 'cows', 'critters',
+  const LISTES_VIDES = ['details', 'decor', 'extras', 'items', 'dig', 'enemies', 'signs', 'tunnels', 'hens', 'ducks', 'cows', 'critters',
     'butterflies', 'villagers', 'crabs', 'seagulls', 'letters', 'balls', 'toys', 'babies', 'roadTunnels', 'calm', 'landmarks'];
   let ouvertes = [];
   const aEcrire = c => { const d = Object.assign({}, c); for (const k of ouvertes) if (!d[k].length) delete d[k]; return d; };
@@ -106,7 +106,7 @@
   ];
   // noms des types (inspecteur, palette)
   ED.NOMS = {
-    decor: 'Décor', items: 'Objet', dig: 'Os doré (trésor)', enemies: 'Chien', signs: 'Panneau', tunnels: 'Terrier',
+    decor: 'Décor', extras: 'Décor de saison', items: 'Objet', dig: 'Os doré (trésor)', enemies: 'Chien', signs: 'Panneau', tunnels: 'Terrier',
     hens: 'Poule', ducks: 'Canard', cows: 'Vache', critters: 'Petite bête', butterflies: 'Papillon', villagers: 'Villageois',
     start: 'Départ de Tecky', alice: 'Alice (cachée dans la cabane)', title: 'Caméra de l’écran titre',
     endingAlice: 'Fin : Alice devant la niche', endingTecky: 'Fin : Tecky à ses pieds',
@@ -154,6 +154,7 @@
         set: (x, y) => { const v = get(ED.c); v[0] = r4(x); v[1] = r4(y); } }, opts));
     };
     liste('decor', 'decors', e => ({ flat: flat.has(e[0]), contrainte: e[0] === 'bridge' ? 'entier' : e[0] === 'bridge_h' ? 'centre' : null }));
+    liste('extras', 'decors', e => ({ flat: flat.has(e[0]) }));        // (les décors de saison d'un épisode)
     liste('items', 'objets', e => ({ indice: I.indices.includes(e[0]) }));
     liste('dig', 'tresors', { contrainte: 'centre', alpha: 0.9 });
     liste('enemies', 'chiens', { num: true });

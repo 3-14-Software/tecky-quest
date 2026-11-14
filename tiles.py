@@ -520,48 +520,74 @@ def _blend(out, color, alpha):
     out[..., :3] = out[..., :3] * (1 - a) + np.array(hexrgb(color)) * a
 
 
-def _shore(out, bits, below, scale, tremble=0.0, variante=0, mer=False):
+def _part_mer(corners, n):
+    """Dans une tuile où la mer et l'eau douce se rejoignent : la part de mer en chaque point (0 l'eau douce, 1 la
+    mer), d'après les seuls coins d'eau, chacun pesé comme dans le champ des coins. Le long d'un bord de la tuile,
+    elle ne dépend que des deux coins de ce bord (un seul coin d'eau : sa valeur, d'un bout à l'autre) : elle se
+    raccorde donc à la tuile voisine, qu'elle soit mêlée elle aussi, toute de mer ou toute d'eau douce."""
+    u = (np.arange(n) + 0.5) / n                      # (en ligne droite, sans _ease : la pente la plus douce d'un bord
+    U, V = np.meshgrid(u, u)                          # à l'autre — adoucie, la jonction faisait une tache)
+    poids = ((1 - U) * (1 - V), U * (1 - V), (1 - U) * V, U * V)
+    num = sum(w for w, c in zip(poids, corners) if c == "sea")
+    den = sum(w for w, c in zip(poids, corners) if c in EAUX)
+    return num / np.maximum(den, 1e-9)
+
+
+def _teinte(out, masque, a, b, m):
+    """Dans `masque`, la couleur a (l'eau douce) fondue vers b (la mer) selon la part de mer m."""
+    a, b = np.array(hexrgb(a), dtype=float), np.array(hexrgb(b), dtype=float)
+    out[..., :3][masque] = a + (b - a) * m[masque][:, None]
+    out[..., 3][masque] = 255
+
+
+def _shore(out, bits, below, scale, tremble=0.0, variante=0, mer=False, vrai=None):
     """Rive et hauts-fonds de l'eau (SHORE) autour des coins `bits`, par-dessus `out` où l'eau est déjà posée.
-    mer : la mer (ses hauts-fonds sont ceux de PLAGE ; sur le sable, le bord de mer)."""
+    mer : la mer (ses hauts-fonds sont ceux de PLAGE ; sur le sable, le bord de mer) — vrai, faux, ou la part de
+    mer en chaque point (_part_mer) là où la mer et l'eau douce se rejoignent : tout ce qui les distingue (largeur
+    du sable mouillé, couleurs et largeurs des hauts-fonds, écume) passe alors de l'une à l'autre en continu.
+    vrai : dans une tuile composée, les seuls coins qui sont vraiment de l'eau (`bits` compte aussi ceux des
+    terrains posés par-dessus : un quai, les planches). Entre la rive et ce terrain, l'eau finit en pointe au bord
+    de la tuile : la rive (sable mouillé, lèvre, écume) s'amincit avec elle au lieu d'être coupée net."""
     n, k = T * scale * SS, scale * SS
     dist, lum, v = _field(bits, n, light=True, tremble=tremble, variante=variante)
     d = dist / k                                      # en px 1x
+    m = mer if isinstance(mer, np.ndarray) else np.full((n, n), 1.0 if mer else 0.0)
     band = lambda a, b: (d >= a) & (d < b)
     u = (np.arange(n) + 0.5) / n
     U, V = np.meshgrid(u, u)
     motif = (np.sin(2 * np.pi * (3 * U + V)) + 0.7 * np.sin(2 * np.pi * (2 * V - 5 * U) + 1.0)
              + 0.5 * np.sin(2 * np.pi * (7 * U + 4 * V) + 2.0))
-    if below == "sand" and mer:                       # le bord de mer (PLAGE)
-        for key in ("wet", "wet2"):
-            col, a = PLAGE[key]
-            out[band(a, 0)] = hexrgb(col) + (255,)
-        v1, v2 = (float(_ease(0.5 + PLAGE[key] / T)) for key in ("mid_at", "deep"))
-        out[(v >= 0.5) & (v < v1)] = hexrgb(PLAGE["shallow"]) + (255,)
-        out[(v >= v1) & (v < v2)] = hexrgb(PLAGE["mid"]) + (255,)
-        for key in ("ecume", "vague"):
-            a, b, seuil, op = PLAGE[key]
-            _blend(out, "#FFFFFF", band(a, b) * (motif > seuil) * op)
-        return
+    plage = below == "sand"
+    f = 1.0                                           # la part de vraie eau : 1 le long d'une rive libre
+    if vrai is not None and vrai != bits:
+        vb, vt = (_field(b, n, light=True)[2] for b in (bits, vrai))
+        f = _ease(np.clip(vt / np.maximum(vb, 1e-6) / 0.6, 0, 1))
     if below in BANKS:
         col, a, b = SHORE["lip"]
-        out[band(a, b)] = hexrgb(col) + (255,)
+        out[band(a * f, b * f)] = hexrgb(col) + (255,)
         for key in ("sand", "wet"):
             col, a = SHORE[key]
-            out[band(a, 0)] = hexrgb(col) + (255,)
-    elif below == "sand":                             # la rivière qui traverse la plage : du sable mouillé
-        for key in ("wet", "wet2"):
+            out[band(a * f, 0)] = hexrgb(col) + (255,)
+    elif plage:                                       # du sable mouillé : large au bord de mer (PLAGE), étroit là où
+        for key in ("wet", "wet2"):                   # la rivière traverse la plage
             col, a = PLAGE[key]
-            out[band(a * 0.6, 0)] = hexrgb(col) + (255,)
-    fonds = PLAGE if mer else SHORE                   # (les hauts-fonds de la mer, le long d'un quai ou de l'herbe aussi)
-    v1, v2 = (float(_ease(0.5 + fonds[key] / T)) for key in ("mid_at", "deep"))    # niveaux du champ, en ligne droite
+            out[band(a * (0.6 + 0.4 * m) * f, 0)] = hexrgb(col) + (255,)
+    # les hauts-fonds : ceux de la mer (PLAGE, le long d'un quai ou de l'herbe aussi) ou de l'eau douce (SHORE)
+    niveau = lambda fonds, key: float(_ease(0.5 + fonds[key] / T))                 # niveaux du champ, en ligne droite
+    v1, v2 = (niveau(SHORE, key) + (niveau(PLAGE, key) - niveau(SHORE, key)) * m for key in ("mid_at", "deep"))
     shallow = (v >= 0.5) & (v < v1)
-    out[shallow] = hexrgb(fonds["shallow"]) + (255,)
-    out[(v >= v1) & (v < v2)] = hexrgb(fonds["mid"]) + (255,)
+    _teinte(out, shallow, SHORE["shallow"], PLAGE["shallow"], m)
+    _teinte(out, (v >= v1) & (v < v2), SHORE["mid"], PLAGE["mid"], m)
+    douce = 1 - m if plage else 1.0                   # (au bord de mer, sur le sable : ni ombre de berge ni tirets)
     col, a = SHORE["shade"]
-    _blend(out, col, shallow * (d >= a) * (lum * 6 - 0.6))
+    _blend(out, col, shallow * (d >= a) * (lum * 6 - 0.6) * douce)
     # écume : des tirets inégaux, tirés d'un motif qui se répète d'une tuile à l'autre (ils se raccordent)
     col, a, b, op = SHORE["foam"]
-    _blend(out, col, band(a, b) * np.clip(-lum * 6 - 0.6, 0, 1) * (motif > 0.55) * op)
+    _blend(out, col, band(a, b) * np.clip(-lum * 6 - 0.6, 0, 1) * (motif > 0.55) * op * douce * f)
+    if plage:                                         # le bord de mer : de l'écume tout le long, une vague plus loin
+        for key in ("ecume", "vague"):
+            a, b, seuil, op = PLAGE[key]
+            _blend(out, "#FFFFFF", band(a, b) * (motif > seuil) * op * m * f)
 
 
 def _ombre_bloc(out, bloc, scale, variante=0):
@@ -573,23 +599,22 @@ def _ombre_bloc(out, bloc, scale, variante=0):
     _blend(out, col, (d > -L) * (d < 0) * np.clip(-lum * 3, 0, 1) * np.clip((L + d) / 2.5, 0, 1) * op)
 
 
-def _layer(out, terrain, bits, below, scale, seed=0, marking=None, variante=0, propres=None, ph=None, bloc=None):
+def _layer(out, terrain, bits, below, scale, seed=0, marking=None, variante=0, propres=None, ph=None, bloc=None, mer=None):
     """Pose `terrain` sur `out` (tableau sur-échantillonné) dans les coins `bits`, avec le style de la paire
     (terrain, below) : liseré et contour ; pour l'eau, la rive et les hauts-fonds (_shore). Dans une tuile composée :
     propres, les seuls coins qui sont vraiment de ce terrain (`bits` compte aussi ceux des terrains posés par-dessus,
     sous lesquels il passe) ; ph, la place de la tuile dans les grandes textures ; bloc, les coins du bloc de la
-    falaise, donnés à son premier terrain posé : il en dessine l'ombre et, pour la paroi, le pied."""
+    falaise, donnés à son premier terrain posé : il en dessine l'ombre et, pour la paroi, le pied ; mer, pour l'eau
+    d'une tuile où la mer et l'eau douce se rejoignent : la part de mer en chaque point (_part_mer)."""
     n = T * scale * SS
     k = scale * SS
     spec = dict(TERRAINS[terrain])
     spec.update(PAIR_STYLE.get((terrain, below), {}))
     ter = np.array(_tex(terrain, scale, seed, marking, ph))
+    if mer is not None:                               # l'eau douce et la mer, fondues l'une dans l'autre
+        ter = _eaux(scale, mer)
     tremble = TREMBLE if terrain in NATURELS and (terrain not in EAUX or below in RIVES) else 0     # (pas le long d'un quai)
     onde = terrain in ONDULES
-    if terrain == "sea" and below == "water":         # l'embouchure : l'eau douce se fond dans la mer, sans rive
-        _, _, v = _field(bits, n, light=True)
-        _blend(out, spec["fill"], _ease(np.clip((v - 0.2) / 0.6, 0, 1)))
-        return
     dist = _field(bits, n, tremble=tremble, variante=variante, ondule=onde)
     if bloc is not None:
         _ombre_bloc(out, bloc, scale, variante)
@@ -612,12 +637,21 @@ def _layer(out, terrain, bits, below, scale, seed=0, marking=None, variante=0, p
         out[(d >= 0) & (d < spec["out_w"])] = hexrgb(spec["out"]) + (255,)
         return
     elif spec.get("shore"):
-        _shore(out, bits, below, scale, tremble, variante, mer=bool(spec.get("mer")))
+        _shore(out, bits, below, scale, tremble, variante, mer=bool(spec.get("mer")) if mer is None else mer, vrai=propres)
     else:
         edge = (dist >= spec["out_w"] * k) & (dist < (spec["out_w"] + spec["edge_w"]) * k)
         out[edge] = hexrgb(spec["edge"]) + (255,)
     outline = (dist >= 0) & (dist < spec["out_w"] * k)
-    out[outline] = hexrgb(spec["out"]) + (255,)
+    if mer is not None:
+        _teinte(out, outline, TERRAINS["water"]["out"], TERRAINS["sea"]["out"], mer)
+    else:
+        out[outline] = hexrgb(spec["out"]) + (255,)
+
+
+def _eaux(scale, m):
+    """L'eau d'une tuile où la mer et l'eau douce se rejoignent : chacune sa couleur, fondues selon la part de mer."""
+    a, b = (np.array(_tex(t, scale), dtype=float) for t in EAUX)
+    return a + (b - a) * m[..., None]
 
 
 def _finish(out, scale):
@@ -661,7 +695,14 @@ def composite(corners, scale, seed=0, ph=None, variante=0):
     if ph:                                            # (une ondulation des bords debout par place : tuiles voisines différentes)
         variante = (ph[0] * 3 + ph[1] * 5) % len(ONDES)
     kinds = sorted(set(corners), key=PRIORITY.index)
-    out = np.array(_tex(kinds[0], scale, seed, None, ph))
+    # L'embouchure : là où la mer et l'eau douce se rejoignent, elles ne font qu'une seule eau, posée d'un coup —
+    # une seule rive, dont les couleurs passent de l'une à l'autre (_part_mer). Posées l'une après l'autre (la rive
+    # d'eau douce, puis un voile de mer), la tuile ne se raccordait à aucune de ses voisines.
+    mer = None
+    if all(e in kinds for e in EAUX):
+        mer = _part_mer(corners, T * scale * SS)
+        kinds.remove("sea")
+    out = np.array(_tex(kinds[0], scale, seed, None, ph)) if not (mer is not None and kinds[0] == "water") else _eaux(scale, mer)
     vu = kinds[0] in BLOC                             # le bloc de la falaise a-t-il déjà un terrain posé ?
     for below, t in zip(kinds, kinds[1:]):
         bits = sum(1 << i for i, c in enumerate(corners) if PRIORITY.index(c) >= PRIORITY.index(t))
@@ -669,7 +710,8 @@ def composite(corners, scale, seed=0, ph=None, variante=0):
         if t in BLOC and not vu:
             bloc, vu = sum(1 << i for i, c in enumerate(corners) if c in BLOC), True
         _layer(out, t, bits, below, scale, seed, variante=variante, ph=ph, bloc=bloc,
-               propres=sum(1 << i for i, c in enumerate(corners) if c == t))
+               propres=sum(1 << i for i, c in enumerate(corners) if c == t or (mer is not None and c in EAUX and t == "water")),
+               mer=mer if t == "water" else None)
     return _finish(out, scale)
 
 

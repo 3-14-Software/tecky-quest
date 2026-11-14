@@ -608,8 +608,17 @@ Ordre (revu le 12 novembre 2026 : Christophe veut un jalon ferme pour les cartes
      d'orgue et sa zone ; le bassin du village s'ouvre sur la rivière par un chenal que franchit un pont de
      bois ; le casino tient dans sa place depuis les retouches de Christophe. À valider : la valse du manège
      (« Été — le manège ») et le klaxon du scooter dans la salle d'écoute, le mouvement des vagues et du manège
-     (je ne les ai vus qu'en images fixes), le tracé du chenal. *Reports assumés* : noms des zones et répliques
-     à valider.
+     (je ne les ai vus qu'en images fixes), le tracé du chenal. **L'été sur le monde et l'écran titre**
+     (14 novembre 2026 ; choix de Christophe sur `reference/v2/ete_monde_options.png` et `titre_options.png`) :
+     la palette « plein été » (herbe vert-jaune, feuillages profonds, chemins clairs), les fleurs d'été
+     (marguerites, coquelicots, bleuets), des cerises sur les cerisiers, une lumière dorée et des ombres plus
+     courtes et plus franches, des décors posés sur le monde en été seulement (linge qui sèche, pataugeoire,
+     transats, bottes de foin) ; l'écran titre devient un paysage dessiné pour chaque saison (prairie et
+     cerisier en fleurs, plage et phare), Alice et Tecky au premier plan, nuages, papillons et mouettes
+     animés, le menu à droite, un fondu d'une saison à l'autre. À valider : les places des décors d'été, la
+     force de la teinte dorée, les animations du titre (je ne les ai vues qu'en images fixes), ce qui se
+     trouve derrière le menu. *Reports assumés* : noms des zones et répliques à valider ; pas de cigales
+     (Christophe n'a pas retenu les sons d'été).
    - *À dessiner* : les motos, les voitures garées (faits), les quatre autres personnages
      des quêtes, le caniche, les moutons, les mouettes, les crabes, les goélands (faits) ; les vagues de la
      mer (faites) ; les objets (chapeau, pelle, tong, coquillages, bouées, jouets de plage). (Faits le 13 novembre
