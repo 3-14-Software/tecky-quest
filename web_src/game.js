@@ -7125,7 +7125,7 @@ function drawTitle() {
     ctx.fillRect(0, GH - 62, GW, 62);
   }
   const bob = Math.sin(titleT * 2) * 8;
-  drawSpr('hud/title_logo', 0, cx, (art ? 232 : 250) + bob, { sc: art ? 1.6 : 1.75 });
+  drawSpr('hud/title_logo', 0, cx, (art ? 232 : 250) + bob, { sc: art ? 0.8 : 0.875 });   // (dessiné en grand : hud.LOGO)
   if (openEpisodes().length > 1) drawEpisodePick();
   else outlined(txt('titre.accroche'), cx, 472, 38, '#FFF7E6');
   drawMenu(titleT);
